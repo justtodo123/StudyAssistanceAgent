@@ -1,0 +1,55 @@
+# ===== 系统与编辑器 =====
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.code-workspace
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ===== Node.js =====
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.yarn/
+.pnpm-store/
+
+# ===== 环境配置 =====
+.env
+.env.*
+!.env.example
+
+# ===== 知识库中间产物与工具缓存 =====
+# 临时转录/下载的原始资料，人工确认后移入 knowledge/ 或保留在外部目录
+/tmp/
+/tools/.cache/
+/tools/logs/
+
+# ===== 二进制与大文件（原始资料保留在 D:\111_Others_Subjects） =====
+*.pdf
+*.pptx
+*.ppt
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.zip
+*.rar
+*.7z
+
+# ===== Claude / Agent 配置中属于本机私有的部分 =====
+.claude/settings.local.json
