@@ -17,8 +17,9 @@
 
 ```
 knowledge/        # ★ 知识库（每门课程一个目录）
-docs/             # 项目文档：PLAN、reference 索引、standards 规范
-tools/            # 辅助脚本（仓库索引、资料整理引导）
+platform/         # Python 后端（FastAPI + 轻量 RAG，检索知识库带出处回答）
+tools/            # 辅助脚本（RAG 评测、索引、资料整理引导）
+docs/             # 项目文档：PLAN、reference 索引、standards、interview
 .claude/          # agents、skills 自定义配置
 ```
 
@@ -54,15 +55,22 @@ tools/            # 辅助脚本（仓库索引、资料整理引导）
 # 预览知识库结构
 tree knowledge/ -L 2
 
-# 生成/更新外部资料索引（先人工整理后执行）
-python tools/build_reference_index.py
+# 后端：安装环境 + 启动 API（platform/ 下）
+cd platform
+python -m venv .venv && ./.venv/Scripts/python -m pip install -r requirements.txt
+./.venv/Scripts/uvicorn app.main:app --reload   # http://127.0.0.1:8000
 
-# 校验知识库条目 frontmatter
-python tools/validate_knowledge.py
+# 后端：跑测试
+./.venv/Scripts/python -m pytest tests/ -q
+
+# RAG 效果评估（数据驱动优化的核心工具）
+python tools/run_evaluation.py -k 1,3,5
 
 # 提交（Conventional Commits 向导）
 git cz
 ```
+
+> 后端 `requirements.txt` 中 `sentence-transformers` 为**可选依赖**：安装后自动启用本地 BGE 向量检索；未安装则降级为纯关键词（BM25）检索，功能不断。配置见 `platform/.env.example`。
 
 ## 常用 agents / skills
 

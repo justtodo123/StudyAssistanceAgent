@@ -1,0 +1,83 @@
+"""问答服务：检索 → （可选）LLM 生成 → 带出处回答。
+
+对应参考项目 AiAgentService 的「检索+生成」主链路，做两层降级以保证总是有输出：
+1. 配置了 LLM → 拼接检索上下文调用 OpenAI 兼容接口，勒令带出处。
+2. 未配置 LLM / 调用失败 → 按相关度拼出结构化「笔记摘要 + 出处」，仍可学习使用。
+"""
+
+from __future__ import annotations
+
+import json
+from typing import Any
+
+from . import config
+from .models import QaRequest, QaResponse, RetrievalChunk
+from .retrieval import MultiRecallService
+
+
+class QaService:
+    def __init__(self) -> None:
+        self._recall = MultiRecallService()
+
+    def answer(self, req: QaRequest) -> QaResponse:
+        results, mode = self._recall.recall(req.question, req.top_k)
+        if req.course:
+            results = [r for r in results if r.course == req.course]
+
+        if req.use_llm and config.LLM_API_KEY:
+            try:
+                text = self._generate(req.question, results)
+                return QaResponse(question=req.question, answer=text, mode=mode, sources=results)
+            except Exception as e:  # LLM 失败 → 降级
+                self._fallback_note = f"（LLM 生成失败，已降级为笔记摘要：{e}）"
+
+        text = self._summarize(results)
+        if getattr(self, "_fallback_note", None):
+            text = text + "\n\n" + self._fallback_note
+        return QaResponse(question=req.question, answer=text, mode=mode, sources=results)
+
+    # -- 生成路径 --
+    def _generate(self, question: str, chunks: list[RetrievalChunk]) -> str:
+        import urllib.request
+
+        context = "\n\n".join(
+            f"[{i + 1}] （来源：{c.file}）\n{c.content}" for i, c in enumerate(chunks[:5])
+        )
+        system = (
+            "你是一名计算机专业学习助手。请基于提供的知识库片段回答用户问题。\n"
+            "要求：1) 优先使用片段内容；2) 回答中标注引用的 [出处序号]；3) 不得编造片段中不存在的信息。"
+        )
+        payload: dict[str, Any] = {
+            "model": config.LLM_MODEL or "default",
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": f"知识库片段：\n{context}\n\n问题：{question}"},
+            ],
+            "temperature": 0.3,
+            "stream": False,
+        }
+        req = urllib.request.Request(
+            f"{config.LLM_BASE_URL}/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {config.LLM_API_KEY}",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data: dict[str, Any] = json.loads(resp.read().decode("utf-8"))
+        return data["choices"][0]["message"]["content"]
+
+    # -- 降级路径 --
+    @staticmethod
+    def _summarize(chunks: list[RetrievalChunk]) -> str:
+        if not chunks:
+            return "（知识库中暂无相关内容。请先在 knowledge/ 补充该主题的笔记，或查看 docs/reference/ 中的外部资料索引。）"
+        lines = ["以下内容取自你的知识库笔记，可作复习参考：", ""]
+        for i, c in enumerate(chunks[:5]):
+            lines.append(f"**【{i + 1}】{c.title or c.file}**（课程：{c.course or '—'}）")
+            lines.append(f"出处：`{c.file}`")
+            body = c.content[:400]
+            lines.append(body + ("…" if len(c.content) > 400 else ""))
+            lines.append("")
+        return "\n".join(lines)

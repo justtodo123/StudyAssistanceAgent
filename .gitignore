@@ -39,6 +39,13 @@ pnpm-debug.log*
 /tools/.cache/
 /tools/logs/
 
+# ===== Python 平台（platform/） =====
+platform/.venv/
+platform/.cache/
+platform/__pycache__/
+platform/**/__pycache__/
+*.py[cod]
+
 # ===== 二进制与大文件（原始资料保留在 D:\111_Others_Subjects） =====
 *.pdf
 *.pptx

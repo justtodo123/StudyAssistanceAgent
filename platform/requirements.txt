@@ -1,0 +1,7 @@
+fastapi>=0.111
+uvicorn[standard]>=0.30
+pydantic>=2.7
+python-dotenv>=1.0
+
+# 可选：本地向量检索（安装后自动启用，会一同安装 torch）
+# sentence-transformers>=2.7
