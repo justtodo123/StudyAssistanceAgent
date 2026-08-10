@@ -1,0 +1,22 @@
+{
+  "进程调度算法有哪些，各有什么特点": ["knowledge/os/process-scheduling.md"],
+  "SJF短作业优先和FCFS先来先服务的区别": ["knowledge/os/process-scheduling.md"],
+  "平均等待时间如何计算": ["knowledge/os/process-scheduling.md"],
+  "进程和线程的主要区别是什么": ["knowledge/os/process-management.md"],
+  "PCB的作用是什么": ["knowledge/os/process-management.md"],
+  "进程有哪几种状态，如何转换": ["knowledge/os/process-management.md"],
+  "生产者消费者问题用信号量怎么解": ["knowledge/os/synchronization.md"],
+  "读者写者问题如何用PV操作实现": ["knowledge/os/synchronization.md"],
+  "哲学家进餐问题如何避免死锁": ["knowledge/os/synchronization.md"],
+  "临界区和互斥的区别": ["knowledge/os/synchronization.md"],
+  "死锁产生的四个必要条件": ["knowledge/os/deadlock.md"],
+  "银行家算法判断安全状态": ["knowledge/os/deadlock.md"],
+  "如何预防死锁": ["knowledge/os/deadlock.md"],
+  "分页和分段的区别": ["knowledge/os/memory-management.md"],
+  "逻辑地址怎么转换为物理地址": ["knowledge/os/memory-management.md"],
+  "页面置换算法有哪些，LRU是什么": ["knowledge/os/memory-management.md"],
+  "什么是Belady异例": ["knowledge/os/memory-management.md"],
+  "文件的连续分配和链接分配区别": ["knowledge/os/file-system.md"],
+  "索引分配和inode是什么": ["knowledge/os/file-system.md"],
+  "空闲空间管理有哪些方法": ["knowledge/os/file-system.md"]
+}

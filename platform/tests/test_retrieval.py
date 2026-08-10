@@ -54,3 +54,13 @@ def test_split_headings_splits_multiple_sections():
     text = "## A\n内容a\n## B\n内容b\n"
     sections = _split_headings(text)
     assert [t for t, _ in sections] == ["A", "B"]
+
+
+def test_tokenizer_keeps_english_words_and_splits_cjk():
+    from app.bm25 import _tokenize
+
+    toks = _tokenize("读者写者问题如何用PV操作实现")
+    assert "pv" in toks, "英文缩写必须是整词，不能被 CJK 黏着"
+    assert "读者" in toks, "中文应按二元组切分"
+    toks2 = _tokenize("什么是Belady异例")
+    assert "belady" in toks2 and "异例" in toks2

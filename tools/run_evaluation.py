@@ -59,9 +59,10 @@ def evaluate(test_set: dict[str, list[str]], top_ks: list[int]) -> None:
             latencies.append((time.perf_counter() - t0) * 1000)
             if not rel_files:  # 无标注相关文档 → 跳过该样本
                 continue
-            hit = sum(1 for r in results if r.file in rel_files)
-            recalls.append(hit / len(rel_files))
-            precisions.append(hit / max(len(results), 1))
+            # 对同一文件可能命中多个切片：按「文档是否被召回」计，避免重复计数虚高
+            hit_files = {r.file for r in results} & set(rel_files)
+            recalls.append(len(hit_files) / len(rel_files))
+            precisions.append(len(hit_files) / max(len(results), 1))
         if not recalls:
             print(f"{k:<3}（本组无标注样本）")
             continue

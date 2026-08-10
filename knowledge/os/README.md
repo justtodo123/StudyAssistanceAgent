@@ -8,21 +8,22 @@
 
 | 章节 | 条目 | 状态 |
 | --- | --- | --- |
-| 进程与线程 | [process-management.md](process-management.md) | 🆕 示例条目（可扩展） |
-| 进程调度 | （待建） | ⬜ |
-| 进程同步/互斥 | （待建） | ⬜ |
-| 死锁 | （待建） | ⬜ |
-| 内存管理 | （待建） | ⬜ |
-| 文件系统 | （待建） | ⬜ |
+| 进程与线程 | [process-management.md](process-management.md) | ✅ |
+| 进程调度 | [process-scheduling.md](process-scheduling.md) | ✅ |
+| 同步与互斥 | [synchronization.md](synchronization.md) | ✅ |
+| 死锁 | [deadlock.md](deadlock.md) | ✅ |
+| 内存管理 | [memory-management.md](memory-management.md) | ✅ |
+| 文件系统 | [file-system.md](file-system.md) | ✅ |
 
 ## 重点 / 难点（高频考点速览）
 
 - 进程调度算法（FCFS / SJF / RR / 优先级 / 多级反馈）
 - 同步与互斥：信号量、生产者消费者、读者写者、哲学家进餐
-- 死锁四条件 + 银行家算法
-- 页面置换（OPT / FIFO / LRU / CLOCK）
-- 虚拟内存与文件系统 inode
+- 死锁四条件 + 银行家算法（安全序列计算）
+- 页面置换（OPT / FIFO / LRU / CLOCK）+ Belady 异例
+- 分页地址转换计算、内存碎片（内部 vs 外部）
+- 文件分配方式（连续/链接/索引）+ inode + 位示图
 
 ## 外部资料指针
 
-见 [docs/reference/os.md](../../docs/reference/os.md)（课件、期末真题、课程设计）。
+见 [docs/reference/os.md](../../docs/reference/os.md)（课堂课件：第01-09章、期末真题、课程设计）。
