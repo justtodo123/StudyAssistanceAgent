@@ -9,18 +9,20 @@
 - 知识库本体是仓库内的 `knowledge/` 目录（Markdown 笔记，越精炼越好，不存大文件）。
 
 ### 为什么这样设计（记录关键决策）
-- **形态选择**：无前后端代码，以 Claude Code 的 agents/skills/CLAUDE.md 驱动学习辅助，个人项目启动快、演进灵活（见 `docs/PLAN.md`）。
+- **形态选择**：以 Claude Code 的 agents/skills/CLAUDE.md 驱动学习辅助，配合 FastAPI RAG 后端（多路召回 + 带出处问答），个人项目启动快、演进灵活（见 `docs/PLAN.md`）。
 - **资料联动**："两者并存" —— 原始大文件（PDF/PPT/实验工程）保留外部目录，精炼笔记与题解迁入 `knowledge/`，仓库内维护映射关系。
 - **Git 主分支**：本地默认分支为 `master`，推送 GitHub 时为个人项目直接在主分支提交交付。
 
 ## 目录结构
 
 ```
-knowledge/        # ★ 知识库（每门课程一个目录）
-platform/         # Python 后端（FastAPI + 轻量 RAG，检索知识库带出处回答）
-tools/            # 辅助脚本（RAG 评测、索引、资料整理引导）
+knowledge/        # ★ 知识库（每门课程一个目录，含导航与条目）
+platform/         # Python 后端（FastAPI + 多路召回 RAG + 带出处问答）
+  app/            #   应用代码（入口/检索/向量/问答/索引/模型/配置）
+  tests/          #   检索链路冒烟测试
+tools/            # 辅助脚本（RAG 评测脚本 + 课程评测集 JSON）
 docs/             # 项目文档：PLAN、reference 索引、standards、interview
-.claude/          # agents、skills 自定义配置
+.claude/          # agents、skills、hooks 自定义配置
 ```
 
 ## 开发规范
@@ -74,10 +76,53 @@ git cz
 
 ## 常用 agents / skills
 
-- **Requirement_helper**（`.claude/agents/`）：需求分析代理，配合 `requirements-clarity` skill 把模糊需求澄清为可执行 PRD。
-- **requirements-clarity**（`.claude/skills/`）：需求澄清技能，产出 `docs/prds/` 下的 PRD 文档。
+已定义 agents：
+- **Requirement_helper**（[.claude/agents/Requirement_helper.md](.claude/agents/Requirement_helper.md)）：需求分析代理，把模糊需求澄清为可执行 PRD。
+
+已定义 skills：
+- **requirements-clarity**（`.claude/skills/requirements-clarity/`）：需求澄清技能，通过系统性提问和 100 分评分机制，将模糊需求转化为可执行的 PRD 文档。
+
+内置可用 skills（由 Claude Code 提供）：
+- `search` — AI 时代的聚合搜索（Exa 引擎），查外部资料/最新信息/技术文档
+- `dataviz` — 数据可视化（charts、SVG、dashboard），含设计规范
+- `update-config` — 配置 Claude Code settings.json（权限、环境变量、hooks）
+- `keybindings-help` — 自定义键盘快捷键
+- `simplify` — 审查代码复用/简化/效率，质量优化
+- `fewer-permission-prompts` — 扫描 transcript 减少权限提示
+- `loop` — 定时执行 prompt/slash 命令
+- `claude-api` — Claude API / Anthropic SDK 参考
+- `run` — 启动/驱动项目 app 查看变更
+- `init` — 初始化新 CLAUDE.md
+- `security-review` — 安全审查当前分支变更
 
 > 新增 agent/skill 时同步更新 `.claude/` 目录并在此登记。
+
+## 文档维护规范（CRITICAL）
+
+### 每层目录必须有 README.md
+
+每个子目录必须有 README.md 作为导航入口：
+- `docs/README.md` — 文档目录导航
+- `platform/README.md` — API 文档与启动指南
+- `tools/README.md` — 工具脚本文档
+- `knowledge/README.md` — 知识库导航与写作约定
+
+### 每次改动后，及时更新从当前目录到项目根目录的说明文档
+
+**具体操作**：
+1. **新增/删除/移动文件** → 更新所在目录的 README.md（目录结构、模块说明）
+2. **新增功能/API 变更** → 更新 `platform/README.md`（端点/配置/降级路径）
+3. **新增工具脚本** → 更新 `tools/README.md`
+4. **里程碑推进** → 更新 `docs/PLAN.md` 状态标记
+5. **状态/版本号变更** → 更新 `README.md`（根目录）的 `当前状态` 行和功能表格
+6. **知识库条目增删** → 更新 `knowledge/{course}/README.md` 的章节地图和 `knowledge/README.md` 的课程登记表
+7. **外部资料整理状态变化** → 更新 `docs/reference/README.md` 主索引
+
+**检查清单**（每次提交前）：
+- [ ] 根 `README.md` 的状态/功能表/目录树是否与当前一致
+- [ ] `docs/PLAN.md` 里程碑是否反映最新进度
+- [ ] 子目录 README 是否涵盖了该目录下的所有模块/文件
+- [ ] `knowledge/` 各课程 README 条目数与索引是否准确
 
 ## 注意事项 / 约束
 - ❌ **不要**把 `D:\111_Others_Subjects` 的内容直接复制进仓库（含 PDF/PPT/工程代码）。仓库只放索引与精炼笔记。
