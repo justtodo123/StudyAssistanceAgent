@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v0.4 M1a 进行中` — OS 知识库 15 篇完成，hybrid RAG 基线 Recall@3=1.000，评测文档 [docs/baselines.md](docs/baselines.md)
+**当前状态**：`v0.4 M1a 完成` — OS 知识库 15 篇完成，hybrid RAG 评测 Recall@3=0.970（33 题评测集，全 15 篇覆盖），评测文档 [docs/baselines.md](docs/baselines.md)
 
 ---
 
