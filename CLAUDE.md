@@ -51,6 +51,7 @@ docs/             # 项目文档：PLAN、reference 索引、standards、intervi
 - **提交信息语言**：英文。示例：`docs(course/os): add memory management notes`。
 - **大小写**：提交信息用命令式、首字母小写。
 - **特殊约定**：`knowledge/` 内容提交时若与某门课程强相关，在 scope 中标注课程名（如 `os`、`ds`、`co`）。
+- **分支策略**：采用 Feature Branch 工作流，每个阶段从 `master` 切独立分支开发，人工合并。详见 [docs/standards/git-conventions.md](docs/standards/git-conventions.md)。
 
 ### 5. 常用命令
 ```bash

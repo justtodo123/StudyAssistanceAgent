@@ -44,6 +44,7 @@
 
 ### M1：数据先行（核心专业课知识库）
 > 目标：让「自学价值」真实落地，同时给 M2 平台喂真数据。
+> **分支映射**：`feature/m1a-os-knowledge` → `feature/m1b-ds-knowledge` → `feature/m1c-co-knowledge` → `feature/m1d-platform-polish`
 - ⬜ 操作系统：`knowledge/os/`（进程/调度/同步/死锁/内存/文件）→ ~20 篇条目 + 真题复盘
 - ⬜ 数据结构复习：`knowledge/ds/`（线性表/树/图/查找/排序）+ 真题题库
 - ⬜ 计算机组成原理：`knowledge/co/`（数据表示/存储/Cache/CPU/总线）+ MIPS 实验复盘
@@ -51,6 +52,7 @@
 - **退出条件**：3 门课各 ≥10 篇条目；评测 Recall@3 ≥ 0.8；能演示「问真题→检索到→带出处答」。
 
 ### M2：Agent 学习辅助能力（面试深水区）
+> **分支映射**：`feature/m2a-review-plan` → `feature/m2b-quiz-generator`
 - ⬜ 复习计划生成（skill/接口）：课程+目标 → `docs/plans/` 计划
 - ⬜ 随堂测验生成：从条目/真题自动出题（工具调用展示）
 - ⬜ 复习排程：基于遗忘曲线的间隔重复提醒
@@ -58,6 +60,7 @@
 - **退出条件**：≥2 个学习辅助能力可在 API/skill 中演示，能答「工具编排」追问。
 
 ### M3：工程质量与沉淀
+> **分支映射**：`feature/m3a-vector-store` → `feature/m3b-observability`
 - ⬜ 可选：接入在线/本地向量库（如 sqlite-vec/Chroma）替换线性扫描
 - ⬜ 观测/日志：检索延迟、缓存命中率、问答日志（对应可观测性面试点）
 - ⬜ 面经库 `knowledge/interview/`：按知识点聚合面经题 ≥50
