@@ -111,7 +111,7 @@ Content-Type: application/json
 | --- | --- | --- |
 | `SA_KNOWLEDGE_ROOT` | `../knowledge` | 知识库根目录路径 |
 | `SA_TOP_K` | `5` | 检索返回数量 |
-| `SA_BM25_POOL` | `50` | BM25 候选池大小 |
+| `SA_BM25_POOL` | `0` | BM25 候选池大小（`0`=全库检索，个人规模下推荐） |
 | `SA_USE_VECTOR` | `true` | 是否启用向量检索 |
 | `SA_EMBEDDING_MODEL` | `BAAI/bge-small-zh-v1.5` | BGE 嵌入模型名 |
 | `SA_LLM_BASE_URL` | — | LLM API 地址（OpenAI 兼容） |

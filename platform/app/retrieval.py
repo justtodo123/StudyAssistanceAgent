@@ -41,7 +41,8 @@ class MultiRecallService:
         """返回 (融合结果, 生效模式)。mode 用于日志/响应标注：hybrid / keyword-only。"""
         self._chunks = self._chunks or self._load()
 
-        pool = self._chunks[: config.BM25_POOL] or self._chunks
+        # BM25_POOL=0 表示全库检索；>0 时仅检索前 N 片（参考项目大语料场景的优化开关）
+        pool = self._chunks if config.BM25_POOL <= 0 else self._chunks[: config.BM25_POOL]
         routes: list[list[RetrievalChunk]] = []
 
         # 路 1：向量（可选）
