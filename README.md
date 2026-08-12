@@ -60,6 +60,10 @@ StudyAssistanceAgent/
 │   ├── README.md          # 工具文档
 │   ├── run_evaluation.py  # RAG 评测脚本（Recall@k / F1 / 延迟）
 │   └── evaluations/       # 评测集（JSON，每课一个文件）
+├── proced_problem/        # 问题记录库（踩坑复盘）
+│   ├── README.md          # 导航与记录列表
+│   ├── _template.md       # 记录模板（7 章：症状→复现→定位→根因→方案→验证→经验）
+│   └── *.md               # 按序号排列的问题记录
 ├── .claude/               # Agent 配置（agents、skills、hooks）
 └── .gitignore
 ```
