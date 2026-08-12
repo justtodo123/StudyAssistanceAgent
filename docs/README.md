@@ -8,6 +8,7 @@
 docs/
 ├── README.md              # 本导航文件
 ├── PLAN.md                # ★ 项目计划与路线图（里程碑、技术选型、风险）
+├── baselines.md            # RAG 评测基线记录（keyword-only vs hybrid 对比）
 ├── reference/             # 外部参考资料索引
 │   ├── README.md          # 索引总览与维护规则
 │   ├── _template.md       # 新课程索引模板
