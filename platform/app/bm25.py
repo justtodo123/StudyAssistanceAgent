@@ -12,13 +12,18 @@ from collections import Counter
 
 from .models import RetrievalChunk
 
-_WORD_RE = re.compile(r"[\w一-鿿]+")
+_SEG_RE = re.compile(r"[一-鿿]+|[a-z0-9_]+")
 
 
 def _tokenize(text: str) -> list[str]:
-    """粗分词：对纯中文串切二元组，其余按空白/标点切词。"""
+    """粗分词：中文切二元组、英文/数字整词保留；中英混排各自独立片段。
+
+    - 「PCB的作用是什么」→ [pcb, 作用, 的是, ...]（pcb 为整词）
+    - 「读者写者问题如何用pv操作实现」→ [读者, 者写, ..., pv, 操作...]（pv 独立成词）
+    - 避免 PCB/LRU/inode 等缩写被二元组切碎失配。
+    """
     tokens: list[str] = []
-    for seg in _WORD_RE.findall(text.lower()):
+    for seg in _SEG_RE.findall(text.lower()):
         if re.fullmatch(r"[一-鿿]+", seg):
             tokens.extend(seg[i : i + 2] for i in range(max(1, len(seg) - 1)))
         else:

@@ -68,10 +68,69 @@ npm i -g commitizen
 
 > 手动提交时，先 `git status` 与 `git diff` 再次确认改动内容，再写提交信息。commitizen / cz-conventional-changelog 配置见 [package.json](../../package.json)。
 
-## 分支与合并策略（个人项目，登 GitHub）
+## 分支与合并策略（Feature Branch 工作流）
 
-- 本人直接在 `master` 上提交（个人项目，单干模式）。
-- 涉及大规模变更或实验时可起分支：`git switch -c feature/spaced-repetition`，完成后 `git merge --no-ff`。
+### 核心原则
+
+- **每个里程碑阶段从 `master` 切独立分支开发**，完成后由人工合并回 `master`。
+- **每个阶段开始前，确保上一阶段分支已合并到 `master`**，并从最新 `master` 切新分支。
+- 不在 `master` 上直接提交功能性改动（仅允许紧急修复 + 文档微调）。
+- 合并使用 `git merge --no-ff`，保留分支历史轨迹。
+
+### 分支命名规范
+
+```
+feature/m{里程碑}-{简短描述}
+```
+
+| 分支名 | 对应阶段 | 说明 |
+|--------|----------|------|
+| `feature/m1a-os-knowledge` | M1 数据先行 — OS 扩写 | OS 知识库 6→15 篇 + 评测基线 |
+| `feature/m1b-ds-knowledge` | M1 数据先行 — DS 知识库 | DS 0→10 篇 + 评测集 |
+| `feature/m1c-co-knowledge` | M1 数据先行 — CO 知识库 | CO 0→10 篇 + 评测集 |
+| `feature/m1d-platform-polish` | M1 数据先行 — 平台增强 | 评测脚本对比模式 + 端点增强 |
+| `feature/m2a-review-plan` | M2 Agent 能力 — 复习计划 | 复习计划生成 skill/接口 |
+| `feature/m2b-quiz-generator` | M2 Agent 能力 — 随堂测验 | 自动出题 + 工具调用演示 |
+| `feature/m3a-vector-store` | M3 工程质量 — 向量库升级 | 替换线性扫描为 sqlite-vec/Chroma |
+| `feature/m3b-observability` | M3 工程质量 — 可观测性 | 日志/延迟/缓存命中埋点 |
+| `fix/{简短描述}` | 紧急修复 | 直接基于 `master`，修复后立即合并 |
+| `docs/{简短描述}` | 文档批量更新 | 不影响代码的纯文档变更 |
+
+### 阶段开发流程
+
+```bash
+# 1. 确认当前在 master 且工作区干净
+git switch master
+git status
+
+# 2. 切新阶段分支
+git switch -c feature/m1a-os-knowledge
+
+# 3. 开发 + 提交（遵循 Conventional Commits）
+git add knowledge/os/xxx.md
+git commit -m "docs(course/os): add detailed scheduling algorithm notes"
+
+# 4. 开发完成，合并回 master（人工操作）
+git switch master
+git merge --no-ff feature/m1a-os-knowledge -m "merge: M1a OS knowledge base expansion"
+
+# 5. （可选）推送 master + 删除本地分支
+git push origin master
+git branch -d feature/m1a-os-knowledge
+```
+
+### 分支粒度原则
+
+- 每个分支的**生命周期尽量控制在 1 周内**，避免长时间偏离 master 导致合并 diff 堆积。
+- 若一个里程碑工作量超过 1 周，拆分为多个子阶段分支（如 M1 拆为 m1a/m1b/m1c/m1d）。
+- 知识库条目（`knowledge/`）是纯内容新增，跨分支几乎无冲突；平台代码（`platform/`）和文档（`CLAUDE.md`、`PLAN.md`）改动时优先合并后再切新分支。
+
+### 合并检查清单
+
+- [ ] 上一阶段分支已合并到 `master`
+- [ ] `git log --oneline --graph` 确认历史清晰
+- [ ] 相关文档（README、PLAN.md）已随改动更新
+- [ ] （如有评测集）已跑评估并记录基线数字对比
 
 ## 撤销与回退速查
 

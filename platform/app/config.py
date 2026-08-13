@@ -16,7 +16,9 @@ KNOWLEDGE_ROOT = Path(os.getenv("SA_KNOWLEDGE_ROOT", REPO_ROOT / "knowledge"))
 
 # ===== 检索 =====
 TOP_K = int(os.getenv("SA_TOP_K", "5"))
-BM25_POOL = int(os.getenv("SA_BM25_POOL", "50"))
+# BM25 候选池大小：0 表示不限制（全库检索）。个人知识库规模（几百片）全量检索毫秒级，
+# 截断候选池反而会在知识库扩容后静默丢文件（曾导致 Recall@3 从 1.000 跌到 0.650）。
+BM25_POOL = int(os.getenv("SA_BM25_POOL", "0"))
 USE_VECTOR = os.getenv("SA_USE_VECTOR", "true").lower() in ("1", "true", "yes")
 EMBEDDING_MODEL = os.getenv("SA_EMBEDDING_MODEL", "BAAI/bge-small-zh-v1.5")
 

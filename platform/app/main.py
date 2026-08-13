@@ -82,5 +82,6 @@ def bm25_only(question: str, top_k: int, course: str | None = None):
     chunks = build_index_cached()
     if course:
         chunks = [c for c in chunks if c.course == course]
-    bm25 = Bm25Search(chunks[: config.BM25_POOL])
+    pool = chunks if config.BM25_POOL <= 0 else chunks[: config.BM25_POOL]
+    bm25 = Bm25Search(pool)
     return bm25.search(question, top_k)

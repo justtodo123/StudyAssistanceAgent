@@ -1,8 +1,8 @@
 # 操作系统 — 外部资料登记
 
 - **外部路径**：`D:\111_Others_Subjects\操作系统`
-- **知识库入口**：[knowledge/os/README.md](../../knowledge/os/README.md)（待建）
-- **整理状态**：🆕 未整理
+- **知识库入口**：[knowledge/os/README.md](../../knowledge/os/README.md)
+- **整理状态**：📝 笔记已建（15 篇条目：概述/接口/进程/调度/同步/死锁/内存/段页式/虚存/文件/磁盘/I-O/安全/Linux实例/期考复盘）
 
 ## 资料构成
 

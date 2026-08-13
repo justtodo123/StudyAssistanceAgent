@@ -60,3 +60,6 @@ platform/**/__pycache__/
 
 # ===== Claude / Agent 配置中属于本机私有的部分 =====
 .claude/settings.local.json
+
+# ===== MCP等辅助配置 =====
+.serena/

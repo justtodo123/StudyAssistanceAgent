@@ -35,20 +35,24 @@
 ### M0：仓库与规范初始化 ✅
 - ✅ 仓库基础文件、CLAUDE.md、Git 规范、知识库框架、参考资料索引、项目计划
 - ✅ Python 平台骨架（FastAPI + 多路召回 + 降级 + SSE）
-- ✅ 「提问→检索 knowledge/→带出处回答」验证链路（5 个测试通过，检索/问答/流式端点验证）
+- ✅ 「提问→检索 knowledge/→带出处回答」验证链路（6 个测试通过，检索/问答/流式端点验证）
 - ✅ 面试价值文档（docs/interview/）与 RAG 评估脚本（tools/run_evaluation.py）
+- ✅ OS 知识库首轮 6 篇条目 + 20 题 RAG 评测集（tools/evaluations/os.json）
+- ✅ 各级 README.md 文档就绪（根/ docs/ platform/ tools/ knowledge/）
 - ⬜ 接入 GitHub 远程仓库（待用户手动 push，受本机网络限制）
 - **退出条件**：初始实现 + 平台骨架 + 双目标文档就绪，远程可克隆。
 
 ### M1：数据先行（核心专业课知识库）
 > 目标：让「自学价值」真实落地，同时给 M2 平台喂真数据。
-- ⬜ 操作系统：`knowledge/os/`（进程/调度/同步/死锁/内存/文件）→ ~20 篇条目 + 真题复盘
+> **分支映射**：`feature/m1a-os-knowledge` → `feature/m1b-ds-knowledge` → `feature/m1c-co-knowledge` → `feature/m1d-platform-polish`
+- 🔄 操作系统：`knowledge/os/`（进程/调度/同步/死锁/内存/文件）→ 15 篇条目 + 真题复盘（M1a 完成，hybrid RAG 评测 Recall@3=0.970，33 题评测集覆盖全部条目）
 - ⬜ 数据结构复习：`knowledge/ds/`（线性表/树/图/查找/排序）+ 真题题库
 - ⬜ 计算机组成原理：`knowledge/co/`（数据表示/存储/Cache/CPU/总线）+ MIPS 实验复盘
 - ⬜ 每课配 5-10 条 RAG 评测集（tools/evaluations/<course>.json）→ 数据驱动优化
 - **退出条件**：3 门课各 ≥10 篇条目；评测 Recall@3 ≥ 0.8；能演示「问真题→检索到→带出处答」。
 
 ### M2：Agent 学习辅助能力（面试深水区）
+> **分支映射**：`feature/m2a-review-plan` → `feature/m2b-quiz-generator`
 - ⬜ 复习计划生成（skill/接口）：课程+目标 → `docs/plans/` 计划
 - ⬜ 随堂测验生成：从条目/真题自动出题（工具调用展示）
 - ⬜ 复习排程：基于遗忘曲线的间隔重复提醒
@@ -56,6 +60,7 @@
 - **退出条件**：≥2 个学习辅助能力可在 API/skill 中演示，能答「工具编排」追问。
 
 ### M3：工程质量与沉淀
+> **分支映射**：`feature/m3a-vector-store` → `feature/m3b-observability`
 - ⬜ 可选：接入在线/本地向量库（如 sqlite-vec/Chroma）替换线性扫描
 - ⬜ 观测/日志：检索延迟、缓存命中率、问答日志（对应可观测性面试点）
 - ⬜ 面经库 `knowledge/interview/`：按知识点聚合面经题 ≥50
@@ -74,8 +79,8 @@
 
 ## 五、面试叙事核心（详见 docs/interview/README.md）
 
-一句话 + 4 个设计决策 + 8 个考点映射 + 3 个量化优化点（RAG 评测、切块调优、缓存命中）。
+一句话 + 5 个设计决策 + 8 个考点映射 + 3 个量化优化点（RAG 评测、切块调优、缓存命中）。
 
 ---
 
-*创建：2026-08-10 · 版本：v0.2（双目标聚焦）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · 版本：v0.3（M0 完整收尾 + 文档体系就绪）· 维护：每次会话开工查看本文档*

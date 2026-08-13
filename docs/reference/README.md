@@ -24,7 +24,7 @@
 
 | 外部目录 | 简称 | 知识库 course（待建） | 状态 | 详细登记 |
 | --- | --- | --- | --- | --- |
-| `操作系统` | OS | `knowledge/os/` | 🆕 未整理 | [os.md](os.md) |
+| `操作系统` | OS | `knowledge/os/` | 📝 笔记已建 | [os.md](os.md) |
 | `数据结构复习` | DS | `knowledge/ds/` | 🆕 未整理 | [ds.md](ds.md) |
 | `计算机组成原理` | CO | `knowledge/co/` | 🆕 未整理 | [co.md](co.md) |
 | `数据库系统` | DB | `knowledge/db/` | 🆕 未整理 | [db.md](db.md) |
