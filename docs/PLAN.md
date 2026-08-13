@@ -39,13 +39,13 @@
 - ✅ 面试价值文档（docs/interview/）与 RAG 评估脚本（tools/run_evaluation.py）
 - ✅ OS 知识库首轮 6 篇条目 + 20 题 RAG 评测集（tools/evaluations/os.json）
 - ✅ 各级 README.md 文档就绪（根/ docs/ platform/ tools/ knowledge/）
-- ⬜ 接入 GitHub 远程仓库（待用户手动 push，受本机网络限制）
+- ✅ 接入 GitHub 远程仓库（origin 已配置，`feature/m1a-os-knowledge` 经 PR #1 合并）
 - **退出条件**：初始实现 + 平台骨架 + 双目标文档就绪，远程可克隆。
 
 ### M1：数据先行（核心专业课知识库）
 > 目标：让「自学价值」真实落地，同时给 M2 平台喂真数据。
 > **分支映射**：`feature/m1a-os-knowledge` → `feature/m1b-ds-knowledge` → `feature/m1c-co-knowledge` → `feature/m1d-platform-polish`
-- 🔄 操作系统：`knowledge/os/`（进程/调度/同步/死锁/内存/文件）→ 15 篇条目 + 真题复盘（M1a 完成，hybrid RAG 评测 Recall@3=0.970，33 题评测集覆盖全部条目）
+- ✅ 操作系统：`knowledge/os/`（进程/调度/同步/死锁/内存/文件）→ 15 篇条目 + 真题复盘（M1a 完成，hybrid RAG 评测 Recall@3=0.970，33 题评测集覆盖全部条目）
 - ⬜ 数据结构复习：`knowledge/ds/`（线性表/树/图/查找/排序）+ 真题题库
 - ⬜ 计算机组成原理：`knowledge/co/`（数据表示/存储/Cache/CPU/总线）+ MIPS 实验复盘
 - ⬜ 每课配 5-10 条 RAG 评测集（tools/evaluations/<course>.json）→ 数据驱动优化
@@ -83,4 +83,4 @@
 
 ---
 
-*创建：2026-08-10 · 版本：v0.3（M0 完整收尾 + 文档体系就绪）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · 版本：v0.4（M0 收尾 + M1a OS 知识库完成并合并）· 维护：每次会话开工查看本文档*
