@@ -10,7 +10,7 @@
          └─ 路2: Bm25Search（bigram 关键词）
       → RRF 融合（k=60）+ 文件级去重
       → QaService: LLM 生成（勒令带出处）| 降级笔记摘要（句子边界截断）
-      → FastAPI /api/v1/{search, qa, qa/stream, quiz, review-plan}
+      → FastAPI /api/v1/{search, qa, qa/stream, quiz, review-plan, review-log, review-due}
 ```
 
 **M1d 优化**：课程过滤前移至检索阶段（避免无关课程占位）、RRF 结果按文件去重（同文件只保留最高分 chunk）、摘要截断在句子边界。
@@ -31,11 +31,13 @@ platform/
 │   ├── qa.py              # 问答服务（LLM 生成 / 降级笔记摘要）
 │   ├── knowledge_index.py # 知识库索引（Markdown 切分 + frontmatter 解析 + JSON 缓存）
 │   ├── review_plan.py     # 复习计划服务（分日学习计划生成）
-│   └── quiz.py            # 测验生成服务（例题+评测集+概念模板三数据源）
+│   ├── quiz.py            # 测验生成服务（例题+评测集+概念模板三数据源）
+│   └── review_scheduler.py # 复习排程服务（遗忘曲线间隔重复）
 ├── tests/
 │   ├── test_retrieval.py  # 检索链路冒烟测试（6 个用例）
 │   ├── test_review_plan.py # 复习计划测试（8 个用例）
-│   └── test_quiz.py       # 测验生成测试（11 个用例）
+│   ├── test_quiz.py       # 测验生成测试（11 个用例）
+│   └── test_review_scheduler.py # 复习排程测试（9 个用例）
 ├── requirements.txt       # 核心依赖
 ├── requirements-dev.txt   # 开发依赖（pytest 等）
 └── .env.example           # 环境变量模板（复制为 .env 后修改）
@@ -161,6 +163,35 @@ Content-Type: application/json
 - `summary`: 汇总（total_entries / by_difficulty / tip）
 - `total_hours`: 预计总学时
 
+### 记录复习
+
+```
+POST /api/v1/review-log
+Content-Type: application/json
+
+{
+  "file": "knowledge/os/process-management.md",
+  "course": "os"
+}
+```
+
+- `file`：必填，知识条目文件路径
+- `course`：可选，课程简称
+
+响应：记录复习次数、计算下次复习时间（间隔序列：1→2→4→8→16→32 天）
+
+### 查询待复习
+
+```
+GET /api/v1/review-due?course=os
+```
+
+- `course`：可选，按课程筛选
+
+响应字段：
+- `entries`: 待复习条目列表，含 `days_overdue`（逾期天数）、`interval_days`（当前间隔）、`review_count`（累计次数）
+- `summary`: 汇总（total_tracked / overdue / due_today / upcoming）
+
 ## 配置
 
 复制 `.env.example` → `.env`，按需修改：
@@ -205,4 +236,4 @@ python -m venv .venv
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-17（M2 新增复习计划+测验生成端点）· 维护：随 API 变更同步更新*
+*创建：2026-08-11 · 更新：2026-08-17（M2 新增复习计划+测验生成+复习排程端点）· 维护：随 API 变更同步更新*

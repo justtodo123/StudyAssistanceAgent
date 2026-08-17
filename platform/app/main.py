@@ -13,11 +13,12 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 
 from . import config
-from .models import QaRequest, QaResponse, QuizRequest, QuizResponse, ReviewPlanRequest, ReviewPlanResponse, SearchRequest, SearchResponse
+from .models import QaRequest, QaResponse, QuizRequest, QuizResponse, ReviewDueResponse, ReviewLogRequest, ReviewPlanRequest, ReviewPlanResponse, SearchRequest, SearchResponse
 from .qa import QaService
 from .quiz import QuizService
 from .retrieval import MultiRecallService
 from .review_plan import ReviewPlanService
+from .review_scheduler import ReviewSchedulerService
 
 app = FastAPI(
     title="StudyAssistanceAgent API",
@@ -29,6 +30,7 @@ _recall = MultiRecallService()
 _qa = QaService()
 _review_plan = ReviewPlanService()
 _quiz = QuizService()
+_review_scheduler = ReviewSchedulerService()
 
 
 @app.get("/health")
@@ -80,6 +82,18 @@ def qa_stream(req: QaRequest) -> StreamingResponse:
 def quiz(req: QuizRequest) -> QuizResponse:
     """测验生成：从知识条目例题、评测集、概念标签生成测验。"""
     return _quiz.generate(req)
+
+
+@app.post("/api/v1/review-log")
+def review_log(req: ReviewLogRequest) -> dict[str, Any]:
+    """记录一次复习完成，更新间隔重复排程。"""
+    return _review_scheduler.log_review(req)
+
+
+@app.get("/api/v1/review-due", response_model=ReviewDueResponse)
+def review_due(course: str | None = None) -> ReviewDueResponse:
+    """查询今日待复习条目（基于遗忘曲线间隔重复）。"""
+    return _review_scheduler.get_due(course)
 
 
 @app.post("/api/v1/review-plan", response_model=ReviewPlanResponse)
