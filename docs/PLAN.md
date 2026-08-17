@@ -46,7 +46,7 @@
 > 目标：让「自学价值」真实落地，同时给 M2 平台喂真数据。
 > **分支映射**：`feature/m1a-os-knowledge` → `feature/m1b-ds-knowledge` → `feature/m1c-co-knowledge` → `feature/m1d-platform-polish`
 - ✅ 操作系统：`knowledge/os/`（进程/调度/同步/死锁/内存/文件）→ 15 篇条目 + 真题复盘（M1a 完成，hybrid RAG 评测 Recall@3=0.970，33 题评测集覆盖全部条目）
-- 🔄 数据结构复习：`knowledge/ds/`（线性表/树/图/查找/排序）+ 真题题库，已写绪论/线性表/栈队列/树/图 5 篇（M1b 进行中）
+- 🔄 数据结构复习：`knowledge/ds/`（线性表/树/图/查找/排序）+ 真题题库，已写绪论/线性表/栈队列/树/图/查找/排序 7 篇（M1b 进行中）
 - ⬜ 计算机组成原理：`knowledge/co/`（数据表示/存储/Cache/CPU/总线）+ MIPS 实验复盘
 - ⬜ 每课配 5-10 条 RAG 评测集（tools/evaluations/<course>.json）→ 数据驱动优化
 - **退出条件**：3 门课各 ≥10 篇条目；评测 Recall@3 ≥ 0.8；能演示「问真题→检索到→带出处答」。

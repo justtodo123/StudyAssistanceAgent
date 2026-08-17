@@ -34,3 +34,5 @@
 | --- | --- | --- |
 | 2026-08-10 | 初始化登记 | — |
 | 2026-08-17 | M1b 启动：建课程导航 + 写绪论/线性表/栈队列 | ds-intro.md, linear-list.md, stack-queue.md |
+| 2026-08-17 | 续写树/二叉树、图 | tree-binary-tree.md, graph.md |
+| 2026-08-17 | 续写查找、排序 | searching.md, sorting.md |
