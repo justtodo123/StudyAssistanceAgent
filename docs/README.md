@@ -13,6 +13,8 @@ docs/
 │   ├── README.md          # 索引总览与维护规则
 │   ├── _template.md       # 新课程索引模板
 │   └── {course}.md        # 各课程原始资料登记（路径、类型、状态）
+├── plans/                 # 学习计划（由 review-plan 生成）
+│   └── README.md          # 计划目录说明
 ├── standards/             # 开发规范
 │   └── git-conventions.md # Git 提交规范（Conventional Commits）
 └── interview/             # 面试叙事（AI 应用开发岗）
