@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v0.10 M2a 进行中` — OS 15 篇 + DS 10 篇 + CO 10 篇，共 35 篇条目；75 题评测集 Recall@3 均≥0.95；新增复习计划生成（branch: `feature/m2a-review-plan`）
+**当前状态**：`v0.11 M2c 进行中` — OS 15 篇 + DS 10 篇 + CO 10 篇，共 35 篇条目；75 题评测集 Recall@3 均≥0.95；新增复习计划+测验生成+复习排程（branch: `feature/m2c-review-scheduler`）
 
 ---
 
@@ -24,7 +24,7 @@
 | RAG 评测 | OS 33 题 + DS 23 题 + CO 19 题评测集，Recall/Precision/F1 量化 | ✅ 已实现（Recall@3 均≥0.95） |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ 已实现（API `/api/v1/review-plan` + Skill `review-plan`） |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
-| 复习提醒 | 结合遗忘曲线的复习排程 | ⏳ 构想 |
+| 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ⏳ 构想 |
 
 ## 目录结构
@@ -55,7 +55,8 @@ StudyAssistanceAgent/
 │   │   ├── qa.py          # 问答服务（LLM 生成 / 降级笔记摘要）
 │   │   ├── knowledge_index.py # 知识库索引（Markdown 切分 + 缓存）
 │   │   ├── review_plan.py # 复习计划服务（分日学习计划生成）
-│   │   └── quiz.py       # 测验生成服务（例题+评测集+概念模板）
+│   │   ├── quiz.py       # 测验生成服务（例题+评测集+概念模板）
+│   │   └── review_scheduler.py # 复习排程服务（遗忘曲线间隔重复）
 │   │   ├── models.py      # Pydantic 领域模型
 │   │   └── config.py      # 环境变量配置
 │   ├── tests/             # 冒烟测试
@@ -108,6 +109,8 @@ cd ..
 | `/api/v1/qa/stream` | POST | 流式问答（SSE，同上但逐段输出） |
 | `/api/v1/review-plan` | POST | 复习计划生成（课程+目标日期 → 分日学习计划） |
 | `/api/v1/quiz` | POST | 测验生成（课程+题数 → 三种题型混合出题） |
+| `/api/v1/review-log` | POST | 记录复习完成（更新间隔重复排程） |
+| `/api/v1/review-due` | GET | 查询今日待复习条目（基于遗忘曲线） |
 
 > 完整 API 文档、配置说明、架构图见 [platform/README.md](platform/README.md)。
 

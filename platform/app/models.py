@@ -127,3 +127,36 @@ class QuizResponse(BaseModel):
     count: int
     questions: list[QuizQuestion]
     summary: dict[str, Any]
+
+
+# ── 复习排程 ──────────────────────────────────────────────────────────────────
+
+
+class ReviewLogRequest(BaseModel):
+    """记录一次复习完成。"""
+
+    file: str = Field(description="知识条目文件路径，如 knowledge/os/process-management.md")
+    course: str = Field(default="", description="课程简称（可选，自动从条目提取）")
+
+
+class ReviewEntry(BaseModel):
+    """单条复习排程记录。"""
+
+    file: str = Field(description="知识条目文件路径")
+    title: str = Field(default="", description="条目标题")
+    course: str = Field(default="", description="课程简称")
+    last_reviewed: str = Field(description="上次复习时间 ISO 格式")
+    review_count: int = Field(description="累计复习次数")
+    next_review: str = Field(description="下次应复习时间 ISO 格式")
+    days_overdue: int = Field(description="逾期天数（0 = 今天到期，正数 = 已逾期）")
+    interval_days: int = Field(description="当前间隔天数")
+
+
+class ReviewDueResponse(BaseModel):
+    """今日待复习响应。"""
+
+    course: str | None
+    checked_at: str
+    total_due: int
+    entries: list[ReviewEntry]
+    summary: dict[str, Any]
