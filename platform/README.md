@@ -10,7 +10,7 @@
          └─ 路2: Bm25Search（bigram 关键词）
       → RRF 融合（k=60）+ 文件级去重
       → QaService: LLM 生成（勒令带出处）| 降级笔记摘要（句子边界截断）
-      → FastAPI /api/v1/{search, qa, qa/stream, review-plan}
+      → FastAPI /api/v1/{search, qa, qa/stream, quiz, review-plan}
 ```
 
 **M1d 优化**：课程过滤前移至检索阶段（避免无关课程占位）、RRF 结果按文件去重（同文件只保留最高分 chunk）、摘要截断在句子边界。
@@ -30,10 +30,12 @@ platform/
 │   ├── vector_store.py    # 本地 BGE 向量存储（可选依赖，未装时优雅降级）
 │   ├── qa.py              # 问答服务（LLM 生成 / 降级笔记摘要）
 │   ├── knowledge_index.py # 知识库索引（Markdown 切分 + frontmatter 解析 + JSON 缓存）
-│   └── review_plan.py     # 复习计划服务（分日学习计划生成）
+│   ├── review_plan.py     # 复习计划服务（分日学习计划生成）
+│   └── quiz.py            # 测验生成服务（例题+评测集+概念模板三数据源）
 ├── tests/
 │   ├── test_retrieval.py  # 检索链路冒烟测试（6 个用例）
-│   └── test_review_plan.py # 复习计划测试（8 个用例）
+│   ├── test_review_plan.py # 复习计划测试（8 个用例）
+│   └── test_quiz.py       # 测验生成测试（11 个用例）
 ├── requirements.txt       # 核心依赖
 ├── requirements-dev.txt   # 开发依赖（pytest 等）
 └── .env.example           # 环境变量模板（复制为 .env 后修改）
@@ -107,6 +109,34 @@ Content-Type: application/json
 
 响应为 SSE（`text/event-stream`）：第一条 `data` 为来源元数据，后续每条为正文段落 `delta`，最后以 `[DONE]` 结束。
 
+### 测验生成
+
+```
+POST /api/v1/quiz
+Content-Type: application/json
+
+{
+  "course": "os",
+  "count": 5,
+  "difficulty": "中等",
+  "topics": ["进程", "调度"]
+}
+```
+
+- `course`：必填，课程简称（os / ds / co）
+- `count`：可选，题目数量（1-20），默认 5
+- `difficulty`：可选，难度筛选（入门 / 中等 / 进阶）
+- `topics`：可选，按标签筛选，如 `["进程", "调度"]`
+
+响应字段：
+- `questions`: 题目列表，每题含 `question`（题干）、`type`（example/retrieval/concept）、`answer`（参考答案，仅 example 有）、`source_file`（来源）、`tags`
+- `summary`: 汇总（total_pool / filtered / by_type）
+
+三种题型：
+- **example**：经典例题，从知识条目 `## 经典例题` 提取，含完整参考答案
+- **retrieval**：检索题，来自评测集，无答案，需查阅知识条目验证
+- **concept**：概念题，从 tags 模板生成，鼓励自行查阅
+
 ### 复习计划
 
 ```
@@ -175,4 +205,4 @@ python -m venv .venv
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-17（M2a 新增复习计划端点）· 维护：随 API 变更同步更新*
+*创建：2026-08-11 · 更新：2026-08-17（M2 新增复习计划+测验生成端点）· 维护：随 API 变更同步更新*

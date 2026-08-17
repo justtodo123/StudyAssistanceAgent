@@ -13,8 +13,9 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 
 from . import config
-from .models import QaRequest, QaResponse, ReviewPlanRequest, ReviewPlanResponse, SearchRequest, SearchResponse
+from .models import QaRequest, QaResponse, QuizRequest, QuizResponse, ReviewPlanRequest, ReviewPlanResponse, SearchRequest, SearchResponse
 from .qa import QaService
+from .quiz import QuizService
 from .retrieval import MultiRecallService
 from .review_plan import ReviewPlanService
 
@@ -27,6 +28,7 @@ app = FastAPI(
 _recall = MultiRecallService()
 _qa = QaService()
 _review_plan = ReviewPlanService()
+_quiz = QuizService()
 
 
 @app.get("/health")
@@ -72,6 +74,12 @@ def qa_stream(req: QaRequest) -> StreamingResponse:
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(gen(), media_type="text/event-stream")
+
+
+@app.post("/api/v1/quiz", response_model=QuizResponse)
+def quiz(req: QuizRequest) -> QuizResponse:
+    """测验生成：从知识条目例题、评测集、概念标签生成测验。"""
+    return _quiz.generate(req)
 
 
 @app.post("/api/v1/review-plan", response_model=ReviewPlanResponse)

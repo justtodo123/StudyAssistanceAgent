@@ -92,3 +92,38 @@ class ReviewPlanResponse(BaseModel):
     total_hours: float
     days: list[PlanDay]
     summary: dict[str, Any]
+
+
+# ── 测验生成 ──────────────────────────────────────────────────────────────────
+
+
+class QuizRequest(BaseModel):
+    """测验生成请求。"""
+
+    course: str = Field(description="课程简称，如 os / ds / co")
+    count: int = Field(default=5, ge=1, le=20, description="题目数量")
+    difficulty: str | None = Field(default=None, description="难度筛选：入门 / 中等 / 进阶")
+    topics: list[str] = Field(default_factory=list, description="按标签筛选，如 ['进程', '调度']")
+
+
+class QuizQuestion(BaseModel):
+    """单道测验题目。"""
+
+    question: str = Field(description="题干")
+    type: str = Field(description="题型：example（经典例题）/ concept（概念题）/ retrieval（检索题）")
+    answer: str = Field(default="", description="参考答案（经典例题有完整解答，其他为空或提示）")
+    source_file: str = Field(default="", description="来源文件路径")
+    source_title: str = Field(default="", description="来源条目标题")
+    tags: list[str] = Field(default_factory=list, description="相关标签")
+    difficulty: str = Field(default="", description="难度")
+
+
+class QuizResponse(BaseModel):
+    """测验响应。"""
+
+    quiz_name: str
+    course: str
+    generated_at: str
+    count: int
+    questions: list[QuizQuestion]
+    summary: dict[str, Any]
