@@ -2,7 +2,7 @@
 
 - **外部路径**：`D:\111_Others_Subjects\数据结构复习`
 - **知识库入口**：[knowledge/ds/README.md](../../knowledge/ds/README.md)（待建）
-- **整理状态**：📝 笔记已建（knowledge/ds/）
+- **整理状态**：✅ 完成（knowledge/ds/，9 篇条目）
 
 ## 资料构成
 
@@ -36,3 +36,4 @@
 | 2026-08-17 | M1b 启动：建课程导航 + 写绪论/线性表/栈队列 | ds-intro.md, linear-list.md, stack-queue.md |
 | 2026-08-17 | 续写树/二叉树、图 | tree-binary-tree.md, graph.md |
 | 2026-08-17 | 续写查找、排序 | searching.md, sorting.md |
+| 2026-08-17 | 续写串数组广义表、真题复盘，M1b 首轮完成 | string-array-glist.md, ds-exam-review.md |
