@@ -26,7 +26,7 @@
 | --- | --- | --- | --- | --- |
 | `操作系统` | OS | `knowledge/os/` | 📝 笔记已建 | [os.md](os.md) |
 | `数据结构复习` | DS | `knowledge/ds/` | ✅ 完成 | [ds.md](ds.md) |
-| `计算机组成原理` | CO | `knowledge/co/` | 🆕 未整理 | [co.md](co.md) |
+| `计算机组成原理` | CO | `knowledge/co/` | 📝 笔记已建 | [co.md](co.md) |
 | `数据库系统` | DB | `knowledge/db/` | 🆕 未整理 | [db.md](db.md) |
 | `算法设计与分析` | Algo | `knowledge/algo/` | 🆕 未整理 | [algo.md](algo.md) |
 | `ComputingNet`（计算机网络） | Network | `knowledge/network/` | 🆕 未整理 | [network.md](network.md) |

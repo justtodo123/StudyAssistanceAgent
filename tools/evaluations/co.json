@@ -1,0 +1,18 @@
+{
+  "冯诺依曼体系结构的五大部件是什么": ["knowledge/co/co-intro.md"],
+  "ISA为什么是软硬件的分界面": ["knowledge/co/co-intro.md"],
+  "补码加法和减法怎么运算": ["knowledge/co/data-representation.md"],
+  "IEEE754单精度浮点数的格式是什么": ["knowledge/co/data-representation.md"],
+  "浮点数运算的对阶规则是什么": ["knowledge/co/alu.md"],
+  "Cache的直接映射和组相联映射有什么区别": ["knowledge/co/memory-system.md"],
+  "LRU和FIFO替换算法有什么区别": ["knowledge/co/memory-system.md"],
+  "Cache的写直达和写回策略有什么区别": ["knowledge/co/memory-system.md"],
+  "基址寻址和变址寻址的区别是什么": ["knowledge/co/instruction-system.md"],
+  "CISC和RISC有哪些主要区别": ["knowledge/co/instruction-system.md"],
+  "流水线的数据冒险有哪几种类型": ["knowledge/co/cpu-design.md"],
+  "流水线的吞吐率和加速比怎么计算": ["knowledge/co/cpu-design.md"],
+  "程序查询中断和DMA三种IO方式有什么区别": ["knowledge/co/bus-io.md"],
+  "DMA的周期挪用方式是怎么工作的": ["knowledge/co/bus-io.md"],
+  "MIPS指令的R型和I型格式有什么区别": ["knowledge/co/mips-experiment.md"],
+  "组成原理期末考试有哪些高频考点": ["knowledge/co/co-exam-review.md"]
+}
