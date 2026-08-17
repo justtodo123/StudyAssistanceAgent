@@ -65,7 +65,7 @@
 
 ### M2：Agent 学习辅助能力（面试深水区）
 > **分支映射**：`feature/m2a-review-plan` → `feature/m2b-quiz-generator`
-- ⬜ 复习计划生成（skill/接口）：课程+目标 → `docs/plans/` 计划
+- ✅ 复习计划生成（skill/接口）：课程+目标 → 分日学习计划（API `/api/v1/review-plan` + Skill `review-plan`）
 - ⬜ 随堂测验生成：从条目/真题自动出题（工具调用展示）
 - ⬜ 复习排程：基于遗忘曲线的间隔重复提醒
 - ⬜ 「多轮工具调用」演示：问知识点→查笔记→出题→断言掌握

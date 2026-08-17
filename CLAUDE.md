@@ -83,6 +83,7 @@ git cz
 已定义 skills：
 - **requirements-clarity**（`.claude/skills/requirements-clarity/`）：需求澄清技能，通过系统性提问和 100 分评分机制，将模糊需求转化为可执行的 PRD 文档。
 - **problem-record**（`.claude/skills/problem-record/`）：问题记录技能，在解决一个非平凡 bug/回归后，引导按模板记录症状→定位→根因→修复→经验到 `proced_problem/` 目录。
+- **review-plan**（`.claude/skills/review-plan/`）：复习计划生成技能，输入课程+目标日期，生成分日学习计划并写入 `docs/plans/`。
 
 内置可用 skills（由 Claude Code 提供）：
 - `search` — AI 时代的聚合搜索（Exa 引擎），查外部资料/最新信息/技术文档

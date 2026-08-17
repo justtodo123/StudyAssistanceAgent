@@ -13,9 +13,10 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 
 from . import config
-from .models import QaRequest, QaResponse, SearchRequest, SearchResponse
+from .models import QaRequest, QaResponse, ReviewPlanRequest, ReviewPlanResponse, SearchRequest, SearchResponse
 from .qa import QaService
 from .retrieval import MultiRecallService
+from .review_plan import ReviewPlanService
 
 app = FastAPI(
     title="StudyAssistanceAgent API",
@@ -25,6 +26,7 @@ app = FastAPI(
 
 _recall = MultiRecallService()
 _qa = QaService()
+_review_plan = ReviewPlanService()
 
 
 @app.get("/health")
@@ -70,6 +72,12 @@ def qa_stream(req: QaRequest) -> StreamingResponse:
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(gen(), media_type="text/event-stream")
+
+
+@app.post("/api/v1/review-plan", response_model=ReviewPlanResponse)
+def review_plan(req: ReviewPlanRequest) -> ReviewPlanResponse:
+    """生成复习计划：输入课程 + 目标日期 → 输出分日学习计划。"""
+    return _review_plan.generate(req)
 
 
 def bm25_only(question: str, top_k: int, course: str | None = None):

@@ -1,6 +1,6 @@
 # Platform — FastAPI RAG 后端
 
-> StudyAssistanceAgent 的 Python 后端服务。提供知识库检索、带出处问答、SSE 流式输出能力。
+> StudyAssistanceAgent 的 Python 后端服务。提供知识库检索、带出处问答、SSE 流式输出、复习计划生成能力。
 
 ## 架构
 
@@ -10,7 +10,7 @@
          └─ 路2: Bm25Search（bigram 关键词）
       → RRF 融合（k=60）+ 文件级去重
       → QaService: LLM 生成（勒令带出处）| 降级笔记摘要（句子边界截断）
-      → FastAPI /api/v1/{search, qa, qa/stream}
+      → FastAPI /api/v1/{search, qa, qa/stream, review-plan}
 ```
 
 **M1d 优化**：课程过滤前移至检索阶段（避免无关课程占位）、RRF 结果按文件去重（同文件只保留最高分 chunk）、摘要截断在句子边界。
@@ -29,9 +29,11 @@ platform/
 │   ├── bm25.py            # BM25 关键词检索（中文 bigram + 英文整词分词）
 │   ├── vector_store.py    # 本地 BGE 向量存储（可选依赖，未装时优雅降级）
 │   ├── qa.py              # 问答服务（LLM 生成 / 降级笔记摘要）
-│   └── knowledge_index.py # 知识库索引（Markdown 切分 + frontmatter 解析 + JSON 缓存）
+│   ├── knowledge_index.py # 知识库索引（Markdown 切分 + frontmatter 解析 + JSON 缓存）
+│   └── review_plan.py     # 复习计划服务（分日学习计划生成）
 ├── tests/
-│   └── test_retrieval.py  # 检索链路冒烟测试（6 个用例）
+│   ├── test_retrieval.py  # 检索链路冒烟测试（6 个用例）
+│   └── test_review_plan.py # 复习计划测试（8 个用例）
 ├── requirements.txt       # 核心依赖
 ├── requirements-dev.txt   # 开发依赖（pytest 等）
 └── .env.example           # 环境变量模板（复制为 .env 后修改）
@@ -105,6 +107,30 @@ Content-Type: application/json
 
 响应为 SSE（`text/event-stream`）：第一条 `data` 为来源元数据，后续每条为正文段落 `delta`，最后以 `[DONE]` 结束。
 
+### 复习计划
+
+```
+POST /api/v1/review-plan
+Content-Type: application/json
+
+{
+  "course": "os",
+  "target_date": "2026-09-01",
+  "hours_per_day": 2.0,
+  "plan_name": "os-midterm"
+}
+```
+
+- `course`：必填，课程简称（os / ds / co）
+- `target_date`：可选，目标日期（YYYY-MM-DD），默认 14 天后
+- `hours_per_day`：可选，每天可用学时（0.5-8.0），默认 2.0
+- `plan_name`：可选，计划名称，默认 `{course}-plan`
+
+响应字段：
+- `days`: 分日任务列表，每天含多个 `PlanTask`（file / title / difficulty / estimated_minutes / priority / tags）
+- `summary`: 汇总（total_entries / by_difficulty / tip）
+- `total_hours`: 预计总学时
+
 ## 配置
 
 复制 `.env.example` → `.env`，按需修改：
@@ -149,4 +175,4 @@ python -m venv .venv
 
 ---
 
-*创建：2026-08-11 · 维护：随 API 变更同步更新*
+*创建：2026-08-11 · 更新：2026-08-17（M2a 新增复习计划端点）· 维护：随 API 变更同步更新*
