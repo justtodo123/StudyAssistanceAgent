@@ -18,5 +18,8 @@
   "快速排序的Partition过程是怎么做的": ["knowledge/ds/sorting.md"],
   "堆排序的建堆过程从哪个结点开始": ["knowledge/ds/sorting.md"],
   "哪些排序算法是稳定的": ["knowledge/ds/sorting.md"],
+  "大根堆和小根堆的区别是什么": ["knowledge/ds/heap-priority-queue.md"],
+  "建堆的时间复杂度为什么是O(n)而不是O(nlogn)": ["knowledge/ds/heap-priority-queue.md"],
+  "堆排序为什么是不稳定的排序算法": ["knowledge/ds/heap-priority-queue.md"],
   "数据结构期末考试有哪些高频考点": ["knowledge/ds/ds-exam-review.md"]
 }

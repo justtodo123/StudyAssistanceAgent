@@ -3,7 +3,7 @@
   "ISA为什么是软硬件的分界面": ["knowledge/co/co-intro.md"],
   "补码加法和减法怎么运算": ["knowledge/co/data-representation.md"],
   "IEEE754单精度浮点数的格式是什么": ["knowledge/co/data-representation.md"],
-  "浮点数运算的对阶规则是什么": ["knowledge/co/alu.md"],
+  "浮点数运算的对阶规则是什么": ["knowledge/co/floating-point-arithmetic.md"],
   "Cache的直接映射和组相联映射有什么区别": ["knowledge/co/memory-system.md"],
   "LRU和FIFO替换算法有什么区别": ["knowledge/co/memory-system.md"],
   "Cache的写直达和写回策略有什么区别": ["knowledge/co/memory-system.md"],
@@ -14,5 +14,8 @@
   "程序查询中断和DMA三种IO方式有什么区别": ["knowledge/co/bus-io.md"],
   "DMA的周期挪用方式是怎么工作的": ["knowledge/co/bus-io.md"],
   "MIPS指令的R型和I型格式有什么区别": ["knowledge/co/mips-experiment.md"],
+  "浮点数加减法的五个步骤是什么": ["knowledge/co/floating-point-arithmetic.md"],
+  "浮点数乘法的阶码相加为什么要减一次偏置值": ["knowledge/co/floating-point-arithmetic.md"],
+  "浮点数运算为什么不满足结合律": ["knowledge/co/floating-point-arithmetic.md"],
   "组成原理期末考试有哪些高频考点": ["knowledge/co/co-exam-review.md"]
 }
