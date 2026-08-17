@@ -18,13 +18,13 @@
 | 线性表（顺序表 + 链表） | [linear-list.md](linear-list.md) | ✅ |
 | 栈与队列 | [stack-queue.md](stack-queue.md) | ✅ |
 | 串、数组与广义表 | string-array-glist.md | ⬜ |
-| 树与二叉树（遍历 / 线索 / 森林 / 哈夫曼） | tree-binary-tree.md | ⬜ |
-| 图（存储 / 遍历 / MST / 最短路 / 拓扑 / 关键路径） | graph.md | ⬜ |
+| 树与二叉树（遍历 / 线索 / 森林 / 哈夫曼） | [tree-binary-tree.md](tree-binary-tree.md) | ✅ |
+| 图（存储 / 遍历 / MST / 最短路 / 拓扑 / 关键路径） | [graph.md](graph.md) | ✅ |
 | 查找（顺序 / 折半 / BST / AVL / B 树 / 哈希） | searching.md | ⬜ |
 | 排序（插入 / 交换 / 选择 / 归并 / 基数 / 外部） | sorting.md | ⬜ |
 | 真题复盘（2017 春 A 卷逐题） | ds-exam-review.md | ⬜ |
 
-**已完成 3 / 9 篇**
+**已完成 5 / 9 篇**
 
 **共 9 篇条目**（含 1 篇真题复盘；树、图两章体量大，可视需拆分）
 
