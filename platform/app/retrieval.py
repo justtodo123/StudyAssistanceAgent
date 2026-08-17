@@ -37,7 +37,8 @@ class MultiRecallService:
     def __init__(self) -> None:
         self._chunks: list[RetrievalChunk] | None = None
 
-    def recall(self, question: str, top_k: int = 5, threshold: float = 0.0) -> tuple[list[RetrievalChunk], str]:
+    def recall(self, question: str, top_k: int = 5, threshold: float = 0.0,
+               course: str | None = None) -> tuple[list[RetrievalChunk], str]:
         """返回 (融合结果, 生效模式)。mode 用于日志/响应标注：hybrid / keyword-only。"""
         self._chunks = self._chunks or self._load()
 
@@ -67,6 +68,11 @@ class MultiRecallService:
 
         mode = "hybrid" if len(routes) > 1 and all(routes) else "keyword-only"
         fused = self._rrf_fuse(routes, top_k)
+
+        # 课程过滤：在融合后过滤，避免向量单例缓存导致过滤失效
+        if course:
+            fused = [r for r in fused if r.course == course]
+
         return fused, mode
 
     def _load(self) -> list[RetrievalChunk]:
@@ -83,8 +89,16 @@ class MultiRecallService:
                 key = chunk.id
                 by_id.setdefault(key, chunk)
                 scores[key] = scores.get(key, 0.0) + 1.0 / (RRF_K + rank + 1)
-        ranked_ids = sorted(scores, key=scores.get, reverse=True)[:top_k]
-        out = [by_id[i].model_copy(deep=True) for i in ranked_ids]
+
+        # 按文件去重：同一文件只保留得分最高的 chunk，避免同一笔记多个切片霸占结果
+        best_by_file: dict[str, tuple[str, float]] = {}  # file → (chunk_id, score)
+        for cid, score in scores.items():
+            f = by_id[cid].file
+            if f not in best_by_file or score > best_by_file[f][1]:
+                best_by_file[f] = (cid, score)
+
+        ranked = sorted(best_by_file.values(), key=lambda x: x[1], reverse=True)[:top_k]
+        out = [by_id[cid].model_copy(deep=True) for cid, _ in ranked]
         for chunk in out:
             chunk.score = round(scores[chunk.id], 4)
         return out

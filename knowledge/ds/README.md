@@ -22,11 +22,10 @@
 | 图（存储 / 遍历 / MST / 最短路 / 拓扑 / 关键路径） | [graph.md](graph.md) | ✅ |
 | 查找（顺序 / 折半 / BST / AVL / B 树 / 哈希） | [searching.md](searching.md) | ✅ |
 | 排序（插入 / 交换 / 选择 / 归并 / 基数 / 外部） | [sorting.md](sorting.md) | ✅ |
+| 堆与优先队列（大根堆 / 小根堆 / 堆排序 / 建堆） | [heap-priority-queue.md](heap-priority-queue.md) | ✅ |
 | 真题复盘（2017 春 A 卷逐题） | [ds-exam-review.md](ds-exam-review.md) | ✅ |
 
-**共 9 篇条目（含 1 篇真题复盘），M1b 首轮完成**
-
-**共 9 篇条目**（含 1 篇真题复盘；树、图两章体量大，可视需拆分）
+**共 10 篇条目**（含 1 篇真题复盘），M1d 达标
 
 ## 重点 / 难点（高频考点速览）
 
