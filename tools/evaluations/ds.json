@@ -1,0 +1,22 @@
+{
+  "数据结构的逻辑结构有哪几种": ["knowledge/ds/ds-intro.md"],
+  "顺序表和链表在插入删除操作上的时间复杂度区别": ["knowledge/ds/linear-list.md"],
+  "单链表就地逆置的头插法是怎么做的": ["knowledge/ds/linear-list.md"],
+  "循环队列如何判空和判满": ["knowledge/ds/stack-queue.md"],
+  "中缀表达式转后缀表达式的调度场算法": ["knowledge/ds/stack-queue.md"],
+  "KMP算法的next数组如何求": ["knowledge/ds/string-array-glist.md"],
+  "广义表的head和tail运算有什么区别": ["knowledge/ds/string-array-glist.md"],
+  "已知前序和中序遍历如何还原二叉树": ["knowledge/ds/tree-binary-tree.md"],
+  "二叉树的性质n0等于n2加1怎么推导": ["knowledge/ds/tree-binary-tree.md"],
+  "哈夫曼树如何构造，WPL怎么计算": ["knowledge/ds/tree-binary-tree.md"],
+  "Dijkstra最短路径算法的核心步骤": ["knowledge/ds/graph.md"],
+  "Prim和Kruskal最小生成树算法的区别": ["knowledge/ds/graph.md"],
+  "拓扑排序的算法过程是什么": ["knowledge/ds/graph.md"],
+  "BST二叉排序树删除操作有哪几种情况": ["knowledge/ds/searching.md"],
+  "AVL树的四种旋转方式分别是什么": ["knowledge/ds/searching.md"],
+  "哈希表的线性探测和链地址法有什么区别": ["knowledge/ds/searching.md"],
+  "快速排序的Partition过程是怎么做的": ["knowledge/ds/sorting.md"],
+  "堆排序的建堆过程从哪个结点开始": ["knowledge/ds/sorting.md"],
+  "哪些排序算法是稳定的": ["knowledge/ds/sorting.md"],
+  "数据结构期末考试有哪些高频考点": ["knowledge/ds/ds-exam-review.md"]
+}
