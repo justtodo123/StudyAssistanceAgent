@@ -41,9 +41,7 @@ def health() -> dict[str, Any]:
 
 @app.post("/api/v1/search", response_model=SearchResponse)
 def search(req: SearchRequest) -> SearchResponse:
-    results, mode = _recall.recall(req.question, req.top_k)
-    if req.course:
-        results = [r for r in results if r.course == req.course]
+    results, mode = _recall.recall(req.question, req.top_k, course=req.course)
     if not req.use_vector and results:
         # 模拟「关闭向量」仅观察关键词路：BM25 单路重算
         results = bm25_only(req.question, req.top_k, req.course)

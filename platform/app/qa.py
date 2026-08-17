@@ -20,9 +20,7 @@ class QaService:
         self._recall = MultiRecallService()
 
     def answer(self, req: QaRequest) -> QaResponse:
-        results, mode = self._recall.recall(req.question, req.top_k)
-        if req.course:
-            results = [r for r in results if r.course == req.course]
+        results, mode = self._recall.recall(req.question, req.top_k, course=req.course)
 
         if req.use_llm and config.LLM_API_KEY:
             try:
@@ -77,7 +75,16 @@ class QaService:
         for i, c in enumerate(chunks[:5]):
             lines.append(f"**【{i + 1}】{c.title or c.file}**（课程：{c.course or '—'}）")
             lines.append(f"出处：`{c.file}`")
-            body = c.content[:400]
-            lines.append(body + ("…" if len(c.content) > 400 else ""))
+            body = c.content
+            if len(body) > 400:
+                # 在句子边界截断，避免截在句中
+                cut = body[:400]
+                for sep in ("。", "；", "\n", "，"):
+                    idx = cut.rfind(sep)
+                    if idx > 200:
+                        cut = cut[: idx + 1]
+                        break
+                body = cut + "…"
+            lines.append(body)
             lines.append("")
         return "\n".join(lines)

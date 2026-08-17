@@ -5,13 +5,15 @@
 ## 架构
 
 ```
-提问 → MultiRecallService
+提问 → MultiRecallService（course 过滤前置）
          ├─ 路1: LocalVectorStore（BGE 余弦，可选依赖）
          └─ 路2: Bm25Search（bigram 关键词）
-      → RRF 融合（k=60）
-      → QaService: LLM 生成（勒令带出处）| 降级笔记摘要
+      → RRF 融合（k=60）+ 文件级去重
+      → QaService: LLM 生成（勒令带出处）| 降级笔记摘要（句子边界截断）
       → FastAPI /api/v1/{search, qa, qa/stream}
 ```
+
+**M1d 优化**：课程过滤前移至检索阶段（避免无关课程占位）、RRF 结果按文件去重（同文件只保留最高分 chunk）、摘要截断在句子边界。
 
 ## 目录结构
 
