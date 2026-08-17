@@ -2,7 +2,7 @@
 
 - **外部路径**：`D:\111_Others_Subjects\数据结构复习`
 - **知识库入口**：[knowledge/ds/README.md](../../knowledge/ds/README.md)（待建）
-- **整理状态**：🆕 未整理
+- **整理状态**：📝 笔记已建（knowledge/ds/）
 
 ## 资料构成
 
@@ -33,3 +33,4 @@
 | 日期 | 动作 | 对应知识库文件 |
 | --- | --- | --- |
 | 2026-08-10 | 初始化登记 | — |
+| 2026-08-17 | M1b 启动：建课程导航 + 写绪论/线性表/栈队列 | ds-intro.md, linear-list.md, stack-queue.md |
