@@ -68,8 +68,8 @@
 - ✅ 复习计划生成（skill/接口）：课程+目标 → 分日学习计划（API `/api/v1/review-plan` + Skill `review-plan`）
 - ✅ 随堂测验生成：从条目/真题自动出题（API `/api/v1/quiz` + Skill `quiz-generator`，三数据源：例题+评测集+概念模板）
 - ✅ 复习排程：基于遗忘曲线的间隔重复提醒（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`，间隔序列 1→2→4→8→16→32 天）
-- ⬜ 「多轮工具调用」演示：问知识点→查笔记→出题→断言掌握
-- **退出条件**：≥2 个学习辅助能力可在 API/skill 中演示，能答「工具编排」追问。
+- ✅ 「多轮工具调用」演示：问知识点→查笔记→出题→断言掌握（Skill `study-assistant`，串联 QA+Quiz+Review-log，6 个集成测试）
+- **退出条件**：✅ ≥2 个学习辅助能力可在 API/skill 中演示（实际 4 个），能答「工具编排」追问。
 
 ### M3：工程质量与沉淀
 > **分支映射**：`feature/m3a-vector-store` → `feature/m3b-observability`

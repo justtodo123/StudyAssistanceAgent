@@ -86,6 +86,7 @@ git cz
 - **review-plan**（`.claude/skills/review-plan/`）：复习计划生成技能，输入课程+目标日期，生成分日学习计划并写入 `docs/plans/`。
 - **quiz-generator**（`.claude/skills/quiz-generator/`）：测验生成技能，从知识条目例题、评测集、概念标签三数据源生成题目，支持交互式答题。
 - **review-due**（`.claude/skills/review-due/`）：复习排程技能，基于遗忘曲线间隔重复（1→2→4→8→16→32 天），追踪复习历史并提示待复习条目。
+- **study-assistant**（`.claude/skills/study-assistant/`）：多轮工具编排学习助手，串联 QA→讲解→出题→评估→记录复习，演示 Agent 多轮工具调用能力（面试重点）。
 
 内置可用 skills（由 Claude Code 提供）：
 - `search` — AI 时代的聚合搜索（Exa 引擎），查外部资料/最新信息/技术文档

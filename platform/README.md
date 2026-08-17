@@ -37,7 +37,8 @@ platform/
 │   ├── test_retrieval.py  # 检索链路冒烟测试（6 个用例）
 │   ├── test_review_plan.py # 复习计划测试（8 个用例）
 │   ├── test_quiz.py       # 测验生成测试（11 个用例）
-│   └── test_review_scheduler.py # 复习排程测试（9 个用例）
+│   ├── test_review_scheduler.py # 复习排程测试（9 个用例）
+│   └── test_study_assistant.py # 多轮工具编排集成测试（6 个用例）
 ├── requirements.txt       # 核心依赖
 ├── requirements-dev.txt   # 开发依赖（pytest 等）
 └── .env.example           # 环境变量模板（复制为 .env 后修改）
@@ -236,4 +237,4 @@ python -m venv .venv
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-17（M2 新增复习计划+测验生成+复习排程端点）· 维护：随 API 变更同步更新*
+*创建：2026-08-11 · 更新：2026-08-17（M2 完成：复习计划+测验生成+复习排程+多轮工具编排）· 维护：随 API 变更同步更新*
