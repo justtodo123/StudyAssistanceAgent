@@ -38,6 +38,7 @@ pnpm-debug.log*
 /tmp/
 /tools/.cache/
 /tools/logs/
+.tmp-test/
 
 # ===== Python 平台（platform/） =====
 platform/.venv/

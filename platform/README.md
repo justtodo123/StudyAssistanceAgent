@@ -22,7 +22,7 @@ platform/
 ├── README.md              # 本文件（API 文档与启动指南）
 ├── app/
 │   ├── __init__.py
-│   ├── main.py            # FastAPI 入口：/health, /api/v1/search, /api/v1/qa, /api/v1/qa/stream
+│   ├── main.py            # FastAPI 入口：/health + search/qa/quiz/review-plan/review-log/review-due
 │   ├── models.py          # Pydantic 领域模型（RetrievalChunk, SearchRequest, QaRequest 等）
 │   ├── config.py          # 环境变量配置（dotenv → 常量）
 │   ├── retrieval.py       # 多路召回 + RRF 融合（MultiRecallService）
@@ -42,6 +42,9 @@ platform/
 ├── requirements.txt       # 核心依赖
 ├── requirements-dev.txt   # 开发依赖（pytest 等）
 └── .env.example           # 环境变量模板（复制为 .env 后修改）
+```
+
+平台原始测试共 40 项；根目录阶段化测试和回归套件见 `../tests/`。
 ```
 
 ## API 端点

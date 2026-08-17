@@ -1,0 +1,303 @@
+# 迭代测试计划 · StudyAssistanceAgent
+
+> 起始日期：2026-08-17 · 基于项目 v1.0（M0-M2 已完成；M3 测试骨架已建立，功能实现待启动/待完成）
+
+## 一、测试策略总览
+
+### 1.1 核心原则
+
+| 原则 | 说明 |
+|------|------|
+| **阶段隔离** | 每阶段测试独立目录，新增阶段不修改存量测试代码 |
+| **回归前置** | 每阶段开发完成后，先跑本阶段测试，再跑回归套件 |
+| **共享复用** | 公共 fixtures/工具函数集中在 `tests/conftest.py`，各阶段 import 使用 |
+| **增量扩展** | 新阶段只需新增目录 + conftest + 测试文件，零改动旧代码 |
+
+### 1.2 目录结构
+
+```
+tests/
+├── TEST_PLAN.md          # 本文件（测试计划）
+├── conftest.py           # 根 conftest：跨阶段共享 fixtures
+│
+├── M0_M2/                # 基线回归（对应 platform/tests/ 已有测试）
+│   ├── conftest.py       # M0-M2 阶段特有 fixtures
+│   └── test_baseline.py  # 基线功能验证（从 platform/tests/ 提炼的关键断言）
+│
+├── M3a/                  # 向量库迁移测试
+│   ├── conftest.py       # 向量库 fixtures（mock/真实引擎切换）
+│   ├── test_store_interface.py   # 存储接口一致性
+│   ├── test_migration.py         # 数据迁移完整性
+│   └── test_fallback.py          # 降级路径
+│
+├── M3b/                  # 可观测性测试
+│   ├── conftest.py       # 日志/metrics fixtures
+│   ├── test_metrics.py           # 指标采集
+│   ├── test_logging.py           # 结构化日志
+│   └── test_health_enhanced.py   # 增强 health 端点
+│
+├── M3c/                  # 面经库测试
+│   ├── conftest.py       # 面经数据 fixtures
+│   └── test_interview_bank.py    # 面经条目验证
+│
+├── M3d/                  # 方法论沉淀测试（文档完整性）
+│   └── test_docs.py              # 文档结构与链接验证
+│
+├── regression/           # 跨阶段回归套件
+│   ├── conftest.py       # 回归专用 fixtures
+│   ├── test_api_contract.py      # API 契约稳定性
+│   ├── test_rag_quality.py       # RAG 质量回归
+│   └── test_data_integrity.py    # 数据完整性
+│
+└── utils/                # 测试工具（非测试文件）
+    └── helpers.py        # 通用断言与辅助函数
+```
+
+### 1.3 执行规则
+
+```
+开发任务完成
+    ↓
+运行本阶段测试（pytest tests/M3x/ -v）
+    ↓
+通过 → 运行回归套件（pytest tests/regression/ -v）
+    ↓
+全部通过 → 提交代码
+    ↓
+失败 → 定位修复 → 重新运行
+```
+
+## 二、各阶段测试规划
+
+### 当前测试基线
+
+| 测试范围 | 收集数量 | 当前结果 | 说明 |
+|----------|----------|----------|------|
+| 根级 `tests/` | 81 项 | — | 阶段测试 + 回归套件 |
+| `platform/tests/` | 40 项 | — | 原始平台冒烟/功能测试 |
+| 完整测试集合 | 121 项 | 107 passed、14 skipped | 跳过原因见下方 |
+
+当前 14 项跳过：3 项因未安装 `sentence-transformers`，1 项因未配置 `LLM_API_KEY`，10 项因 M3c 的 `knowledge/interview/` 尚未创建。受限 Windows 环境若默认临时目录不可写，可使用 `pytest --basetemp=.tmp-test`。
+
+### 阶段 0：基线建立（M0-M2 回归）
+
+**目的**：将 `platform/tests/` 的 40 个测试提炼为根级回归基线，确保后续阶段不破坏已有功能。
+
+**对应开发任务**：无（已有功能固化）
+
+**测试范围**：
+
+| 测试类 | 验证点 | 回归价值 |
+|--------|--------|----------|
+| 知识库索引 | frontmatter 解析、按 `##` 切块、课程过滤 | 数据层基础 |
+| BM25 检索 | 二元组分词、关键词召回、排序 | 检索层基础 |
+| 向量检索 | BGE 嵌入、余弦相似度、top-k | 检索层基础 |
+| 多路召回 | RRF 融合、文件去重、模式标识 | 核心链路 |
+| 问答服务 | 出处标注、降级摘要、无 LLM 可用 | 核心链路 |
+| 复习计划 | 条目去重、日期分配、时间限制 | 业务功能 |
+| 测验生成 | 三数据源、难度/标签筛选、答案完整 | 业务功能 |
+| 复习排程 | 间隔序列、逾期查询、历史持久化 | 业务功能 |
+| 多轮编排 | QA→Quiz→Review-log 串联、来源传递 | 集成链路 |
+
+**执行命令**：
+```bash
+# 基线回归
+pytest tests/M0_M2/ -v
+
+# 完整回归（含 platform/tests/ 原始测试）
+pytest -v
+# 或显式指定两个测试根目录
+pytest tests/ platform/tests/ -v
+
+# Windows 受限环境：将 pytest 临时目录放到仓库内
+pytest --basetemp=.tmp-test -v
+```
+
+---
+
+### 阶段 1：M3a — 向量库迁移（规划/预置测试，当前未完成）
+
+**对应开发任务**：接入 sqlite-vec/Chroma 替换线性扫描
+
+**测试时间**：M3a 开发完成后
+
+#### 1.1 业务需求验证
+
+| 测试文件 | 测试项 | 验证点 |
+|----------|--------|--------|
+| `test_store_interface.py` | 接口一致性 | 新存储实现与原 `LocalVectorStore` 的 `search()` 签名、返回类型一致 |
+| `test_store_interface.py` | 维度兼容 | 嵌入向量维度（BGE-small-zh 为 512）读写一致 |
+| `test_store_interface.py` | 空库行为 | 空索引时 `search()` 返回空列表而非报错 |
+| `test_migration.py` | 数据完整性 | 迁移后 `count()` 与原索引一致 |
+| `test_migration.py` | 检索一致性 | 相同 query 的 top-k 结果文件集合相同（允许排序微调） |
+| `test_migration.py` | 幂等性 | 重复迁移不产生重复数据 |
+| `test_fallback.py` | 降级路径 | sqlite-vec 不可用时自动降级为线性扫描 |
+| `test_fallback.py` | 配置开关 | `SA_VECTOR_STORE=linear` 强制使用旧引擎 |
+
+#### 1.2 回归校验
+
+```bash
+pytest tests/M3a/ -v           # 本阶段测试
+pytest tests/regression/ -v    # 回归套件（含 RAG 质量回归）
+pytest tests/M0_M2/ -v         # 基线回归
+```
+
+#### 1.3 预期风险与缓解
+
+| 风险 | 测试缓解 |
+|------|----------|
+| 新存储引入精度差异 | `test_migration.py` 允许排序微调，但文件级召回必须一致 |
+| 依赖安装失败 | `test_fallback.py` 验证无依赖时自动降级 |
+| 数据格式不兼容 | `test_migration.py` 验证向量维度、ID 格式 |
+
+---
+
+### 阶段 2：M3b — 可观测性（规划/预置测试，当前未完成）
+
+**对应开发任务**：检索延迟、缓存命中率、问答日志
+
+**测试时间**：M3b 开发完成后
+
+#### 2.1 业务需求验证
+
+| 测试文件 | 测试项 | 验证点 |
+|----------|--------|--------|
+| `test_metrics.py` | 检索延迟记录 | 每次 `/api/v1/search` 调用产生延迟指标 |
+| `test_metrics.py` | 缓存命中率 | 索引缓存命中时 `cache_hit=true` |
+| `test_metrics.py` | 问答日志 | `/api/v1/qa` 调用写入日志文件 |
+| `test_logging.py` | 结构化格式 | 日志为 JSON 格式，含 `timestamp`、`level`、`event` 字段 |
+| `test_logging.py` | 敏感信息过滤 | 日志中不出现 `LLM_API_KEY` 等敏感值 |
+| `test_health_enhanced.py` | 增强健康检查 | `/health` 返回向量引擎类型、索引大小、缓存状态 |
+| `test_health_enhanced.py` | 指标端点 | `/metrics` 或 `/health` 包含延迟统计 |
+
+#### 2.2 回归校验
+
+```bash
+pytest tests/M3b/ -v           # 本阶段测试
+pytest tests/regression/ -v    # 回归套件
+pytest tests/M0_M2/ -v         # 基线回归
+```
+
+#### 2.3 预期风险与缓解
+
+| 风险 | 测试缓解 |
+|------|----------|
+| 日志影响性能 | `test_metrics.py` 验证日志写入为异步/非阻塞 |
+| 日志文件膨胀 | `test_logging.py` 验证日志轮转配置 |
+| 指标采集改变返回格式 | `test_health_enhanced.py` 验证原有字段不丢失 |
+
+---
+
+### 阶段 3：M3c — 面经库（未开始，测试条件跳过）
+
+**对应开发任务**：`knowledge/interview/` 按知识点聚合面经题 ≥50
+
+**测试时间**：M3c 开发完成后
+
+#### 3.1 业务需求验证
+
+| 测试文件 | 测试项 | 验证点 |
+|----------|--------|--------|
+| `test_interview_bank.py` | 条目数量 | `knowledge/interview/` 下条目 ≥50（含子目录） |
+| `test_interview_bank.py` | frontmatter 完整 | 每条面经含 `title`、`course`、`tags`、`difficulty`、`type: interview` |
+| `test_interview_bank.py` | 知识点覆盖 | 三门主课（os/ds/co）各有 ≥10 条面经 |
+| `test_interview_bank.py` | 检索集成 | 面经条目可被 RAG 检索到（`search("面试 进程")` 命中面经） |
+| `test_interview_bank.py` | 格式一致 | 面经遵循 `knowledge/README.md` 写作规范 |
+
+#### 3.2 回归校验
+
+```bash
+pytest tests/M3c/ -v           # 本阶段测试
+pytest tests/regression/ -v    # 回归套件（含数据完整性）
+pytest tests/M0_M2/ -v         # 基线回归
+```
+
+---
+
+### 阶段 4：M3d — 方法论沉淀（文档检查已具备，方法论沉淀未完成）
+
+**对应开发任务**：复习笔记规范复盘、PLAN 裁剪
+
+**测试时间**：M3d 开发完成后
+
+#### 4.1 业务需求验证
+
+| 测试文件 | 测试项 | 验证点 |
+|----------|--------|--------|
+| `test_docs.py` | README 链接 | 每个子目录 README 中的相对链接可解析 |
+| `test_docs.py` | PLAN 一致性 | `docs/PLAN.md` 中标记 ✅ 的条目对应文件实际存在 |
+| `test_docs.py` | 知识库导航 | 每门课程 README 的章节地图与实际文件一一对应 |
+
+---
+
+### 阶段 5：回归套件（跨阶段）
+
+**目的**：每次阶段交付后运行，确保新增功能不破坏历史链路。
+
+| 测试文件 | 验证范围 | 运行时机 |
+|----------|----------|----------|
+| `test_api_contract.py` | 全部 8 个 API 端点的请求/响应 schema 不变 | 每阶段 |
+| `test_rag_quality.py` | OS/DS/CO 三课 Recall@3 ≥ 0.8（量化基线） | M3a（向量库变更）|
+| `test_data_integrity.py` | 知识库条目 frontmatter 完整、评测集格式合法 | M3c（数据变更）|
+
+## 三、执行矩阵
+
+| 阶段 | 本阶段测试 | 回归测试 | 基线测试 | RAG 评测 |
+|------|-----------|----------|----------|----------|
+| M0-M2 基线 | — | — | `tests/M0_M2/` | `tools/run_evaluation.py` |
+| M3a 向量库 | `tests/M3a/` | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
+| M3b 可观测性 | `tests/M3b/` | `tests/regression/` | `tests/M0_M2/` | — |
+| M3c 面经库 | `tests/M3c/` | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
+| M3d 方法论 | `tests/M3d/` | `tests/regression/` | `tests/M0_M2/` | — |
+
+## 四、pytest 配置
+
+```bash
+# 运行全部测试
+pytest tests/ -v
+
+# 运行指定阶段
+pytest tests/M3a/ -v -m m3a
+
+# 运行回归套件
+pytest tests/regression/ -v
+
+# 运行基线 + 回归
+pytest tests/M0_M2/ tests/regression/ -v
+
+# 仅运行慢速测试（如 RAG 评测）
+pytest tests/ -v -m slow
+
+# 并行执行（需 pytest-xdist）
+pytest tests/ -v -n auto
+```
+
+## 五、测试维护规范
+
+### 5.1 新增阶段流程
+
+1. 在 `tests/` 下新建目录（如 `tests/M4/`）
+2. 创建 `conftest.py`，import 根 conftest 的共享 fixtures
+3. 编写测试文件，遵循命名 `test_*.py`
+4. 如需回归，在 `tests/regression/` 新增文件（不修改已有回归文件）
+5. 更新本计划文档
+
+### 5.2 修改存量测试的红线
+
+- ❌ **不要**修改 `tests/conftest.py` 的已有 fixtures（只能追加）
+- ❌ **不要**修改其他阶段的测试文件
+- ✅ 可以在 `tests/regression/` 新增回归用例
+- ✅ 可以在 `tests/utils/` 新增工具函数
+
+### 5.3 测试数据管理
+
+| 数据类型 | 来源 | 隔离方式 |
+|----------|------|----------|
+| 知识库内容 | `knowledge/` 真实数据 | 只读，不修改 |
+| 复习历史 | `review_history.json` | `tmp_path` + mock |
+| 评测集 | `tools/evaluations/*.json` | 只读 |
+| 向量索引 | 内存构建 | session 级 fixture |
+
+---
+
+*维护：每阶段开发完成后更新本计划，新增测试项与执行结果。当前基线：121 项收集，107 passed、14 skipped（2026-08-17）。*

@@ -19,7 +19,17 @@
 knowledge/        # ★ 知识库（每门课程一个目录，含导航与条目）
 platform/         # Python 后端（FastAPI + 多路召回 RAG + 带出处问答）
   app/            #   应用代码（入口/检索/向量/问答/索引/模型/配置）
-  tests/          #   检索链路冒烟测试
+  tests/          #   检索链路冒烟测试（40 项）
+tests/            # ★ 迭代测试体系（阶段隔离架构，67 项）
+  TEST_PLAN.md    #   测试计划文档
+  conftest.py     #   跨阶段共享 fixtures
+  M0_M2/          #   基线回归（18 项）
+  M3a/            #   向量库迁移测试
+  M3b/            #   可观测性测试
+  M3c/            #   面经库测试
+  M3d/            #   文档完整性测试
+  regression/     #   跨阶段回归套件（21 项）
+  utils/          #   测试工具函数
 tools/            # 辅助脚本（RAG 评测脚本 + 课程评测集 JSON）
 docs/             # 项目文档：PLAN、reference 索引、standards、interview
 .claude/          # agents、skills、hooks 自定义配置
@@ -53,7 +63,17 @@ docs/             # 项目文档：PLAN、reference 索引、standards、intervi
 - **特殊约定**：`knowledge/` 内容提交时若与某门课程强相关，在 scope 中标注课程名（如 `os`、`ds`、`co`）。
 - **分支策略**：采用 Feature Branch 工作流，每个阶段从 `master` 切独立分支开发，人工合并。详见 [docs/standards/git-conventions.md](docs/standards/git-conventions.md)。
 
-### 5. 常用命令
+### 5. 测试规范
+详见 [tests/TEST_PLAN.md](tests/TEST_PLAN.md)。要点：
+- **阶段隔离**：每阶段测试独立目录（`tests/M3a/`、`tests/M3b/` 等），新增阶段不修改存量测试。
+- **共享 fixtures**：公共 fixture 集中在 `tests/conftest.py`，各阶段 import 使用。
+- **回归前置**：每阶段开发完成后，先跑本阶段测试，再跑 `tests/regression/` 回归套件。
+- **pytest markers**：用 `@pytest.mark.m3a` 等标记按阶段筛选，`@pytest.mark.slow` 标记慢速测试。
+- **M3c 条件跳过**：面经目录不存在时自动 skip，创建后自动启用。
+- **存量测试不动**：`platform/tests/` 的 40 个原始测试不修改，根级 `tests/` 是增量扩展。
+- **测试计划**：详细测试项、执行矩阵、维护规范见 `tests/TEST_PLAN.md`。
+
+### 6. 常用命令
 ```bash
 # 预览知识库结构
 tree knowledge/ -L 2
@@ -63,8 +83,14 @@ cd platform
 python -m venv .venv && ./.venv/Scripts/python -m pip install -r requirements.txt
 ./.venv/Scripts/uvicorn app.main:app --reload   # http://127.0.0.1:8000
 
-# 后端：跑测试
+# 后端：跑冒烟测试（platform/ 下）
 ./.venv/Scripts/python -m pytest tests/ -q
+
+# 迭代测试体系（项目根目录下）
+./platform/.venv/Scripts/python -m pytest tests/ -v              # 全部测试
+./platform/.venv/Scripts/python -m pytest tests/M0_M2/ -v       # 基线回归
+./platform/.venv/Scripts/python -m pytest tests/regression/ -v  # 回归套件
+./platform/.venv/Scripts/python -m pytest tests/ -m m3a          # 按阶段筛选（m3a/m3b/m3c/m3d/slow）
 
 # RAG 效果评估（数据驱动优化的核心工具）
 python tools/run_evaluation.py -k 1,3,5
@@ -129,6 +155,8 @@ git cz
 - [ ] `docs/PLAN.md` 里程碑是否反映最新进度
 - [ ] 子目录 README 是否涵盖了该目录下的所有模块/文件
 - [ ] `knowledge/` 各课程 README 条目数与索引是否准确
+- [ ] `tests/` 新增测试是否遵循阶段隔离（不修改其他阶段文件）
+- [ ] 本阶段测试 + 回归套件是否全部通过
 
 ## 注意事项 / 约束
 - ❌ **不要**把 `D:\111_Others_Subjects` 的内容直接复制进仓库（含 PDF/PPT/工程代码）。仓库只放索引与精炼笔记。

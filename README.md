@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v0.12 M2 完成` — OS 15 篇 + DS 10 篇 + CO 10 篇，共 35 篇条目；75 题评测集 Recall@3 均≥0.95；M2 学习辅助能力全部完成（复习计划+测验生成+复习排程+多轮工具编排）
+**当前状态**：`v1.0 M1d+M2 完成` — OS 15 篇 + DS 10 篇 + CO 10 篇，共 35 篇条目；75 题评测集 Recall@3 均≥0.95；M2 学习辅助能力全部完成（复习计划+测验生成+复习排程+多轮工具编排）。根级迭代测试 81 项、平台原始测试 40 项，共 121 项；当前基线结果为 107 passed、14 skipped。M3 测试骨架已建立，功能仍待逐阶段落地。
 
 ---
 
@@ -67,6 +67,16 @@ StudyAssistanceAgent/
 │   ├── README.md          # 工具文档
 │   ├── run_evaluation.py  # RAG 评测脚本（Recall@k / F1 / 延迟）
 │   └── evaluations/       # 评测集（JSON，每课一个文件）
+├── tests/                 # ★ 迭代测试体系（阶段隔离架构）
+│   ├── TEST_PLAN.md       # 测试计划文档
+│   ├── conftest.py        # 跨阶段共享 fixtures
+│   ├── M0_M2/             # 基线回归测试（18 项）
+│   ├── M3a/               # 向量库迁移测试（14 项）
+│   ├── M3b/               # 可观测性测试（12 项）
+│   ├── M3c/               # 面经库测试（10 项，当前条件跳过）
+│   ├── M3d/               # 文档完整性测试（6 项）
+│   ├── regression/        # 跨阶段回归套件（21 项）
+│   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
 │   ├── README.md          # 导航与记录列表
 │   ├── _template.md       # 记录模板（7 章：症状→复现→定位→根因→方案→验证→经验）
@@ -96,6 +106,12 @@ python -m venv .venv
 # 5. 跑 RAG 评测（验证检索效果）
 cd ..
 ./platform/.venv/Scripts/python tools/run_evaluation.py -k 1,3,5
+
+# 6. 运行迭代测试体系（根目录下）
+./platform/.venv/Scripts/python -m pytest tests/ -v            # 全部测试
+./platform/.venv/Scripts/python -m pytest tests/M0_M2/ -v     # 基线回归
+./platform/.venv/Scripts/python -m pytest tests/regression/ -v # 回归套件
+./platform/.venv/Scripts/python -m pytest tests/ -m m3a        # 按阶段筛选
 ```
 
 > 在 Claude Code 中打开本仓库即自动加载 `CLAUDE.md`，可调用内置 agents 与 skills。API 文档见 [platform/README.md](platform/README.md)。
@@ -120,6 +136,7 @@ cd ..
 | 文档 | 说明 |
 | --- | --- |
 | [docs/PLAN.md](docs/PLAN.md) | ★ 项目计划与路线图（里程碑、技术选型、风险） |
+| [tests/TEST_PLAN.md](tests/TEST_PLAN.md) | ★ 迭代测试计划（阶段隔离、回归策略、执行矩阵） |
 | [docs/reference/README.md](docs/reference/README.md) | 外部原始资料索引（D:\111_Others_Subjects 映射） |
 | [docs/interview/README.md](docs/interview/README.md) | 面试叙事：一句话 + 5 设计决策 + 8 考点 + 3 优化点 |
 | [docs/standards/git-conventions.md](docs/standards/git-conventions.md) | Git 提交规范（Conventional Commits） |

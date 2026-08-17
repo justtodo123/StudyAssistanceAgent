@@ -1,4 +1,4 @@
-# 问题记录库（proced_problem/）
+﻿# 问题记录库（proced_problem/）
 
 > 记录项目开发中实际遇到的问题：症状、定位过程、根因与修复。目的是积累工程直觉，可复盘、可检索。
 
@@ -20,6 +20,7 @@ proced_problem/
 | 序号 | 标题 | 日期 | 标签 |
 | --- | --- | --- | --- |
 | 001 | [BM25 候选池截断导致 Recall 回归](001-bm25-pool-silent-truncation.md) | 2026-08-12 | retrieval, bug, recall-regression, silent-failure |
+| 002 | [测试基线与项目文档统计脱节](002-test-baseline-and-documentation-drift.md) | 2026-08-17 | testing, documentation, repository-hygiene, milestone-drift |
 
 ## 如何新增记录
 
