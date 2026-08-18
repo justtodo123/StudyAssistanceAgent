@@ -10,7 +10,7 @@ from __future__ import annotations
 from . import config
 from .bm25 import Bm25Search
 from .models import RetrievalChunk
-from .vector_store import LocalVectorStore
+from .vector_store import LocalVectorStore, SqliteVectorStore, VectorStore
 
 RRF_K = 60
 
@@ -18,17 +18,34 @@ RRF_K = 60
 class _VectorHolder:
     """惰性单例：避免未装依赖/首次加载阻塞无向量需求的请求。"""
 
-    _store: LocalVectorStore | None = None
+    _store: VectorStore | None = None
     _loaded = False
 
     @classmethod
-    def get(cls) -> LocalVectorStore | None:
-        if not config.VECTOR_ENABLED or not LocalVectorStore.available():
+    def get(cls) -> VectorStore | None:
+        if not config.VECTOR_ENABLED or not cls._available():
             return None
         if not cls._loaded:
-            cls._store = LocalVectorStore(config.EMBEDDING_MODEL)
+            if config.VECTOR_STORE == "linear":
+                cls._store = LocalVectorStore(config.EMBEDDING_MODEL)
+            else:
+                cls._store = SqliteVectorStore(
+                    config.EMBEDDING_MODEL,
+                    db_path=config.VECTOR_STORE_PATH,
+                )
             cls._loaded = True
         return cls._store
+
+    @staticmethod
+    def _available() -> bool:
+        if config.VECTOR_STORE == "linear":
+            return LocalVectorStore.available()
+        if config.VECTOR_STORE == "sqlite":
+            return SqliteVectorStore.available()
+        raise ValueError(
+            f"unsupported vector store: {config.VECTOR_STORE!r}; "
+            "expected 'sqlite' or 'linear'"
+        )
 
 
 class MultiRecallService:
@@ -50,8 +67,8 @@ class MultiRecallService:
         vector_store = _VectorHolder.get()
         if vector_store is not None:
             try:
-                if not getattr(vector_store, "_items", None):
-                    vector_store.add(self._chunks)
+                if not vector_store.is_synced(self._chunks):
+                    vector_store.replace_all(self._chunks)
                 routes.append(vector_store.search(question, top_k=20, threshold=threshold))
             except Exception:
                 routes.append([])  # 向量路失败不阻断
