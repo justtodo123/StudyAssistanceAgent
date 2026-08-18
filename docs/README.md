@@ -43,7 +43,7 @@ docs/
 - M4 知识库规模计划见
   [plans/m4-knowledge-base-scale-plan.md](plans/m4-knowledge-base-scale-plan.md)，课程条目已补齐，实现提交 `106164d` 已进入 `master`。
 - M5 会话化与交付计划见
-  [plans/m5-agent-session-delivery-plan.md](plans/m5-agent-session-delivery-plan.md)，M5a~M5e 已完成。
+  [plans/m5-agent-session-delivery-plan.md](plans/m5-agent-session-delivery-plan.md)，M5 已收口。下一步是演示彩排与真实复习，不再扩功能。
 
 ### reference/ — 外部资料索引
 
@@ -80,4 +80,4 @@ docs/
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-18（M5e 可复现交付完成）· 维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-08-18（M5 文档收口）· 维护：随项目演进同步更新*
