@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v1.5 M5d 最小学习工作台` — 打开 `http://127.0.0.1:8000/` 即可完成讲解、作答、反馈和复习记录。下一步是 M5e 可复现交付。
+**当前状态**：`v1.6 M5e 可复现交付` — `python tools/start_local.py` 一键离线启动；CI 跑阶段测试、回归和评测冒烟。
 
 ---
 
@@ -28,6 +28,7 @@
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
 | 多轮工具编排 | QA→讲解→出题→评估→记录复习完整链路 | ✅ 已实现（API `/api/v1/study-sessions` + Skill `study-assistant`） |
 | 学习工作台 | 最小交互页面，调用正式会话 API 完成学习闭环 | ✅ 已实现（`GET /`） |
+| 离线交付 | 一键启动、健康检查、离线 CI 与演示基线 | ✅ 已实现（`tools/start_local.py` + `.github/workflows/offline-ci.yml`） |
 
 ## 目录结构
 
@@ -73,6 +74,7 @@ StudyAssistanceAgent/
 ├── tools/                 # 辅助脚本
 │   ├── README.md          # 工具文档
 │   ├── run_evaluation.py  # 统一 RAG 评测入口（三课 90 题 / JSON 报告）
+│   ├── start_local.py     # 一键启动与 /health 检查
 │   └── evaluations/       # 评测集（JSON，每课一个文件）
 ├── tests/                 # ★ 迭代测试体系（阶段隔离架构）
 │   ├── TEST_PLAN.md       # 测试计划文档
@@ -87,12 +89,14 @@ StudyAssistanceAgent/
 │   ├── M5b/               # 学习会话测试（18 项）
 │   ├── M5c/               # 学习状态持久化测试（14 项）
 │   ├── M5d/               # 学习工作台测试（10 项）
+│   ├── M5e/               # 可复现交付测试（15 项）
 │   ├── regression/        # 跨阶段回归套件（21 项）
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
 │   ├── README.md          # 导航与记录列表
 │   ├── _template.md       # 记录模板（7 章：症状→复现→定位→根因→方案→验证→经验）
 │   └── *.md               # 按序号排列的问题记录
+├── .github/               # 离线 CI（阶段测试 / 回归 / 评测冒烟）
 ├── .claude/               # Agent 配置（agents、skills、hooks）
 └── .gitignore
 ```
@@ -110,7 +114,7 @@ npm i -g commitizen
 cd platform
 python -m venv .venv
 ./.venv/Scripts/python -m pip install -r requirements.txt
-./.venv/Scripts/uvicorn app.main:app --reload   # http://127.0.0.1:8000
+./.venv/Scripts/python ../tools/start_local.py   # 或 uvicorn；http://127.0.0.1:8000/
 
 # 4. 运行冒烟测试
 ./.venv/Scripts/python -m pytest tests/ -q
@@ -120,7 +124,7 @@ cd ..
 ./platform/.venv/Scripts/python tools/run_evaluation.py
 
 # 6. 运行迭代测试体系（根目录下）
-./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（172 项）
+./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（187 项）
 ./platform/.venv/Scripts/python -m pytest tests/M0_M2/ -v     # 基线回归
 ./platform/.venv/Scripts/python -m pytest tests/regression/ -v # 回归套件
 ./platform/.venv/Scripts/python -m pytest tests/ -m m3d        # M3d 文档检查
@@ -129,6 +133,7 @@ cd ..
 ./platform/.venv/Scripts/python -m pytest tests/ -m m5b        # M5b 学习会话检查
 ./platform/.venv/Scripts/python -m pytest tests/ -m m5c        # M5c 持久化检查
 ./platform/.venv/Scripts/python -m pytest tests/ -m m5d        # M5d 学习工作台检查
+./platform/.venv/Scripts/python -m pytest tests/ -m m5e        # M5e 可复现交付检查
 ```
 
 > 在 Claude Code 中打开本仓库即自动加载 `CLAUDE.md`，可调用内置 agents 与 skills。API 文档见 [platform/README.md](platform/README.md)。
@@ -160,6 +165,8 @@ cd ..
 | [tests/TEST_PLAN.md](tests/TEST_PLAN.md) | ★ 迭代测试计划（阶段隔离、回归策略、执行矩阵） |
 | [docs/reference/README.md](docs/reference/README.md) | 外部原始资料索引（D:\111_Others_Subjects 映射） |
 | [docs/interview/README.md](docs/interview/README.md) | 面试叙事：一句话 + 5 设计决策 + 8 考点 + 3 优化点 |
+| [docs/demo.md](docs/demo.md) | 离线演示手册（一键启动与学习闭环） |
+| [docs/baselines.md](docs/baselines.md) | RAG 与交付延迟基线 |
 | [docs/standards/git-conventions.md](docs/standards/git-conventions.md) | Git 提交规范（Conventional Commits） |
 | [docs/plans/m3-engineering-execution-plan.md](docs/plans/m3-engineering-execution-plan.md) | M3 工程质量阶段执行记录（已完成） |
 | [docs/plans/m4-knowledge-base-scale-plan.md](docs/plans/m4-knowledge-base-scale-plan.md) | M4 课程知识库规模补齐计划（范围、验收、分支） |

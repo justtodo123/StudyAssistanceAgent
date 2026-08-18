@@ -44,19 +44,27 @@ python -m venv .venv
 .\.venv\Scripts\python -m pytest tests/ -q       # 冒烟测试（40 项）
 ```
 
+仓库根目录一键启动（默认离线 BM25）：
+
+```bash
+python tools/start_local.py          # 启动工作台并等待 /health
+python tools/start_local.py --check  # 只做健康检查
+```
+
 迭代测试体系（项目根目录下）：
 
 ```bash
 .\platform\.venv\Scripts\python -m pytest tests/ -v              # 全部测试（67 项）
 .\platform\.venv\Scripts\python -m pytest tests\M0_M2\ -v       # 基线回归
 .\platform\.venv\Scripts\python -m pytest tests\regression\ -v  # 回归套件
-.\platform\.venv\Scripts\python -m pytest tests\ -m m3a          # 按阶段筛选（m3a/m3b/m3c/m3d/m4/m5a/m5b/m5c/slow）
+.\platform\.venv\Scripts\python -m pytest tests\ -m m3a          # 按阶段筛选（m3a/m3b/m3c/m3d/m4/m5a/m5b/m5c/m5d/m5e/slow）
 ```
 
 RAG 效果评估（项目根目录）：
 
 ```bash
 python tools/run_evaluation.py                # 三课 90 题离线 BM25
+python tools/run_evaluation.py --smoke        # CI 评测冒烟
 ```
 
 提交规范向导：`git cz`
