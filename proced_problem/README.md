@@ -21,6 +21,7 @@ proced_problem/
 | --- | --- | --- | --- |
 | 001 | [BM25 候选池截断导致 Recall 回归](001-bm25-pool-silent-truncation.md) | 2026-08-12 | retrieval, bug, recall-regression, silent-failure |
 | 002 | [测试基线与项目文档统计脱节](002-test-baseline-and-documentation-drift.md) | 2026-08-17 | testing, documentation, repository-hygiene, milestone-drift |
+| 003 | [M4 任务范围膨胀且缺少检查点导致长时间无可见成效](003-long-running-task-without-checkpoints.md) | 2026-08-18 | workflow, scope-control, testing, checkpoint, agent-execution |
 
 ## 如何新增记录
 
