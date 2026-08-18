@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v1.1 M4 课程知识库规模补齐` — M3 工程收口已完成；M4 已将 OS、DS、CO 三门课程均补齐至 20 篇条目（共 60 篇），并新增 15 道课程评测题。当前分支等待人工审查与合并。
+**当前状态**：`v1.1 M4 课程知识库规模补齐` — M3 工程收口已完成；M4 已将 OS、DS、CO 三门课程均补齐至 20 篇条目（共 60 篇），并新增 15 道课程评测题。M4 实现提交 `106164d` 已于 2026-08-18 进入 `master`。
 
 ---
 
@@ -161,4 +161,4 @@ cd ..
 
 
 
-> **M4 status (2026-08-18):** The M3d closure has merged into `master`. M4 expands OS/DS/CO to 20 entries each (60 course entries total) and adds 15 evaluation questions; the feature branch is pending review. The M3c interview bank still contains 51 entries and is integrated with indexing, search, and QA sources.
+> **M4 status (2026-08-18):** M3d and M4 are now on `master`. M4 expands OS/DS/CO to 20 entries each (60 course entries total) and adds 15 evaluation questions. The M3c interview bank still contains 51 entries and is integrated with indexing, search, and QA sources.
