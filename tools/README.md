@@ -7,39 +7,49 @@
 ```
 tools/
 ├── README.md              # 本文件（工具文档）
-├── run_evaluation.py      # ★ RAG 效果评估脚本
+├── run_evaluation.py      # ★ 统一 RAG 评测入口
 └── evaluations/           # 课程评测集（每课一个 JSON 文件）
-    └── os.json            # 操作系统 20 题评测集
+    ├── os.json            # 操作系统 38 题
+    ├── ds.json            # 数据结构 28 题
+    └── co.json            # 计算机组成原理 24 题
 ```
 
 ## run_evaluation.py — RAG 效果评估
 
-量化衡量检索链路效果，支撑「调整切块策略 → 看指标变化」的数据驱动优化。
+一条命令跑完三课 90 题，输出控制台表格和可选 JSON 报告。默认使用离线 BM25（`SA_USE_VECTOR=false`），不依赖网络、模型缓存或 LLM key。
 
 ### 用法
 
 ```bash
-# 默认跑内置示例 + @1/3/5
+# 默认：自动发现 OS/DS/CO 共 90 题，离线 BM25，@1/3/5
 python tools/run_evaluation.py
 
-# 指定 k 值
-python tools/run_evaluation.py -k 1,3,5,10
+# 只评其中几门课
+python tools/run_evaluation.py --courses os,ds -k 1,3,5
 
-# 指定评测集文件
+# 保留单文件模式
 python tools/run_evaluation.py --test-set tools/evaluations/os.json -k 1,3,5
 
-# 使用 platform 虚拟环境运行
-./platform/.venv/Scripts/python tools/run_evaluation.py -k 1,3,5
+# 写出 JSON 报告（默认不要提交；确认后再记入 docs/baselines.md）
+python tools/run_evaluation.py --report reports/eval.json
+
+# 显式启用向量/hybrid 评测
+python tools/run_evaluation.py --use-vector
+
+# 使用 platform 虚拟环境
+./platform/.venv/Scripts/python tools/run_evaluation.py
 ```
 
 ### 指标
 
 | 指标 | 含义 | 目标 |
 | --- | --- | --- |
-| **Recall@k** | top-k 结果中出现相关文档的比例 | M1 目标 ≥ 0.8 |
+| **Recall@k** | top-k 结果中出现相关文档的比例 | ≥ 0.8（M5a 看 Recall@3） |
 | **Precision@k** | top-k 结果中相关文档的比例 | 越高越好 |
 | **F1** | Recall 与 Precision 的调和平均 | 综合评价 |
-| **AvgLatency** | 平均检索耗时（ms） | < 100ms（个人规模） |
+| **AvgLatency** | 每题平均检索耗时（ms，按 max k 测一次） | < 100ms（个人规模） |
+
+报告字段还包括：`mode`、`use_vector`、每课题数、汇总指标。`reports/` 已加入 `.gitignore`。
 
 ### 评测集格式
 
@@ -51,13 +61,13 @@ python tools/run_evaluation.py --test-set tools/evaluations/os.json -k 1,3,5
 ```
 
 - key 为自然语言检索问句
-- value 为「相关文档」的 `knowledge/` 相对路径数组（可在不同文件中命中多个切片）
+- value 为「相关文档」的 `knowledge/` 相对路径数组
 - 空数组 `[]` 表示无标注相关文档，该样本跳过不参与计分
 
 ### 优化迭代流程
 
-1. 建评测集（每门课 ≥ 10 题）
-2. 跑 `run_evaluation.py` 得基线
+1. 建评测集（每门课覆盖实际条目）
+2. 跑 `python tools/run_evaluation.py` 得离线基线
 3. 调整切块策略 / BM25 参数 / 分词逻辑
 4. 再跑测评 → 看指标变化
 5. 面试时直接报数字（如「切片从整篇改为按小节切分后，Recall@3 从 62% 提到 79%」）
@@ -68,10 +78,14 @@ python tools/run_evaluation.py --test-set tools/evaluations/os.json -k 1,3,5
 
 | 文件 | 课程 | 题数 | 状态 |
 | --- | --- | --- | --- |
-| [os.json](evaluations/os.json) | 操作系统 | 20 | ✅ 已建 |
+| [os.json](evaluations/os.json) | 操作系统 | 38 | ✅ 已建 |
+| [ds.json](evaluations/ds.json) | 数据结构 | 28 | ✅ 已建 |
+| [co.json](evaluations/co.json) | 计算机组成原理 | 24 | ✅ 已建 |
+
+合计 **90 题**。M5a 离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000。
 
 > 新增课程评测集：新建 `evaluations/{course}.json`，格式同上。
 
 ---
 
-*创建：2026-08-11 · 维护：随新增工具脚本与评测集同步更新*
+*创建：2026-08-11 · 更新：2026-08-18（M5a 统一 90 题离线评测入口）· 维护：随新增工具脚本与评测集同步更新*

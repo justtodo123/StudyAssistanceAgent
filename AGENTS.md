@@ -50,13 +50,13 @@ python -m venv .venv
 .\platform\.venv\Scripts\python -m pytest tests/ -v              # 全部测试（67 项）
 .\platform\.venv\Scripts\python -m pytest tests\M0_M2\ -v       # 基线回归
 .\platform\.venv\Scripts\python -m pytest tests\regression\ -v  # 回归套件
-.\platform\.venv\Scripts\python -m pytest tests\ -m m3a          # 按阶段筛选（m3a/m3b/m3c/m3d/slow）
+.\platform\.venv\Scripts\python -m pytest tests\ -m m3a          # 按阶段筛选（m3a/m3b/m3c/m3d/m4/m5a/slow）
 ```
 
 RAG 效果评估（项目根目录）：
 
 ```bash
-python tools/run_evaluation.py -k 1,3,5
+python tools/run_evaluation.py                # 三课 90 题离线 BM25
 ```
 
 提交规范向导：`git cz`

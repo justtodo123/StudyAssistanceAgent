@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v1.1 M4 课程知识库规模补齐` — M3 工程收口已完成；M4 已将 OS、DS、CO 三门课程均补齐至 20 篇条目（共 60 篇），并新增 15 道课程评测题。M4 实现提交 `106164d` 已于 2026-08-18 进入 `master`。
+**当前状态**：`v1.2 M5a 评测入口可复现化` — M0~M4 已进入 `master`。M5a 已把三课 90 题收成一条离线评测命令，默认 BM25，Recall@3 为 OS 1.000、DS 0.929、CO 1.000。下一步是 M5b 学习会话状态机。
 
 ---
 
@@ -21,7 +21,7 @@
 | 知识问答 | 基于知识库 + 外部资料回答课程问题，支持 LLM 生成或降级笔记摘要 | ✅ 已实现 |
 | 课程笔记管理 | 结构化笔记、例题、错题集的创建与检索 | ✅ 已实现（OS 20 篇 + DS 20 篇 + CO 20 篇） |
 | 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（文件去重、课程过滤） |
-| RAG 评测 | OS 38 题 + DS 28 题 + CO 24 题评测集，共 90 题，Recall/Precision/F1 量化 | ✅ 已实现（离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000） |
+| RAG 评测 | 一条命令评测 OS 38 + DS 28 + CO 24 共 90 题，输出汇总指标和 JSON 报告 | ✅ 已实现（默认离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000） |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ 已实现（API `/api/v1/review-plan` + Skill `review-plan`） |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
@@ -68,7 +68,7 @@ StudyAssistanceAgent/
 │   └── .env.example       # 环境变量模板
 ├── tools/                 # 辅助脚本
 │   ├── README.md          # 工具文档
-│   ├── run_evaluation.py  # RAG 评测脚本（Recall@k / F1 / 延迟）
+│   ├── run_evaluation.py  # 统一 RAG 评测入口（三课 90 题 / JSON 报告）
 │   └── evaluations/       # 评测集（JSON，每课一个文件）
 ├── tests/                 # ★ 迭代测试体系（阶段隔离架构）
 │   ├── TEST_PLAN.md       # 测试计划文档
@@ -79,6 +79,7 @@ StudyAssistanceAgent/
 │   ├── M3c/               # 面经库测试（10 项）
 │   ├── M3d/               # 文档完整性测试（6 项）
 │   ├── M4/                # 课程知识库规模测试（14 项）
+│   ├── M5a/               # 评测入口测试（26 项）
 │   ├── regression/        # 跨阶段回归套件（21 项）
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
@@ -109,14 +110,15 @@ python -m venv .venv
 
 # 5. 跑 RAG 评测（验证检索效果）
 cd ..
-./platform/.venv/Scripts/python tools/run_evaluation.py -k 1,3,5
+./platform/.venv/Scripts/python tools/run_evaluation.py
 
 # 6. 运行迭代测试体系（根目录下）
-./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（104 项）
+./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（130 项）
 ./platform/.venv/Scripts/python -m pytest tests/M0_M2/ -v     # 基线回归
 ./platform/.venv/Scripts/python -m pytest tests/regression/ -v # 回归套件
 ./platform/.venv/Scripts/python -m pytest tests/ -m m3d        # M3d 文档检查
 ./platform/.venv/Scripts/python -m pytest tests/ -m m4         # M4 知识库规模检查
+./platform/.venv/Scripts/python -m pytest tests/ -m m5a        # M5a 评测入口检查
 ```
 
 > 在 Claude Code 中打开本仓库即自动加载 `CLAUDE.md`，可调用内置 agents 与 skills。API 文档见 [platform/README.md](platform/README.md)。
