@@ -14,7 +14,10 @@ docs/
 │   ├── _template.md       # 新课程索引模板
 │   └── {course}.md        # 各课程原始资料登记（路径、类型、状态）
 ├── plans/                 # 学习计划与项目工程执行计划
-│   └── README.md          # 计划目录说明
+│   ├── README.md          # 计划目录说明
+│   ├── m3-engineering-execution-plan.md
+│   ├── m4-knowledge-base-scale-plan.md
+│   └── m5-agent-session-delivery-plan.md
 ├── standards/             # 开发规范
 │   └── git-conventions.md # Git 提交规范（Conventional Commits）
 └── interview/             # 面试叙事（AI 应用开发岗）
@@ -25,14 +28,17 @@ docs/
 
 ### PLAN.md — 项目计划
 
-核心文件。定义项目双目标（自学价值 + 面试价值）、技术选型（已拍板）、里程碑（M0~M3）、风险与缓解。
+核心文件。定义项目双目标（自学价值 + 面试价值）、技术选型、里程碑（M0~M5）、风险与缓解。
 **每次会话开工前先看本文档**，明确当前里程碑与退出条件。
 
 ### plans/ — 学习计划与项目工程执行计划
 
 - 个人复习计划由 `review-plan` Skill 或 API 生成。
 - M3 执行记录见 [plans/m3-engineering-execution-plan.md](plans/m3-engineering-execution-plan.md)，已于 2026-08-18 合并到 `master`。
-- M4 知识库规模计划见 [plans/m4-knowledge-base-scale-plan.md](plans/m4-knowledge-base-scale-plan.md)，课程条目已补齐，实现提交 `106164d` 已进入 `master`。
+- M4 知识库规模计划见
+  [plans/m4-knowledge-base-scale-plan.md](plans/m4-knowledge-base-scale-plan.md)，课程条目已补齐，实现提交 `106164d` 已进入 `master`。
+- M5 会话化与交付计划见
+  [plans/m5-agent-session-delivery-plan.md](plans/m5-agent-session-delivery-plan.md)，当前待启动，第一轮只执行 M5a + M5b。
 
 ### reference/ — 外部资料索引
 
@@ -69,4 +75,4 @@ docs/
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-18（M3d 文档收口）· 维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-08-18（M5 计划立项）· 维护：随项目演进同步更新*

@@ -15,8 +15,8 @@
 
 用于拆解项目里程碑，安排代码、测试、文档、知识库和 Git 分支推进，不替代 `docs/PLAN.md` 的总路线图。
 
-- 当前计划：[`m3-engineering-execution-plan.md`](m3-engineering-execution-plan.md)
-- 适用范围：M3a 向量存储、M3b 可观测性、M3c 面经库、M3d 文档闭环
+- 当前计划：[`m5-agent-session-delivery-plan.md`](m5-agent-session-delivery-plan.md)
+- 适用范围：M5a 评测入口、M5b 学习会话、M5c 状态持久化、M5d 工作台、M5e 可复现交付
 
 ## 当前计划
 
@@ -24,5 +24,6 @@
 | --- | --- | --- |
 | `m3-engineering-execution-plan.md` | 项目工程执行计划 | M3d 收口与最终回归完成，已合并到 `master`（2026-08-18） |
 | `m4-knowledge-base-scale-plan.md` | 项目工程执行计划 | 三门课程各补齐至 20 篇，已进入 `master`（2026-08-18） |
+| `m5-agent-session-delivery-plan.md` | 项目工程执行计划 | M5 待启动；第一轮只执行 M5a + M5b（2026-08-18） |
 
 > 后续由 `review-plan` Skill 生成的个人复习计划，继续使用 `{plan_name}-plan.md` 命名，避免与项目执行计划混淆。

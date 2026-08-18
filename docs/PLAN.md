@@ -44,7 +44,8 @@
 
 ### M1：数据先行（核心专业课知识库）
 > 目标：让「自学价值」真实落地，同时给 M2 平台喂真数据。
-> **分支映射**：`feature/m1a-os-knowledge` → `feature/m1b-ds-knowledge` → `feature/m1c-co-knowledge` → `feature/m1d-platform-polish`
+> **分支映射**：`feature/m1a-os-knowledge` → `feature/m1b-ds-knowledge` →
+> `feature/m1c-co-knowledge` → `feature/m1d-platform-polish`
 - ✅ 操作系统：`knowledge/os/`（进程/调度/同步/死锁/内存/文件）→ 15 篇条目 + 真题复盘（M1a 完成，hybrid RAG 评测 Recall@3=0.970，33 题评测集覆盖全部条目）
 - ✅ 数据结构复习：`knowledge/ds/`（绪论/线性表/栈队列/串数组广义表/树/图/查找/排序/堆与优先队列/真题复盘）10 篇完成（M1b 完成）
 - ✅ 计算机组成原理：`knowledge/co/`（概述/数据表示/运算器/存储系统/指令系统/CPU设计/总线I/O/MIPS实验/浮点数运算/期考复盘）10 篇完成（M1c 完成）
@@ -73,7 +74,8 @@
 - **退出条件**：✅ ≥2 个学习辅助能力可在 API/skill 中演示（实际 4 个），能答「工具编排」追问。
 
 ### M3：工程质量与沉淀（M3a/M3b/M3c/M3d 均已完成）
-> **分支映射**：`feature/m3a-vector-store` → `feature/m3b-observability` → `feature/m3c-interview-bank` → `docs/m3d-project-closure`
+> **分支映射**：`feature/m3a-vector-store` → `feature/m3b-observability` →
+> `feature/m3c-interview-bank` → `docs/m3d-project-closure`
 > **当前状态**：M3a 向量存储迁移、M3b 可观测性、M3c 面经库和 M3d 文档闭环均已完成；M3d 已于 2026-08-18 通过 `--no-ff` 合并到 `master`。
 - ✅ 可选：接入本地 SQLite 向量库，并保留线性后端与 BM25 降级路径
 - ✅ 观测/日志：检索/QA 延迟、进程内缓存指标、健康检查字段与敏感信息过滤
@@ -83,11 +85,24 @@
 
 ### M4：课程知识库规模补齐（已完成并进入 master）
 > **分支**：`feature/m4-knowledge-scale`
-> **当前状态**：OS、DS、CO 已分别从 15/10/10 篇补齐至 20/20/20 篇，共 60 篇课程条目；新增 15 道评测题，M4 阶段测试 14 项、根级测试 104 项和平台测试 40 项全部通过；实现提交 `106164d` 已于 2026-08-18 进入 `master`。
+> **当前状态**：OS、DS、CO 已分别从 15/10/10 篇补齐至 20/20/20 篇，共 60 篇课程条目；
+> 新增 15 道评测题，M4 阶段测试 14 项、根级测试 104 项和平台测试 40 项全部通过；
+> 实现提交 `106164d` 已于 2026-08-18 进入 `master`。
 - ✅ OS 新增线程、IPC、实时调度、文件分配、设备管理 5 篇。
 - ✅ DS 新增分治、动态规划、AVL/B+ 树、并查集、字符串匹配、哈希、图算法、外部排序 10 篇。
 - ✅ CO 新增数制、乘除法、Cache、地址转换、控制器、流水线、中断、总线、性能 10 篇。
 - **退出条件**：✅ 三门课程各 ≥20 篇、评测引用有效、Recall@3 ≥0.8、阶段测试与回归通过；离线 BM25 评测为 OS 1.000、DS 0.929、CO 1.000。
+
+### M5：学习 Agent 会话化与可交付演示（待启动）
+> **执行计划**：`docs/plans/m5-agent-session-delivery-plan.md`
+> **范围控制**：第一轮只执行 M5a 评测入口和 M5b 学习会话；持久化、工作台和 CI 不阻塞第一轮交付。
+- ⬜ M5a：统一三课 90 题离线评测入口，支持汇总指标和 JSON 报告。
+- ⬜ M5b：实现服务端学习会话状态机，编排 QA、Quiz、答案评估和 Review-log。
+- ⬜ M5c：使用 SQLite 持久化会话、答题记录、掌握度和复习历史。
+- ⬜ M5d：提供最小学习工作台，完成讲解、作答、反馈和复习记录交互。
+- ⬜ M5e：增加离线 CI、一键启动、模型缓存说明和演示基线。
+- **Level 1 退出条件**：一条命令完成 90 题离线评测；一个 API 会话完成“检索→讲解→出题→作答→评估→记录复习”；无 LLM 和向量模型时仍可运行。
+- **完整退出条件**：会话可跨重启恢复；工作台可完成学习闭环；离线 CI 通过；现有阶段测试、回归和平台测试保持通过。
 
 ## 四、风险与缓解
 
@@ -105,7 +120,7 @@
 
 ---
 
-*创建：2026-08-10 · 版本：v1.1（截至 2026-08-18：M3a/M3b/M3c/M3d/M4 均已完成并进入 `master`；三课共 60 篇条目、面经 51 条、90 题评测集，14 项 M4 测试与 104 项根级测试通过）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · 版本：v1.2（截至 2026-08-18：M0~M4 已完成并进入 `master`；M5 已立项，第一轮执行 M5a + M5b）· 维护：每次会话开工查看本文档*
 
 
 
@@ -113,7 +128,8 @@
 
 - Added the shared `VectorStore` protocol and a persistent SQLite implementation.
 - Retained the `linear` in-memory backend for rollback and debugging.
-- Added chunk-ID upsert, full replacement, migration, restart persistence, threshold filtering, and dimension validation.
+- Added chunk-ID upsert, full replacement, migration, restart persistence, threshold filtering,
+  and dimension validation.
 - Persisted chunk fingerprints and embedding model metadata so stale indexes rebuild automatically.
 - Preserved BM25 fallback when sentence-transformers is unavailable.
 - Validation: 22 M3a tests, 40 M0-M2 plus M3a tests, and 21 regression tests passed.
