@@ -38,7 +38,7 @@ docs/
 - M4 知识库规模计划见
   [plans/m4-knowledge-base-scale-plan.md](plans/m4-knowledge-base-scale-plan.md)，课程条目已补齐，实现提交 `106164d` 已进入 `master`。
 - M5 会话化与交付计划见
-  [plans/m5-agent-session-delivery-plan.md](plans/m5-agent-session-delivery-plan.md)，M5a~M5c 已完成，下一步 M5d 最小学习工作台。
+  [plans/m5-agent-session-delivery-plan.md](plans/m5-agent-session-delivery-plan.md)，M5a~M5d 已完成，下一步 M5e 可复现交付。
 
 ### reference/ — 外部资料索引
 
@@ -75,4 +75,4 @@ docs/
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-18（M5c 学习状态持久化完成）· 维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-08-18（M5d 最小学习工作台完成）· 维护：随项目演进同步更新*

@@ -7,10 +7,12 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 from . import config
 from .models import (
@@ -42,6 +44,9 @@ app = FastAPI(
     version="0.1.0",
 )
 
+_STATIC_DIR = Path(__file__).resolve().parent / "static"
+_WORKBENCH_INDEX = _STATIC_DIR / "workbench" / "index.html"
+
 _recall = MultiRecallService()
 _qa = QaService()
 _review_plan = ReviewPlanService()
@@ -56,6 +61,14 @@ _study_sessions = StudySessionService(
     review_scheduler=_review_scheduler,
     session_repository=_learning_store,
 )
+
+
+@app.get("/", include_in_schema=False)
+def workbench() -> FileResponse:
+    """Serve the minimal learning workbench as the first screen."""
+    if not _WORKBENCH_INDEX.is_file():
+        raise HTTPException(status_code=404, detail="learning workbench is unavailable")
+    return FileResponse(_WORKBENCH_INDEX)
 
 
 @app.get("/health")
@@ -180,3 +193,7 @@ def bm25_only(question: str, top_k: int, course: str | None = None):
     pool = chunks if config.BM25_POOL <= 0 else chunks[: config.BM25_POOL]
     bm25 = Bm25Search(pool)
     return bm25.search(question, top_k)
+
+
+if _STATIC_DIR.is_dir():
+    app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")

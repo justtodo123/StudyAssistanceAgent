@@ -2,7 +2,7 @@
 
 > 版本：v1.0
 > 制定日期：2026-08-18
-> 当前状态：M5a~M5c 已完成，下一步 M5d
+> 当前状态：M5a~M5d 已完成，下一步 M5e
 > 适用范围：RAG 评测入口、学习会话编排、学习状态持久化、最小交互界面和可复现交付
 
 ## 1. 背景
@@ -122,6 +122,7 @@ POST /api/v1/study-sessions/{session_id}/answers
 ### M5d：最小学习工作台
 
 目标：让用户无需直接调用 REST API，也能完成一次学习闭环。
+状态：已完成。工作台由 FastAPI 在 `GET /` 提供，静态资源位于 `platform/app/static/workbench/`。
 
 最小视图：
 
@@ -268,4 +269,4 @@ docs(plan): close M5 delivery milestone
 ## 9. 下一步
 
 M5a~M5c 已完成：90 题离线评测、学习会话 API 和 SQLite 学习状态持久化均已落地。
-下一步只启动 M5d 最小学习工作台；不提前实现 CI。
+下一步只启动 M5e 可复现交付；不提前扩大前端范围。

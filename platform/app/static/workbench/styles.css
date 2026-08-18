@@ -1,0 +1,151 @@
+:root {
+  color-scheme: light;
+  --bg: #f3efe6;
+  --ink: #243038;
+  --muted: #5b6770;
+  --card: #fffdf8;
+  --line: #d7cfc2;
+  --accent: #1f5f56;
+  --accent-ink: #f7fffd;
+  --danger: #8a2d2d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.page-header h1,
+.panel h2,
+article h3 {
+  margin: 0 0 8px;
+}
+
+.lede,
+.muted {
+  color: var(--muted);
+  margin: 0;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.panel-head,
+.inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.stack-form,
+.due-list,
+.source-list,
+.trace-list {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 12px 0 0;
+}
+
+.due-list,
+.source-list {
+  list-style: none;
+}
+
+label {
+  font-size: 14px;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.inline-form select,
+.inline-form button {
+  width: auto;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  cursor: pointer;
+}
+
+button[disabled] {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.due-item,
+.source-item,
+.trace-list li {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.due-item {
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  color: var(--ink);
+}
+
+.prose,
+.question {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.status {
+  min-height: 1.4em;
+  margin: 12px 0 0;
+}
+
+.status.error {
+  color: var(--danger);
+}
+
+.hidden {
+  display: none;
+}
+
+#trace-panel {
+  margin-top: 16px;
+}

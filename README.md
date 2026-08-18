@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v1.4 M5c 学习状态持久化` — 学习会话和复习历史写入 `platform/.cache/learning_state.sqlite3`，重启可恢复未完成会话。下一步是 M5d 最小学习工作台。
+**当前状态**：`v1.5 M5d 最小学习工作台` — 打开 `http://127.0.0.1:8000/` 即可完成讲解、作答、反馈和复习记录。下一步是 M5e 可复现交付。
 
 ---
 
@@ -27,6 +27,7 @@
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
 | 多轮工具编排 | QA→讲解→出题→评估→记录复习完整链路 | ✅ 已实现（API `/api/v1/study-sessions` + Skill `study-assistant`） |
+| 学习工作台 | 最小交互页面，调用正式会话 API 完成学习闭环 | ✅ 已实现（`GET /`） |
 
 ## 目录结构
 
@@ -51,7 +52,7 @@ StudyAssistanceAgent/
 ├── platform/              # Python 后端（FastAPI + 轻量 RAG）
 │   ├── README.md          # API 文档与启动指南
 │   ├── app/               # 应用代码
-│   │   ├── main.py        # FastAPI 入口（search/qa/quiz/review/study-sessions）
+│   │   ├── main.py        # FastAPI 入口（search/qa/quiz/review/study-sessions + 工作台）
 │   │   ├── retrieval.py   # 多路召回 + RRF 融合
 │   │   ├── bm25.py        # BM25 关键词检索（bigram 分词）
 │   │   ├── vector_store.py# 本地 BGE 向量存储（可选依赖）
@@ -64,7 +65,8 @@ StudyAssistanceAgent/
 │   │   ├── learning_store.py # SQLite 会话/复习仓储
 │   │   ├── observability.py # 进程内指标与结构化日志
 │   │   ├── models.py      # Pydantic 领域模型
-│   │   └── config.py      # 环境变量配置
+│   │   ├── config.py      # 环境变量配置
+│   │   └── static/           # 最小学习工作台静态页
 │   ├── tests/             # 冒烟测试
 │   ├── requirements.txt   # Python 依赖
 │   └── .env.example       # 环境变量模板
@@ -84,6 +86,7 @@ StudyAssistanceAgent/
 │   ├── M5a/               # 评测入口测试（26 项）
 │   ├── M5b/               # 学习会话测试（18 项）
 │   ├── M5c/               # 学习状态持久化测试（14 项）
+│   ├── M5d/               # 学习工作台测试（10 项）
 │   ├── regression/        # 跨阶段回归套件（21 项）
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
@@ -117,7 +120,7 @@ cd ..
 ./platform/.venv/Scripts/python tools/run_evaluation.py
 
 # 6. 运行迭代测试体系（根目录下）
-./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（162 项）
+./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（172 项）
 ./platform/.venv/Scripts/python -m pytest tests/M0_M2/ -v     # 基线回归
 ./platform/.venv/Scripts/python -m pytest tests/regression/ -v # 回归套件
 ./platform/.venv/Scripts/python -m pytest tests/ -m m3d        # M3d 文档检查
@@ -125,6 +128,7 @@ cd ..
 ./platform/.venv/Scripts/python -m pytest tests/ -m m5a        # M5a 评测入口检查
 ./platform/.venv/Scripts/python -m pytest tests/ -m m5b        # M5b 学习会话检查
 ./platform/.venv/Scripts/python -m pytest tests/ -m m5c        # M5c 持久化检查
+./platform/.venv/Scripts/python -m pytest tests/ -m m5d        # M5d 学习工作台检查
 ```
 
 > 在 Claude Code 中打开本仓库即自动加载 `CLAUDE.md`，可调用内置 agents 与 skills。API 文档见 [platform/README.md](platform/README.md)。
@@ -133,6 +137,7 @@ cd ..
 
 | 端点 | 方法 | 说明 |
 | --- | --- | --- |
+| `/` | GET | 最小学习工作台（讲解、作答、反馈、复习记录） |
 | `/health` | GET | 健康检查（向量引擎、知识库路径、索引/缓存/延迟指标、LLM 配置状态） |
 | `/api/v1/search` | POST | 检索知识库片段（多路召回 + RRF 融合） |
 | `/api/v1/qa` | POST | 问答（检索 → 可选 LLM 生成 → 带出处回答） |

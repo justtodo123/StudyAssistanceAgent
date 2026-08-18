@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>学习工作台</title>
+    <link rel="stylesheet" href="/static/workbench/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <h1>学习工作台</h1>
+        <p class="lede">选择课程和主题，完成讲解、作答、反馈和复习记录。</p>
+      </header>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <section id="due-panel" class="panel">
+        <div class="panel-head">
+          <h2>今日待复习</h2>
+          <div class="inline-form">
+            <label for="due-course">课程</label>
+            <select id="due-course">
+              <option value="">全部</option>
+              <option value="os">操作系统</option>
+              <option value="ds">数据结构</option>
+              <option value="co">组成原理</option>
+            </select>
+            <button id="refresh-due" type="button">刷新</button>
+          </div>
+        </div>
+        <p id="due-summary" class="muted"></p>
+        <ul id="due-list" class="due-list"></ul>
+      </section>
+
+      <section id="start-panel" class="panel">
+        <h2>开始学习</h2>
+        <form id="start-form" class="stack-form">
+          <label for="course">课程</label>
+          <select id="course" name="course" required>
+            <option value="os">操作系统</option>
+            <option value="ds">数据结构</option>
+            <option value="co">组成原理</option>
+          </select>
+          <label for="topic">主题</label>
+          <input id="topic" name="topic" type="text" required minlength="1" placeholder="例如：死锁" />
+          <button id="start-button" type="submit">开始学习</button>
+        </form>
+      </section>
+
+      <section id="session-panel" class="panel hidden">
+        <div class="panel-head">
+          <h2>当前会话</h2>
+          <p id="session-meta" class="muted"></p>
+        </div>
+
+        <article id="explanation-panel">
+          <h3>知识讲解</h3>
+          <div id="explanation" class="prose"></div>
+        </article>
+
+        <article id="sources-panel">
+          <h3>来源</h3>
+          <ul id="sources" class="source-list"></ul>
+        </article>
+
+        <article id="question-panel">
+          <h3>作答</h3>
+          <p id="question-text" class="question"></p>
+          <form id="answer-form" class="stack-form">
+            <label for="answer">你的答案</label>
+            <textarea id="answer" name="answer" rows="5" required minlength="1"></textarea>
+            <button id="answer-button" type="submit">提交答案</button>
+          </form>
+        </article>
+
+        <article id="feedback-panel" class="hidden">
+          <h3>反馈与补充讲解</h3>
+          <p id="feedback" class="prose"></p>
+          <div id="remediation" class="prose"></div>
+        </article>
+
+        <article id="completion-panel" class="hidden">
+          <h3>学习结果</h3>
+          <p id="completion-result" class="prose"></p>
+          <p id="next-review" class="prose"></p>
+          <button id="reset-button" type="button">再学一个主题</button>
+        </article>
+
+        <details id="trace-panel">
+          <summary>工具调用轨迹</summary>
+          <ol id="tool-trace" class="trace-list"></ol>
+        </details>
+      </section>
+    </main>
+    <noscript>学习工作台需要浏览器启用 JavaScript，以便调用正式会话 API。</noscript>
+    <script src="/static/workbench/app.js" defer></script>
+  </body>
+</html>
