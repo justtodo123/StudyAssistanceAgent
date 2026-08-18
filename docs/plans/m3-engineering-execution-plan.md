@@ -2,7 +2,7 @@
 
 > 版本：v1.0
 > 制定日期：2026-08-18
-> 当前状态：执行中
+> 当前状态：M3b 实现完成，待人工验收合并
 > 适用范围：StudyAssistanceAgent 的 M3a～M3d 工程质量工作
 
 ## 1. 计划定位
@@ -137,12 +137,12 @@ git merge --no-ff feature/m3a-vector-store -m "merge: complete M3a vector store 
 
 ### 工作项
 
-- [ ] 为 `/health` 增加稳定字段：`vector_engine`、`knowledge_root`、`index_size`、`cache_status`、`avg_latency_ms`。
-- [ ] 为搜索和 QA 增加结构化日志，至少记录操作类型、课程过滤、结果数量和耗时。
-- [ ] 日志中不得输出 API key、密码、token 或完整敏感环境变量值。
-- [ ] 记录检索延迟和重复请求的缓存表现，明确统计口径。
-- [ ] 将 `tests/M3b/` 中注释掉的断言改为实际断言。
-- [ ] 保持 `/health`、搜索、QA 现有 API 契约不破坏。
+- [x] 为 `/health` 增加稳定字段：`vector_engine`、`knowledge_root`、`index_size`、`cache_status`、`avg_latency_ms`。
+- [x] 为搜索和 QA 增加结构化日志，至少记录操作类型、课程过滤、结果数量和耗时。
+- [x] 日志中不得输出 API key、密码、token 或完整敏感环境变量值。
+- [x] 记录检索延迟和重复请求的缓存表现，明确统计口径。
+- [x] 将 `tests/M3b/` 中注释掉的断言改为实际断言。
+- [x] 保持 `/health`、搜索、QA 现有 API 契约不破坏。
 
 ### 建议提交拆分
 
@@ -154,12 +154,12 @@ docs(platform): document observability fields
 
 ### 验收门禁
 
-- [ ] M3b 测试不再依赖占位断言。
-- [ ] `/health` 字段稳定且不泄露敏感值。
-- [ ] 搜索和 QA 均能产生日志，日志包含耗时和结果数量。
-- [ ] 重复检索的延迟和缓存状态可以被测试或健康检查观察。
-- [ ] M0_M2、M3a、M3b 和 regression 全部通过。
-- [ ] 记录一次基线延迟和一次优化后的对比数据，写入 `docs/baselines.md` 或平台文档。
+- [x] M3b 测试不再依赖占位断言。
+- [x] `/health` 字段稳定且不泄露敏感值。
+- [x] 搜索和 QA 均能产生日志，日志包含耗时和结果数量。
+- [x] 重复检索的延迟和缓存状态可以被测试或健康检查观察。
+- [x] M0_M2、M3a、M3b 和 regression 全部通过。
+- [x] 记录一次基线延迟和一次优化后的对比数据，写入 `docs/baselines.md` 或平台文档。
 
 ### 阶段三：M3c 面经库建设
 

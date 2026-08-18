@@ -30,6 +30,7 @@ platform/
 │   ├── vector_store.py    # 本地 BGE 向量存储（可选依赖，未装时优雅降级）
 │   ├── qa.py              # 问答服务（LLM 生成 / 降级笔记摘要）
 │   ├── knowledge_index.py # 知识库索引（Markdown 切分 + frontmatter 解析 + JSON 缓存）
+│   ├── observability.py   # 进程内延迟/缓存指标与结构化日志
 │   ├── review_plan.py     # 复习计划服务（分日学习计划生成）
 │   ├── quiz.py            # 测验生成服务（例题+评测集+概念模板三数据源）
 │   └── review_scheduler.py # 复习排程服务（遗忘曲线间隔重复）
@@ -59,11 +60,31 @@ GET /health
 ```json
 {
   "status": "UP",
-  "vector_engine": "local",
+  "vector_engine": "linear",
   "knowledge_root": ".../knowledge",
+  "index_size": 123,
+  "cache_status": "warm",
+  "avg_latency_ms": 0.06,
   "llm_configured": false
 }
 ```
+
+字段说明：
+- `vector_engine`：当前向量后端；可为 `linear` / `sqlite`，不可用时带 `-unavailable` 后缀。
+- `knowledge_root`：知识库根目录路径，仅用于诊断配置，不包含密钥。
+- `index_size`：当前索引中的有效 Markdown 切片数。
+- `cache_status`：进程内最近一次索引/检索缓存状态，取值为 `cold`、`warm` 或 `unknown`。
+- `avg_latency_ms`：当前进程保留的最近操作样本平均耗时（毫秒）；服务重启后重新统计。
+- `llm_configured`：是否配置 LLM API key 的布尔值，不返回 key 本身。
+
+### 可观测性与日志
+
+搜索和 QA 会通过 `app` logger 输出单行 JSON 结构化日志。日志只包含安全元数据：
+`event`、`duration_ms`、`result_count`，以及可选的 `course`、`mode`、`cache_hit`。
+问题正文、检索内容、API key、密码、token 和 Authorization 不会写入日志。
+
+检索服务使用有界的进程内结果缓存；知识库索引使用 `.cache/knowledge_index.json` 缓存。
+`/health` 的延迟和缓存字段用于运行时诊断，不作为持久化监控指标。
 
 ### 检索
 
@@ -240,7 +261,7 @@ python -m venv .venv
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-17（M2 完成：复习计划+测验生成+复习排程+多轮工具编排）· 维护：随 API 变更同步更新*
+*创建：2026-08-11 · 更新：2026-08-18（M3b 完成可观测性字段、结构化日志与缓存指标）· 维护：随 API 变更同步更新*
 
 
 
