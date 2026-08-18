@@ -40,7 +40,7 @@ tests/
 │   ├── conftest.py       # 面经数据 fixtures
 │   └── test_interview_bank.py    # 面经条目验证
 │
-├── M3d/                  # 方法论沉淀测试（文档完整性）
+├── M3d/                  # 文档完整性测试（M3d 文档闭环）
 │   └── test_docs.py              # 文档结构与链接验证
 │
 ├── regression/           # 跨阶段回归套件
@@ -248,7 +248,7 @@ pytest tests/M0_M2/ -v         # 基线回归
 | M3a 向量库 | `tests/M3a/` | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
 | M3b 可观测性 | `tests/M3b/` | `tests/regression/` | `tests/M0_M2/` | — |
 | M3c 面经库 | `tests/M3c/` | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
-| M3d 方法论 | `tests/M3d/` | `tests/regression/` | `tests/M0_M2/` | — |
+| M3d 文档闭环 | `tests/M3d/` | `tests/regression/` | `tests/M0_M2/` | — |
 
 ## 四、pytest 配置
 
