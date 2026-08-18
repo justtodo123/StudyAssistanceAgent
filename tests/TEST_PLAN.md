@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-18（M0-M2、M3a～M3d、M4 均已完成并进入 `master`）
+> 起始日期：2026-08-17 · 更新：2026-08-18（M0-M2、M3a～M3d、M4 已完成；M5a 评测入口已完成）
 
 ## 一、测试策略总览
 
@@ -46,6 +46,13 @@ tests/
 ├── M4/                   # 课程知识库规模补齐测试
 │   └── test_knowledge_scale.py   # 数量、frontmatter、导航与评测引用
 │
+├── M5a/                  # 统一评测入口测试
+│   ├── conftest.py               # 评测脚本导入
+│   ├── test_cli.py               # 参数解析
+│   ├── test_discovery.py         # 评测集发现
+│   ├── test_metrics.py           # 指标聚合
+│   └── test_report.py            # 报告格式
+│
 ├── regression/           # 跨阶段回归套件
 │   ├── conftest.py       # 回归专用 fixtures
 │   ├── test_api_contract.py      # API 契约稳定性
@@ -76,10 +83,11 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/` | 104 项 | 104 passed | 阶段测试 + 回归套件（M0_M2 18、M3a 22、M3b 13、M3c 10、M3d 6、M4 14、regression 21） |
+| 根级 `tests/` | 130 项 | 130 collected | 阶段测试 + 回归套件（M0_M2 18、M3a 22、M3b 13、M3c 10、M3d 6、M4 14、M5a 26、regression 21） |
 | `platform/tests/` | 40 项 | 40 passed | 原始平台冒烟/功能测试 |
 | M3 验收门禁 | 130 项 | 130 passed | 根级测试 90 项 + 平台原始测试 40 项；包含 M3d 文档检查 |
 | M4 验收门禁 | 144 项 | 144 passed | 根级测试 104 项 + 平台原始测试 40 项；包含知识库规模检查 |
+| M5a 本阶段 | 26 项 | 26 passed | 参数解析、评测集发现、指标聚合、报告格式 |
 
 M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。受限 Windows 环境若默认临时目录不可写，可使用工作区内的 `pytest --basetemp=.tmp-test\...`。
 
@@ -255,6 +263,17 @@ pytest tests/M0_M2/ -v         # 基线回归
 | `test_knowledge_scale.py` | 课程导航 | 每门课程 README 链接全部条目 |
 | `test_knowledge_scale.py` | 评测引用 | `tools/evaluations/*.json` 仅引用实际文件 |
 
+### 阶段 6：M5a — 评测入口可复现化（已完成）
+
+**对应开发任务**：统一三课 90 题离线评测入口，支持课程筛选、汇总指标和 JSON 报告。
+
+| 测试文件 | 测试项 | 验证点 |
+|----------|--------|--------|
+| `test_cli.py` | 参数解析 | 默认离线、课程筛选、`--test-set`、`--use-vector` |
+| `test_discovery.py` | 评测集发现 | 自动发现 OS/DS/CO，合计 90 题；缺失文件跳过 |
+| `test_metrics.py` | 指标聚合 | 未标注跳过、按文件去重命中、加权汇总 |
+| `test_report.py` | 报告格式 | 控制台含 mode/summary，JSON 可回读 |
+
 ## 三、执行矩阵
 
 | 阶段 | 本阶段测试 | 回归测试 | 基线测试 | RAG 评测 |
@@ -265,6 +284,7 @@ pytest tests/M0_M2/ -v         # 基线回归
 | M3c 面经库 | `tests/M3c/` | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
 | M3d 文档闭环 | `tests/M3d/` | `tests/regression/` | `tests/M0_M2/` | — |
 | M4 知识库规模补齐 | `tests/M4/` | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
+| M5a 评测入口 | `tests/M5a/` | `tests/regression/` | `tests/M0_M2/` | `python tools/run_evaluation.py` |
 
 ## 四、pytest 配置
 
@@ -274,6 +294,9 @@ pytest tests/ -v
 
 # 运行指定阶段
 pytest tests/M3a/ -v -m m3a
+
+# 运行 M5a 评测入口测试
+pytest tests/M5a/ -v -m m5a
 
 # 运行回归套件
 pytest tests/regression/ -v

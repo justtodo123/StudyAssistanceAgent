@@ -93,7 +93,7 @@ python -m venv .venv && ./.venv/Scripts/python -m pip install -r requirements.tx
 ./platform/.venv/Scripts/python -m pytest tests/ -m m3a          # 按阶段筛选（m3a/m3b/m3c/m3d/slow）
 
 # RAG 效果评估（数据驱动优化的核心工具）
-python tools/run_evaluation.py -k 1,3,5
+python tools/run_evaluation.py                # 三课 90 题离线 BM25
 
 # 提交（Conventional Commits 向导）
 git cz
