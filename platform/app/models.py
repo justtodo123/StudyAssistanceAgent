@@ -160,3 +160,77 @@ class ReviewDueResponse(BaseModel):
     total_due: int
     entries: list[ReviewEntry]
     summary: dict[str, Any]
+
+# ── 学习会话 ──────────────────────────────────────────────────────────────────
+
+
+class StudySessionCreateRequest(BaseModel):
+    """Create a learning session for one topic."""
+
+    topic: str = Field(min_length=1, description="学习主题，如 死锁 / 进程调度")
+    course: str = Field(pattern=r"^(os|ds|co)$", description="课程简称：os / ds / co")
+    question_count: int = Field(default=1, ge=1, le=2, description="题目数量，1 或 2")
+    use_llm: bool = Field(default=False, description="是否允许 QA 走 LLM，默认关闭")
+
+
+class StudySessionAnswerRequest(BaseModel):
+    """Submit an answer for the current session question."""
+
+    answer: str = Field(min_length=1, description="用户答案")
+    question_id: str | None = Field(default=None, description="题目 ID，默认当前题")
+
+
+class StudySessionSource(BaseModel):
+    file: str
+    title: str = ""
+    course: str = ""
+
+
+class StudyQuestionView(BaseModel):
+    """Public question payload. Reference answers are not included."""
+
+    id: str
+    question: str
+    type: str
+    source_file: str = ""
+    source_title: str = ""
+    difficulty: str = ""
+    tags: list[str] = Field(default_factory=list)
+
+
+class ToolTraceStep(BaseModel):
+    step: str
+    service: str
+    status: str
+    result_count: int = 0
+    detail: str = ""
+    state_after: str = ""
+
+
+class AnswerEvaluation(BaseModel):
+    question_id: str
+    correct: bool
+    score: float
+    attempt_count: int
+    feedback: str
+    reference_answer: str = ""
+    method: str = "deterministic"
+
+
+class StudySessionResponse(BaseModel):
+    session_id: str
+    course: str
+    topic: str
+    state: str
+    explanation: str
+    sources: list[StudySessionSource]
+    questions: list[StudyQuestionView]
+    current_question_id: str | None = None
+    attempt_count: int = 0
+    score: float | None = None
+    last_evaluation: AnswerEvaluation | None = None
+    remediation: str = ""
+    review: dict[str, Any] | None = None
+    tool_trace: list[ToolTraceStep] = Field(default_factory=list)
+    created_at: str
+    updated_at: str

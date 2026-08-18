@@ -24,7 +24,7 @@ platform/
 ├── README.md              # 本文件（API 文档与启动指南）
 ├── app/
 │   ├── __init__.py
-│   ├── main.py            # FastAPI 入口：/health + search/qa/quiz/review-plan/review-log/review-due
+│   ├── main.py            # FastAPI 入口：search/qa/quiz/review/study-sessions
 │   ├── models.py          # Pydantic 领域模型（RetrievalChunk, SearchRequest, QaRequest 等）
 │   ├── config.py          # 环境变量配置（dotenv → 常量）
 │   ├── retrieval.py       # 多路召回 + RRF 融合（MultiRecallService）
@@ -35,7 +35,8 @@ platform/
 │   ├── observability.py   # 进程内延迟/缓存指标与结构化日志
 │   ├── review_plan.py     # 复习计划服务（分日学习计划生成）
 │   ├── quiz.py            # 测验生成服务（例题+评测集+概念模板三数据源）
-│   └── review_scheduler.py # 复习排程服务（遗忘曲线间隔重复）
+│   ├── review_scheduler.py # 复习排程服务（遗忘曲线间隔重复）
+│   └── study_session.py   # 学习会话编排（状态机 + 工具轨迹）
 ├── tests/
 │   ├── test_retrieval.py  # 检索链路冒烟测试（6 个用例）
 │   ├── test_review_plan.py # 复习计划测试（8 个用例）
@@ -47,7 +48,7 @@ platform/
 └── .env.example           # 环境变量模板（复制为 .env 后修改）
 ```
 
-平台原始测试共 40 项且已全部通过；根目录阶段化测试和回归套件见 `../tests/`，当前根级测试共 104 项。
+平台原始测试共 40 项且已全部通过；根目录阶段化测试和回归套件见 `../tests/`，当前根级测试共 148 项。
 ```
 
 ## API 端点
@@ -218,6 +219,36 @@ GET /api/v1/review-due?course=os
 响应字段：
 - `entries`: 待复习条目列表，含 `days_overdue`（逾期天数）、`interval_days`（当前间隔）、`review_count`（累计次数）
 - `summary`: 汇总（total_tracked / overdue / due_today / upcoming）
+
+### 学习会话
+
+```
+POST /api/v1/study-sessions
+Content-Type: application/json
+
+{
+  "topic": "死锁",
+  "course": "os",
+  "question_count": 1,
+  "use_llm": false
+}
+```
+
+```
+GET /api/v1/study-sessions/{session_id}
+POST /api/v1/study-sessions/{session_id}/answers
+Content-Type: application/json
+
+{
+  "answer": "互斥、占有并等待、不可剥夺、循环等待"
+}
+```
+
+- 创建会话时编排 QA 检索与讲解，再出 1 至 2 道题。
+- 答案评估默认使用确定性规则；不配置 LLM 时完整链路仍可运行。
+- 答对则完成并记录复习；答错一次给提示并重试；连续两次答错后返回完整参考并结束。
+- 响应包含 `state`、`sources`、`attempt_count`、`score`、`review` 和 `tool_trace`。
+- 非法状态转换返回 409，未知会话返回 404。
 
 ## 配置
 

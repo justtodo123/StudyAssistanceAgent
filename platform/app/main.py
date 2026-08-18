@@ -9,16 +9,31 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 
 from . import config
-from .models import QaRequest, QaResponse, QuizRequest, QuizResponse, ReviewDueResponse, ReviewLogRequest, ReviewPlanRequest, ReviewPlanResponse, SearchRequest, SearchResponse
+from .models import (
+    QaRequest,
+    QaResponse,
+    QuizRequest,
+    QuizResponse,
+    ReviewDueResponse,
+    ReviewLogRequest,
+    ReviewPlanRequest,
+    ReviewPlanResponse,
+    SearchRequest,
+    SearchResponse,
+    StudySessionAnswerRequest,
+    StudySessionCreateRequest,
+    StudySessionResponse,
+)
 from .qa import QaService
 from .quiz import QuizService
 from .retrieval import MultiRecallService
 from .review_plan import ReviewPlanService
 from .review_scheduler import ReviewSchedulerService
+from .study_session import IllegalSessionStateError, SessionNotFoundError, StudySessionService
 
 app = FastAPI(
     title="StudyAssistanceAgent API",
@@ -31,6 +46,11 @@ _qa = QaService()
 _review_plan = ReviewPlanService()
 _quiz = QuizService()
 _review_scheduler = ReviewSchedulerService()
+_study_sessions = StudySessionService(
+    qa_service=_qa,
+    quiz_service=_quiz,
+    review_scheduler=_review_scheduler,
+)
 
 
 @app.get("/health")
@@ -113,6 +133,35 @@ def review_due(course: str | None = None) -> ReviewDueResponse:
 def review_plan(req: ReviewPlanRequest) -> ReviewPlanResponse:
     """生成复习计划：输入课程 + 目标日期 → 输出分日学习计划。"""
     return _review_plan.generate(req)
+
+
+@app.post("/api/v1/study-sessions", response_model=StudySessionResponse)
+def create_study_session(req: StudySessionCreateRequest) -> StudySessionResponse:
+    """创建学习会话：检索讲解并出题。"""
+    return _study_sessions.create(req)
+
+
+@app.get("/api/v1/study-sessions/{session_id}", response_model=StudySessionResponse)
+def get_study_session(session_id: str) -> StudySessionResponse:
+    """查询学习会话状态。"""
+    try:
+        return _study_sessions.get(session_id)
+    except SessionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/v1/study-sessions/{session_id}/answers", response_model=StudySessionResponse)
+def submit_study_answer(
+    session_id: str,
+    req: StudySessionAnswerRequest,
+) -> StudySessionResponse:
+    """提交当前题目答案并评估掌握度。"""
+    try:
+        return _study_sessions.submit_answer(session_id, req)
+    except SessionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except IllegalSessionStateError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 def bm25_only(question: str, top_k: int, course: str | None = None):

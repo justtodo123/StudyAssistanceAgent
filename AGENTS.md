@@ -50,7 +50,7 @@ python -m venv .venv
 .\platform\.venv\Scripts\python -m pytest tests/ -v              # 全部测试（67 项）
 .\platform\.venv\Scripts\python -m pytest tests\M0_M2\ -v       # 基线回归
 .\platform\.venv\Scripts\python -m pytest tests\regression\ -v  # 回归套件
-.\platform\.venv\Scripts\python -m pytest tests\ -m m3a          # 按阶段筛选（m3a/m3b/m3c/m3d/m4/m5a/slow）
+.\platform\.venv\Scripts\python -m pytest tests\ -m m3a          # 按阶段筛选（m3a/m3b/m3c/m3d/m4/m5a/m5b/slow）
 ```
 
 RAG 效果评估（项目根目录）：
@@ -318,6 +318,9 @@ updated: 2026-08-10
 | `/api/v1/quiz` | POST | 测验生成 |
 | `/api/v1/review-log` | POST | 记录复习完成 |
 | `/api/v1/review-due` | GET | 查询今日待复习条目 |
+| `/api/v1/study-sessions` | POST | 创建学习会话 |
+| `/api/v1/study-sessions/{id}` | GET | 查询学习会话 |
+| `/api/v1/study-sessions/{id}/answers` | POST | 提交会话答案 |
 
 ## 注意事项
 

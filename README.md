@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v1.2 M5a 评测入口可复现化` — M0~M4 已进入 `master`。M5a 已把三课 90 题收成一条离线评测命令，默认 BM25，Recall@3 为 OS 1.000、DS 0.929、CO 1.000。下一步是 M5b 学习会话状态机。
+**当前状态**：`v1.3 M5 Level 1` — M5a 统一 90 题离线评测，M5b 提供学习会话 API（检索→讲解→出题→作答→评估→记录复习）。下一步是 M5c 会话持久化。
 
 ---
 
@@ -26,7 +26,7 @@
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
-| 多轮工具编排 | QA→讲解→出题→评估→记录复习完整链路 | ✅ 已实现（Skill `study-assistant`，面试演示重点） |
+| 多轮工具编排 | QA→讲解→出题→评估→记录复习完整链路 | ✅ 已实现（API `/api/v1/study-sessions` + Skill `study-assistant`） |
 
 ## 目录结构
 
@@ -51,7 +51,7 @@ StudyAssistanceAgent/
 ├── platform/              # Python 后端（FastAPI + 轻量 RAG）
 │   ├── README.md          # API 文档与启动指南
 │   ├── app/               # 应用代码
-│   │   ├── main.py        # FastAPI 入口（/health, /api/v1/search, /api/v1/qa, /api/v1/qa/stream）
+│   │   ├── main.py        # FastAPI 入口（search/qa/quiz/review/study-sessions）
 │   │   ├── retrieval.py   # 多路召回 + RRF 融合
 │   │   ├── bm25.py        # BM25 关键词检索（bigram 分词）
 │   │   ├── vector_store.py# 本地 BGE 向量存储（可选依赖）
@@ -59,7 +59,8 @@ StudyAssistanceAgent/
 │   │   ├── knowledge_index.py # 知识库索引（Markdown 切分 + 缓存）
 │   │   ├── review_plan.py # 复习计划服务（分日学习计划生成）
 │   │   ├── quiz.py       # 测验生成服务（例题+评测集+概念模板）
-│   │   └── review_scheduler.py # 复习排程服务（遗忘曲线间隔重复）
+│   │   ├── review_scheduler.py # 复习排程服务（遗忘曲线间隔重复）
+│   │   ├── study_session.py # 学习会话编排（状态机 + 工具轨迹）
 │   │   ├── observability.py # 进程内指标与结构化日志
 │   │   ├── models.py      # Pydantic 领域模型
 │   │   └── config.py      # 环境变量配置
@@ -80,6 +81,7 @@ StudyAssistanceAgent/
 │   ├── M3d/               # 文档完整性测试（6 项）
 │   ├── M4/                # 课程知识库规模测试（14 项）
 │   ├── M5a/               # 评测入口测试（26 项）
+│   ├── M5b/               # 学习会话测试（18 项）
 │   ├── regression/        # 跨阶段回归套件（21 项）
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
@@ -113,12 +115,13 @@ cd ..
 ./platform/.venv/Scripts/python tools/run_evaluation.py
 
 # 6. 运行迭代测试体系（根目录下）
-./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（130 项）
+./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（148 项）
 ./platform/.venv/Scripts/python -m pytest tests/M0_M2/ -v     # 基线回归
 ./platform/.venv/Scripts/python -m pytest tests/regression/ -v # 回归套件
 ./platform/.venv/Scripts/python -m pytest tests/ -m m3d        # M3d 文档检查
 ./platform/.venv/Scripts/python -m pytest tests/ -m m4         # M4 知识库规模检查
 ./platform/.venv/Scripts/python -m pytest tests/ -m m5a        # M5a 评测入口检查
+./platform/.venv/Scripts/python -m pytest tests/ -m m5b        # M5b 学习会话检查
 ```
 
 > 在 Claude Code 中打开本仓库即自动加载 `CLAUDE.md`，可调用内置 agents 与 skills。API 文档见 [platform/README.md](platform/README.md)。
@@ -135,6 +138,9 @@ cd ..
 | `/api/v1/quiz` | POST | 测验生成（课程+题数 → 三种题型混合出题） |
 | `/api/v1/review-log` | POST | 记录复习完成（更新间隔重复排程） |
 | `/api/v1/review-due` | GET | 查询今日待复习条目（基于遗忘曲线） |
+| `/api/v1/study-sessions` | POST | 创建学习会话（检索讲解并出题） |
+| `/api/v1/study-sessions/{id}` | GET | 查询学习会话状态与工具轨迹 |
+| `/api/v1/study-sessions/{id}/answers` | POST | 提交答案并评估掌握度 |
 
 > 完整 API 文档、配置说明、架构图见 [platform/README.md](platform/README.md)。
 
