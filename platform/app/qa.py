@@ -8,10 +8,12 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 from . import config
 from .models import QaRequest, QaResponse, RetrievalChunk
+from .observability import log_operation, metrics
 from .retrieval import MultiRecallService
 
 
@@ -20,19 +22,33 @@ class QaService:
         self._recall = MultiRecallService()
 
     def answer(self, req: QaRequest) -> QaResponse:
-        results, mode = self._recall.recall(req.question, req.top_k, course=req.course)
+        started = time.perf_counter()
+        results: list[RetrievalChunk] = []
+        mode = "keyword-only"
+        try:
+            results, mode = self._recall.recall(req.question, req.top_k, course=req.course)
 
-        if req.use_llm and config.LLM_API_KEY:
-            try:
-                text = self._generate(req.question, results)
-                return QaResponse(question=req.question, answer=text, mode=mode, sources=results)
-            except Exception as e:  # LLM 失败 → 降级
-                self._fallback_note = f"（LLM 生成失败，已降级为笔记摘要：{e}）"
+            if req.use_llm and config.LLM_API_KEY:
+                try:
+                    text = self._generate(req.question, results)
+                    return QaResponse(question=req.question, answer=text, mode=mode, sources=results)
+                except Exception as exc:
+                    self._fallback_note = f"LLM generation failed; used local summary: {exc}"
 
-        text = self._summarize(results)
-        if getattr(self, "_fallback_note", None):
-            text = text + "\n\n" + self._fallback_note
-        return QaResponse(question=req.question, answer=text, mode=mode, sources=results)
+            text = self._summarize(results)
+            if getattr(self, "_fallback_note", None):
+                text = text + "\n\n" + self._fallback_note
+            return QaResponse(question=req.question, answer=text, mode=mode, sources=results)
+        finally:
+            duration_ms = (time.perf_counter() - started) * 1000
+            metrics.record("qa", duration_ms, len(results))
+            log_operation(
+                "qa",
+                duration_ms=duration_ms,
+                result_count=len(results),
+                course=req.course,
+                mode=mode,
+            )
 
     # -- 生成路径 --
     def _generate(self, question: str, chunks: list[RetrievalChunk]) -> str:
