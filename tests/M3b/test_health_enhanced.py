@@ -1,8 +1,4 @@
-"""M3b 增强健康检查测试。
-
-验证 /health 端点返回更多运维信息。
-M3b 开发后补充具体断言。
-"""
+"""Concrete health endpoint assertions for M3b observability."""
 
 from __future__ import annotations
 
@@ -18,45 +14,40 @@ if str(PLATFORM_DIR) not in sys.path:
 
 @pytest.mark.m3b
 class TestEnhancedHealth:
-    """增强健康检查端点。"""
-
     def test_health_returns_basic_fields(self, test_client):
-        """health 端点应返回基本字段。"""
-        resp = test_client.get("/health")
-        assert resp.status_code == 200
-        data = resp.json()
-        assert "status" in data
+        response = test_client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
         assert data["status"] == "UP"
+        assert isinstance(data["vector_engine"], str)
+        assert isinstance(data["knowledge_root"], str)
 
     def test_health_shows_vector_engine(self, test_client):
-        """health 应显示向量引擎类型。"""
-        resp = test_client.get("/health")
-        data = resp.json()
-        assert "vector_engine" in data
+        data = test_client.get("/health").json()
+        assert data["vector_engine"] in {
+            "sqlite",
+            "linear",
+            "sqlite-unavailable",
+            "linear-unavailable",
+        }
 
     def test_health_shows_knowledge_root(self, test_client):
-        """health 应显示知识库路径。"""
-        resp = test_client.get("/health")
-        data = resp.json()
-        assert "knowledge_root" in data
+        data = test_client.get("/health").json()
+        assert data["knowledge_root"].endswith("knowledge")
 
-    @pytest.mark.m3b
     def test_health_shows_index_stats(self, test_client):
-        """M3b: health 应显示索引统计（条目数、缓存状态）。"""
-        resp = test_client.get("/health")
-        data = resp.json()
-        # M3b 开发后取消注释：
-        # assert "index_size" in data, "应返回索引条目数"
-        # assert "cache_status" in data, "应返回缓存状态"
+        data = test_client.get("/health").json()
+        assert isinstance(data["index_size"], int)
+        assert data["index_size"] > 0
+        assert data["cache_status"] in {"cold", "warm", "unknown"}
 
-    @pytest.mark.m3b
     def test_health_shows_latency_stats(self, test_client):
-        """M3b: health 应包含延迟统计。"""
-        # 先触发几次检索
         for _ in range(3):
-            test_client.post("/api/v1/search", json={"question": "测试", "top_k": 1})
+            response = test_client.post(
+                "/api/v1/search", json={"question": "\u6d4b\u8bd5", "top_k": 1}
+            )
+            assert response.status_code == 200
 
-        resp = test_client.get("/health")
-        data = resp.json()
-        # M3b 开发后取消注释：
-        # assert "avg_latency_ms" in data, "应返回平均延迟"
+        data = test_client.get("/health").json()
+        assert isinstance(data["avg_latency_ms"], (int, float))
+        assert data["avg_latency_ms"] >= 0
