@@ -13,7 +13,7 @@ docs/
 │   ├── README.md          # 索引总览与维护规则
 │   ├── _template.md       # 新课程索引模板
 │   └── {course}.md        # 各课程原始资料登记（路径、类型、状态）
-├── plans/                 # 学习计划（由 review-plan 生成）
+├── plans/                 # 学习计划与项目工程执行计划
 │   └── README.md          # 计划目录说明
 ├── standards/             # 开发规范
 │   └── git-conventions.md # Git 提交规范（Conventional Commits）
@@ -27,6 +27,11 @@ docs/
 
 核心文件。定义项目双目标（自学价值 + 面试价值）、技术选型（已拍板）、里程碑（M0~M3）、风险与缓解。
 **每次会话开工前先看本文档**，明确当前里程碑与退出条件。
+
+### plans/ — 学习计划与项目工程执行计划
+
+- 个人复习计划由 `review-plan` Skill 或 API 生成。
+- 当前 M3 工程执行计划见 [plans/m3-engineering-execution-plan.md](plans/m3-engineering-execution-plan.md)。
 
 ### reference/ — 外部资料索引
 

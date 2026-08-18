@@ -1,15 +1,27 @@
-# 学习计划（plans/）
+# 学习计划与项目执行计划（plans/）
 
-> 由 `review-plan` Skill 或 `/api/v1/review-plan` API 自动生成的复习计划存放目录。
+> 本目录同时存放个人复习计划和项目工程执行计划；两者定位不同，文件名和内容必须明确区分。
 
-## 说明
+## 目录用途
 
-- 计划文件命名：`{plan_name}-plan.md`
-- 计划内容：按天分列学习任务，含难度、时间估算、优先级
-- 生成方式：
-  - Claude Code 中触发 `review-plan` skill
-  - 调用 `POST /api/v1/review-plan` API
+### 个人复习计划
+
+由 `review-plan` Skill 或 `/api/v1/review-plan` API 自动生成，按课程和目标日期安排每日学习任务。
+
+- 命名：`{plan_name}-plan.md`
+- 内容：按天分列学习任务、难度、时间估算和优先级
+
+### 项目工程执行计划
+
+用于拆解项目里程碑，安排代码、测试、文档、知识库和 Git 分支推进，不替代 `docs/PLAN.md` 的总路线图。
+
+- 当前计划：[`m3-engineering-execution-plan.md`](m3-engineering-execution-plan.md)
+- 适用范围：M3a 向量存储、M3b 可观测性、M3c 面经库、M3d 文档闭环
 
 ## 当前计划
 
-> 暂无计划文件，首次生成后会自动出现在此目录。
+| 文件 | 类型 | 状态 |
+| --- | --- | --- |
+| `m3-engineering-execution-plan.md` | 项目工程执行计划 | 执行中（2026-08-18） |
+
+> 后续由 `review-plan` Skill 生成的个人复习计划，继续使用 `{plan_name}-plan.md` 命名，避免与项目执行计划混淆。

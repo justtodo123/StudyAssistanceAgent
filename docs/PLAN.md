@@ -98,3 +98,14 @@
 ---
 
 *创建：2026-08-10 · 版本：v1.0（M1d+M2 已完成：三课 35 篇条目、75 题评测集、完整测试 121 项，当前 107 passed/14 skipped；M3 测试骨架已建立）· 维护：每次会话开工查看本文档*
+
+
+
+### M3a: Vector-store migration (completed 2026-08-17)
+
+- Added the shared `VectorStore` protocol and a persistent SQLite implementation.
+- Retained the `linear` in-memory backend for rollback and debugging.
+- Added chunk-ID upsert, full replacement, migration, restart persistence, threshold filtering, and dimension validation.
+- Persisted chunk fingerprints and embedding model metadata so stale indexes rebuild automatically.
+- Preserved BM25 fallback when sentence-transformers is unavailable.
+- Validation: 22 M3a tests, 40 M0-M2 plus M3a tests, and 21 regression tests passed.

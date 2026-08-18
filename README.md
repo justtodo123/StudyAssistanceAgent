@@ -45,6 +45,7 @@ StudyAssistanceAgent/
 │   ├── PLAN.md            # ★ 项目计划（路线图）
 │   ├── reference/         # 外部参考资料索引（D:\111_Others_Subjects 的映射）
 │   ├── standards/         # 开发规范（Git 提交规范等）
+│   ├── plans/              # 学习计划与项目工程执行计划
 │   └── interview/         # 面试叙事与考点映射（AI 应用开发岗）
 ├── platform/              # Python 后端（FastAPI + 轻量 RAG）
 │   ├── README.md          # API 文档与启动指南
@@ -140,6 +141,7 @@ cd ..
 | [docs/reference/README.md](docs/reference/README.md) | 外部原始资料索引（D:\111_Others_Subjects 映射） |
 | [docs/interview/README.md](docs/interview/README.md) | 面试叙事：一句话 + 5 设计决策 + 8 考点 + 3 优化点 |
 | [docs/standards/git-conventions.md](docs/standards/git-conventions.md) | Git 提交规范（Conventional Commits） |
+| [docs/plans/m3-engineering-execution-plan.md](docs/plans/m3-engineering-execution-plan.md) | M3 当前工程执行计划（阶段、分支、验收） |
 | [knowledge/README.md](knowledge/README.md) | 知识库导航与写作规范 |
 | [CLAUDE.md](CLAUDE.md) | Agent 项目级开发指导 |
 
@@ -151,3 +153,7 @@ cd ..
 ## License
 
 [MIT](LICENSE)
+
+
+
+> **M3a status (2026-08-17):** SQLite vector-store migration is complete, with the `linear` in-memory fallback retained. Content/model changes trigger automatic index rebuilds, and BM25 fallback remains available. All 22 M3a tests pass.

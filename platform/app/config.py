@@ -21,6 +21,18 @@ TOP_K = int(os.getenv("SA_TOP_K", "5"))
 BM25_POOL = int(os.getenv("SA_BM25_POOL", "0"))
 USE_VECTOR = os.getenv("SA_USE_VECTOR", "true").lower() in ("1", "true", "yes")
 EMBEDDING_MODEL = os.getenv("SA_EMBEDDING_MODEL", "BAAI/bge-small-zh-v1.5")
+# Vector-store backend: sqlite persists across restarts; linear keeps the in-memory fallback.
+VECTOR_STORE = os.getenv("SA_VECTOR_STORE", "sqlite").lower()
+if VECTOR_STORE not in {"sqlite", "linear"}:
+    raise ValueError(
+        f"unsupported SA_VECTOR_STORE={VECTOR_STORE!r}; expected 'sqlite' or 'linear'"
+    )
+VECTOR_STORE_PATH = Path(
+    os.getenv(
+        "SA_VECTOR_STORE_PATH",
+        str(REPO_ROOT / "platform" / ".cache" / "vector_store.sqlite3"),
+    )
+)
 
 # ===== LLM（OpenAI 兼容）=====
 LLM_BASE_URL = os.getenv("SA_LLM_BASE_URL", "")
