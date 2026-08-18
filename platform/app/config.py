@@ -33,6 +33,12 @@ VECTOR_STORE_PATH = Path(
         str(REPO_ROOT / "platform" / ".cache" / "vector_store.sqlite3"),
     )
 )
+LEARNING_STORE_PATH = Path(
+    os.getenv(
+        "SA_LEARNING_STORE_PATH",
+        str(REPO_ROOT / "platform" / ".cache" / "learning_state.sqlite3"),
+    )
+)
 
 # ===== LLM（OpenAI 兼容）=====
 LLM_BASE_URL = os.getenv("SA_LLM_BASE_URL", "")

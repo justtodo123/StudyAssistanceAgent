@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v1.3 M5 Level 1` — M5a 统一 90 题离线评测，M5b 提供学习会话 API（检索→讲解→出题→作答→评估→记录复习）。下一步是 M5c 会话持久化。
+**当前状态**：`v1.4 M5c 学习状态持久化` — 学习会话和复习历史写入 `platform/.cache/learning_state.sqlite3`，重启可恢复未完成会话。下一步是 M5d 最小学习工作台。
 
 ---
 
@@ -61,6 +61,7 @@ StudyAssistanceAgent/
 │   │   ├── quiz.py       # 测验生成服务（例题+评测集+概念模板）
 │   │   ├── review_scheduler.py # 复习排程服务（遗忘曲线间隔重复）
 │   │   ├── study_session.py # 学习会话编排（状态机 + 工具轨迹）
+│   │   ├── learning_store.py # SQLite 会话/复习仓储
 │   │   ├── observability.py # 进程内指标与结构化日志
 │   │   ├── models.py      # Pydantic 领域模型
 │   │   └── config.py      # 环境变量配置
@@ -82,6 +83,7 @@ StudyAssistanceAgent/
 │   ├── M4/                # 课程知识库规模测试（14 项）
 │   ├── M5a/               # 评测入口测试（26 项）
 │   ├── M5b/               # 学习会话测试（18 项）
+│   ├── M5c/               # 学习状态持久化测试（14 项）
 │   ├── regression/        # 跨阶段回归套件（21 项）
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
@@ -115,13 +117,14 @@ cd ..
 ./platform/.venv/Scripts/python tools/run_evaluation.py
 
 # 6. 运行迭代测试体系（根目录下）
-./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（148 项）
+./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（162 项）
 ./platform/.venv/Scripts/python -m pytest tests/M0_M2/ -v     # 基线回归
 ./platform/.venv/Scripts/python -m pytest tests/regression/ -v # 回归套件
 ./platform/.venv/Scripts/python -m pytest tests/ -m m3d        # M3d 文档检查
 ./platform/.venv/Scripts/python -m pytest tests/ -m m4         # M4 知识库规模检查
 ./platform/.venv/Scripts/python -m pytest tests/ -m m5a        # M5a 评测入口检查
 ./platform/.venv/Scripts/python -m pytest tests/ -m m5b        # M5b 学习会话检查
+./platform/.venv/Scripts/python -m pytest tests/ -m m5c        # M5c 持久化检查
 ```
 
 > 在 Claude Code 中打开本仓库即自动加载 `CLAUDE.md`，可调用内置 agents 与 skills。API 文档见 [platform/README.md](platform/README.md)。

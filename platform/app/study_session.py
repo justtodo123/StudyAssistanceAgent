@@ -26,6 +26,7 @@ from .models import (
     StudySessionSource,
     ToolTraceStep,
 )
+from .learning_store import StudySessionRepository
 from .qa import QaService
 from .quiz import QuizService
 from .review_scheduler import ReviewSchedulerService
@@ -78,6 +79,8 @@ class _Session:
     tool_trace: list[ToolTraceStep] = field(default_factory=list)
     created_at: str = ""
     updated_at: str = ""
+    last_answer_normalized: str = ""
+    answer_records: list[dict[str, Any]] = field(default_factory=list)
 
 
 class StudySessionService:
@@ -88,10 +91,12 @@ class StudySessionService:
         qa_service: QaService | None = None,
         quiz_service: QuizService | None = None,
         review_scheduler: ReviewSchedulerService | None = None,
+        session_repository: StudySessionRepository | None = None,
     ) -> None:
         self._qa = qa_service or QaService()
         self._quiz = quiz_service or QuizService()
         self._scheduler = review_scheduler or ReviewSchedulerService()
+        self._session_repository = session_repository
         self._sessions: dict[str, _Session] = {}
 
     def create(self, req: StudySessionCreateRequest) -> StudySessionResponse:
@@ -170,6 +175,7 @@ class StudySessionService:
             )
             self._complete(session)
         session.updated_at = _now()
+        self._persist(session)
         return self.to_response(session)
 
     def get(self, session_id: str) -> StudySessionResponse:
@@ -189,9 +195,18 @@ class StudySessionService:
             raise IllegalSessionStateError("session has no questions to answer")
 
         question_state = self._current_question(session, req.question_id)
+        normalized = _normalize(req.answer)
+        if (
+            session.last_answer_normalized
+            and session.last_answer_normalized == normalized
+            and session.last_evaluation is not None
+            and session.last_evaluation.question_id == question_state.id
+        ):
+            return self.to_response(session)
         session.state = STATE_EVALUATING
         session.updated_at = _now()
         question_state.attempt_count += 1
+        session.last_answer_normalized = normalized
 
         evaluation = evaluate_answer(
             req.answer,
@@ -214,13 +229,16 @@ class StudySessionService:
             question_state.correct = True
             session.remediation = ""
             session.last_evaluation = evaluation
+            self._record_attempt(session, question_state, normalized, evaluation)
             self._advance_or_complete(session)
+            self._persist(session)
             return self.to_response(session)
 
         question_state.correct = False
         if question_state.attempt_count < MAX_ATTEMPTS:
             evaluation.reference_answer = ""
             session.last_evaluation = evaluation
+            self._record_attempt(session, question_state, normalized, evaluation)
             session.remediation = _hint(question_state.question, session.explanation)
             session.state = STATE_REMEDIATION
             self._trace(
@@ -243,11 +261,13 @@ class StudySessionService:
                 state_after=STATE_AWAITING_ANSWER,
             )
             session.updated_at = _now()
+            self._persist(session)
             return self.to_response(session)
 
         session.remediation = _full_explanation(question_state.question, session.explanation)
         evaluation.reference_answer = question_state.question.answer or session.explanation
         session.last_evaluation = evaluation
+        self._record_attempt(session, question_state, normalized, evaluation)
         self._trace(
             session,
             step="remediation",
@@ -258,6 +278,7 @@ class StudySessionService:
             state_after=STATE_REMEDIATION,
         )
         self._advance_or_complete(session)
+        self._persist(session)
         return self.to_response(session)
 
     def to_response(self, session: _Session) -> StudySessionResponse:
@@ -299,6 +320,11 @@ class StudySessionService:
 
     def _require(self, session_id: str) -> _Session:
         session = self._sessions.get(session_id)
+        if session is None and self._session_repository is not None:
+            record = self._session_repository.get(session_id)
+            if record is not None:
+                session = deserialize_session(record)
+                self._sessions[session_id] = session
         if session is None:
             raise SessionNotFoundError(f"study session not found: {session_id}")
         return session
@@ -354,7 +380,8 @@ class StudySessionService:
 
     def _complete(self, session: _Session) -> None:
         session.score = _session_score(session)
-        session.review = self._log_review(session)
+        if session.review is None:
+            session.review = self._log_review(session)
         session.state = STATE_COMPLETED
         session.updated_at = _now()
         review_file = ""
@@ -379,7 +406,11 @@ class StudySessionService:
         if not source_file:
             source_file = f"knowledge/{session.course}/{session.topic}.md"
         return self._scheduler.log_review(
-            ReviewLogRequest(file=source_file, course=session.course)
+            ReviewLogRequest(
+                file=source_file,
+                course=session.course,
+                source_session_id=session.session_id,
+            )
         )
 
     def _trace(
@@ -402,6 +433,29 @@ class StudySessionService:
                 detail=detail,
                 state_after=state_after,
             )
+        )
+
+    def _persist(self, session: _Session) -> None:
+        if self._session_repository is None:
+            return
+        self._session_repository.save(serialize_session(session))
+
+    @staticmethod
+    def _record_attempt(
+        session: _Session,
+        question_state: _QuestionState,
+        normalized: str,
+        evaluation: AnswerEvaluation,
+    ) -> None:
+        session.answer_records.append(
+            {
+                "question_id": question_state.id,
+                "attempt_count": question_state.attempt_count,
+                "answer_normalized": normalized,
+                "correct": evaluation.correct,
+                "feedback": evaluation.feedback,
+                "created_at": _now(),
+            }
         )
 
     @staticmethod
@@ -532,3 +586,68 @@ def _coverage(user: str, reference: str) -> float:
 
 def _now() -> str:
     return datetime.now().isoformat(timespec="seconds")
+
+def serialize_session(session: _Session) -> dict[str, Any]:
+    return {
+        "session_id": session.session_id,
+        "course": session.course,
+        "topic": session.topic,
+        "state": session.state,
+        "explanation": session.explanation,
+        "sources": [item.model_dump() for item in session.sources],
+        "questions": [
+            {
+                "id": item.id,
+                "question": item.question.model_dump(),
+                "attempt_count": item.attempt_count,
+                "correct": item.correct,
+            }
+            for item in session.questions
+        ],
+        "current_index": session.current_index,
+        "score": session.score,
+        "last_evaluation": None
+        if session.last_evaluation is None
+        else session.last_evaluation.model_dump(),
+        "remediation": session.remediation,
+        "review": session.review,
+        "tool_trace": [item.model_dump() for item in session.tool_trace],
+        "created_at": session.created_at,
+        "updated_at": session.updated_at,
+        "last_answer_normalized": session.last_answer_normalized,
+        "answer_records": list(session.answer_records),
+    }
+
+
+def deserialize_session(record: dict[str, Any]) -> _Session:
+    questions = [
+        _QuestionState(
+            id=item["id"],
+            question=QuizQuestion.model_validate(item["question"]),
+            attempt_count=int(item.get("attempt_count", 0)),
+            correct=item.get("correct"),
+        )
+        for item in record.get("questions", [])
+    ]
+    last_evaluation = record.get("last_evaluation")
+    return _Session(
+        session_id=record["session_id"],
+        course=record.get("course", ""),
+        topic=record.get("topic", ""),
+        state=record.get("state", STATE_CREATED),
+        explanation=record.get("explanation", ""),
+        sources=[RetrievalChunk.model_validate(item) for item in record.get("sources", [])],
+        questions=questions,
+        current_index=int(record.get("current_index", 0)),
+        score=record.get("score"),
+        last_evaluation=None
+        if last_evaluation is None
+        else AnswerEvaluation.model_validate(last_evaluation),
+        remediation=record.get("remediation", ""),
+        review=record.get("review"),
+        tool_trace=[ToolTraceStep.model_validate(item) for item in record.get("tool_trace", [])],
+        created_at=record.get("created_at", ""),
+        updated_at=record.get("updated_at", ""),
+        last_answer_normalized=record.get("last_answer_normalized", ""),
+        answer_records=list(record.get("answer_records", [])),
+    )
