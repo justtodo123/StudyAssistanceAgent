@@ -2,7 +2,7 @@
 
 > 版本：v1.0
 > 制定日期：2026-08-18
-> 当前状态：M3b 实现完成，待人工验收合并
+> 当前状态：M3c 实现完成，待人工验收合并
 > 适用范围：StudyAssistanceAgent 的 M3a～M3d 工程质量工作
 
 ## 1. 计划定位
@@ -184,13 +184,13 @@ docs(platform): document observability fields
 
 ### 工作项
 
-- [ ] 创建 `knowledge/interview/README.md`，说明目录结构、主题导航和写作规范。
-- [ ] 每条记录包含规范 frontmatter：`title`、`course`、`tags`、`difficulty`、`updated`。
-- [ ] 每条面经尽量包含问题、回答要点、项目结合点和可继续追问方向。
-- [ ] 覆盖 OS、DS、CO 三门课程，并覆盖 RAG/Agent 项目追问。
-- [ ] 验证面经能进入索引、搜索结果和 QA 来源。
-- [ ] 不复制外部原始资料，只保留必要的提炼内容和引用路径。
-- [ ] 同步更新 `knowledge/README.md`、根 README 和必要的面试文档。
+- [x] 创建 `knowledge/interview/README.md`，说明目录结构、主题导航和写作规范。
+- [x] 每条记录包含规范 frontmatter：`title`、`course`、`tags`、`difficulty`、`updated`。
+- [x] 每条面经尽量包含问题、回答要点、项目结合点和可继续追问方向。
+- [x] 覆盖 OS、DS、CO 三门课程，并覆盖 RAG/Agent 项目追问。
+- [x] 验证面经能进入索引、搜索结果和 QA 来源。
+- [x] 不复制外部原始资料，只保留必要的提炼内容和引用路径。
+- [x] 同步更新 `knowledge/README.md`、根 README 和必要的面试文档。
 
 ### 建议提交拆分
 
@@ -202,11 +202,11 @@ test(interview): validate interview bank coverage
 
 ### 验收门禁
 
-- [ ] `knowledge/interview/` 至少 50 条非二进制 Markdown 条目。
-- [ ] M3c 10 项测试全部通过，不再条件跳过。
-- [ ] OS、DS、CO 三门课程均有面经覆盖。
-- [ ] 面经可以通过搜索召回，并在 QA 响应中作为来源出现。
-- [ ] 课程 README、知识库总 README、根目录导航保持一致。
+- [x] `knowledge/interview/` 至少 50 条非二进制 Markdown 条目。
+- [x] M3c 10 项测试全部通过，不再条件跳过。
+- [x] OS、DS、CO 三门课程均有面经覆盖。
+- [x] 面经可以通过搜索召回，并在 QA 响应中作为来源出现。
+- [x] 课程 README、知识库总 README、根目录导航保持一致。
 
 ### 阶段四：M3d 文档闭环与最终回归
 
