@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-18（M0-M2、M3a、M3b、M3c 已完成；M3d 待推进）
+> 起始日期：2026-08-17 · 更新：2026-08-18（M0-M2、M3a、M3b、M3c、M3d 已完成）
 
 ## 一、测试策略总览
 
@@ -73,11 +73,11 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/` | 90 项 | 90 passed | 阶段测试 + 回归套件 |
+| 根级 `tests/` | 90 项 | 90 passed | 阶段测试 + 回归套件（M0_M2 18、M3a 22、M3b 13、M3c 10、M3d 6、regression 21） |
 | `platform/tests/` | 40 项 | 40 passed | 原始平台冒烟/功能测试 |
-| M3c 验收门禁 | 124 项 | 124 passed | M0_M2（18）+ M3a（22）+ M3b（13）+ M3c（10）+ regression（21）+ 平台测试（40） |
+| M3 验收门禁 | 130 项 | 130 passed | 根级测试 90 项 + 平台原始测试 40 项；包含 M3d 文档检查 |
 
-M3c 的 10 项测试已启用并全部通过。受限 Windows 环境若默认临时目录不可写，可使用 `pytest --basetemp=.tmp-test`。
+M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。受限 Windows 环境若默认临时目录不可写，可使用工作区内的 `pytest --basetemp=.tmp-test\...`。
 
 ### 阶段 0：基线建立（M0-M2 回归）
 
@@ -199,7 +199,7 @@ pytest tests/M0_M2/ -v         # 基线回归
 | 测试文件 | 测试项 | 验证点 |
 |----------|--------|--------|
 | `test_interview_bank.py` | 条目数量 | `knowledge/interview/` 下条目 ≥50（含子目录） |
-| `test_interview_bank.py` | frontmatter 完整 | 每条面经含 `title`、`course`、`tags`、`difficulty`、`type: interview` |
+| `test_interview_bank.py` | frontmatter 完整 | 每条面经含 `title`、`course`、`tags`、`difficulty`；面经统一使用 `course: interview`，课程分类由目录和 tags 表示 |
 | `test_interview_bank.py` | 知识点覆盖 | 三门主课（os/ds/co）各有 ≥10 条面经 |
 | `test_interview_bank.py` | 检索集成 | 面经条目可被 RAG 检索到（`search("面试 进程")` 命中面经） |
 | `test_interview_bank.py` | 格式一致 | 面经遵循 `knowledge/README.md` 写作规范 |
@@ -214,11 +214,11 @@ pytest tests/M0_M2/ -v         # 基线回归
 
 ---
 
-### 阶段 4：M3d — 方法论沉淀（文档检查已具备，方法论沉淀未完成）
+### 阶段 4：M3d — 文档闭环与最终回归（已完成）
 
-**对应开发任务**：复习笔记规范复盘、PLAN 裁剪
+**对应开发任务**：统一项目状态、文档导航、测试统计和 M3 退出条件；不在本阶段新增课程条目。
 
-**测试时间**：M3d 开发完成后
+**测试时间**：M3d 文档变更完成后；6 项文档完整性测试已通过
 
 #### 4.1 业务需求验证
 

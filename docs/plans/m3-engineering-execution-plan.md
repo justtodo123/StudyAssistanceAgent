@@ -2,7 +2,8 @@
 
 > 版本：v1.0
 > 制定日期：2026-08-18
-> 当前状态：M3c 实现完成，待人工验收合并
+> 最后更新：2026-08-18
+> 当前状态：M3d 文档收口完成，待人工审查与合并
 > 适用范围：StudyAssistanceAgent 的 M3a～M3d 工程质量工作
 
 ## 1. 计划定位
@@ -25,7 +26,7 @@
 | `tests/TEST_PLAN.md` | 阶段测试隔离、fixture 和回归测试规则 |
 | `docs/standards/git-conventions.md` | 分支、提交、合并和提交信息规范 |
 
-本计划的核心原则是：**先收口已有 M3a WIP，再逐阶段推进 M3b、M3c、M3d；每一阶段独立分支、独立验收、人工合并，不在 `master` 上直接提交功能代码。**
+本计划的核心原则是：**每一阶段独立分支、独立验收、人工合并；M3a、M3b、M3c 已完成，当前仅收口 M3d 文档，不在 `master` 上直接提交功能代码。**
 
 ## 2. 当前基线（2026-08-18）
 
@@ -34,8 +35,9 @@
 - M1 已完成：OS 15 篇、DS 10 篇、CO 10 篇，共 35 篇课程条目。
 - M1 评测集共 75 题，三门课程 Recall@3 均达到当前基线要求。
 - M2 已完成：复习计划、测验生成、复习排程、多轮工具编排。
-- M3a 实现已经存在于当前工作区，但尚未形成正式提交和合并记录。
-- `knowledge/interview/` 当前不存在，M3c 面经库尚未开始。
+- M3a 已通过阶段验收并已合并到当前 `master`，保留 SQLite 持久化后端、linear 回退后端和 BM25 降级路径。
+- M3b 已完成可观测性、结构化日志、健康检查和缓存指标，M3c 已完成 51 条面经库并接入索引、搜索和 QA 来源。
+- 当前分支 `docs/m3d-project-closure` 基于 M3c 合并后的 `master` 创建，工作区只包含计划中的文档收口变更。
 
 ### 2.2 测试基线
 
@@ -45,18 +47,18 @@
 | --- | --- |
 | `tests/M0_M2/` | 18 passed |
 | `tests/M3a/` | 22 passed |
-| `tests/M3b/` | 11 passed，1 skipped；部分断言仍是占位断言 |
-| `tests/M3c/` | 10 skipped；原因是面经目录不存在 |
+| `tests/M3b/` | 13 passed |
+| `tests/M3c/` | 10 passed |
 | `tests/M3d/` | 6 passed |
 | `tests/regression/` | 21 passed |
 | `platform/tests/` | 40 passed |
 
-由于本机 pytest 默认临时目录存在权限问题，后续验证统一允许使用工作区临时目录：
+当前验证使用工作区临时目录，避免 Windows 受限环境下 pytest 默认临时目录权限问题：
 
 ```powershell
 $py = ".\\platform\\.venv\\Scripts\\python.exe"
 $base = ".\\.tmp-test\\m3"
-& $py -m pytest tests/M3a/ -q --basetemp "$base\\m3a"
+& $py -m pytest tests/M3d/ -q --basetemp "$base\\m3d"
 & $py -m pytest tests/regression/ -q --basetemp "$base\\regression"
 ```
 
@@ -83,21 +85,21 @@ $base = ".\\.tmp-test\\m3"
 
 ### 阶段一：M3a 向量存储迁移收口
 
-**目标**：将当前未提交的 SQLite 向量存储实现整理为正式功能，并保留线性内存后端和 BM25 降级路径。
+**目标**：将 SQLite 向量存储实现整理为正式功能，并保留线性内存后端和 BM25 降级路径。（已完成）
 
 **建议分支**：`feature/m3a-vector-store`
 
-**当前特殊处理**：当前工作区已经在 `master` 上存在 M3a 未提交改动。不得在 `master` 上提交这些功能改动。先审查 `git diff`，再把现有 WIP 迁移到 `feature/m3a-vector-store`；
-迁移后应确认 `master` 不再承载该 WIP。
+**阶段结果**：M3a WIP 已迁移到 `feature/m3a-vector-store`，完成阶段验收并合并到当前 `master`；以下工作项和门禁均已完成。
+
 
 ### 工作项
 
-- [ ] 审查 `platform/app/vector_store.py` 的协议、SQLite 实现、线性实现和迁移逻辑。
-- [ ] 删除 `platform/app/retrieval.py` 中的无用变量，修复配置注释乱码。
-- [ ] 确认 `SA_VECTOR_STORE`、`SA_VECTOR_STORE_PATH` 在根目录和 `platform/` 启动方式下行为一致。
-- [ ] 检查空索引、重复 upsert、内容变化、模型变化、维度不一致和重启恢复。
-- [ ] 保持 sentence-transformers 不可用时的 BM25 fallback。
-- [ ] 将代码、测试、配置和文档拆成可读的原子提交。
+- [x] 审查 `platform/app/vector_store.py` 的协议、SQLite 实现、线性实现和迁移逻辑。
+- [x] 删除 `platform/app/retrieval.py` 中的无用变量，修复配置注释乱码。
+- [x] 确认 `SA_VECTOR_STORE`、`SA_VECTOR_STORE_PATH` 在根目录和 `platform/` 启动方式下行为一致。
+- [x] 检查空索引、重复 upsert、内容变化、模型变化、维度不一致和重启恢复。
+- [x] 保持 sentence-transformers 不可用时的 BM25 fallback。
+- [x] 将代码、测试、配置和文档拆成可读的原子提交。
 
 ### 建议提交拆分
 
@@ -109,13 +111,13 @@ docs(platform): document vector store configuration
 
 ### 验收门禁
 
-- [ ] `tests/M3a/`：22 项通过。
-- [ ] `tests/M0_M2/`：18 项通过。
-- [ ] `tests/regression/`：21 项通过。
-- [ ] `platform/tests/`：40 项通过。
-- [ ] `git diff --check` 和 Python 编译检查通过。
-- [ ] `README.md`、`platform/README.md`、`docs/PLAN.md` 已反映 M3a 的真实状态。
-- [ ] 人工检查 SQLite 文件、缓存、`.venv` 未进入 Git。
+- [x] `tests/M3a/`：22 项通过。
+- [x] `tests/M0_M2/`：18 项通过。
+- [x] `tests/regression/`：21 项通过。
+- [x] `platform/tests/`：40 项通过。
+- [x] `git diff --check` 和 Python 编译检查通过。
+- [x] `README.md`、`platform/README.md`、`docs/PLAN.md` 已反映 M3a 的真实状态。
+- [x] 人工检查 SQLite 文件、缓存、`.venv` 未进入 Git。
 
 ### 合并方式
 
@@ -125,7 +127,7 @@ git pull --ff-only origin master
 git merge --no-ff feature/m3a-vector-store -m "merge: complete M3a vector store migration"
 ```
 
-合并前必须由人工确认测试结果；合并后再开始 M3b 分支。
+M3a 合并前已由人工确认测试结果；合并后进入 M3b 分支。
 
 ### 阶段二：M3b 可观测性落地
 
@@ -218,21 +220,21 @@ test(interview): validate interview bank coverage
 
 ### 工作项
 
-- [ ] 修订 `docs/PLAN.md`，准确标记 M3a、M3b、M3c、M3d 状态。
-- [ ] 更新根 README 的当前状态、功能表、目录树和测试统计。
-- [ ] 更新 `platform/README.md` 的配置、健康检查和可观测性说明。
-- [ ] 更新 `docs/plans/README.md` 和 `docs/README.md` 的文档导航。
-- [ ] 检查所有内部 Markdown 链接和课程导航。
-- [ ] 重新确认 M3 退出条件，尤其是“三门课程各 20 篇”与当前 15/10/10 条目的差距。
-- [ ] 如果仍保留“三门课程各 20 篇”作为退出条件，另开独立知识库分支补齐，不在文档中静默降低标准。
+- [x] 修订 `docs/PLAN.md`，准确标记 M3a、M3b、M3c、M3d 状态。
+- [x] 更新根 README 的当前状态、功能表、目录树和测试统计。
+- [x] 更新 `platform/README.md` 的配置、健康检查和可观测性说明。
+- [x] 更新 `docs/plans/README.md` 和 `docs/README.md` 的文档导航。
+- [x] 检查 M3d 覆盖的根 README、知识库导航、PLAN 关键引用和课程导航。原有模板/未来课程占位链接不在本阶段扩大范围。
+- [x] 重新确认 M3 退出条件：面经 ≥50、评测闭环和面试追问材料已满足；三门课程各 ≥20 篇尚未满足，当前为 OS 15 / DS 10 / CO 10。
+- [x] 保留“三门课程各 ≥20 篇”长期标准，并明确课程条目补齐需另开独立知识库阶段。
 
 ### 验收门禁
 
-- [ ] `tests/M0_M2/`、`tests/M3a/`、`tests/M3b/`、`tests/M3c/`、`tests/M3d/` 全部通过。
-- [ ] `tests/regression/` 和 `platform/tests/` 全部通过。
-- [ ] 根 README、`docs/PLAN.md`、各级 README 的状态和数量一致。
-- [ ] M3 退出条件有明确的“已满足/未满足”结论。
-- [ ] `git diff --check` 通过，工作区只保留计划中明确的文档变更。
+- [x] `tests/M0_M2/`、`tests/M3a/`、`tests/M3b/`、`tests/M3c/`、`tests/M3d/` 全部通过。
+- [x] `tests/regression/` 和 `platform/tests/` 全部通过。
+- [x] 根 README、`docs/PLAN.md`、各级 README 的状态和数量一致。
+- [x] M3 退出条件已明确记录为“部分满足”：面经/评测/追问材料满足，三门课程各 ≥20 篇未满足。
+- [x] `git diff --check` 通过，工作区只保留计划中明确的文档变更。
 
 ## 5. Git 分支与提交规范
 
@@ -245,33 +247,19 @@ test(interview): validate interview bank coverage
 - 阶段完成后使用 `git merge --no-ff`，保留阶段历史。
 - 未经人工确认，不自动删除分支、不自动 push、不直接合并远程。
 
-### 5.2 当前 M3a WIP 的迁移步骤
+### 5.2 M3a 迁移记录（已完成）
 
-当前工作区不是干净的 `master`，因此严格执行以下顺序：
+M3a 阶段曾从 `master` 工作区迁移未提交 WIP 到 `feature/m3a-vector-store`，随后按代码、测试和文档拆分原子提交，并由人工完成合并。当前 `master` 已包含 M3a 合并结果，本分支不再重复执行迁移动作。
 
-```powershell
-# 1. 先确认改动只属于 M3a
-git status --short
-git diff --stat
-git diff -- platform/app/vector_store.py platform/app/retrieval.py
+阶段提交记录：
 
-# 2. 将现有 WIP 迁移到阶段分支，不在 master 上提交
-git switch -c feature/m3a-vector-store
-
-# 3. 在阶段分支上按文件范围拆分提交
-git status --short
-git add platform/app/vector_store.py platform/app/retrieval.py platform/app/config.py platform/.env.example
-git commit -m "feat(platform): add persistent sqlite vector store"
-
-# 测试和文档分别提交
-git add tests/M3a/
-git commit -m "test(platform): cover vector store migration cases"
-git add README.md platform/README.md docs/PLAN.md
-# 根据最终改动范围选择 docs scope
-git commit -m "docs(platform): document vector store configuration"
+```text
+feat(platform): add persistent sqlite vector store
+test(platform): cover vector store migration cases
+docs(platform): document vector store configuration
 ```
 
-如果审查发现 WIP 混入了无关改动，应先使用 `git restore` 或交互式暂存拆分；不得用 `git reset --hard` 粗暴丢弃用户改动。
+后续阶段继续遵循：阶段分支完成测试和文档收口后，等待人工确认并以 `--no-ff` 合并；不自动 push、删除分支或改写历史。
 
 ### 5.3 提交信息规则
 
@@ -311,18 +299,18 @@ git diff --check
 & $py -m compileall -q platform/app
 ```
 
-M3c 之前，允许测试因 `knowledge/interview/` 不存在而跳过；M3c 合并后不再接受该跳过状态。M3b 合并前不接受仍依赖注释占位断言的“通过”。
+M3c 合并后，面经目录已存在，M3c 的 10 项测试必须实际执行并通过；M3b 的 13 项测试也已移除占位断言。
 
 ## 7. 风险与决策点
 
 | 风险/决策点 | 处理方式 |
 | --- | --- |
-| 当前 M3a WIP 位于 `master` 工作区 | 先迁移到 `feature/m3a-vector-store`，不在 `master` 提交功能 |
+| M3a WIP 曾位于 `master` 工作区 | 已在 M3a 阶段分支完成验收并合并，当前不再是未提交 WIP |
 | pytest 默认临时目录权限不足 | 使用工作区 `--basetemp`；记录为环境问题，不修改业务代码 |
 | 测试运行时间较长 | 先保证正确性；后续单独优化 fixture、索引初始化和缓存隔离 |
-| M3b 测试存在占位断言 | 补齐真实实现和断言后才算阶段完成 |
-| M3c 面经目录不存在 | 创建目录和导航后再取消条件跳过 |
-| M3 退出条件要求三门各 20 篇 | M3d 阶段明确是否补齐；不静默修改目标 |
+| M3b 测试曾存在占位断言 | 已补齐真实实现和断言，13 项测试通过 |
+| M3c 面经目录曾不存在 | 已创建 51 条面经并接入索引、搜索和 QA，10 项测试通过 |
+| M3 退出条件要求三门各 20 篇 | M3d 明确保留长期标准；当前 OS 15 / DS 10 / CO 10，后续另开知识库阶段补齐 |
 | 代码、知识库和文档容易混合冲突 | 按阶段分支和原子提交拆分，合并前更新各级 README |
 
 ## 8. 当前执行顺序
@@ -337,4 +325,4 @@ M3c 面经库建设并合并
 M3d 文档闭环、退出条件确认与最终回归
 ```
 
-当前第一项动作：**不要在 `master` 上提交现有 M3a WIP；先将其迁移到 `feature/m3a-vector-store`，然后完成 M3a 代码审查和测试验收。**
+当前执行结论：**M3a、M3b、M3c 已完成并合并；M3d 文档闭环已完成。下一步等待人工审查后将 `docs/m3d-project-closure` 以 `--no-ff` 合并，不自动 push 或删除分支。**
