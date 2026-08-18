@@ -7,9 +7,13 @@
 
 from __future__ import annotations
 
+import time
+from collections import OrderedDict
+
 from . import config
 from .bm25 import Bm25Search
 from .models import RetrievalChunk
+from .observability import log_operation, metrics
 from .vector_store import LocalVectorStore, SqliteVectorStore, VectorStore
 
 RRF_K = 60
@@ -53,17 +57,48 @@ class MultiRecallService:
 
     def __init__(self) -> None:
         self._chunks: list[RetrievalChunk] | None = None
+        self._result_cache: OrderedDict[
+            tuple[str, int, float, str | None], tuple[list[RetrievalChunk], str]
+        ] = OrderedDict()
+        self._cache_capacity = 128
 
-    def recall(self, question: str, top_k: int = 5, threshold: float = 0.0,
-               course: str | None = None) -> tuple[list[RetrievalChunk], str]:
-        """返回 (融合结果, 生效模式)。mode 用于日志/响应标注：hybrid / keyword-only。"""
+    @staticmethod
+    def _copy_results(results: list[RetrievalChunk]) -> list[RetrievalChunk]:
+        return [chunk.model_copy(deep=True) for chunk in results]
+
+    def recall(
+        self,
+        question: str,
+        top_k: int = 5,
+        threshold: float = 0.0,
+        course: str | None = None,
+    ) -> tuple[list[RetrievalChunk], str]:
+        """Return fused results and the active retrieval mode."""
+        started = time.perf_counter()
+        cache_key = (question, top_k, threshold, course)
+        cached = self._result_cache.get(cache_key)
+        if cached is not None:
+            results, mode = cached
+            self._result_cache.move_to_end(cache_key)
+            results = self._copy_results(results)
+            duration_ms = (time.perf_counter() - started) * 1000
+            metrics.record("search", duration_ms, len(results), cache_hit=True)
+            log_operation(
+                "search",
+                duration_ms=duration_ms,
+                result_count=len(results),
+                course=course,
+                mode=mode,
+                cache_hit=True,
+            )
+            return results, mode
+
         self._chunks = self._chunks or self._load()
 
-        # BM25_POOL=0 表示全库检索；>0 时仅检索前 N 片（参考项目大语料场景的优化开关）
+        # BM25_POOL=0 means search the complete corpus.
         pool = self._chunks if config.BM25_POOL <= 0 else self._chunks[: config.BM25_POOL]
         routes: list[list[RetrievalChunk]] = []
 
-        # 路 1：向量（可选）
         vector_store = _VectorHolder.get()
         if vector_store is not None:
             try:
@@ -71,9 +106,8 @@ class MultiRecallService:
                     vector_store.replace_all(self._chunks)
                 routes.append(vector_store.search(question, top_k=20, threshold=threshold))
             except Exception:
-                routes.append([])  # 向量路失败不阻断
+                routes.append([])
 
-        # 路 2：BM25
         try:
             bm25 = Bm25Search(pool)
             routes.append(bm25.search(question, top_k=20))
@@ -81,16 +115,30 @@ class MultiRecallService:
             routes.append([])
 
         if not any(routes):
-            return [], "keyword-only"
+            results, mode = [], "keyword-only"
+        else:
+            mode = "hybrid" if len(routes) > 1 and all(routes) else "keyword-only"
+            results = self._rrf_fuse(routes, top_k)
+            if course:
+                results = [result for result in results if result.course == course]
 
-        mode = "hybrid" if len(routes) > 1 and all(routes) else "keyword-only"
-        fused = self._rrf_fuse(routes, top_k)
+        stored = self._copy_results(results)
+        self._result_cache[cache_key] = (stored, mode)
+        self._result_cache.move_to_end(cache_key)
+        while len(self._result_cache) > self._cache_capacity:
+            self._result_cache.popitem(last=False)
 
-        # 课程过滤：在融合后过滤，避免向量单例缓存导致过滤失效
-        if course:
-            fused = [r for r in fused if r.course == course]
-
-        return fused, mode
+        duration_ms = (time.perf_counter() - started) * 1000
+        metrics.record("search", duration_ms, len(results), cache_hit=False)
+        log_operation(
+            "search",
+            duration_ms=duration_ms,
+            result_count=len(results),
+            course=course,
+            mode=mode,
+            cache_hit=False,
+        )
+        return self._copy_results(results), mode
 
     def _load(self) -> list[RetrievalChunk]:
         from .knowledge_index import build_index_cached

@@ -45,3 +45,11 @@ def log_records():
     logger.addHandler(handler)
     yield records
     logger.removeHandler(handler)
+
+
+@pytest.fixture(autouse=True)
+def disable_optional_vector_encoder(monkeypatch):
+    """Keep observability tests deterministic when the optional model is uncached."""
+    from app import config
+
+    monkeypatch.setattr(config, "VECTOR_ENABLED", False)

@@ -107,6 +107,7 @@ def build_index_cached(root: Path | None = None) -> list[RetrievalChunk]:
     """带 JSON 缓存的索引构建：md 时间戳未变则读缓存，避免重复扫描。
     缓存写入数据目录 .cache/（已在 .gitignore 忽略）。"""
     from . import config
+    from .observability import metrics
 
     root = root or config.KNOWLEDGE_ROOT
     cache_dir = Path(__file__).resolve().parents[1] / ".cache"
@@ -119,11 +120,14 @@ def build_index_cached(root: Path | None = None) -> list[RetrievalChunk]:
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
             if meta.get("latest_mtime", -1) == _latest_mtime(root):
                 data = json.loads(cache_path.read_text(encoding="utf-8"))
-                return [RetrievalChunk(**c) for c in data]
+                chunks = [RetrievalChunk(**c) for c in data]
+                metrics.record_index_cache(hit=True, index_size=len(chunks))
+                return chunks
         except Exception:
             pass  # 缓存损坏则重建
 
     chunks = build_index(root)
+    metrics.record_index_cache(hit=False, index_size=len(chunks))
     cache_path.write_text(
         json.dumps([c.model_dump() for c in chunks], ensure_ascii=False, indent=2),
         encoding="utf-8",

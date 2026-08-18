@@ -35,12 +35,25 @@ _review_scheduler = ReviewSchedulerService()
 
 @app.get("/health")
 def health() -> dict[str, Any]:
-    from .vector_store import LocalVectorStore
+    from .knowledge_index import build_index_cached
+    from .observability import metrics
+    from .vector_store import LocalVectorStore, SqliteVectorStore
 
+    if config.VECTOR_STORE == "sqlite":
+        vector_engine = "sqlite" if SqliteVectorStore.available() else "sqlite-unavailable"
+    else:
+        vector_engine = "linear" if LocalVectorStore.available() else "linear-unavailable"
+
+    chunks = build_index_cached()
+    metrics.set_index_size(len(chunks))
+    snapshot = metrics.snapshot()
     return {
         "status": "UP",
-        "vector_engine": "local" if LocalVectorStore.available() else "not-installed",
+        "vector_engine": vector_engine,
         "knowledge_root": str(config.KNOWLEDGE_ROOT),
+        "index_size": len(chunks),
+        "cache_status": snapshot["cache_status"],
+        "avg_latency_ms": snapshot["avg_latency_ms"],
         "llm_configured": bool(config.LLM_API_KEY),
     }
 
