@@ -9,6 +9,7 @@ docs/
 ├── README.md              # 本导航文件
 ├── PLAN.md                # ★ 项目计划与路线图（里程碑、技术选型、风险）
 ├── baselines.md            # RAG 评测基线记录（keyword-only vs hybrid 对比）
+├── demo.md                 # 离线演示手册（一键启动 + 学习闭环）
 ├── reference/             # 外部参考资料索引
 │   ├── README.md          # 索引总览与维护规则
 │   ├── _template.md       # 新课程索引模板
@@ -26,6 +27,10 @@ docs/
 
 ## 各目录说明
 
+### demo.md — 离线演示手册
+
+一键启动、工作台学习闭环和真实工具调用链。详见 [demo.md](demo.md)。
+
 ### PLAN.md — 项目计划
 
 核心文件。定义项目双目标（自学价值 + 面试价值）、技术选型、里程碑（M0~M5）、风险与缓解。
@@ -38,7 +43,7 @@ docs/
 - M4 知识库规模计划见
   [plans/m4-knowledge-base-scale-plan.md](plans/m4-knowledge-base-scale-plan.md)，课程条目已补齐，实现提交 `106164d` 已进入 `master`。
 - M5 会话化与交付计划见
-  [plans/m5-agent-session-delivery-plan.md](plans/m5-agent-session-delivery-plan.md)，M5a~M5d 已完成，下一步 M5e 可复现交付。
+  [plans/m5-agent-session-delivery-plan.md](plans/m5-agent-session-delivery-plan.md)，M5a~M5e 已完成。
 
 ### reference/ — 外部资料索引
 
@@ -75,4 +80,4 @@ docs/
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-18（M5d 最小学习工作台完成）· 维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-08-18（M5e 可复现交付完成）· 维护：随项目演进同步更新*

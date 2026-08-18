@@ -8,6 +8,7 @@
 tools/
 ├── README.md              # 本文件（工具文档）
 ├── run_evaluation.py      # ★ 统一 RAG 评测入口
+├── start_local.py         # 一键启动工作台并做 /health 检查
 └── evaluations/           # 课程评测集（每课一个 JSON 文件）
     ├── os.json            # 操作系统 38 题
     ├── ds.json            # 数据结构 28 题
@@ -35,6 +36,9 @@ python tools/run_evaluation.py --report reports/eval.json
 
 # 显式启用向量/hybrid 评测
 python tools/run_evaluation.py --use-vector
+
+# 评测冒烟（CI 使用，每课只取少量已标注题）
+python tools/run_evaluation.py --smoke
 
 # 使用 platform 虚拟环境
 ./platform/.venv/Scripts/python tools/run_evaluation.py
@@ -86,6 +90,17 @@ python tools/run_evaluation.py --use-vector
 
 > 新增课程评测集：新建 `evaluations/{course}.json`，格式同上。
 
+## start_local.py — 一键启动
+
+```bash
+python tools/start_local.py          # 离线启动并等待 /health
+python tools/start_local.py --check  # 只检查健康状态
+python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
+```
+
+默认设置 `SA_USE_VECTOR=false`、`HF_HUB_OFFLINE=1`，不要求 LLM key。演示步骤见 [docs/demo.md](../docs/demo.md)。
+
 ---
 
-*创建：2026-08-11 · 更新：2026-08-18（M5a 统一 90 题离线评测入口）· 维护：随新增工具脚本与评测集同步更新*
+*创建：2026-08-11 · 更新：2026-08-18（M5e 一键启动与评测冒烟）· 维护：随新增工具脚本与评测集同步更新*
+

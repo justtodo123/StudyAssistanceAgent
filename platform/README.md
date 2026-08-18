@@ -294,7 +294,46 @@ Content-Type: application/json
 
 **核心原则：保证总是有输出。**
 
+## 可选 BGE 模型（非基础验收前提）
+
+默认演示和 CI 使用 `SA_USE_VECTOR=false`，不访问 Hugging Face，不加载 BGE。
+
+| 项 | 说明 |
+| --- | --- |
+| 模型名 | `BAAI/bge-small-zh-v1.5`（`SA_EMBEDDING_MODEL`） |
+| Hugging Face 缓存 | 默认 `~/.cache/huggingface`，可用 `HF_HOME` 覆盖 |
+| 项目向量库 | `platform/.cache/vector_store.sqlite3`（`SA_VECTOR_STORE_PATH`） |
+
+预下载（只需一次，需要网络）：
+
+```bash
+./.venv/Scripts/python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-zh-v1.5')"
+```
+
+离线启动：
+
+```bash
+# 无模型：纯 BM25
+set HF_HUB_OFFLINE=1
+python tools/start_local.py
+
+# 已有缓存：允许向量路但禁止再下载
+set HF_HUB_OFFLINE=1
+set TRANSFORMERS_OFFLINE=1
+python tools/start_local.py --use-vector
+```
+
+
 ## 运行
+
+仓库根目录一条命令启动（默认离线 BM25，不下载模型、不要求 LLM key）：
+
+```bash
+python tools/start_local.py          # 启动并等待 /health
+python tools/start_local.py --check  # 只做健康检查
+```
+
+成功后打开 `http://127.0.0.1:8000/`。演示步骤见 [docs/demo.md](../docs/demo.md)。
 
 ```bash
 # 安装环境
@@ -313,7 +352,7 @@ python -m venv .venv
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-18（M5d 最小学习工作台完成）· 维护：随 API 变更同步更新*
+*创建：2026-08-11 · 更新：2026-08-18（M5e 一键启动与离线模型说明完成）· 维护：随 API 变更同步更新*
 
 
 

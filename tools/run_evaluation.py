@@ -16,6 +16,7 @@ Usage:
     python tools/run_evaluation.py --courses os,ds -k 1,3,5
     python tools/run_evaluation.py --test-set tools/evaluations/os.json
     python tools/run_evaluation.py --report reports/eval.json
+    python tools/run_evaluation.py --smoke
 """
 
 from __future__ import annotations
@@ -100,6 +101,17 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable optional vector/hybrid retrieval. Default is offline BM25.",
     )
+    parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help="Evaluate a small labeled subset per dataset for offline CI.",
+    )
+    parser.add_argument(
+        "--smoke-limit",
+        type=int,
+        default=2,
+        help="Labeled questions kept per dataset in --smoke mode. Default: 2",
+    )
     return parser
 
 
@@ -160,6 +172,20 @@ def load_test_set(path: Path) -> dict[str, list[str]]:
             raise ValueError(f"related files must be an array: {path}")
         loaded[str(question)] = related
     return loaded
+
+
+def limit_smoke_samples(test_set: dict[str, list[str]], limit: int) -> dict[str, list[str]]:
+    """Keep the first N labeled questions for a fast smoke run."""
+    if limit <= 0:
+        raise ValueError("smoke-limit must be a positive integer")
+    selected: dict[str, list[str]] = {}
+    for question, files in test_set.items():
+        if not files:
+            continue
+        selected[question] = files
+        if len(selected) >= limit:
+            break
+    return selected
 
 
 def resolve_datasets(
@@ -425,6 +451,8 @@ def run(
     observed_mode: str | None = None
     for spec in datasets_spec:
         test_set = load_test_set(Path(spec["path"]))
+        if getattr(args, "smoke", False):
+            test_set = limit_smoke_samples(test_set, args.smoke_limit)
         result = evaluate_test_set(test_set, top_ks, active_recall)
         if result["mode"]:
             observed_mode = result["mode"]

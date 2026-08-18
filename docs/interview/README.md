@@ -53,14 +53,35 @@
 ```
 **跑 `tools/run_evaluation.py`** 输出 Recall@k / Precision@k / F1 / 延迟 → 每次改索引/切块后看指标变化。面试时直接报数字：**「切片从整篇改为按小节切分后，Recall@3 从 62% 提到 79%」** —— 这就是数据驱动优化。
 
-## 六、常见追问 & 备好答案
+## 六、真实工具调用链（学习会话）
+
+核心演示不再只是 Skill 里手工串联服务，而是 `POST /api/v1/study-sessions` 留下的 `tool_trace`。
+一次答对闭环的真实步骤：
+
+```text
+create -> qa -> explain -> quiz -> evaluate -> review-log -> completed
+```
+
+| 步骤 | 服务 | 作用 |
+| --- | --- | --- |
+| `qa` | `QaService` | 检索知识片段并返回出处 |
+| `explain` | `StudySessionService` | 把检索结果收成讲解 |
+| `quiz` | `QuizService` | 出 1 至 2 道相关题 |
+| `evaluate` | `StudySessionService` | 确定性评估，不依赖 LLM |
+| `review-log` | `ReviewSchedulerService` | 写入间隔重复复习记录 |
+
+答错分支是 `evaluate -> remediation -> retry`；连续两次答错后结束并给出完整参考。
+工作台只渲染这些状态，不复制状态机。离线启动见 [docs/demo.md](../demo.md)。
+
+## 七、常见追问 & 备好答案
+
 
 - **「这项目和网上 RAG demo 有什么区别？」** → 多路召回 + RRF 不是单一向量检索；真实使用数据（真题/自己的笔记）；有评估闭环。
 - **「向量库为什么不用 Milvus / Chroma？」** → 个人规模（几百片）线性扫描足够，之后换弹性的接入即可，接口（vector_store.py）已抽象。
 - **「如何避免回答幻觉？」** → 勒令只基于检索片段、标注出处、无命中时明确说「知识库暂无」。
 - **「并发量表级？」** → 诚实：个人项目，但 FastAPI 异步 + 流式已具备；如要规模化再加缓存/分片（这反而是加分项——你知道边界）。
 
-## 七、给简历的一句话亮点（可替换用）
+## 八、给简历的一句话亮点（可替换用）
 
 > 「设计并实现个人学习 Agent：Markdown 课程知识库 → 多路召回检索（BGE 向量 + BM25 + RRF）→ FastAPI 带出处问答 + SSE 流式输出，含 RAG 效果评估闭环（Recall@k/延迟量化），支撑 OS 等课程复习与求职备战。」
 

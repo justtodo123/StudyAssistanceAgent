@@ -146,3 +146,27 @@ python tools/run_evaluation.py -k 1,3,5
 
 - 该数据用于验证 M3b 的可观测性和缓存行为，不代表所有机器或向量模式下的性能承诺。
 - 后续若启用本地 BGE 向量检索，应单独记录模型加载（cold）与模型已加载（warm）的数据。
+
+## 交付基线 v1 — 2026-08-18（M5e，离线 BM25）
+
+记录冷启动、热启动和一次完整学习会话，便于新环境对照。数字来自本机离线模式
+（`SA_USE_VECTOR=false`，未配置 LLM），不代表所有机器。
+
+| 场景 | 口径 | 延迟 | 说明 |
+| --- | --- | --- | --- |
+| 冷启动 | 首次 `GET /health`（含应用导入与索引加载） | 9.0 s | 无模型下载，无 LLM |
+| 热启动 | 再次 `GET /health` | 19.8 ms | 进程内缓存已热 |
+| 学习会话 | `POST /study-sessions` + `POST /answers` | 139.8 ms | 检索→讲解→出题→作答→评估 |
+
+### 本机实测（2026-08-18）
+
+| 场景 | 延迟 |
+| --- | --- |
+| 冷启动 | 9.0 s（导入 8967.5 ms + 首次健康检查 58.5 ms） |
+| 热启动 | 19.8 ms |
+| 学习会话 | 139.8 ms |
+
+- 启动命令：`python tools/start_local.py`
+- 健康检查：`python tools/start_local.py --check`
+- 评测冒烟：`python tools/run_evaluation.py --smoke`
+- 可选 BGE 不纳入本基线；启用向量后应单独记录模型加载时间。

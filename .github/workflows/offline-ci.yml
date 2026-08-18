@@ -1,0 +1,35 @@
+name: offline-ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    env:
+      SA_USE_VECTOR: "false"
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install offline runtime
+        run: |
+          python -m pip install -r platform/requirements.txt -r platform/requirements-dev.txt
+
+      - name: Run stage tests and regression
+        run: |
+          python -m pytest tests/M0_M2 tests/M3a tests/M3b tests/M3c tests/M3d tests/M4 tests/M5a tests/M5b tests/M5c tests/M5d tests/M5e tests/regression -q --tb=short -m "not slow"
+
+      - name: Run evaluation smoke
+        run: |
+          python tools/run_evaluation.py --smoke
