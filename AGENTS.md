@@ -12,7 +12,7 @@ knowledge/          # ★ 知识库（每门课程一个目录，含导航与条
 platform/           # Python 后端（FastAPI + 多路召回 RAG + 带出处问答）
   app/              #   应用代码（入口/检索/向量/问答/索引/模型/配置）
   tests/            #   检索链路冒烟测试（40 项）
-tests/              # ★ 迭代测试体系（阶段隔离架构，67 项）
+tests/              # ★ 迭代测试体系（阶段隔离架构，187 项）
   TEST_PLAN.md      #   测试计划文档
   conftest.py       #   跨阶段共享 fixtures
   M0_M2/            #   基线回归（18 项）
@@ -20,6 +20,8 @@ tests/              # ★ 迭代测试体系（阶段隔离架构，67 项）
   M3b/              #   可观测性测试
   M3c/              #   面经库测试
   M3d/              #   文档完整性测试
+  M4/               #   课程知识库规模测试
+  M5a/ ~ M5e/       #   评测、会话、持久化、工作台、离线交付
   regression/       #   跨阶段回归套件（21 项）
   utils/            #   测试工具函数
 tools/              # 辅助脚本（RAG 评测脚本 + 课程评测集 JSON）
@@ -54,7 +56,7 @@ python tools/start_local.py --check  # 只做健康检查
 迭代测试体系（项目根目录下）：
 
 ```bash
-.\platform\.venv\Scripts\python -m pytest tests/ -v              # 全部测试（67 项）
+.\platform\.venv\Scripts\python -m pytest tests/ -v              # 全部测试（187 项）
 .\platform\.venv\Scripts\python -m pytest tests\M0_M2\ -v       # 基线回归
 .\platform\.venv\Scripts\python -m pytest tests\regression\ -v  # 回归套件
 .\platform\.venv\Scripts\python -m pytest tests\ -m m3a          # 按阶段筛选（m3a/m3b/m3c/m3d/m4/m5a/m5b/m5c/m5d/m5e/slow）

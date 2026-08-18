@@ -6,7 +6,7 @@
 
 ## 一、项目定位（一句话）
 
-**「自己的课程学习+面试备战系统」**：Markdown 课程知识库（考点/面经/掌握度）→ 多路召回 RAG（本地 BGE 向量+BM25+RRF）→ FastAPI 轻量 Agent → 带出处问答 + 复习计划/测验。
+**「自己的课程学习+面试备战系统」**：Markdown 课程知识库（考点/面经/掌握度）→ 多路召回 RAG（本地 BGE 向量+BM25+RRF）→ FastAPI 学习会话 Agent → 带出处问答、测验、复习排程与最小工作台。
 
 ## 二、技术选型（已拍板）
 
@@ -17,17 +17,19 @@
 | 向量 | 本地 BGE（sentence-transformers），可选安装 | 离线、零 API 成本、隐私；未装时自动降级关键词 |
 | 检索 | BM25 + 向量多路召回 + RRF 融合 | 混合检索，鲁棒、无需调参 |
 | LLM | OpenAI 兼容接口（DeepSeek 等），可配 | 不配则降级为笔记摘要，保证总是有输出 |
-| 存储 | 无 DB，JSON 缓存索引 | 个人规模（几百片）足够，零运维 |
+| 存储 | 检索索引用 JSON 缓存；学习状态用 SQLite | 索引可重建；会话/复习需跨重启恢复 |
 
 **架构**（参考 `ai_agent_platform` 的 MultiRecall/RRF/LongContext 模式，做个人级瘦身）：
 
 ```
-提问 → MultiRecallService
-         ├─ 路1: LocalVectorStore(BGE 余弦近邻)
-         └─ 路2: Bm25Search(bigram 关键词)
-      → RRF 融合 → 结果(带 file 出处)
-      → QaService: LLM 生成(勒令带出处) 或 降级笔记摘要
-      → FastAPI /api/v1/{search,qa,qa/stream}
+提问 / 工作台 GET /
+  → MultiRecallService
+       ├─ 路1: LocalVectorStore(BGE，可选)
+       └─ 路2: Bm25Search(bigram 关键词)
+    → RRF 融合 → 带 file 出处
+    → QaService: LLM 生成或降级笔记摘要
+    → StudySessionService: QA → Quiz → 评估 → review-log
+    → SQLite learning_state + FastAPI /api/v1/{search,qa,study-sessions,...}
 ```
 
 ## 三、里程碑
@@ -95,14 +97,15 @@
 
 ### M5：学习 Agent 会话化与可交付演示（已完成）
 > **执行计划**：`docs/plans/m5-agent-session-delivery-plan.md`
-> **范围控制**：第一轮只执行 M5a 评测入口和 M5b 学习会话；持久化、工作台和 CI 不阻塞第一轮交付。
+> **收口**：Level 1（M5a/M5b）与 Level 2（M5c/M5d/M5e）均已完成；下一步是使用与面试彩排，不再扩功能。
 - ✅ M5a：统一三课 90 题离线评测入口，支持汇总指标和 JSON 报告（离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000）。
 - ✅ M5b：实现服务端学习会话状态机，编排 QA、Quiz、答案评估和 Review-log（`POST/GET /api/v1/study-sessions`）。
 - ✅ M5c：使用 SQLite 持久化会话、答题记录、掌握度和复习历史（`platform/.cache/learning_state.sqlite3`，兼容读取 `review_history.json`）。
 - ✅ M5d：提供最小学习工作台，完成讲解、作答、反馈和复习记录交互（`GET /`）。
 - ✅ M5e：增加离线 CI、一键启动、模型缓存说明和演示基线。
 - **Level 1 退出条件**：一条命令完成 90 题离线评测；一个 API 会话完成“检索→讲解→出题→作答→评估→记录复习”；无 LLM 和向量模型时仍可运行。
-- **完整退出条件**：会话可跨重启恢复；工作台可完成学习闭环；离线 CI 通过；现有阶段测试、回归和平台测试保持通过。
+- **完整退出条件**：✅ 会话可跨重启恢复；工作台可完成学习闭环；离线 CI 与一键启动已落地；阶段测试、回归和平台测试保持通过。
+- **收口结论**：M5 交付关闭。后续优先用工作台学习和按 `docs/demo.md` 彩排，不为展示再加前端框架或通用 Agent 运行时。
 
 ## 四、风险与缓解
 
@@ -120,7 +123,7 @@
 
 ---
 
-*创建：2026-08-10 · 版本：v1.7（截至 2026-08-18：M0~M4 与 M5a~M5e 已完成）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · 版本：v1.8（截至 2026-08-18：M0~M5 已收口）· 维护：每次会话开工查看本文档*
 
 
 
