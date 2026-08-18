@@ -31,7 +31,7 @@ docs/
 ### plans/ — 学习计划与项目工程执行计划
 
 - 个人复习计划由 `review-plan` Skill 或 API 生成。
-- 当前 M3 工程执行计划见 [plans/m3-engineering-execution-plan.md](plans/m3-engineering-execution-plan.md)，目前处于 M3d 文档收口完成、待人工合并状态。
+- 当前 M3 工程执行计划见 [plans/m3-engineering-execution-plan.md](plans/m3-engineering-execution-plan.md)，M3d 文档收口与最终回归已完成，并已于 2026-08-18 合并到 `master`。
 
 ### reference/ — 外部资料索引
 

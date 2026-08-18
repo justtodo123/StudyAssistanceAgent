@@ -72,9 +72,9 @@
 - ✅ 「多轮工具调用」演示：问知识点→查笔记→出题→断言掌握（Skill `study-assistant`，串联 QA+Quiz+Review-log，6 个集成测试）
 - **退出条件**：✅ ≥2 个学习辅助能力可在 API/skill 中演示（实际 4 个），能答「工具编排」追问。
 
-### M3：工程质量与沉淀（M3a/M3b/M3c 已完成，M3d 文档收口完成）
+### M3：工程质量与沉淀（M3a/M3b/M3c/M3d 均已完成）
 > **分支映射**：`feature/m3a-vector-store` → `feature/m3b-observability` → `feature/m3c-interview-bank` → `docs/m3d-project-closure`
-> **当前状态**：M3a 向量存储迁移、M3b 可观测性、M3c 面经库和 M3d 文档闭环均已完成；当前分支等待人工审查与合并。
+> **当前状态**：M3a 向量存储迁移、M3b 可观测性、M3c 面经库和 M3d 文档闭环均已完成；M3d 已于 2026-08-18 通过 `--no-ff` 合并到 `master`。
 - ✅ 可选：接入本地 SQLite 向量库，并保留线性后端与 BM25 降级路径
 - ✅ 观测/日志：检索/QA 延迟、进程内缓存指标、健康检查字段与敏感信息过滤
 - ✅ 面经库 `knowledge/interview/`：51 条，覆盖 OS/DS/CO/RAG/Agent/项目追问
