@@ -1,4 +1,4 @@
-# 知识库（knowledge/）
+﻿# 知识库（knowledge/）
 
 > 这是本项目**核心资产**：计算机课程的精炼笔记、例题、面经与索引，全部为 Markdown，随仓库版本化。
 
@@ -15,6 +15,13 @@ knowledge/
 ├── {course}/              # 每门课程一个目录（kebab-case，如 operating-system）
 │   ├── README.md          # 课程导航：课程简介、章节地图、外部资料索引指针
 │   └── *.md               # 主题条目，如 memory-management.md
+├── interview/             # 面经知识库（课程题 + RAG/Agent + 项目追问）
+│   ├── README.md          # 面经导航与写作规范
+│   ├── os/                # OS 面经
+│   ├── ds/                # DS 面经
+│   ├── co/                # CO 面经
+│   ├── rag-agent/         # RAG/Agent 工程面经
+│   └── project/           # 项目介绍与系统设计面经
 └── _templates/            # 条目模板（新建条目时复制）
 ```
 
@@ -30,7 +37,7 @@ knowledge/
 ```yaml
 ---
 title: 条目标题
-course: 课程简称（如 os, ds, co, db, network, ai, se）
+course: 课程简称（如 os, ds, co, interview, db, network, ai, se）
 tags: [topic1, topic2]
 difficulty: 入门 | 中等 | 进阶
 updated: 2026-08-10
@@ -61,3 +68,12 @@ source: 参考的外部资料路径或书目（可省略，指向 docs/reference
 | 操作系统 | os | [os/](os/README.md) | 15 | ✅ M1 首轮完成（概述→接口→进程→调度→同步→死锁→内存→段页式→虚存→文件→磁盘→I/O→安全→Linux 实例→期考复盘） |
 | 数据结构 | ds | [ds/](ds/README.md) | 10 | ✅ M1d 达标（绪论→线性表→栈队列→串数组广义表→树→图→查找→排序→堆与优先队列→真题复盘） |
 | 计算机组成原理 | co | [co/](co/README.md) | 10 | ✅ M1d 达标（概述→数据表示→运算器→存储系统→指令系统→CPU设计→总线I/O→MIPS实验→浮点数运算→期考复盘） |
+
+
+## 面经知识库
+
+- [面经导航](interview/README.md)：51 条条目，覆盖 OS、DS、CO、RAG/Agent 和项目追问。
+- 面经使用与课程笔记相同的 frontmatter 和 Markdown 索引流程，可被搜索与 QA 引用。
+
+
+| 面经知识库 | interview | [interview/](interview/README.md) | 51 | ✅ M3c 完成（OS/DS/CO/RAG/Agent/项目追问） |
