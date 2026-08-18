@@ -23,5 +23,6 @@
 | 文件 | 类型 | 状态 |
 | --- | --- | --- |
 | `m3-engineering-execution-plan.md` | 项目工程执行计划 | M3d 收口与最终回归完成，已合并到 `master`（2026-08-18） |
+| `m4-knowledge-base-scale-plan.md` | 项目工程执行计划 | 三门课程各补齐至 20 篇，等待人工审查与合并（2026-08-18） |
 
 > 后续由 `review-plan` Skill 生成的个人复习计划，继续使用 `{plan_name}-plan.md` 命名，避免与项目执行计划混淆。

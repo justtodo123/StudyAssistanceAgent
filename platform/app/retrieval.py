@@ -118,9 +118,15 @@ class MultiRecallService:
             results, mode = [], "keyword-only"
         else:
             mode = "hybrid" if len(routes) > 1 and all(routes) else "keyword-only"
-            results = self._rrf_fuse(routes, top_k)
+            # Keep a wider candidate set before applying content-type and course
+            # preferences. Otherwise interview notes or README navigation chunks can
+            # occupy every top-k slot and hide the underlying course note.
+            results = self._rrf_fuse(routes, max(top_k, 20))
             if course:
                 results = [result for result in results if result.course == course]
+            else:
+                results = self._prioritize_content_type(question, results)
+            results = results[:top_k]
 
         stored = self._copy_results(results)
         self._result_cache[cache_key] = (stored, mode)
@@ -139,6 +145,35 @@ class MultiRecallService:
             cache_hit=False,
         )
         return self._copy_results(results), mode
+
+    @staticmethod
+    def _prioritize_content_type(
+        question: str,
+        results: list[RetrievalChunk],
+    ) -> list[RetrievalChunk]:
+        """Favor actual course notes for study queries and interview notes for interview queries.
+
+        README chunks are useful navigation material but should not displace a note
+        that directly answers the question. Interview-bank chunks remain preferred
+        when the user explicitly asks an interview-oriented question.
+        """
+        normalized = question.lower()
+        asks_for_interview = "面试" in question or "interview" in normalized
+
+        interview: list[RetrievalChunk] = []
+        course_notes: list[RetrievalChunk] = []
+        navigation: list[RetrievalChunk] = []
+        for chunk in results:
+            if "/interview/" in chunk.file:
+                interview.append(chunk)
+            elif chunk.file.endswith("/README.md"):
+                navigation.append(chunk)
+            else:
+                course_notes.append(chunk)
+
+        if asks_for_interview:
+            return interview + course_notes + navigation
+        return course_notes + interview + navigation
 
     def _load(self) -> list[RetrievalChunk]:
         from .knowledge_index import build_index_cached

@@ -1,21 +1,74 @@
 {
-  "冯诺依曼体系结构的五大部件是什么": ["knowledge/co/co-intro.md"],
-  "ISA为什么是软硬件的分界面": ["knowledge/co/co-intro.md"],
-  "补码加法和减法怎么运算": ["knowledge/co/data-representation.md"],
-  "IEEE754单精度浮点数的格式是什么": ["knowledge/co/data-representation.md"],
-  "浮点数运算的对阶规则是什么": ["knowledge/co/floating-point-arithmetic.md"],
-  "Cache的直接映射和组相联映射有什么区别": ["knowledge/co/memory-system.md"],
-  "LRU和FIFO替换算法有什么区别": ["knowledge/co/memory-system.md"],
-  "Cache的写直达和写回策略有什么区别": ["knowledge/co/memory-system.md"],
-  "基址寻址和变址寻址的区别是什么": ["knowledge/co/instruction-system.md"],
-  "CISC和RISC有哪些主要区别": ["knowledge/co/instruction-system.md"],
-  "流水线的数据冒险有哪几种类型": ["knowledge/co/cpu-design.md"],
-  "流水线的吞吐率和加速比怎么计算": ["knowledge/co/cpu-design.md"],
-  "程序查询中断和DMA三种IO方式有什么区别": ["knowledge/co/bus-io.md"],
-  "DMA的周期挪用方式是怎么工作的": ["knowledge/co/bus-io.md"],
-  "MIPS指令的R型和I型格式有什么区别": ["knowledge/co/mips-experiment.md"],
-  "浮点数加减法的五个步骤是什么": ["knowledge/co/floating-point-arithmetic.md"],
-  "浮点数乘法的阶码相加为什么要减一次偏置值": ["knowledge/co/floating-point-arithmetic.md"],
-  "浮点数运算为什么不满足结合律": ["knowledge/co/floating-point-arithmetic.md"],
-  "组成原理期末考试有哪些高频考点": ["knowledge/co/co-exam-review.md"]
+  "冯诺依曼体系结构的五大部件是什么": [
+    "knowledge/co/co-intro.md"
+  ],
+  "ISA为什么是软硬件的分界面": [
+    "knowledge/co/co-intro.md"
+  ],
+  "补码加法和减法怎么运算": [
+    "knowledge/co/data-representation.md"
+  ],
+  "IEEE754单精度浮点数的格式是什么": [
+    "knowledge/co/data-representation.md"
+  ],
+  "浮点数运算的对阶规则是什么": [
+    "knowledge/co/floating-point-arithmetic.md"
+  ],
+  "Cache的直接映射和组相联映射有什么区别": [
+    "knowledge/co/memory-system.md"
+  ],
+  "LRU和FIFO替换算法有什么区别": [
+    "knowledge/co/memory-system.md"
+  ],
+  "Cache的写直达和写回策略有什么区别": [
+    "knowledge/co/memory-system.md"
+  ],
+  "基址寻址和变址寻址的区别是什么": [
+    "knowledge/co/instruction-system.md"
+  ],
+  "CISC和RISC有哪些主要区别": [
+    "knowledge/co/instruction-system.md"
+  ],
+  "流水线的数据冒险有哪几种类型": [
+    "knowledge/co/cpu-design.md"
+  ],
+  "流水线的吞吐率和加速比怎么计算": [
+    "knowledge/co/cpu-design.md"
+  ],
+  "程序查询中断和DMA三种IO方式有什么区别": [
+    "knowledge/co/bus-io.md"
+  ],
+  "DMA的周期挪用方式是怎么工作的": [
+    "knowledge/co/bus-io.md"
+  ],
+  "MIPS指令的R型和I型格式有什么区别": [
+    "knowledge/co/mips-experiment.md"
+  ],
+  "浮点数加减法的五个步骤是什么": [
+    "knowledge/co/floating-point-arithmetic.md"
+  ],
+  "浮点数乘法的阶码相加为什么要减一次偏置值": [
+    "knowledge/co/floating-point-arithmetic.md"
+  ],
+  "浮点数运算为什么不满足结合律": [
+    "knowledge/co/floating-point-arithmetic.md"
+  ],
+  "组成原理期末考试有哪些高频考点": [
+    "knowledge/co/co-exam-review.md"
+  ],
+  "补码的溢出如何判断": [
+    "knowledge/co/number-systems-codes.md"
+  ],
+  "Booth 算法中 01 和 10 分别执行什么操作": [
+    "knowledge/co/booth-multiplication.md"
+  ],
+  "直接映射和组相联 Cache 的地址如何划分": [
+    "knowledge/co/cache-mapping.md"
+  ],
+  "TLB 未命中和缺页有什么区别": [
+    "knowledge/co/virtual-memory-address-translation.md"
+  ],
+  "Amdahl 定律如何计算整体加速比": [
+    "knowledge/co/computer-performance.md"
+  ]
 }

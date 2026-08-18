@@ -1,35 +1,119 @@
 {
-  "进程调度算法有哪些，各有什么特点": ["knowledge/os/process-scheduling.md"],
-  "SJF短作业优先和FCFS先来先服务的区别": ["knowledge/os/process-scheduling.md"],
-  "平均等待时间如何计算": ["knowledge/os/process-scheduling.md"],
-  "进程和线程的主要区别是什么": ["knowledge/os/process-management.md"],
-  "PCB的作用是什么": ["knowledge/os/process-management.md"],
-  "进程有哪几种状态，如何转换": ["knowledge/os/process-management.md"],
-  "生产者消费者问题用信号量怎么解": ["knowledge/os/synchronization.md"],
-  "读者写者问题如何用PV操作实现": ["knowledge/os/synchronization.md"],
-  "哲学家进餐问题如何避免死锁": ["knowledge/os/synchronization.md", "knowledge/os/deadlock.md"],
-  "临界区和互斥的区别": ["knowledge/os/synchronization.md"],
-  "死锁产生的四个必要条件": ["knowledge/os/deadlock.md"],
-  "银行家算法判断安全状态": ["knowledge/os/deadlock.md"],
-  "如何预防死锁": ["knowledge/os/deadlock.md"],
-  "分页和分段的区别": ["knowledge/os/memory-management.md", "knowledge/os/segmentation-paging.md"],
-  "逻辑地址怎么转换为物理地址": ["knowledge/os/memory-management.md"],
-  "页面置换算法有哪些，LRU是什么": ["knowledge/os/memory-management.md"],
-  "什么是Belady异例": ["knowledge/os/memory-management.md"],
-  "文件的连续分配和链接分配区别": ["knowledge/os/file-system.md"],
-  "索引分配和inode是什么": ["knowledge/os/file-system.md"],
-  "空闲空间管理有哪些方法": ["knowledge/os/file-system.md"],
-  "中断、异常和陷入有什么不同": ["knowledge/os/os-overview.md"],
-  "操作系统的内核态和用户态有什么区别": ["knowledge/os/os-overview.md"],
-  "Shell是什么，命令解释器如何工作": ["knowledge/os/os-interface.md"],
-  "系统调用是如何执行的": ["knowledge/os/os-interface.md", "knowledge/os/os-overview.md"],
-  "段页式存储的地址转换过程是怎么样的": ["knowledge/os/segmentation-paging.md"],
-  "请求分页和缺页中断是如何工作的": ["knowledge/os/virtual-memory-deep.md"],
-  "什么是工作集模型，如何防治抖动": ["knowledge/os/virtual-memory-deep.md"],
-  "磁盘调度算法有哪些，SCAN和SSTF的区别": ["knowledge/os/disk-storage.md"],
-  "DMA和中断方式控制I/O的区别是什么": ["knowledge/os/io-system.md"],
-  "SPOOLing技术是什么": ["knowledge/os/io-system.md"],
-  "缓冲区溢出攻击如何防御": ["knowledge/os/protection-security.md"],
-  "Linux的进程调度器CFS是怎么实现的": ["knowledge/os/linux-case-study.md"],
-  "操作系统期末考试高频考点有哪些": ["knowledge/os/os-exam-review.md"]
+  "进程调度算法有哪些，各有什么特点": [
+    "knowledge/os/process-scheduling.md"
+  ],
+  "SJF短作业优先和FCFS先来先服务的区别": [
+    "knowledge/os/process-scheduling.md"
+  ],
+  "平均等待时间如何计算": [
+    "knowledge/os/process-scheduling.md"
+  ],
+  "进程和线程的主要区别是什么": [
+    "knowledge/os/process-management.md"
+  ],
+  "PCB的作用是什么": [
+    "knowledge/os/process-management.md"
+  ],
+  "进程有哪几种状态，如何转换": [
+    "knowledge/os/process-management.md"
+  ],
+  "生产者消费者问题用信号量怎么解": [
+    "knowledge/os/synchronization.md"
+  ],
+  "读者写者问题如何用PV操作实现": [
+    "knowledge/os/synchronization.md"
+  ],
+  "哲学家进餐问题如何避免死锁": [
+    "knowledge/os/synchronization.md",
+    "knowledge/os/deadlock.md"
+  ],
+  "临界区和互斥的区别": [
+    "knowledge/os/synchronization.md"
+  ],
+  "死锁产生的四个必要条件": [
+    "knowledge/os/deadlock.md"
+  ],
+  "银行家算法判断安全状态": [
+    "knowledge/os/deadlock.md"
+  ],
+  "如何预防死锁": [
+    "knowledge/os/deadlock.md"
+  ],
+  "分页和分段的区别": [
+    "knowledge/os/memory-management.md",
+    "knowledge/os/segmentation-paging.md"
+  ],
+  "逻辑地址怎么转换为物理地址": [
+    "knowledge/os/memory-management.md"
+  ],
+  "页面置换算法有哪些，LRU是什么": [
+    "knowledge/os/memory-management.md"
+  ],
+  "什么是Belady异例": [
+    "knowledge/os/memory-management.md"
+  ],
+  "文件的连续分配和链接分配区别": [
+    "knowledge/os/file-system.md"
+  ],
+  "索引分配和inode是什么": [
+    "knowledge/os/file-system.md"
+  ],
+  "空闲空间管理有哪些方法": [
+    "knowledge/os/file-system.md"
+  ],
+  "中断、异常和陷入有什么不同": [
+    "knowledge/os/os-overview.md"
+  ],
+  "操作系统的内核态和用户态有什么区别": [
+    "knowledge/os/os-overview.md"
+  ],
+  "Shell是什么，命令解释器如何工作": [
+    "knowledge/os/os-interface.md"
+  ],
+  "系统调用是如何执行的": [
+    "knowledge/os/os-interface.md",
+    "knowledge/os/os-overview.md"
+  ],
+  "段页式存储的地址转换过程是怎么样的": [
+    "knowledge/os/segmentation-paging.md"
+  ],
+  "请求分页和缺页中断是如何工作的": [
+    "knowledge/os/virtual-memory-deep.md"
+  ],
+  "什么是工作集模型，如何防治抖动": [
+    "knowledge/os/virtual-memory-deep.md"
+  ],
+  "磁盘调度算法有哪些，SCAN和SSTF的区别": [
+    "knowledge/os/disk-storage.md"
+  ],
+  "DMA和中断方式控制I/O的区别是什么": [
+    "knowledge/os/io-system.md"
+  ],
+  "SPOOLing技术是什么": [
+    "knowledge/os/io-system.md"
+  ],
+  "缓冲区溢出攻击如何防御": [
+    "knowledge/os/protection-security.md"
+  ],
+  "Linux的进程调度器CFS是怎么实现的": [
+    "knowledge/os/linux-case-study.md"
+  ],
+  "操作系统期末考试高频考点有哪些": [
+    "knowledge/os/os-exam-review.md"
+  ],
+  "用户级线程和内核级线程有什么区别": [
+    "knowledge/os/thread-management.md"
+  ],
+  "管道、消息队列和共享内存应该如何选择": [
+    "knowledge/os/ipc-mechanisms.md"
+  ],
+  "RMS 和 EDF 实时调度有什么区别": [
+    "knowledge/os/real-time-scheduling.md"
+  ],
+  "连续分配、链接分配和索引分配的区别": [
+    "knowledge/os/file-allocation.md"
+  ],
+  "设备驱动、中断和 DMA 如何协作完成 I/O": [
+    "knowledge/os/device-management.md"
+  ]
 }

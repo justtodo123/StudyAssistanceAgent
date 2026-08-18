@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v1.0 M3 工程收口` — M3a 向量存储迁移、M3b 可观测性、M3c 面经库与 M3d 文档闭环均已完成，并已于 2026-08-18 合并到 `master`。当前包含 OS 15 篇、DS 10 篇、CO 10 篇课程条目，51 条面经，75 题评测集 Recall@3 均≥0.95；M3 总体退出条件部分满足，三门课程各 ≥20 篇仍待独立知识库阶段补齐。
+**当前状态**：`v1.1 M4 课程知识库规模补齐` — M3 工程收口已完成；M4 已将 OS、DS、CO 三门课程均补齐至 20 篇条目（共 60 篇），并新增 15 道课程评测题。当前分支等待人工审查与合并。
 
 ---
 
@@ -19,9 +19,9 @@
 | 能力 | 说明 | 状态 |
 | --- | --- | --- |
 | 知识问答 | 基于知识库 + 外部资料回答课程问题，支持 LLM 生成或降级笔记摘要 | ✅ 已实现 |
-| 课程笔记管理 | 结构化笔记、例题、错题集的创建与检索 | ✅ 已实现（OS 15 篇 + DS 10 篇 + CO 10 篇） |
+| 课程笔记管理 | 结构化笔记、例题、错题集的创建与检索 | ✅ 已实现（OS 20 篇 + DS 20 篇 + CO 20 篇） |
 | 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（文件去重、课程过滤） |
-| RAG 评测 | OS 33 题 + DS 23 题 + CO 19 题评测集，Recall/Precision/F1 量化 | ✅ 已实现（Recall@3 均≥0.95） |
+| RAG 评测 | OS 38 题 + DS 28 题 + CO 24 题评测集，共 90 题，Recall/Precision/F1 量化 | ✅ 已实现（离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000） |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ 已实现（API `/api/v1/review-plan` + Skill `review-plan`） |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
@@ -37,9 +37,9 @@ StudyAssistanceAgent/
 ├── knowledge/             # ★ 本地知识库（Markdown 笔记，项目核心资产）
 │   ├── README.md          # 知识库导航与写作约定
 │   ├── _templates/        # 条目模板
-│   ├── os/                # 操作系统（15 篇）
-│   ├── ds/                # 数据结构（10 篇）
-│   ├── co/                # 计算机组成原理（10 篇）
+│   ├── os/                # 操作系统（20 篇）
+│   ├── ds/                # 数据结构（20 篇）
+│   ├── co/                # 计算机组成原理（20 篇）
 │   └── interview/         # 面经知识库（51 条）
 ├── docs/                  # 项目文档
 │   ├── README.md          # 文档目录导航
@@ -78,6 +78,7 @@ StudyAssistanceAgent/
 │   ├── M3b/               # 可观测性测试（13 项）
 │   ├── M3c/               # 面经库测试（10 项）
 │   ├── M3d/               # 文档完整性测试（6 项）
+│   ├── M4/                # 课程知识库规模测试（14 项）
 │   ├── regression/        # 跨阶段回归套件（21 项）
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
@@ -111,10 +112,11 @@ cd ..
 ./platform/.venv/Scripts/python tools/run_evaluation.py -k 1,3,5
 
 # 6. 运行迭代测试体系（根目录下）
-./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（90 项）
+./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（104 项）
 ./platform/.venv/Scripts/python -m pytest tests/M0_M2/ -v     # 基线回归
 ./platform/.venv/Scripts/python -m pytest tests/regression/ -v # 回归套件
 ./platform/.venv/Scripts/python -m pytest tests/ -m m3d        # M3d 文档检查
+./platform/.venv/Scripts/python -m pytest tests/ -m m4         # M4 知识库规模检查
 ```
 
 > 在 Claude Code 中打开本仓库即自动加载 `CLAUDE.md`，可调用内置 agents 与 skills。API 文档见 [platform/README.md](platform/README.md)。
@@ -143,7 +145,8 @@ cd ..
 | [docs/reference/README.md](docs/reference/README.md) | 外部原始资料索引（D:\111_Others_Subjects 映射） |
 | [docs/interview/README.md](docs/interview/README.md) | 面试叙事：一句话 + 5 设计决策 + 8 考点 + 3 优化点 |
 | [docs/standards/git-conventions.md](docs/standards/git-conventions.md) | Git 提交规范（Conventional Commits） |
-| [docs/plans/m3-engineering-execution-plan.md](docs/plans/m3-engineering-execution-plan.md) | M3d 收口后的工程执行计划（阶段、分支、验收） |
+| [docs/plans/m3-engineering-execution-plan.md](docs/plans/m3-engineering-execution-plan.md) | M3 工程质量阶段执行记录（已完成） |
+| [docs/plans/m4-knowledge-base-scale-plan.md](docs/plans/m4-knowledge-base-scale-plan.md) | M4 课程知识库规模补齐计划（范围、验收、分支） |
 | [knowledge/README.md](knowledge/README.md) | 知识库导航与写作规范（含 51 条面经） |
 | [CLAUDE.md](CLAUDE.md) | Agent 项目级开发指导 |
 
@@ -158,4 +161,4 @@ cd ..
 
 
 
-> **M3 status (2026-08-18):** M3a/M3b/M3c completed and M3d documentation closure completed, pending manual merge. Root tests: 90 passed; platform tests: 40 passed. The M3c interview bank contains 51 entries and is integrated with indexing, search, and QA sources.
+> **M4 status (2026-08-18):** The M3d closure has merged into `master`. M4 expands OS/DS/CO to 20 entries each (60 course entries total) and adds 15 evaluation questions; the feature branch is pending review. The M3c interview bank still contains 51 entries and is integrated with indexing, search, and QA sources.

@@ -1,8 +1,8 @@
 # 计算机组成原理 — 外部资料登记
 
 - **外部路径**：`D:\111_Others_Subjects\计算机组成原理`
-- **知识库入口**：[knowledge/co/README.md](../../knowledge/co/README.md)（待建）
-- **整理状态**：📝 笔记已建
+- **知识库入口**：[knowledge/co/README.md](../../knowledge/co/README.md)（已建）
+- **整理状态**：✅ M4 完成（knowledge/co/，20 篇条目）
 
 ## 资料构成
 

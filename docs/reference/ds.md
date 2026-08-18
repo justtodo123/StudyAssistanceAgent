@@ -1,8 +1,8 @@
 # 数据结构 — 外部资料登记
 
 - **外部路径**：`D:\111_Others_Subjects\数据结构复习`
-- **知识库入口**：[knowledge/ds/README.md](../../knowledge/ds/README.md)（待建）
-- **整理状态**：✅ 完成（knowledge/ds/，9 篇条目）
+- **知识库入口**：[knowledge/ds/README.md](../../knowledge/ds/README.md)（已建）
+- **整理状态**：✅ M4 完成（knowledge/ds/，20 篇条目）
 
 ## 资料构成
 

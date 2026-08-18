@@ -24,7 +24,12 @@
 | Linux 操作系统实例 | [linux-case-study.md](linux-case-study.md) | ✅ |
 | 期考复盘与高频错题 | [os-exam-review.md](os-exam-review.md) | ✅ |
 
-**共 15 篇条目**（含 1 篇期考复盘）
+| 线程管理与多线程模型 | [thread-management.md](thread-management.md) | ✅ |
+| 进程间通信机制 | [ipc-mechanisms.md](ipc-mechanisms.md) | ✅ |
+| 实时调度与优先级反转 | [real-time-scheduling.md](real-time-scheduling.md) | ✅ |
+| 文件分配与空闲空间管理 | [file-allocation.md](file-allocation.md) | ✅ |
+| 设备管理与驱动程序 | [device-management.md](device-management.md) | ✅ |
+**共 20 篇条目**（含 1 篇期考复盘）· ✅ M4 规模补齐完成
 
 ## 重点 / 难点（高频考点速览）
 

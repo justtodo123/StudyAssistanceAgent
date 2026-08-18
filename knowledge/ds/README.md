@@ -25,7 +25,17 @@
 | 堆与优先队列（大根堆 / 小根堆 / 堆排序 / 建堆） | [heap-priority-queue.md](heap-priority-queue.md) | ✅ |
 | 真题复盘（2017 春 A 卷逐题） | [ds-exam-review.md](ds-exam-review.md) | ✅ |
 
-**共 10 篇条目**（含 1 篇真题复盘），M1d 达标
+| 递归与分治算法 | [recursion-divide-conquer.md](recursion-divide-conquer.md) | ✅ |
+| 动态规划与最优子结构 | [dynamic-programming-basics.md](dynamic-programming-basics.md) | ✅ |
+| AVL 树与平衡维护 | [avl-balanced-trees.md](avl-balanced-trees.md) | ✅ |
+| B 树与 B+ 树 | [b-tree-bplus-tree.md](b-tree-bplus-tree.md) | ✅ |
+| 并查集与连通性维护 | [union-find.md](union-find.md) | ✅ |
+| 字符串匹配与 KMP | [string-matching.md](string-matching.md) | ✅ |
+| 哈希表冲突处理与性能分析 | [hash-table-deep-dive.md](hash-table-deep-dive.md) | ✅ |
+| 拓扑排序与关键路径 | [topological-critical-path.md](topological-critical-path.md) | ✅ |
+| 最短路径算法选型 | [shortest-path-algorithms.md](shortest-path-algorithms.md) | ✅ |
+| 外部排序与多路归并 | [external-sorting.md](external-sorting.md) | ✅ |
+**共 20 篇条目**（含 1 篇真题复盘）· ✅ M4 规模补齐完成
 
 ## 重点 / 难点（高频考点速览）
 

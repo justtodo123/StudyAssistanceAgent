@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-18（M0-M2、M3a、M3b、M3c、M3d 已完成）
+> 起始日期：2026-08-17 · 更新：2026-08-18（M0-M2、M3a～M3d 已完成；M4 知识库规模补齐完成，待人工合并）
 
 ## 一、测试策略总览
 
@@ -43,6 +43,9 @@ tests/
 ├── M3d/                  # 文档完整性测试（M3d 文档闭环）
 │   └── test_docs.py              # 文档结构与链接验证
 │
+├── M4/                   # 课程知识库规模补齐测试
+│   └── test_knowledge_scale.py   # 数量、frontmatter、导航与评测引用
+│
 ├── regression/           # 跨阶段回归套件
 │   ├── conftest.py       # 回归专用 fixtures
 │   ├── test_api_contract.py      # API 契约稳定性
@@ -73,9 +76,10 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/` | 90 项 | 90 passed | 阶段测试 + 回归套件（M0_M2 18、M3a 22、M3b 13、M3c 10、M3d 6、regression 21） |
+| 根级 `tests/` | 104 项 | 104 passed | 阶段测试 + 回归套件（M0_M2 18、M3a 22、M3b 13、M3c 10、M3d 6、M4 14、regression 21） |
 | `platform/tests/` | 40 项 | 40 passed | 原始平台冒烟/功能测试 |
 | M3 验收门禁 | 130 项 | 130 passed | 根级测试 90 项 + 平台原始测试 40 项；包含 M3d 文档检查 |
+| M4 验收门禁 | 144 项 | 144 passed | 根级测试 104 项 + 平台原始测试 40 项；包含知识库规模检查 |
 
 M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。受限 Windows 环境若默认临时目录不可写，可使用工作区内的 `pytest --basetemp=.tmp-test\...`。
 
@@ -240,6 +244,17 @@ pytest tests/M0_M2/ -v         # 基线回归
 | `test_rag_quality.py` | OS/DS/CO 三课 Recall@3 ≥ 0.8（量化基线） | M3a（向量库变更）|
 | `test_data_integrity.py` | 知识库条目 frontmatter 完整、评测集格式合法 | M3c（数据变更）|
 
+### 阶段 5：M4 — 课程知识库规模补齐（已完成，待人工合并）
+
+**对应开发任务**：将 OS、DS、CO 三门课程各补齐到至少 20 篇条目，并验证 frontmatter、课程导航和评测集引用。
+
+| 测试文件 | 测试项 | 验证点 |
+|----------|--------|--------|
+| `test_knowledge_scale.py` | 条目数量 | OS/DS/CO 各至少 20 篇 |
+| `test_knowledge_scale.py` | frontmatter | 新旧课程条目均含必填字段且 course 正确 |
+| `test_knowledge_scale.py` | 课程导航 | 每门课程 README 链接全部条目 |
+| `test_knowledge_scale.py` | 评测引用 | `tools/evaluations/*.json` 仅引用实际文件 |
+
 ## 三、执行矩阵
 
 | 阶段 | 本阶段测试 | 回归测试 | 基线测试 | RAG 评测 |
@@ -249,6 +264,7 @@ pytest tests/M0_M2/ -v         # 基线回归
 | M3b 可观测性 | `tests/M3b/` | `tests/regression/` | `tests/M0_M2/` | — |
 | M3c 面经库 | `tests/M3c/` | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
 | M3d 文档闭环 | `tests/M3d/` | `tests/regression/` | `tests/M0_M2/` | — |
+| M4 知识库规模补齐 | `tests/M4/` | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
 
 ## 四、pytest 配置
 
