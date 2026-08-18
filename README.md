@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v1.0 M3c` — OS 15 篇 + DS 10 篇 + CO 10 篇课程条目，新增 51 条面经；75 题评测集 Recall@3 均≥0.95；M2 学习辅助能力、M3a 向量存储迁移与 M3b 可观测性已完成。M3c 面经库已进入索引、搜索和 QA 来源链路。
+**当前状态**：`v1.0 M3d 文档收口` — M3a 向量存储迁移、M3b 可观测性、M3c 面经库与 M3d 文档闭环均已完成（待人工合并）。当前包含 OS 15 篇、DS 10 篇、CO 10 篇课程条目，51 条面经，75 题评测集 Recall@3 均≥0.95；M3 总体退出条件部分满足，三门课程各 ≥20 篇仍待独立知识库阶段补齐。
 
 ---
 
@@ -111,10 +111,10 @@ cd ..
 ./platform/.venv/Scripts/python tools/run_evaluation.py -k 1,3,5
 
 # 6. 运行迭代测试体系（根目录下）
-./platform/.venv/Scripts/python -m pytest tests/ -v            # 全部测试
+./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（90 项）
 ./platform/.venv/Scripts/python -m pytest tests/M0_M2/ -v     # 基线回归
 ./platform/.venv/Scripts/python -m pytest tests/regression/ -v # 回归套件
-./platform/.venv/Scripts/python -m pytest tests/ -m m3a        # 按阶段筛选
+./platform/.venv/Scripts/python -m pytest tests/ -m m3d        # M3d 文档检查
 ```
 
 > 在 Claude Code 中打开本仓库即自动加载 `CLAUDE.md`，可调用内置 agents 与 skills。API 文档见 [platform/README.md](platform/README.md)。
@@ -143,7 +143,7 @@ cd ..
 | [docs/reference/README.md](docs/reference/README.md) | 外部原始资料索引（D:\111_Others_Subjects 映射） |
 | [docs/interview/README.md](docs/interview/README.md) | 面试叙事：一句话 + 5 设计决策 + 8 考点 + 3 优化点 |
 | [docs/standards/git-conventions.md](docs/standards/git-conventions.md) | Git 提交规范（Conventional Commits） |
-| [docs/plans/m3-engineering-execution-plan.md](docs/plans/m3-engineering-execution-plan.md) | M3 当前工程执行计划（阶段、分支、验收） |
+| [docs/plans/m3-engineering-execution-plan.md](docs/plans/m3-engineering-execution-plan.md) | M3d 收口后的工程执行计划（阶段、分支、验收） |
 | [knowledge/README.md](knowledge/README.md) | 知识库导航与写作规范（含 51 条面经） |
 | [CLAUDE.md](CLAUDE.md) | Agent 项目级开发指导 |
 
@@ -158,4 +158,4 @@ cd ..
 
 
 
-> **M3a status (2026-08-17):** SQLite vector-store migration is complete, with the `linear` in-memory fallback retained. Content/model changes trigger automatic index rebuilds, and BM25 fallback remains available. All 22 M3a tests pass.
+> **M3 status (2026-08-18):** M3a/M3b/M3c completed and M3d documentation closure completed, pending manual merge. Root tests: 90 passed; platform tests: 40 passed. The M3c interview bank contains 51 entries and is integrated with indexing, search, and QA sources.
