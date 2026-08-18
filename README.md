@@ -3,7 +3,7 @@
 > 面向**大学计算机专业学生**的个人学习助手。以 **Claude Code Agent 工作流 + 本地知识库**为核心，
 > 汇集课程笔记、例题、面经与学习方法；搭载 **FastAPI 多路召回 RAG 后端**，通过对话式提问与自动化任务辅助学习。
 
-**当前状态**：`v1.0 M3b` — OS 15 篇 + DS 10 篇 + CO 10 篇，共 35 篇条目；75 题评测集 Recall@3 均≥0.95；M2 学习辅助能力全部完成；M3a 向量存储迁移与 M3b 可观测性已实现。根级迭代测试 90 项、平台原始测试 40 项，共 130 项；M3c 面经库测试仍因目录不存在而条件跳过。
+**当前状态**：`v1.0 M3c` — OS 15 篇 + DS 10 篇 + CO 10 篇课程条目，新增 51 条面经；75 题评测集 Recall@3 均≥0.95；M2 学习辅助能力、M3a 向量存储迁移与 M3b 可观测性已完成。M3c 面经库已进入索引、搜索和 QA 来源链路。
 
 ---
 
@@ -25,7 +25,7 @@
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ 已实现（API `/api/v1/review-plan` + Skill `review-plan`） |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
-| 面经整理 | 按知识点聚合面试真题 | ⏳ 构想 |
+| 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
 | 多轮工具编排 | QA→讲解→出题→评估→记录复习完整链路 | ✅ 已实现（Skill `study-assistant`，面试演示重点） |
 
 ## 目录结构
@@ -39,7 +39,8 @@ StudyAssistanceAgent/
 │   ├── _templates/        # 条目模板
 │   ├── os/                # 操作系统（15 篇）
 │   ├── ds/                # 数据结构（10 篇）
-│   └── co/                # 计算机组成原理（10 篇）
+│   ├── co/                # 计算机组成原理（10 篇）
+│   └── interview/         # 面经知识库（51 条）
 ├── docs/                  # 项目文档
 │   ├── README.md          # 文档目录导航
 │   ├── PLAN.md            # ★ 项目计划（路线图）
@@ -75,7 +76,7 @@ StudyAssistanceAgent/
 │   ├── M0_M2/             # 基线回归测试（18 项）
 │   ├── M3a/               # 向量库迁移测试（22 项）
 │   ├── M3b/               # 可观测性测试（13 项）
-│   ├── M3c/               # 面经库测试（10 项，当前条件跳过）
+│   ├── M3c/               # 面经库测试（10 项）
 │   ├── M3d/               # 文档完整性测试（6 项）
 │   ├── regression/        # 跨阶段回归套件（21 项）
 │   └── utils/             # 测试工具函数
@@ -143,7 +144,7 @@ cd ..
 | [docs/interview/README.md](docs/interview/README.md) | 面试叙事：一句话 + 5 设计决策 + 8 考点 + 3 优化点 |
 | [docs/standards/git-conventions.md](docs/standards/git-conventions.md) | Git 提交规范（Conventional Commits） |
 | [docs/plans/m3-engineering-execution-plan.md](docs/plans/m3-engineering-execution-plan.md) | M3 当前工程执行计划（阶段、分支、验收） |
-| [knowledge/README.md](knowledge/README.md) | 知识库导航与写作规范 |
+| [knowledge/README.md](knowledge/README.md) | 知识库导航与写作规范（含 51 条面经） |
 | [CLAUDE.md](CLAUDE.md) | Agent 项目级开发指导 |
 
 ## Git 与贡献

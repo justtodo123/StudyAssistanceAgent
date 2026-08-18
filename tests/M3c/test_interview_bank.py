@@ -150,9 +150,8 @@ class TestInterviewSearchIntegration:
     def test_interview_searchable(self, retrieval_service):
         """面经条目应可被检索到。"""
         results, _ = retrieval_service.recall("面试 进程 问题", top_k=10)
-        # M3c 开发后：验证结果中包含面经文件
-        # interview_hits = [r for r in results if "interview" in r.file]
-        # assert len(interview_hits) >= 1, "应能检索到面经条目"
+        interview_hits = [result for result in results if "knowledge/interview/" in result.file]
+        assert interview_hits, "面经条目应能被检索召回"
 
     def test_interview_in_qa_sources(self, qa_service):
         """问答应能引用面经作为来源。"""
@@ -161,6 +160,5 @@ class TestInterviewSearchIntegration:
         resp = qa_service.answer(
             QaRequest(question="操作系统面试常见问题", use_llm=False)
         )
-        # M3c 开发后：验证来源中包含面经
-        # interview_sources = [s for s in resp.sources if "interview" in s.file]
-        # assert len(interview_sources) >= 1
+        interview_sources = [source for source in resp.sources if "knowledge/interview/" in source.file]
+        assert interview_sources, "QA 来源应包含面经条目"
