@@ -32,7 +32,7 @@ docs/
 
 - 个人复习计划由 `review-plan` Skill 或 API 生成。
 - M3 执行记录见 [plans/m3-engineering-execution-plan.md](plans/m3-engineering-execution-plan.md)，已于 2026-08-18 合并到 `master`。
-- 当前 M4 知识库规模计划见 [plans/m4-knowledge-base-scale-plan.md](plans/m4-knowledge-base-scale-plan.md)，课程条目已补齐，等待人工审查与合并。
+- M4 知识库规模计划见 [plans/m4-knowledge-base-scale-plan.md](plans/m4-knowledge-base-scale-plan.md)，课程条目已补齐，实现提交 `106164d` 已进入 `master`。
 
 ### reference/ — 外部资料索引
 
