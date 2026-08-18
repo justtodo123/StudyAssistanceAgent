@@ -241,3 +241,9 @@ python -m venv .venv
 ---
 
 *创建：2026-08-11 · 更新：2026-08-17（M2 完成：复习计划+测验生成+复习排程+多轮工具编排）· 维护：随 API 变更同步更新*
+
+
+
+## M3a vector storage
+
+The default backend is a persistent SQLite vector store configured by `SA_VECTOR_STORE_PATH`. Set `SA_VECTOR_STORE=linear` to use the original in-memory backend. The index stores chunk fingerprints and the embedding model name, and rebuilds automatically when knowledge content or the model changes. SQLite itself does not require `sentence-transformers`; text queries still require an encoder, and unavailable encoders fall back to BM25.
