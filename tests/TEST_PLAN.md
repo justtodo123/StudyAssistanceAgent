@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-18（M0-M4 已完成；M5a~M5c 已完成）
+> 起始日期：2026-08-17 · 更新：2026-08-18（M0-M4 已完成；M5a~M5d 已完成）
 
 ## 一、测试策略总览
 
@@ -67,6 +67,12 @@ tests/
 │   ├── test_idempotency.py       # 答案/复习幂等
 │   └── test_concurrency.py       # 并发写入
 │
+├── M5d/                  # 学习工作台测试
+│   ├── conftest.py               # 静态页路径与 API 白名单
+│   ├── test_page.py              # 首页与必要视图
+│   ├── test_client_contract.py   # 只调用正式 API
+│   └── test_flow.py              # 学习闭环字段
+│
 ├── regression/           # 跨阶段回归套件
 │   ├── conftest.py       # 回归专用 fixtures
 │   ├── test_api_contract.py      # API 契约稳定性
@@ -97,13 +103,14 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/` | 162 项 | 162 collected | 阶段测试 + 回归套件（M0_M2 18、M3a 22、M3b 13、M3c 10、M3d 6、M4 14、M5a 26、M5b 18、M5c 14、regression 21） |
+| 根级 `tests/` | 172 项 | 172 collected | 阶段测试 + 回归套件（M0_M2 18、M3a 22、M3b 13、M3c 10、M3d 6、M4 14、M5a 26、M5b 18、M5c 14、M5d 10、regression 21） |
 | `platform/tests/` | 40 项 | 40 passed | 原始平台冒烟/功能测试 |
 | M3 验收门禁 | 130 项 | 130 passed | 根级测试 90 项 + 平台原始测试 40 项；包含 M3d 文档检查 |
 | M4 验收门禁 | 144 项 | 144 passed | 根级测试 104 项 + 平台原始测试 40 项；包含知识库规模检查 |
 | M5a 本阶段 | 26 项 | 26 passed | 参数解析、评测集发现、指标聚合、报告格式 |
 | M5b 本阶段 | 18 项 | 18 passed | 状态机、评估、降级、API 契约 |
 | M5c 本阶段 | 14 项 | 14 passed | 仓储、迁移、恢复、幂等、并发 |
+| M5d 本阶段 | 10 项 | 10 passed | 首页视图、API 白名单、学习闭环 |
 
 M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。受限 Windows 环境若默认临时目录不可写，可使用工作区内的 `pytest --basetemp=.tmp-test\...`。
 
@@ -313,6 +320,17 @@ pytest tests/M0_M2/ -v         # 基线回归
 | `test_idempotency.py` | 幂等 | 重复提交同一答案不占新尝试；同会话复习不递增 |
 | `test_concurrency.py` | 并发 | 多线程写入全部可见 |
 
+### 阶段 9：M5d — 最小学习工作台（已完成）
+
+**对应开发任务**：用 FastAPI 静态页提供讲解、作答、反馈和复习记录交互，且不复制服务端状态机。
+
+| 测试文件 | 测试项 | 验证点 |
+|----------|--------|--------|
+| `test_page.py` | 首页 | `GET /` 返回工作台 HTML，必要视图齐全 |
+| `test_page.py` | 静态资源 | JS/CSS 可访问 |
+| `test_client_contract.py` | API 边界 | 只调用 review-due 与 study-sessions |
+| `test_flow.py` | 闭环 | 正式 API 可完成作答并返回下次复习日期 |
+
 ## 三、执行矩阵
 
 | 阶段 | 本阶段测试 | 回归测试 | 基线测试 | RAG 评测 |
@@ -326,6 +344,7 @@ pytest tests/M0_M2/ -v         # 基线回归
 | M5a 评测入口 | `tests/M5a/` | `tests/regression/` | `tests/M0_M2/` | `python tools/run_evaluation.py` |
 | M5b 学习会话 | `tests/M5b/` | `tests/regression/` | `tests/M0_M2/` | — |
 | M5c 学习持久化 | `tests/M5c/` | `tests/regression/` | `tests/M0_M2/` | — |
+| M5d 学习工作台 | `tests/M5d/` | `tests/regression/` | `tests/M0_M2/` | — |
 
 ## 四、pytest 配置
 
@@ -344,6 +363,9 @@ pytest tests/M5b/ -v -m m5b
 
 # 运行 M5c 持久化测试
 pytest tests/M5c/ -v -m m5c
+
+# 运行 M5d 学习工作台测试
+pytest tests/M5d/ -v -m m5d
 
 # 运行回归套件
 pytest tests/regression/ -v

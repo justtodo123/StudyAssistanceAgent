@@ -1,6 +1,6 @@
 # Platform — FastAPI RAG 后端
 
-> StudyAssistanceAgent 的 Python 后端服务。提供知识库检索、带出处问答、SSE 流式输出、复习计划生成能力。
+> StudyAssistanceAgent 的 Python 后端服务。提供知识库检索、带出处问答、SSE 流式输出、复习计划生成和学习工作台。
 
 ## 架构
 
@@ -24,7 +24,7 @@ platform/
 ├── README.md              # 本文件（API 文档与启动指南）
 ├── app/
 │   ├── __init__.py
-│   ├── main.py            # FastAPI 入口：search/qa/quiz/review/study-sessions
+│   ├── main.py            # FastAPI 入口：search/qa/quiz/review/study-sessions + 工作台
 │   ├── models.py          # Pydantic 领域模型（RetrievalChunk, SearchRequest, QaRequest 等）
 │   ├── config.py          # 环境变量配置（dotenv → 常量）
 │   ├── retrieval.py       # 多路召回 + RRF 融合（MultiRecallService）
@@ -37,7 +37,8 @@ platform/
 │   ├── quiz.py            # 测验生成服务（例题+评测集+概念模板三数据源）
 │   ├── review_scheduler.py # 复习排程服务（遗忘曲线间隔重复）
 │   ├── study_session.py   # 学习会话编排（状态机 + 工具轨迹）
-│   └── learning_store.py   # SQLite 会话/复习仓储
+│   ├── learning_store.py   # SQLite 会话/复习仓储
+│   └── static/workbench/    # 最小学习工作台（HTML/CSS/JS）
 ├── tests/
 │   ├── test_retrieval.py  # 检索链路冒烟测试（6 个用例）
 │   ├── test_review_plan.py # 复习计划测试（8 个用例）
@@ -49,10 +50,25 @@ platform/
 └── .env.example           # 环境变量模板（复制为 .env 后修改）
 ```
 
-平台原始测试共 40 项且已全部通过；根目录阶段化测试和回归套件见 `../tests/`，当前根级测试共 162 项。
+平台原始测试共 40 项且已全部通过；根目录阶段化测试和回归套件见 `../tests/`，当前根级测试共 172 项。
 ```
 
 ## API 端点
+
+### 学习工作台
+
+```
+GET /
+```
+
+启动后端后打开 `http://127.0.0.1:8000/`，首屏即为学习工作台。页面只调用正式会话 API 和待复习接口：
+
+- `GET /api/v1/review-due`
+- `POST /api/v1/study-sessions`
+- `GET /api/v1/study-sessions/{id}`
+- `POST /api/v1/study-sessions/{id}/answers`
+
+可完成今日待复习、主题讲解、单题作答、反馈和复习记录，不复制服务端状态机。
 
 ### 健康检查
 
@@ -286,8 +302,8 @@ cd platform
 python -m venv .venv
 ./.venv/Scripts/python -m pip install -r requirements.txt
 
-# 启动 API
-./.venv/Scripts/uvicorn app.main:app --reload   # http://127.0.0.1:8000
+# 启动 API / 学习工作台
+./.venv/Scripts/uvicorn app.main:app --reload   # http://127.0.0.1:8000/
 
 # 跑测试
 ./.venv/Scripts/python -m pytest tests/ -q
@@ -297,7 +313,7 @@ python -m venv .venv
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-18（M3d 文档收口与 M4 课程知识库规模补齐完成）· 维护：随 API 变更同步更新*
+*创建：2026-08-11 · 更新：2026-08-18（M5d 最小学习工作台完成）· 维护：随 API 变更同步更新*
 
 
 
