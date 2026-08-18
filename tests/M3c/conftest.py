@@ -40,3 +40,16 @@ def interview_chunks(knowledge_chunks):
         c for c in knowledge_chunks
         if "interview" in c.file or "interview" in c.tags
     ]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def disable_optional_vector_encoder():
+    """Keep M3c integration tests deterministic and offline."""
+    from app import config
+
+    previous = config.VECTOR_ENABLED
+    config.VECTOR_ENABLED = False
+    try:
+        yield
+    finally:
+        config.VECTOR_ENABLED = previous
