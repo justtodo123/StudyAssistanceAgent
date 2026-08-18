@@ -36,7 +36,8 @@ platform/
 │   ├── review_plan.py     # 复习计划服务（分日学习计划生成）
 │   ├── quiz.py            # 测验生成服务（例题+评测集+概念模板三数据源）
 │   ├── review_scheduler.py # 复习排程服务（遗忘曲线间隔重复）
-│   └── study_session.py   # 学习会话编排（状态机 + 工具轨迹）
+│   ├── study_session.py   # 学习会话编排（状态机 + 工具轨迹）
+│   └── learning_store.py   # SQLite 会话/复习仓储
 ├── tests/
 │   ├── test_retrieval.py  # 检索链路冒烟测试（6 个用例）
 │   ├── test_review_plan.py # 复习计划测试（8 个用例）
@@ -48,7 +49,7 @@ platform/
 └── .env.example           # 环境变量模板（复制为 .env 后修改）
 ```
 
-平台原始测试共 40 项且已全部通过；根目录阶段化测试和回归套件见 `../tests/`，当前根级测试共 148 项。
+平台原始测试共 40 项且已全部通过；根目录阶段化测试和回归套件见 `../tests/`，当前根级测试共 162 项。
 ```
 
 ## API 端点
@@ -249,6 +250,7 @@ Content-Type: application/json
 - 答对则完成并记录复习；答错一次给提示并重试；连续两次答错后返回完整参考并结束。
 - 响应包含 `state`、`sources`、`attempt_count`、`score`、`review` 和 `tool_trace`。
 - 非法状态转换返回 409，未知会话返回 404。
+- 会话、答题记录和复习历史默认写入 `platform/.cache/learning_state.sqlite3`；服务重启后可按 `session_id` 恢复未完成会话。现有 `review_history.json` 仍可兼容读取。
 
 ## 配置
 
@@ -264,6 +266,7 @@ Content-Type: application/json
 | `SA_LLM_BASE_URL` | — | LLM API 地址（OpenAI 兼容） |
 | `SA_LLM_API_KEY` | — | LLM API 密钥 |
 | `SA_LLM_MODEL` | — | LLM 模型名（如 `deepseek-chat`） |
+| `SA_LEARNING_STORE_PATH` | `platform/.cache/learning_state.sqlite3` | 学习会话与复习历史 SQLite |
 
 ## 降级路径
 

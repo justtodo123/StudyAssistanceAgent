@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-18（M0-M4 已完成；M5a/M5b Level 1 已完成）
+> 起始日期：2026-08-17 · 更新：2026-08-18（M0-M4 已完成；M5a~M5c 已完成）
 
 ## 一、测试策略总览
 
@@ -59,6 +59,14 @@ tests/
 │   ├── test_evaluation.py        # 确定性评估
 │   └── test_api.py               # 会话 API 契约
 │
+├── M5c/                  # 学习状态持久化测试
+│   ├── helpers.py                # SQLite fixtures
+│   ├── test_repository.py        # 仓储读写
+│   ├── test_migration.py         # JSON 迁移
+│   ├── test_recovery.py          # 重启恢复与损坏降级
+│   ├── test_idempotency.py       # 答案/复习幂等
+│   └── test_concurrency.py       # 并发写入
+│
 ├── regression/           # 跨阶段回归套件
 │   ├── conftest.py       # 回归专用 fixtures
 │   ├── test_api_contract.py      # API 契约稳定性
@@ -89,12 +97,13 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/` | 148 项 | 148 collected | 阶段测试 + 回归套件（M0_M2 18、M3a 22、M3b 13、M3c 10、M3d 6、M4 14、M5a 26、M5b 18、regression 21） |
+| 根级 `tests/` | 162 项 | 162 collected | 阶段测试 + 回归套件（M0_M2 18、M3a 22、M3b 13、M3c 10、M3d 6、M4 14、M5a 26、M5b 18、M5c 14、regression 21） |
 | `platform/tests/` | 40 项 | 40 passed | 原始平台冒烟/功能测试 |
 | M3 验收门禁 | 130 项 | 130 passed | 根级测试 90 项 + 平台原始测试 40 项；包含 M3d 文档检查 |
 | M4 验收门禁 | 144 项 | 144 passed | 根级测试 104 项 + 平台原始测试 40 项；包含知识库规模检查 |
 | M5a 本阶段 | 26 项 | 26 passed | 参数解析、评测集发现、指标聚合、报告格式 |
 | M5b 本阶段 | 18 项 | 18 passed | 状态机、评估、降级、API 契约 |
+| M5c 本阶段 | 14 项 | 14 passed | 仓储、迁移、恢复、幂等、并发 |
 
 M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。受限 Windows 环境若默认临时目录不可写，可使用工作区内的 `pytest --basetemp=.tmp-test\...`。
 
@@ -292,6 +301,18 @@ pytest tests/M0_M2/ -v         # 基线回归
 | `test_evaluation.py` | 确定性评估 | 精确匹配、空答案、无关答案、无参考答案降级 |
 | `test_api.py` | API 契约 | 200/404/409/422，无 LLM 可运行 |
 
+### 阶段 8：M5c — 学习状态持久化（已完成）
+
+**对应开发任务**：用 SQLite 保存学习会话、答题记录和复习历史，支持 JSON 兼容读取、重启恢复和幂等写入。
+
+| 测试文件 | 测试项 | 验证点 |
+|----------|--------|--------|
+| `test_repository.py` | 仓储读写 | 会话/复习可回读，重复复习写入不加倍 |
+| `test_migration.py` | JSON 迁移 | 空库导入、已有数据不覆盖、损坏 JSON 忽略 |
+| `test_recovery.py` | 恢复 | 新进程可继续作答；损坏 DB 隔离后重建 |
+| `test_idempotency.py` | 幂等 | 重复提交同一答案不占新尝试；同会话复习不递增 |
+| `test_concurrency.py` | 并发 | 多线程写入全部可见 |
+
 ## 三、执行矩阵
 
 | 阶段 | 本阶段测试 | 回归测试 | 基线测试 | RAG 评测 |
@@ -304,6 +325,7 @@ pytest tests/M0_M2/ -v         # 基线回归
 | M4 知识库规模补齐 | `tests/M4/` | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
 | M5a 评测入口 | `tests/M5a/` | `tests/regression/` | `tests/M0_M2/` | `python tools/run_evaluation.py` |
 | M5b 学习会话 | `tests/M5b/` | `tests/regression/` | `tests/M0_M2/` | — |
+| M5c 学习持久化 | `tests/M5c/` | `tests/regression/` | `tests/M0_M2/` | — |
 
 ## 四、pytest 配置
 
@@ -319,6 +341,9 @@ pytest tests/M5a/ -v -m m5a
 
 # 运行 M5b 学习会话测试
 pytest tests/M5b/ -v -m m5b
+
+# 运行 M5c 持久化测试
+pytest tests/M5c/ -v -m m5c
 
 # 运行回归套件
 pytest tests/regression/ -v

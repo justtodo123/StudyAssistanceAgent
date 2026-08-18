@@ -137,6 +137,7 @@ class ReviewLogRequest(BaseModel):
 
     file: str = Field(description="知识条目文件路径，如 knowledge/os/process-management.md")
     course: str = Field(default="", description="课程简称（可选，自动从条目提取）")
+    source_session_id: str = Field(default="", description="来源学习会话 ID，用于会话完成后的幂等记复习")
 
 
 class ReviewEntry(BaseModel):

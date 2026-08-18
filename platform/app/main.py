@@ -28,6 +28,7 @@ from .models import (
     StudySessionCreateRequest,
     StudySessionResponse,
 )
+from .learning_store import ReviewHistoryRepositoryAdapter, SqliteLearningStore
 from .qa import QaService
 from .quiz import QuizService
 from .retrieval import MultiRecallService
@@ -45,11 +46,15 @@ _recall = MultiRecallService()
 _qa = QaService()
 _review_plan = ReviewPlanService()
 _quiz = QuizService()
-_review_scheduler = ReviewSchedulerService()
+_learning_store = SqliteLearningStore(config.LEARNING_STORE_PATH)
+_review_scheduler = ReviewSchedulerService(
+    repository=ReviewHistoryRepositoryAdapter(_learning_store)
+)
 _study_sessions = StudySessionService(
     qa_service=_qa,
     quiz_service=_quiz,
     review_scheduler=_review_scheduler,
+    session_repository=_learning_store,
 )
 
 
