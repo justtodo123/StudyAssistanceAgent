@@ -64,6 +64,7 @@ docs/             # 项目文档：PLAN、reference 索引、standards、intervi
 - **大小写**：提交信息用命令式、首字母小写。
 - **特殊约定**：`knowledge/` 内容提交时若与某门课程强相关，在 scope 中标注课程名（如 `os`、`ds`、`co`）。
 - **分支策略**：采用 Feature Branch 工作流，每个阶段从 `master` 切独立分支开发，人工合并。详见 [docs/standards/git-conventions.md](docs/standards/git-conventions.md)。
+- **阶段开工前置检查**：每个阶段开始前，必须确保 git 工作区状态干净（`git status` 无未提交修改）。如有未提交内容，先处理完毕再进入下一阶段。
 
 ### 5. 测试规范
 详见 [tests/TEST_PLAN.md](tests/TEST_PLAN.md)。要点：
