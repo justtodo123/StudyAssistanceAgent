@@ -1,12 +1,16 @@
 # 项目计划 · StudyAssistanceAgent
 
-> 面向大学计算机专业学生的个人学习助手 + 面向 **AI 应用开发岗** 的面试项目。
-> **双目标**：① 帮助自己学懂每门课（自学价值）；② 简历上可讲的完整 Agent/RAG 工程（面试价值）。
+> 通用学习 Agent 的 harness 框架。M0–M5 是最小实现（默认计算机知识包 + 学习闭环）。
+> **双目标**：① 按用户目标把任意知识源学完（产品价值）；② 可讲清 Agent harness / RAG / 计划执行（工程价值）。
 > 状态图例：⬜ 未开始 ｜ 🔄 进行中 ｜ ✅ 完成
+> **当前阶段**：M6a 未开工。里程碑与退出方向以**本文**为准。`docs/plans/references/` 只辅助决策，不是最终依据。
+> **M6 拆分说明**：原 M6 已按招聘驱动可行性分析拆为 M6a（协议先行）+ M6b（Agent 核心：ReAct + 工具调用），以尽早补齐 Agent 岗面试的致命缺口（H1/H2）。详见 `docs/plans/references/recruitment-driven-feasibility.md`。
 
 ## 一、项目定位（一句话）
 
-**「自己的课程学习+面试备战系统」**：Markdown 课程知识库（考点/面经/掌握度）→ 多路召回 RAG（本地 BGE 向量+BM25+RRF）→ FastAPI 学习会话 Agent → 带出处问答、测验、复习排程与最小工作台。
+**「通用学习 Agent harness」**：用户接入知识源、声明等级/掌握度/目标 → 外部 AI（可降级）生成学习计划 →
+harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）→ 监控进度与偏差。
+仓库内 OS/DS/CO 笔记是默认知识包，不是唯一数据源。
 
 ## 二、技术选型（已拍板）
 
@@ -17,7 +21,8 @@
 | 向量 | 本地 BGE（sentence-transformers），可选安装 | 离线、零 API 成本、隐私；未装时自动降级关键词 |
 | 检索 | BM25 + 向量多路召回 + RRF 融合 | 混合检索，鲁棒、无需调参 |
 | LLM | OpenAI 兼容接口（DeepSeek 等），可配 | 不配则降级为笔记摘要，保证总是有输出 |
-| 存储 | 检索索引用 JSON 缓存；学习状态用 SQLite | 索引可重建；会话/复习需跨重启恢复 |
+| 存储 | 控制面 SQLite；向量 SQLite→LanceDB，万级可选 Qdrant | 协议可替换；默认离线可跑 |
+| 数据源 | 默认 `knowledge/` Markdown pack + 用户注册源 | 百/千/万分级；不把原始 PDF 写入 Git |
 
 **架构**（参考 `ai_agent_platform` 的 MultiRecall/RRF/LongContext 模式，做个人级瘦身）：
 
@@ -52,7 +57,8 @@
 - ✅ 数据结构复习：`knowledge/ds/`（绪论/线性表/栈队列/串数组广义表/树/图/查找/排序/堆与优先队列/真题复盘）10 篇完成（M1b 完成）
 - ✅ 计算机组成原理：`knowledge/co/`（概述/数据表示/运算器/存储系统/指令系统/CPU设计/总线I/O/MIPS实验/浮点数运算/期考复盘）10 篇完成（M1c 完成）
 - ✅ 每课配 RAG 评测集：OS 33 题 + DS 23 题 + CO 19 题，共 75 题
-- **退出条件**：3 门课各 ≥10 篇条目；评测 Recall@3 ≥ 0.8；能演示「问真题→检索到→带出处答」。
+- ✅ 计算机网络：`knowledge/network/`（概述/体系结构/性能指标/物理层/编码/信道容量/数据链路层/差错控制/流量控制/CSMA-CD/以太网/网络层/IP/子网划分/ARP-ICMP/路由/NAT/传输层/TCP连接/TCP可靠/TCP拥塞/UDP/应用层/DNS/HTTP/FTP-SMTP/Socket/安全概述/加密签名/防火墙-VPN/真题复盘）31 篇完成 + 评测集 30 题
+- **退出条件**：4 门课各 ≥10 篇条目；评测 Recall@3 ≥ 0.8；能演示「问真题→检索到→带出处答」。
 
 #### M1d：平台打磨（已完成）
 > **目标**：评测闭环 + 平台体验 + 文档同步，满足 M1 退出条件。
@@ -97,7 +103,8 @@
 
 ### M5：学习 Agent 会话化与可交付演示（已完成）
 > **执行计划**：`docs/plans/m5-agent-session-delivery-plan.md`
-> **收口**：Level 1（M5a/M5b）与 Level 2（M5c/M5d/M5e）均已完成；下一步是使用与面试彩排，不再扩功能。
+> **收口**：Level 1（M5a/M5b）与 Level 2（M5c/M5d/M5e）均已完成，作为 harness 的最小实现冻结。
+> 2026-08-20 起产品定位升级为通用学习 Agent harness，后续阶段见 M6–M10。
 - ✅ M5a：统一三课 90 题离线评测入口，支持汇总指标和 JSON 报告（离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000）。
 - ✅ M5b：实现服务端学习会话状态机，编排 QA、Quiz、答案评估和 Review-log（`POST/GET /api/v1/study-sessions`）。
 - ✅ M5c：使用 SQLite 持久化会话、答题记录、掌握度和复习历史（`platform/.cache/learning_state.sqlite3`，兼容读取 `review_history.json`）。
@@ -105,7 +112,25 @@
 - ✅ M5e：增加离线 CI、一键启动、模型缓存说明和演示基线。
 - **Level 1 退出条件**：一条命令完成 90 题离线评测；一个 API 会话完成“检索→讲解→出题→作答→评估→记录复习”；无 LLM 和向量模型时仍可运行。
 - **完整退出条件**：✅ 会话可跨重启恢复；工作台可完成学习闭环；离线 CI 与一键启动已落地；阶段测试、回归和平台测试保持通过。
-- **收口结论**：M5 交付关闭。后续优先用工作台学习和按 `docs/demo.md` 彩排，不为展示再加前端框架或通用 Agent 运行时。
+- **收口结论**：M5 作为 MVP 关闭。默认学习闭环与离线交付不再回退；通用运行时与可插拔数据源改由 M6 起按路线图建设。
+
+### M6–M10：通用学习 Agent Harness（规划中）
+> **最终依据**：本节（M6–M10）。辅助分析见 `docs/plans/references/`，冲突时以本文为准。
+> **当前状态**：M6a 未开工。M0–M5 回归必须持续全绿。
+> **执行计划**：`docs/plans/m6a-harness-skeleton-plan.md`、`docs/plans/m6b-agent-core-plan.md`。
+
+- ⬜ **M6a Harness 骨架**：Source/Store/Tool/Runner 四协议；额外 Markdown 源注册；API 兼容 MVP；默认 Runner 仍是学习状态机。
+  - 执行计划：`docs/plans/m6a-harness-skeleton-plan.md`
+  - 招聘价值：工具协议是 Function Calling 的基础，面试可讲「可扩展的工具协议设计」。
+- ⬜ **M6b Agent 核心（ReAct + 工具调用）**：工具注册表 + Function Calling + ReAct 推理循环 + 安全护栏（步数/超时/重复熔断）+ 降级路径。
+  - 执行计划：`docs/plans/m6b-agent-core-plan.md`
+  - 招聘价值：★★★★★ 直接补齐 H1（Agent 推理循环）和 H2（工具调用）两个致命面试缺口。
+- ⬜ **M7 用户数据源与千级检索**：源注册/同步、FTS5、1k–3k chunk 基线。
+- ⬜ **M8 专业化存储**：统一学习 schema；默认 LanceDB；Qdrant 作为万级可选项。
+- ⬜ **M9 目标驱动计划**：外部 AI 按等级/掌握度/目标生成计划；按计划选题；监控偏差。
+- ⬜ **M10 Harness 对外**：知识包 manifest、Agent 评测（任务成功率/工具调用准确率/成本/延迟）、MCP 协议最小实现。
+
+**总退出方向**：用户能自定义知识源，在百/千/万级数据上按自己的目标学，并看到计划执行情况；无外部 AI 时仍可降级运行。ReAct 作为可选 Runner 与学习状态机正交，不破坏教学法。
 
 ## 四、风险与缓解
 
@@ -116,6 +141,9 @@
 | 面试被追问「和 RAG demo 有何不同」 | docs/interview/README 已备 8 大追问答案；多用「数据驱动优化」叙事 |
 | 参考项目 Java/Spring 太重不适合 | 已确认 Python 栈 + 本地向量 + 降级路，仍借鉴其 MultiRecall/RRF 模式 |
 | 本机 GitHub 访问受限 | SSH 走 443 已配置；push 由用户手动完成 |
+| 做成空框架、课内体验变差 | M6 先兼容现有 API；默认 Runner 仍是学习状态机 |
+| 万级数据污染 Git 仓库 | 用户源放仓库外；Git 只存默认 pack 与配置 |
+| 外部 AI 把全书塞进上下文 | Planner 只使用目录摘要 + 掌握度，不喂原文全书 |
 
 ## 五、面试叙事核心（详见 docs/interview/README.md）
 
@@ -123,7 +151,7 @@
 
 ---
 
-*创建：2026-08-10 · 版本：v1.8（截至 2026-08-18：M0~M5 已收口）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · 版本：v2.0（2026-08-20：M6 拆为 M6a/M6b，ReAct 提前至 M6b，M10 增加 MCP）· 维护：每次会话开工查看本文档*
 
 
 

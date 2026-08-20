@@ -1,0 +1,95 @@
+{
+  "计算机网络体系结构有哪几层，各层功能是什么": [
+    "knowledge/network/architecture.md"
+  ],
+  "OSI七层模型和TCP/IP模型的主要区别": [
+    "knowledge/network/architecture.md"
+  ],
+  "什么是带宽时延积": [
+    "knowledge/network/performance.md"
+  ],
+  "发送时延和传播时延的区别": [
+    "knowledge/network/performance.md"
+  ],
+  "奈奎斯特定理和香农定理的区别": [
+    "knowledge/network/channel-capacity.md"
+  ],
+  "曼彻斯特编码的特点是什么": [
+    "knowledge/network/encoding.md"
+  ],
+  "数据链路层如何实现透明传输": [
+    "knowledge/network/data-link-layer.md"
+  ],
+  "CRC校验的原理和计算过程": [
+    "knowledge/network/error-control.md"
+  ],
+  "停等协议、GBN和SR的区别": [
+    "knowledge/network/flow-control.md"
+  ],
+  "CSMA/CD的工作原理": [
+    "knowledge/network/csma-cd.md"
+  ],
+  "以太网最小帧长为什么是64字节": [
+    "knowledge/network/csma-cd.md",
+    "knowledge/network/ethernet.md"
+  ],
+  "VLAN的作用是什么": [
+    "knowledge/network/ethernet.md"
+  ],
+  "IP地址分类有哪些": [
+    "knowledge/network/ip-protocol.md"
+  ],
+  "子网划分如何计算子网掩码": [
+    "knowledge/network/subnetting.md"
+  ],
+  "ARP协议的工作过程": [
+    "knowledge/network/arp-icmp.md"
+  ],
+  "RIP和OSPF的区别": [
+    "knowledge/network/routing.md"
+  ],
+  "NAT的作用和局限": [
+    "knowledge/network/nat.md"
+  ],
+  "TCP三次握手的过程": [
+    "knowledge/network/tcp-connection.md"
+  ],
+  "TCP四次挥手的过程": [
+    "knowledge/network/tcp-connection.md"
+  ],
+  "TCP如何实现可靠传输": [
+    "knowledge/network/tcp-reliable.md"
+  ],
+  "TCP拥塞控制的四个阶段": [
+    "knowledge/network/tcp-congestion.md"
+  ],
+  "UDP和TCP的主要区别": [
+    "knowledge/network/udp.md",
+    "knowledge/network/transport-layer.md"
+  ],
+  "DNS域名解析的过程": [
+    "knowledge/network/dns.md"
+  ],
+  "HTTP状态码有哪些类型": [
+    "knowledge/network/http.md"
+  ],
+  "HTTPS和HTTP的区别": [
+    "knowledge/network/http.md"
+  ],
+  "FTP为什么需要两个连接": [
+    "knowledge/network/ftp-smtp.md"
+  ],
+  "Socket编程的基本流程": [
+    "knowledge/network/socket.md"
+  ],
+  "对称加密和非对称加密的区别": [
+    "knowledge/network/encryption.md"
+  ],
+  "数字签名的作用是什么": [
+    "knowledge/network/encryption.md",
+    "knowledge/network/security-overview.md"
+  ],
+  "防火墙有哪些类型": [
+    "knowledge/network/firewall-vpn.md"
+  ]
+}

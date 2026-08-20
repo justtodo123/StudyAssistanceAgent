@@ -1,8 +1,8 @@
 # 计算机网络 — 外部资料登记
 
 - **外部路径**：`D:\111_Others_Subjects\ComputingNet`
-- **知识库入口**：[knowledge/network/README.md](../../knowledge/network/README.md)（待建）
-- **整理状态**：🆕 未整理
+- **知识库入口**：[knowledge/network/README.md](../../knowledge/network/README.md)（31 篇，408 全章节覆盖）
+- **整理状态**：📝 笔记已建
 
 ## 资料构成
 
@@ -36,3 +36,4 @@ winpcap（NPCAP）计算机网络实验.doc
 | 日期 | 动作 | 对应知识库文件 |
 | --- | --- | --- |
 | 2026-08-10 | 初始化登记 | — |
+| 2026-08-20 | 网络爬取 + LLM 精炼，31 篇条目入库 | knowledge/network/ 全部 31 个文件 |
