@@ -47,6 +47,10 @@ class QaResponse(BaseModel):
     answer: str
     mode: str
     sources: list[RetrievalChunk]
+    generation_layer: str = Field(
+        default="note_summary",
+        description="grounded_llm | note_summary | no_hit",
+    )
 
 
 # ── 复习计划 ──────────────────────────────────────────────────────────────────

@@ -31,14 +31,28 @@ class QaService:
             if req.use_llm and config.LLM_API_KEY:
                 try:
                     text = self._generate(req.question, results)
-                    return QaResponse(question=req.question, answer=text, mode=mode, sources=results)
+                    layer = "grounded_llm" if results else "no_hit"
+                    return QaResponse(
+                        question=req.question,
+                        answer=text,
+                        mode=mode,
+                        sources=results,
+                        generation_layer=layer,
+                    )
                 except Exception as exc:
                     self._fallback_note = f"LLM generation failed; used local summary: {exc}"
 
             text = self._summarize(results)
             if getattr(self, "_fallback_note", None):
                 text = text + "\n\n" + self._fallback_note
-            return QaResponse(question=req.question, answer=text, mode=mode, sources=results)
+            layer = "no_hit" if not results else "note_summary"
+            return QaResponse(
+                question=req.question,
+                answer=text,
+                mode=mode,
+                sources=results,
+                generation_layer=layer,
+            )
         finally:
             duration_ms = (time.perf_counter() - started) * 1000
             metrics.record("qa", duration_ms, len(results))
@@ -67,7 +81,7 @@ class QaService:
                 {"role": "system", "content": system},
                 {"role": "user", "content": f"知识库片段：\n{context}\n\n问题：{question}"},
             ],
-            "temperature": 0.3,
+            "temperature": config.LLM_TEMPERATURE,
             "stream": False,
         }
         req = urllib.request.Request(
@@ -78,7 +92,7 @@ class QaService:
                 "Authorization": f"Bearer {config.LLM_API_KEY}",
             },
         )
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=config.LLM_TIMEOUT_S) as resp:
             data: dict[str, Any] = json.loads(resp.read().decode("utf-8"))
         return data["choices"][0]["message"]["content"]
 

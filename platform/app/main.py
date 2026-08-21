@@ -10,11 +10,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config
+from .errors import ErrorCode, http_error
 from .models import (
     QaRequest,
     QaResponse,
@@ -67,7 +68,7 @@ _study_sessions = StudySessionService(
 def workbench() -> FileResponse:
     """Serve the minimal learning workbench as the first screen."""
     if not _WORKBENCH_INDEX.is_file():
-        raise HTTPException(status_code=404, detail="learning workbench is unavailable")
+        raise http_error(ErrorCode.WORKBENCH_UNAVAILABLE, "learning workbench is unavailable")
     return FileResponse(_WORKBENCH_INDEX)
 
 
@@ -92,6 +93,10 @@ def health() -> dict[str, Any]:
         "index_size": len(chunks),
         "cache_status": snapshot["cache_status"],
         "avg_latency_ms": snapshot["avg_latency_ms"],
+        "p50_latency_ms": snapshot["p50_latency_ms"],
+        "p95_latency_ms": snapshot["p95_latency_ms"],
+        "p99_latency_ms": snapshot["p99_latency_ms"],
+        "sample_count": snapshot["sample_count"],
         "llm_configured": bool(config.LLM_API_KEY),
     }
 
@@ -165,7 +170,7 @@ def get_study_session(session_id: str) -> StudySessionResponse:
     try:
         return _study_sessions.get(session_id)
     except SessionNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise http_error(ErrorCode.SESSION_NOT_FOUND, str(exc)) from exc
 
 
 @app.post("/api/v1/study-sessions/{session_id}/answers", response_model=StudySessionResponse)
@@ -177,9 +182,9 @@ def submit_study_answer(
     try:
         return _study_sessions.submit_answer(session_id, req)
     except SessionNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise http_error(ErrorCode.SESSION_NOT_FOUND, str(exc)) from exc
     except IllegalSessionStateError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        raise http_error(ErrorCode.ILLEGAL_SESSION_STATE, str(exc)) from exc
 
 
 def bm25_only(question: str, top_k: int, course: str | None = None):

@@ -125,9 +125,11 @@ class _EmbeddingMixin:
         if embedder is None:
             self._ensure_model()
             embedder = self._model
+        from . import config
+
         encoded = embedder.encode(
             texts,
-            normalize_embeddings=True,
+            normalize_embeddings=config.EMBEDDING_NORMALIZE,
             show_progress_bar=False,
         )
         return _normalise_vectors(encoded)

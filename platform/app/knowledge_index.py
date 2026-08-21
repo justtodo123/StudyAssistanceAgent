@@ -82,7 +82,7 @@ def build_index(root: Path | None = None) -> list[RetrievalChunk]:
             continue
         body = _FRONTMATTER_RE.sub("", text)
         for title, content in _split_headings(body):
-            if len(content) < 15:  # 过短片段（可能是占位）跳过，减少噪音
+            if len(content) < config.CHUNK_MIN_CHARS:
                 continue
             chunks.append(
                 RetrievalChunk(
