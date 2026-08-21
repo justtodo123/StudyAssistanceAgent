@@ -83,7 +83,7 @@ StudyAssistanceAgent/
 │   ├── README.md          # 工具文档
 │   ├── run_evaluation.py  # 统一 RAG 评测入口（三课 90 题 / JSON 报告）
 │   ├── start_local.py     # 一键启动与 /health 检查
-│   ├── crawler/           # 候选 Markdown 抓取/清洗/转换（M6a-P0 待收口）
+│   ├── crawler/           # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   └── evaluations/       # 默认三课 90 题 + Network 30 题显式扩展集
 ├── tests/                 # ★ 迭代测试体系（阶段隔离架构）
 │   ├── TEST_PLAN.md       # 测试计划文档
@@ -99,7 +99,7 @@ StudyAssistanceAgent/
 │   ├── M5c/               # 学习状态持久化测试（14 项）
 │   ├── M5d/               # 学习工作台测试（10 项）
 │   ├── M5e/               # 可复现交付测试（15 项）
-│   ├── M6_crawler/        # crawler 既有测试（M6a-P0 待收口）
+│   ├── M6_crawler/        # crawler P0 离线测试（独立 marker / CI 已收口）
 │   ├── regression/        # 跨阶段回归套件（21 项）
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
