@@ -6,6 +6,8 @@ import pytest
 
 from tools.crawler.cleaner import clean_html, extract_title
 
+pytestmark = pytest.mark.m6_crawler
+
 
 class TestCleanHtml:
     """clean_html 测试。"""

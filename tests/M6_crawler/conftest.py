@@ -2,17 +2,59 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
+import httpx
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOLS_DIR = REPO_ROOT / "tools"
 
-# 确保 tools/ 可 import
+# 确保 tools/ 与仓库根可 import
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
+
+def pytest_collection_modifyitems(config, items) -> None:
+    """Every test under tests/M6_crawler gets m6_crawler; other stages stay unmarked."""
+    marker = pytest.mark.m6_crawler
+    for item in items:
+        path = getattr(item, "path", None)
+        parts = path.parts if path is not None else Path(str(item.fspath)).parts
+        if "M6_crawler" in parts:
+            item.add_marker(marker)
+
+
+@pytest.fixture(autouse=True)
+def block_real_http(monkeypatch, request):
+    """Offline crawler tests must mock HTTP; real sockets are a contract failure."""
+    if request.node.get_closest_marker("online"):
+        yield
+        return
+
+    class _BlockedClient:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "crawler offline tests cannot open real HTTP connections; mock fetch/httpx"
+            )
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(httpx, "Client", _BlockedClient)
+    monkeypatch.setattr("tools.crawler.fetcher.httpx.Client", _BlockedClient)
+    yield
+
+
+def crawler_online_enabled() -> bool:
+    return os.getenv("CRAWLER_ONLINE", "").strip().lower() in {"1", "true", "yes"}
 
 
 @pytest.fixture

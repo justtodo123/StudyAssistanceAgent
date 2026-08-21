@@ -18,6 +18,8 @@ from app.source_policy import (
 from tools.crawler.converter import ArticleMeta, to_knowledge_markdown
 from tools.crawler.pipeline import run_pipeline
 
+pytestmark = pytest.mark.m6_crawler
+
 
 class TestCandidateFrontmatter:
     def test_converter_marks_web_candidate(self, sample_text: str) -> None:

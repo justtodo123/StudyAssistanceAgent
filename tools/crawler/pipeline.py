@@ -29,6 +29,13 @@ from tools.crawler.fetcher import fetch_batch
 
 logger = logging.getLogger(__name__)
 
+def _display_path(path: Path) -> str:
+    """Repo-relative POSIX path, or basename if outside the repo (no absolute leak)."""
+    try:
+        return path.resolve().relative_to(_ROOT).as_posix()
+    except ValueError:
+        return path.name
+
 
 def run_pipeline(
     url_file: Path,
@@ -42,7 +49,7 @@ def run_pipeline(
 
     Args:
         url_file: URL 列表 JSON 文件路径
-        output_dir: 输出目录（knowledge/{course}/）
+        output_dir: 输出目录（默认 platform/.cache/crawler-candidates/{course}）
         dry_run: 试运行（不写文件）
         delay: 每次请求间隔（秒）
 
@@ -59,7 +66,7 @@ def run_pipeline(
     with open(url_file, encoding="utf-8") as f:
         entries = json.load(f)
 
-    logger.info("loaded %d URLs from %s", len(entries), url_file)
+    logger.info("loaded %d URLs from %s", len(entries), _display_path(url_file))
 
     # 2. 批量抓取
     urls = [e["url"] for e in entries]
@@ -76,6 +83,7 @@ def run_pipeline(
         "dedup_skipped": 0,
         "converted": 0,
         "written": 0,
+        "output_dir": _display_path(output_dir),
     }
 
     for entry, result in zip(entries, fetch_results):
@@ -126,14 +134,14 @@ def run_pipeline(
         for filename, content in articles:
             out_path = output_dir / filename
             if out_path.exists():
-                logger.info("SKIP existing file: %s", out_path)
+                logger.info("SKIP existing file: %s", _display_path(out_path))
                 continue
             out_path.write_text(content, encoding="utf-8")
             stats["written"] += 1
-            logger.info("written: %s", out_path)
+            logger.info("written: %s", _display_path(out_path))
     else:
         stats["written"] = len(articles)
-        logger.info("[DRY RUN] would write %d files to %s", len(articles), output_dir)
+        logger.info("[DRY RUN] would write %d files to %s", len(articles), _display_path(output_dir))
 
     logger.info("pipeline complete: %s", json.dumps(stats, indent=2))
     return stats

@@ -7,6 +7,8 @@ import yaml
 
 from tools.crawler.converter import ArticleMeta, slug_from_title, to_knowledge_markdown
 
+pytestmark = pytest.mark.m6_crawler
+
 
 class TestToKnowledgeMarkdown:
     """to_knowledge_markdown 测试。"""

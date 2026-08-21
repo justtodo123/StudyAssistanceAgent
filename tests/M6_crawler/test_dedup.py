@@ -6,6 +6,8 @@ import pytest
 
 from tools.crawler.dedup import DedupIndex
 
+pytestmark = pytest.mark.m6_crawler
+
 
 class TestDedupIndex:
     """DedupIndex 测试。"""

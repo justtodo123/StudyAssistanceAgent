@@ -10,6 +10,8 @@ import pytest
 
 from tools.crawler.pipeline import run_pipeline
 
+pytestmark = pytest.mark.m6_crawler
+
 
 class TestPipeline:
     """run_pipeline 集成测试。"""
