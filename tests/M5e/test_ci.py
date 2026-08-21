@@ -27,3 +27,7 @@ class TestOfflineCiWorkflow:
         assert "pytest" in workflow_text
         assert "tests/regression" in workflow_text
         assert "tools/run_evaluation.py --smoke" in workflow_text
+
+    def test_dev_requirements_declare_httpx2_for_testclient(self, repo_root):
+        text = (repo_root / "platform" / "requirements-dev.txt").read_text(encoding="utf-8")
+        assert "httpx2>=2,<3" in text

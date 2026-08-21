@@ -1,0 +1,4 @@
+# 爬虫工具依赖（独立于 platform/requirements.txt）
+httpx>=0.27.0
+trafilatura>=1.12.0
+pyyaml>=6.0

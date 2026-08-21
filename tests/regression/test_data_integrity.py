@@ -26,7 +26,7 @@ class TestKnowledgeIntegrity:
 
     def test_all_chunks_have_valid_course(self, knowledge_chunks):
         """所有切片的 course 字段应为已知课程（README 等导航文件除外）。"""
-        valid_courses = {"os", "ds", "co", "interview"}
+        valid_courses = {"os", "ds", "co", "interview", "network"}
         for chunk in knowledge_chunks:
             # README 文件是导航页，无 frontmatter，course 为空是正常的
             if chunk.file.endswith("README.md"):
@@ -63,7 +63,7 @@ class TestEvaluationSetIntegrity:
     @pytest.fixture
     def eval_sets(self):
         sets = {}
-        for name in ("os", "ds", "co"):
+        for name in ("os", "ds", "co", "network"):
             path = REPO_ROOT / "tools" / "evaluations" / f"{name}.json"
             if path.exists():
                 sets[name] = json.loads(path.read_text(encoding="utf-8"))

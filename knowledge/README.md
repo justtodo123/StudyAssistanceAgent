@@ -22,7 +22,8 @@ knowledge/
 │   ├── co/                # CO 面经
 │   ├── rag-agent/         # RAG/Agent 工程面经
 │   └── project/           # 项目介绍与系统设计面经
-└── _templates/            # 条目模板（新建条目时复制）
+├── _templates/            # 条目模板（新建条目时复制）
+└── _inbox/                # 待审核候选（不进入检索）
 ```
 
 ## 每门课程目录的 README 应包含
@@ -42,6 +43,8 @@ tags: [topic1, topic2]
 difficulty: 入门 | 中等 | 进阶
 updated: 2026-08-10
 source: 参考的外部资料路径或书目（可省略，指向 docs/reference 索引）
+source_type: human_markdown  # 可选；网页候选为 web_candidate，审核后为 web_reviewed
+ingest_status: approved      # 可选；candidate 不会进入检索
 ---
 ```
 
@@ -68,7 +71,7 @@ source: 参考的外部资料路径或书目（可省略，指向 docs/reference
 | 操作系统 | os | [os/](os/README.md) | 20 | ✅ M4 完成（新增线程、IPC、实时调度、文件分配、设备管理） |
 | 数据结构 | ds | [ds/](ds/README.md) | 20 | ✅ M4 完成（新增分治、动态规划、平衡树、并查集、字符串匹配、哈希、图算法、外部排序） |
 | 计算机组成原理 | co | [co/](co/README.md) | 20 | ✅ M4 完成（新增数制、乘除法、Cache、地址转换、控制器、流水线、中断、总线、性能） |
-
+| 计算机网络 | network | [network/](network/README.md) | 31 | ✅ M1 完成（408 全章节覆盖：物理层→数据链路→网络层→传输层→应用层→网络安全） |
 
 ## 面经知识库
 

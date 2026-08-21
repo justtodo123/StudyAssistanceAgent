@@ -65,6 +65,7 @@ def _chunk_id(file: Path, title: str) -> str:
 def build_index(root: Path | None = None) -> list[RetrievalChunk]:
     """扫描知识库目录，返回全部检索切片。root 默认取配置中的 KNOWLEDGE_ROOT。"""
     from . import config
+    from .source_policy import is_indexable_frontmatter, is_indexable_relative_path
 
     root = root or config.KNOWLEDGE_ROOT
     chunks: list[RetrievalChunk] = []
@@ -73,13 +74,15 @@ def build_index(root: Path | None = None) -> list[RetrievalChunk]:
 
     for md in sorted(root.rglob("*.md")):
         rel = md.relative_to(root).as_posix()
-        if rel.startswith("_templates/"):  # 模板不入索引
+        if not is_indexable_relative_path(rel):
             continue
-        text = md.read_text(encoding="utf-8")
+        text = md.read_text(encoding="utf-8-sig")
         meta = _parse_frontmatter(text)
+        if not is_indexable_frontmatter(meta):
+            continue
         body = _FRONTMATTER_RE.sub("", text)
         for title, content in _split_headings(body):
-            if len(content) < 15:  # 过短片段（可能是占位）跳过，减少噪音
+            if len(content) < config.CHUNK_MIN_CHARS:
                 continue
             chunks.append(
                 RetrievalChunk(

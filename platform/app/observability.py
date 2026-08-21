@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import threading
 from collections import defaultdict, deque
 from statistics import fmean
@@ -70,6 +71,10 @@ class MetricsRegistry:
                 "index_size": self._index_size,
                 "cache_status": self._cache_status,
                 "avg_latency_ms": round(avg, 3),
+                "p50_latency_ms": _percentile(all_samples, 50),
+                "p95_latency_ms": _percentile(all_samples, 95),
+                "p99_latency_ms": _percentile(all_samples, 99),
+                "sample_count": len(all_samples),
                 "cache_hits": self._cache_hits,
                 "cache_misses": self._cache_misses,
                 "requests": dict(self._requests),
@@ -84,6 +89,15 @@ class MetricsRegistry:
             self._cache_misses = 0
             self._cache_status = "unknown"
             self._index_size = 0
+
+
+def _percentile(samples: list[float], percent: float) -> float:
+    """Nearest-rank percentile in milliseconds; empty sample set is 0.0."""
+    if not samples:
+        return 0.0
+    ordered = sorted(samples)
+    rank = max(1, math.ceil(percent / 100 * len(ordered)))
+    return round(ordered[rank - 1], 3)
 
 
 metrics = MetricsRegistry()

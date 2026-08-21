@@ -32,6 +32,8 @@ platform/
 │   ├── vector_store.py    # 本地 BGE 向量存储（可选依赖，未装时优雅降级）
 │   ├── qa.py              # 问答服务（LLM 生成 / 降级笔记摘要）
 │   ├── knowledge_index.py # 知识库索引（Markdown 切分 + frontmatter 解析 + JSON 缓存）
+│   ├── source_policy.py   # 数据源类型与入库门禁
+│   ├── errors.py          # 稳定错误码
 │   ├── observability.py   # 进程内延迟/缓存指标与结构化日志
 │   ├── review_plan.py     # 复习计划服务（分日学习计划生成）
 │   ├── quiz.py            # 测验生成服务（例题+评测集+概念模板三数据源）
@@ -50,8 +52,8 @@ platform/
 └── .env.example           # 环境变量模板（复制为 .env 后修改）
 ```
 
-平台原始测试共 40 项且已全部通过；根目录阶段化测试和回归套件见 `../tests/`，当前根级测试共 172 项。
-```
+平台原始测试共 40 项，历史 M5 验收时已全部通过；根目录阶段化测试、crawler 前置测试和回归套件见
+`../tests/TEST_PLAN.md`。文档中的历史通过数不代表本次修改已重新执行完整测试。
 
 ## API 端点
 
@@ -80,11 +82,15 @@ GET /health
 ```json
 {
   "status": "UP",
-  "vector_engine": "linear",
+  "vector_engine": "sqlite",
   "knowledge_root": ".../knowledge",
   "index_size": 123,
   "cache_status": "warm",
   "avg_latency_ms": 0.06,
+  "p50_latency_ms": 0.05,
+  "p95_latency_ms": 0.12,
+  "p99_latency_ms": 0.20,
+  "sample_count": 12,
   "llm_configured": false
 }
 ```
@@ -95,6 +101,8 @@ GET /health
 - `index_size`：当前索引中的有效 Markdown 切片数。
 - `cache_status`：进程内最近一次索引/检索缓存状态，取值为 `cold`、`warm` 或 `unknown`。
 - `avg_latency_ms`：当前进程保留的最近操作样本平均耗时（毫秒）；服务重启后重新统计。
+- `p50_latency_ms` / `p95_latency_ms` / `p99_latency_ms`：同一批样本的分位数；不是 SLO。
+- `sample_count`：参与统计的样本数，最多 200。
 - `llm_configured`：是否配置 LLM API key 的布尔值，不返回 key 本身。
 
 ### 可观测性与日志
@@ -105,6 +113,7 @@ GET /health
 
 检索服务使用有界的进程内结果缓存；知识库索引使用 `.cache/knowledge_index.json` 缓存。
 `/health` 的延迟和缓存字段用于运行时诊断，不作为持久化监控指标。
+完整参数表、错误码和生成分层见 [docs/standards/runtime-contracts.md](../docs/standards/runtime-contracts.md)。
 
 ### 检索
 
@@ -141,6 +150,7 @@ Content-Type: application/json
 
 - `use_llm: true` 时若配置了 LLM，则调用 AI 生成带出处的回答
 - `use_llm: false` 或 LLM 不可用/失败时，自动降级为笔记摘要（结构化展示检索到的知识库片段）
+- 响应含 `generation_layer`：`grounded_llm` / `note_summary` / `no_hit`
 
 ### 流式问答（SSE）
 
@@ -265,7 +275,7 @@ Content-Type: application/json
 - 答案评估默认使用确定性规则；不配置 LLM 时完整链路仍可运行。
 - 答对则完成并记录复习；答错一次给提示并重试；连续两次答错后返回完整参考并结束。
 - 响应包含 `state`、`sources`、`attempt_count`、`score`、`review` 和 `tool_trace`。
-- 非法状态转换返回 409，未知会话返回 404。
+- 非法状态转换返回 409，未知会话返回 404；`detail` 为 `{code, message, retryable}`。
 - 会话、答题记录和复习历史默认写入 `platform/.cache/learning_state.sqlite3`；服务重启后可按 `session_id` 恢复未完成会话。现有 `review_history.json` 仍可兼容读取。
 
 ## 配置
@@ -279,10 +289,26 @@ Content-Type: application/json
 | `SA_BM25_POOL` | `0` | BM25 候选池大小（`0`=全库检索，个人规模下推荐） |
 | `SA_USE_VECTOR` | `true` | 是否启用向量检索 |
 | `SA_EMBEDDING_MODEL` | `BAAI/bge-small-zh-v1.5` | BGE 嵌入模型名 |
+| `SA_EMBEDDING_NORMALIZE` | `true` | 向量 L2 归一化 |
+| `SA_EMBEDDING_DIM` | `512` | BGE-small-zh 期望维度（入库仍校验） |
+| `SA_CHUNK_MIN_CHARS` | `15` | 过短切片丢弃 |
+| `SA_VECTOR_THRESHOLD` | `0.0` | 余弦下限 |
+| `SA_VECTOR_INDEX_TYPE` | `linear_cosine` | 当前索引类型；ANN 属于 M8 |
+| `SA_RRF_K` | `60` | RRF 融合常数 |
 | `SA_LLM_BASE_URL` | — | LLM API 地址（OpenAI 兼容） |
 | `SA_LLM_API_KEY` | — | LLM API 密钥 |
 | `SA_LLM_MODEL` | — | LLM 模型名（如 `deepseek-chat`） |
+| `SA_LLM_TEMPERATURE` | `0.3` | 生成温度 |
+| `SA_LLM_TIMEOUT_S` | `60` | 单次生成超时（秒） |
 | `SA_LEARNING_STORE_PATH` | `platform/.cache/learning_state.sqlite3` | 学习会话与复习历史 SQLite |
+
+## M6 规划边界（尚未实现）
+
+M6a 将在不改变现有 API 的前提下收敛 Source/存储职责/Tool/Runner 契约；M6b 只增加独立、只读的原生
+工具调用 preview，不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。
+完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。当前配置表和 API 清单不包含这些规划能力。
+
+默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
 ## 降级路径
 
@@ -352,7 +378,7 @@ python -m venv .venv
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-18（M5e 一键启动与离线模型说明完成）· 维护：随 API 变更同步更新*
+*创建：2026-08-11 · 更新：2026-08-21（同步 M6 只读预览边界与三课评测基线）· 维护：随 API 变更同步更新*
 
 
 

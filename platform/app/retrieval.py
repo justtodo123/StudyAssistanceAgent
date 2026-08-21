@@ -16,7 +16,7 @@ from .models import RetrievalChunk
 from .observability import log_operation, metrics
 from .vector_store import LocalVectorStore, SqliteVectorStore, VectorStore
 
-RRF_K = 60
+RRF_K = config.RRF_K
 
 
 class _VectorHolder:
@@ -70,11 +70,13 @@ class MultiRecallService:
         self,
         question: str,
         top_k: int = 5,
-        threshold: float = 0.0,
+        threshold: float | None = None,
         course: str | None = None,
     ) -> tuple[list[RetrievalChunk], str]:
         """Return fused results and the active retrieval mode."""
         started = time.perf_counter()
+        if threshold is None:
+            threshold = config.VECTOR_THRESHOLD
         cache_key = (question, top_k, threshold, course)
         cached = self._result_cache.get(cache_key)
         if cached is not None:

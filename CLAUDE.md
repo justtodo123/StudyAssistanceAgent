@@ -20,7 +20,7 @@ knowledge/        # ★ 知识库（每门课程一个目录，含导航与条�
 platform/         # Python 后端（FastAPI + 多路召回 RAG + 带出处问答）
   app/            #   应用代码（入口/检索/向量/问答/索引/模型/配置）
   tests/          #   检索链路冒烟测试（40 项）
-tests/            # ★ 迭代测试体系（阶段隔离架构，187 项）
+tests/            # ★ 迭代测试体系（阶段隔离架构；数量以 pytest 收集为准）
   TEST_PLAN.md    #   测试计划文档
   conftest.py     #   跨阶段共享 fixtures
   M0_M2/          #   基线回归（18 项）
@@ -64,6 +64,7 @@ docs/             # 项目文档：PLAN、reference 索引、standards、intervi
 - **大小写**：提交信息用命令式、首字母小写。
 - **特殊约定**：`knowledge/` 内容提交时若与某门课程强相关，在 scope 中标注课程名（如 `os`、`ds`、`co`）。
 - **分支策略**：采用 Feature Branch 工作流，每个阶段从 `master` 切独立分支开发，人工合并。详见 [docs/standards/git-conventions.md](docs/standards/git-conventions.md)。
+- **阶段开工前置检查**：每个阶段开始前，必须确保 git 工作区状态干净（`git status` 无未提交修改）。如有未提交内容，先处理完毕再进入下一阶段。
 
 ### 5. 测试规范
 详见 [tests/TEST_PLAN.md](tests/TEST_PLAN.md)。要点：

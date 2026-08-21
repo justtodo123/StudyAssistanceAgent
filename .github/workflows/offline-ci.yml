@@ -4,6 +4,12 @@ on:
   push:
     branches: [master]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      crawler_online_smoke:
+        description: Run crawler online smoke against the public web
+        type: boolean
+        default: false
 
 jobs:
   offline:
@@ -33,3 +39,61 @@ jobs:
       - name: Run evaluation smoke
         run: |
           python tools/run_evaluation.py --smoke
+
+  crawler-offline:
+    name: crawler-offline
+    runs-on: ubuntu-latest
+    env:
+      SA_USE_VECTOR: "false"
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install crawler offline runtime
+        run: |
+          python -m pip install -r platform/requirements.txt -r platform/requirements-dev.txt -r tools/crawler/requirements.txt
+
+      - name: Run crawler offline tests
+        run: |
+          python -m pytest tests/M6_crawler -q --tb=short -m "m6_crawler and not online"
+
+      - name: Explain crawler offline failure
+        if: failure()
+        run: |
+          echo "::error::crawler-offline failed. These tests use mocked HTTP only; inspect tests/M6_crawler ingest gates, candidate output, and eval isolation."
+          exit 1
+
+  crawler-online-smoke:
+    name: crawler-online-smoke
+    if: github.event_name == 'workflow_dispatch' && inputs.crawler_online_smoke
+    runs-on: ubuntu-latest
+    env:
+      SA_USE_VECTOR: "false"
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      CRAWLER_ONLINE: "true"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install crawler online runtime
+        run: |
+          python -m pip install -r platform/requirements.txt -r platform/requirements-dev.txt -r tools/crawler/requirements.txt
+
+      - name: Run crawler online smoke
+        run: |
+          python -m pytest tests/M6_crawler -q --tb=short -m "m6_crawler and online"

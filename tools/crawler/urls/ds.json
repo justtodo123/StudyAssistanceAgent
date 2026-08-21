@@ -1,0 +1,16 @@
+[
+  {
+    "url": "https://blog.csdn.net/qq_36903182/article/details/124536710",
+    "topic": "红黑树原理详解",
+    "course": "ds",
+    "tags": ["红黑树", "平衡树", "查找"],
+    "difficulty": "进阶"
+  },
+  {
+    "url": "https://blog.csdn.net/weixin_45067603/article/details/108580810",
+    "topic": "图的最短路径算法",
+    "course": "ds",
+    "tags": ["Dijkstra", "最短路径", "图"],
+    "difficulty": "中等"
+  }
+]

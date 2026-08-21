@@ -14,15 +14,24 @@ docs/
 │   ├── README.md          # 索引总览与维护规则
 │   ├── _template.md       # 新课程索引模板
 │   └── {course}.md        # 各课程原始资料登记（路径、类型、状态）
-├── plans/                 # 学习计划与项目工程执行计划
+├── plans/                 # 学习计划、项目执行计划、计划辅助调查
 │   ├── README.md          # 计划目录说明
+│   ├── references/        # 辅助计划决策的分析与事实调查
+│   │   ├── README.md
+│   │   ├── agent-alignment-analysis.md
+│   │   ├── recruitment-driven-feasibility.md
+│   │   └── stage-advancement-analysis.md
 │   ├── m3-engineering-execution-plan.md
 │   ├── m4-knowledge-base-scale-plan.md
-│   └── m5-agent-session-delivery-plan.md
+│   ├── m5-agent-session-delivery-plan.md
+│   ├── m6a-harness-skeleton-plan.md
+│   └── m6b-agent-core-plan.md
 ├── standards/             # 开发规范
-│   └── git-conventions.md # Git 提交规范（Conventional Commits）
+│   ├── git-conventions.md # Git 提交规范（Conventional Commits）
+│   └── runtime-contracts.md # 数据源门禁、检索参数、错误码、质量分层
 └── interview/             # 面试叙事（AI 应用开发岗）
-    └── README.md          # 一句话叙事 + 设计决策 + 考点映射 + 常见追问
+    ├── README.md          # 一句话叙事 + 设计决策 + 考点映射 + 能力边界
+    └── StudyAssistanceAgent_requirement.md  # Agent 招聘对齐原始调查
 ```
 
 ## 各目录说明
@@ -33,7 +42,7 @@ docs/
 
 ### PLAN.md — 项目计划
 
-核心文件。定义项目双目标（自学价值 + 面试价值）、技术选型、里程碑（M0~M5）、风险与缓解。
+核心文件。定义项目定位（通用学习 Agent harness）、技术选型、里程碑（M0~M5 MVP，M6+ 规划中）。
 **每次会话开工前先看本文档**，明确当前里程碑与退出条件。
 
 ### plans/ — 学习计划与项目工程执行计划
@@ -43,7 +52,13 @@ docs/
 - M4 知识库规模计划见
   [plans/m4-knowledge-base-scale-plan.md](plans/m4-knowledge-base-scale-plan.md)，课程条目已补齐，实现提交 `106164d` 已进入 `master`。
 - M5 会话化与交付计划见
-  [plans/m5-agent-session-delivery-plan.md](plans/m5-agent-session-delivery-plan.md)，M5 已收口。下一步是演示彩排与真实复习，不再扩功能。
+  [plans/m5-agent-session-delivery-plan.md](plans/m5-agent-session-delivery-plan.md)，已作为 MVP 冻结。
+- M6a/M6b 执行计划：
+  [plans/m6a-harness-skeleton-plan.md](plans/m6a-harness-skeleton-plan.md)（契约与兼容骨架，前置 crawler P0 已收口）和
+  [plans/m6b-agent-core-plan.md](plans/m6b-agent-core-plan.md)（独立只读原生工具调用预览）。
+- 当前 M6b 不接管正式学习会话；完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测后移 M10。
+- 默认 RAG 评测仍为 OS/DS/CO 三课 90 题；Network 评测集为显式运行的独立扩展。
+- `plans/references/` 只存放辅助决策的分析与事实调查，**不能作为最终支撑来源**。
 
 ### reference/ — 外部资料索引
 
@@ -59,15 +74,16 @@ docs/
 ### standards/ — 开发规范
 
 - [git-conventions.md](standards/git-conventions.md)：Conventional Commits 规范，含类型表、scope 约定、撤销速查
+- [runtime-contracts.md](standards/runtime-contracts.md)：数据源类型与入库门禁、embedding/索引参数、稳定错误码、生成分层与 P99
 
 ### interview/ — 面试叙事
 
 面向 **AI 应用开发岗** 的面试备战文档：
 - 一句话项目叙事
 - 5 个设计决策与能力映射
-- 8 个考点映射（RAG / Embedding / Chunking / 缓存 / Prompt / SSE / 降级 / 可观测）
-- 数据驱动优化的实锤方案
-- 常见追问与备好答案
+- 考点映射、数据驱动优化实锤、常见追问
+- 现行能力边界：领域状态机编排，不是 ReAct / Function Calling；与 PLAN v2.2 / runtime-contracts 同一口径
+- 招聘对齐原始调查： [interview/StudyAssistanceAgent_requirement.md](interview/StudyAssistanceAgent_requirement.md)
 
 ---
 
@@ -80,4 +96,4 @@ docs/
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-18（M5 文档收口）· 维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-08-20（定位改为通用学习 Agent harness）· 维护：随项目演进同步更新*
