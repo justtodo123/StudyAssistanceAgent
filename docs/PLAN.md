@@ -3,7 +3,7 @@
 > 通用学习 Agent 的 harness 框架。M0–M5 是最小实现（默认计算机知识包 + 学习闭环）。
 > **双目标**：① 按用户目标把任意知识源学完（产品价值）；② 可讲清 Agent harness / RAG / 计划执行（工程价值）。
 > 状态图例：⬜ 未开始 ｜ 🔄 进行中 ｜ ✅ 完成
-> **当前阶段**：M6a 前置 crawler 收口；M6a/M6b 已完成设计、尚未开工。里程碑与退出方向以**本文**为准。
+> **当前阶段**：M6a-P0 crawler 已收口；M6a/M6b 已完成设计、尚未开工。里程碑与退出方向以**本文**为准。
 > `docs/plans/references/` 只辅助决策，不是最终依据。
 > 数据源门禁、embedding/索引参数、错误码、生成分层与延迟分位数见
 > [`docs/standards/runtime-contracts.md`](standards/runtime-contracts.md)。
@@ -124,13 +124,14 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 
 ### M6–M10：通用学习 Agent Harness（设计完成，尚未开工）
 > **最终依据**：本节（M6–M10）。辅助分析见 `docs/plans/references/`，冲突时以本文为准。
-> **当前状态**：先完成 M6a 前置 crawler 收口；M6a/M6b 仅完成设计。M0–M5 回归必须持续全绿。
+> **当前状态**：M6a-P0 crawler 离线测试与独立 CI 已落地；M6a/M6b 仅完成设计。M0–M5 回归必须持续全绿。
 > **执行计划**：`docs/plans/m6a-harness-skeleton-plan.md`、`docs/plans/m6b-agent-core-plan.md`。
 > **评测基线**：默认只自动发现 OS/DS/CO 三课 90 题；Network 30 题是显式运行的扩展集，不进入默认门禁。
 
-- ⬜ **M6a-P0 crawler 前置收口**：登记既有 `tools/crawler/` 与 `tests/M6_crawler/`，固定独立依赖、marker、
-  CI/测试方式和人工审核后入库边界。crawler 默认写入 `platform/.cache/crawler-candidates/`，
-  不自动注册 Source，也不代表 M7 生命周期完成。入库门禁已按 runtime-contracts 生效。
+- ✅ **M6a-P0 crawler 前置收口**：`tests/M6_crawler` 使用独立 marker `m6_crawler`；离线测试 mock HTTP；
+  CI job `crawler-offline` 安装 `tools/crawler/requirements.txt` 并跑 `-m "m6_crawler and not online"`。
+  默认写入 `platform/.cache/crawler-candidates/`，不自动注册 Source。在线 smoke 仅显式
+  `workflow_dispatch`。不代表 M7 生命周期完成。
 - ⬜ **M6a Harness 兼容骨架**：先完成契约收敛，再适配现有实现。
   - 仓储按职责区分 LearningStateRepository、ReviewRepository、SourceRegistry 与 RetrievalIndex；复用现有
     `SqliteLearningStore` 和 `VectorStore`，不创建承载所有数据的泛化 Store。

@@ -4,7 +4,7 @@
 > M0–M5 提供最小实现：默认计算机知识包、多路召回 RAG、学习会话与工作台。
 > M6 起按计划扩展：可插拔数据源、专业化存储、目标驱动学习计划与执行监控。
 
-**当前状态**：`v1.8 M6 设计完成、实现未开工` — 当前先做 M6a-P0 crawler 收口；MVP（M5）可用，
+**当前状态**：`v1.8 M6 设计完成、实现未开工` — M6a-P0 crawler 已收口；MVP（M5）可用，
 `python tools/start_local.py` 可启动最小工作台。
 阶段与定位以 [docs/PLAN.md](docs/PLAN.md) 为最终依据。
 
@@ -35,7 +35,7 @@
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
 | 多轮工具编排 | QA→讲解→出题→评估→记录复习完整链路 | ✅ 已实现（API `/api/v1/study-sessions` + Skill `study-assistant`） |
 | 学习工作台 | 最小交互页面，调用正式会话 API 完成学习闭环 | ✅ 已实现（`GET /`） |
-| 离线交付 | 一键启动、健康检查、离线 CI 与演示基线 | ✅ 已实现（`tools/start_local.py` + `.github/workflows/offline-ci.yml`） |
+| 离线交付 | 一键启动、健康检查、离线 CI、crawler 独立离线 job 与演示基线 | ✅ 已实现（`tools/start_local.py` + `.github/workflows/offline-ci.yml`） |
 
 ## 目录结构
 

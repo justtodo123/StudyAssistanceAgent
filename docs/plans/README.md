@@ -18,7 +18,7 @@
 
 - **最终计划依据**：[`docs/PLAN.md`](../PLAN.md)（定位、里程碑、退出方向）
 - 已完成：M3 / M4 / M5（MVP 最小实现）
-- 当前前置：M6a-P0 crawler 收口；M6a/M6b 已完成设计、尚未开工
+- 当前前置：M6a-P0 crawler 已收口；M6a/M6b 已完成设计、尚未开工
 - M6a：契约先行的兼容骨架；M6b：独立只读原生工具调用预览；完整自主 Runner 属于 M10
 - 不把 `references/` 中的分析当作执行计划或验收真源
 - 跨阶段运行时契约见 [`docs/standards/runtime-contracts.md`](../standards/runtime-contracts.md)
@@ -39,7 +39,7 @@
 | `m3-engineering-execution-plan.md` | 项目工程执行计划 | M3d 收口与最终回归完成，已合并到 `master`（2026-08-18） |
 | `m4-knowledge-base-scale-plan.md` | 项目工程执行计划 | 三门课程各补齐至 20 篇，已进入 `master`（2026-08-18） |
 | `m5-agent-session-delivery-plan.md` | 项目工程执行计划 | M5 已收口，作为 MVP 冻结（2026-08-18） |
-| `m6a-harness-skeleton-plan.md` | 项目工程执行计划 | M6a 契约与兼容骨架；前置 crawler 收口；设计完成，未开工 |
+| `m6a-harness-skeleton-plan.md` | 项目工程执行计划 | M6a 契约与兼容骨架；前置 crawler P0 已收口；设计完成，未开工 |
 | `m6b-agent-core-plan.md` | 项目工程执行计划 | M6b 独立只读原生工具调用预览；设计完成，未开工（完整自主 Runner 后移 M10） |
 
 ## 计划辅助调查

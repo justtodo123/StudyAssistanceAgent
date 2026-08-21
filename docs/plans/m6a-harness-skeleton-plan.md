@@ -2,7 +2,7 @@
 
 > 版本：v2.0
 > 制定日期：2026-08-21
-> 当前状态：设计完成，未开工；前置为 M6a-P0 crawler 收口
+> 当前状态：设计完成，未开工；前置 M6a-P0 crawler 离线测试与独立 CI 已收口
 > 适用范围：Source/Store/Tool/Runner 契约、现有状态机兼容、启动期静态额外 Markdown 源
 > 后续阶段：M7 用户数据源生命周期；M6b 为独立的只读 Agent 预览
 
@@ -74,10 +74,10 @@ Runner 必须表达跨请求生命周期，而不是只有 `run(context)`：至�
 
 - 登记 `tools/crawler/`、`tests/M6_crawler/` 及 `tools/crawler/requirements.txt`；
 - 明确 fetch/clean/convert/dedup/pipeline 的输入输出、依赖安装和离线/在线边界；
-- 为 crawler 规划独立 `M6_crawler` marker、CI 安装/测试策略和可复现夹具；
+- 已落地独立 marker `m6_crawler`、CI job `crawler-offline` 和 mock HTTP 夹具；在线 smoke 仅显式启用；
 - 明确候选 Markdown 必须经人工审核、显式目录配置后才入源；默认 pack 和默认评测不受影响。
 
-退出条件：crawler 阶段测试可独立运行，依赖和 CI 处理有文档，且不被宣称为 M7 Source 生命周期。
+退出条件：✅ crawler 阶段测试可独立运行（`m6_crawler and not online`），依赖和 CI job `crawler-offline` 已文档化，且不被宣称为 M7 Source 生命周期。
 
 ### M6a-1：协议与契约测试
 

@@ -9,7 +9,7 @@ tools/
 ├── README.md              # 本文件（工具文档）
 ├── run_evaluation.py      # ★ 统一 RAG 评测入口
 ├── start_local.py         # 一键启动工作台并做 /health 检查
-├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 待收口）
+├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   ├── requirements.txt   # crawler 独立依赖
 │   └── fetcher/cleaner/converter/dedup/pipeline
 └── evaluations/           # 课程评测集
@@ -98,12 +98,14 @@ python tools/run_evaluation.py --smoke
 ## crawler/ — 候选 Markdown 资料处理
 
 crawler 提供 fetch、clean、convert、dedup 和 pipeline 能力，依赖单独记录在
-`tools/crawler/requirements.txt`。它当前属于 **M6a-P0 前置收口**：
+`tools/crawler/requirements.txt`。M6a-P0 已固定离线测试与独立 CI job：
 
 - 默认输出 `platform/.cache/crawler-candidates/{course}`，不自动写入或注册默认 `knowledge/`；
 - 未加 `--allow-knowledge-write` 时拒绝写入课程目录；候选必须人工审核后才能检索；
-- `tests/M6_crawler/` 覆盖 cleaner/converter/dedup/pipeline，以及默认不入库门禁；
-- marker、CI 依赖安装和独立执行策略仍是待实施收口项；
+- 离线测试：`pytest tests/M6_crawler -m "m6_crawler and not online"`（mock HTTP，不访问公网）；
+- 在线 smoke 非默认：`CRAWLER_ONLINE=1 pytest tests/M6_crawler -m "m6_crawler and online"`；
+- CI：`.github/workflows/offline-ci.yml` 的 `crawler-offline` job 安装 crawler 依赖并跑离线 marker；
+  在线 smoke 仅 `workflow_dispatch` + `crawler_online_smoke=true`；
 - crawler 的存在不代表 M7 的持久化源注册、同步、删除传播或多源隔离已经完成。
 
 ## start_local.py — 一键启动
@@ -118,5 +120,5 @@ python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-21（crawler 默认写入候选目录，禁止直接入库）· 维护：随新增工具脚本与评测集同步更新*
+*创建：2026-08-11 · 更新：2026-08-21（crawler P0：离线 marker 与独立 CI）· 维护：随新增工具脚本与评测集同步更新*
 

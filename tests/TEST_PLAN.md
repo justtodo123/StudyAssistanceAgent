@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-21（M6 crawler 前置收口规划；M6a/M6b 尚未实施）
+> 起始日期：2026-08-17 · 更新：2026-08-21（M6 crawler P0：marker + 离线 CI；M6a/M6b 尚未实施）
 
 ## 一、测试策略总览
 
@@ -79,11 +79,17 @@ tests/
 │   ├── test_eval_smoke.py        # 评测冒烟
 │   └── test_docs.py              # 基线/缓存/演示文档
 │
-├── M6_crawler/             # crawler 前置收口（既有测试，尚未纳入默认 CI）
+├── M6_crawler/             # crawler P0（独立 marker，离线 CI job）
+│   ├── conftest.py         # m6_crawler 自动标记 + 拦截真实 HTTP
 │   ├── test_cleaner.py     # 清洗
 │   ├── test_converter.py   # Markdown 转换
 │   ├── test_dedup.py       # 去重
-│   └── test_pipeline.py    # pipeline 编排
+│   ├── test_fetcher.py     # mock HTTP 抓取
+│   ├── test_pipeline.py    # pipeline 编排
+│   ├── test_ingest_gate.py # 默认不入库
+│   ├── test_offline_contract.py  # 候选目录 / 90 题隔离 / 路径隐私
+│   ├── test_ci.py          # crawler CI 契约
+│   └── test_online_smoke.py      # 显式在线 smoke（默认跳过）
 │
 ├── regression/             # 跨阶段回归套件
 │   ├── conftest.py         # 回归专用 fixtures
@@ -116,9 +122,9 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/`（含 M6_crawler） | 以当前 `pytest --collect-only` 为准 | 历史文档数字不作通过声明 | 阶段测试 + 回归套件；M6 crawler 尚待纳入默认 CI |
+| 根级 `tests/`（含 M6_crawler） | 以当前 `pytest --collect-only` 为准 | 历史文档数字不作通过声明 | 阶段测试 + 回归套件；crawler 走独立 job `crawler-offline` |
 | `platform/tests/` | 40 项 | 历史 M5 验收已通过 | 原始平台冒烟/功能测试 |
-| M6 crawler 前置门禁 | 待收口 | 未纳入默认 CI | 依赖、marker、在线/离线边界和人工审核流程待补齐 |
+| M6 crawler 前置门禁 | `tests/M6_crawler/` | 独立 job `crawler-offline` | marker `m6_crawler`；默认 mock HTTP；在线 smoke 仅 workflow_dispatch |
 
 M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。受限 Windows 环境若默认临时目录不可写，可使用工作区内的 `pytest --basetemp=.tmp-test\...`。
 
@@ -350,16 +356,17 @@ pytest tests/M0_M2/ -v         # 基线回归
 | `test_eval_smoke.py` | 冒烟 | `--smoke` 限制已标注题量 |
 | `test_docs.py` | 文档 | 冷/热启动与会话基线、缓存说明、工具链 |
 
-### 阶段 11：M6a-P0 — crawler 前置收口（规划中）
+### 阶段 11：M6a-P0 — crawler 前置收口（marker / 离线 CI 已落地）
 
 **对应开发任务**：登记既有 crawler、固定独立依赖/marker/CI 策略，明确人工审核和 Source 边界。
 
-| 范围 | 验证点 |
+| 测试文件 | 验证点 |
 | --- | --- |
-| `tests/M6_crawler/` | cleaner、converter、dedup、pipeline 行为可复现 |
-| `tools/crawler/requirements.txt` | crawler 依赖与平台核心依赖分离，安装策略明确 |
-| 评测/知识包隔离 | crawler 不自动写入默认 `knowledge/`，不扩大 OS/DS/CO 默认 90 题 |
-| 人工审核边界 | 候选 Markdown 仅在审核和显式注册后才能进入 Source |
+| `test_cleaner.py` / `test_converter.py` / `test_dedup.py` / `test_pipeline.py` | 离线 fixture 下清洗、转换、去重、编排可复现 |
+| `test_fetcher.py` | mock HTTP；默认拦截真实 `httpx.Client` |
+| `test_ingest_gate.py` / `test_offline_contract.py` | 默认写入候选目录；候选不进检索；默认评测仍为 OS/DS/CO 90 题；统计不含绝对路径 |
+| `test_ci.py` | CI 安装 `tools/crawler/requirements.txt`，独立运行 `m6_crawler and not online` |
+| `test_online_smoke.py` | 仅 `CRAWLER_ONLINE=1` 或 workflow_dispatch 在线 smoke |
 
 M6a-P0 不等同于 M7 Source 生命周期；持久化注册、同步、删除传播和多源隔离留待 M7。
 
@@ -385,7 +392,7 @@ M6b 不列 ReAct Runner 切换；完整自主 Runner、写工具、checkpoint/�
 | M5c 学习持久化 | `tests/M5c/` | `tests/regression/` | `tests/M0_M2/` | — |
 | M5d 学习工作台 | `tests/M5d/` | `tests/regression/` | `tests/M0_M2/` | — |
 | M5e 可复现交付 | `tests/M5e/` | `tests/regression/` | `tests/M0_M2/` | `python tools/run_evaluation.py --smoke` |
-| M6 crawler 前置 | `tests/M6_crawler/`（收口后纳入 CI） | `tests/regression/` | `tests/M0_M2/` | 默认 90 题发现 + smoke |
+| M6 crawler 前置 | `pytest tests/M6_crawler -m "m6_crawler and not online"` | `tests/regression/` | `tests/M0_M2/` | 默认 90 题发现 + smoke |
 | M6a 契约骨架 | `tests/M6a/`（规划） | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
 | M6b 只读预览 | `tests/M6b/`（规划） | `tests/regression/` | `tests/M0_M2/` | 默认 90 题；可选 provider smoke |
 
@@ -412,6 +419,13 @@ pytest tests/M5d/ -v -m m5d
 
 # 运行 M5e 可复现交付测试
 pytest tests/M5e/ -v -m m5e
+
+# 运行 crawler P0 离线测试（需 tools/crawler/requirements.txt）
+pytest tests/M6_crawler -v -m "m6_crawler and not online"
+
+# 显式 crawler 在线 smoke（默认不跑）
+# Unix: CRAWLER_ONLINE=1 pytest tests/M6_crawler -v -m "m6_crawler and online"
+# PowerShell: $env:CRAWLER_ONLINE=1; pytest tests/M6_crawler -v -m "m6_crawler and online"
 
 # 运行回归套件
 pytest tests/regression/ -v
@@ -454,4 +468,4 @@ pytest tests/ -v -n auto
 
 ---
 
-*维护：每阶段开发完成后更新本计划。当前根级测试数量以 pytest 收集结果为准；历史 M5 验收记录为平台原始测试 40 项，M6 crawler 已存在但尚未纳入默认 CI。*
+*维护：每阶段开发完成后更新本计划。当前根级测试数量以 pytest 收集结果为准；历史 M5 验收记录为平台原始测试 40 项。crawler P0 使用独立 marker `m6_crawler` 和 CI job `crawler-offline`。*
