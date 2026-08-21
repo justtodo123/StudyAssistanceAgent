@@ -1,3 +1,7 @@
+> **地位**：2026-08-20 招聘对照调查快照，**不是执行计划**。
+> 现行口径以 [docs/PLAN.md](../PLAN.md) 和 [docs/standards/runtime-contracts.md](../standards/runtime-contracts.md) 为准。
+> 其中「M6b 上 ReAct / 用 JSON 冒充 Function Calling / 187 项测试」等表述已过期：M6b 是只读原生工具调用 preview；完整自主 Runner 在 M10；测试数量以 pytest 收集为准。
+
 StudyAssistanceAgent
 与 Agent 招聘要求对齐分析报告
 —— 参考 ai-agent-platform 架构 · 面向 2027 届秋招 Agent 开发岗

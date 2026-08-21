@@ -3,8 +3,12 @@
 > 通用学习 Agent 的 harness 框架。M0–M5 是最小实现（默认计算机知识包 + 学习闭环）。
 > **双目标**：① 按用户目标把任意知识源学完（产品价值）；② 可讲清 Agent harness / RAG / 计划执行（工程价值）。
 > 状态图例：⬜ 未开始 ｜ 🔄 进行中 ｜ ✅ 完成
-> **当前阶段**：M6a 未开工。里程碑与退出方向以**本文**为准。`docs/plans/references/` 只辅助决策，不是最终依据。
-> **M6 拆分说明**：原 M6 已按招聘驱动可行性分析拆为 M6a（协议先行）+ M6b（Agent 核心：ReAct + 工具调用），以尽早补齐 Agent 岗面试的致命缺口（H1/H2）。详见 `docs/plans/references/recruitment-driven-feasibility.md`。
+> **当前阶段**：M6a 前置 crawler 收口；M6a/M6b 已完成设计、尚未开工。里程碑与退出方向以**本文**为准。
+> `docs/plans/references/` 只辅助决策，不是最终依据。
+> 数据源门禁、embedding/索引参数、错误码、生成分层与延迟分位数见
+> [`docs/standards/runtime-contracts.md`](standards/runtime-contracts.md)。
+> **M6 拆分说明**：M6 按“前置收口 → 契约收敛 → 兼容骨架 → 只读 Agent 预览”推进。M6b 不接管正式
+> `study-sessions`；完整自主 Runner、写工具与 Agent 评测后移到 M10。
 
 ## 一、项目定位（一句话）
 
@@ -22,7 +26,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | 检索 | BM25 + 向量多路召回 + RRF 融合 | 混合检索，鲁棒、无需调参 |
 | LLM | OpenAI 兼容接口（DeepSeek 等），可配 | 不配则降级为笔记摘要，保证总是有输出 |
 | 存储 | 控制面 SQLite；向量 SQLite→LanceDB，万级可选 Qdrant | 协议可替换；默认离线可跑 |
-| 数据源 | 默认 `knowledge/` Markdown pack + 用户注册源 | 百/千/万分级；不把原始 PDF 写入 Git |
+| 数据源 | 默认人工 Markdown pack；网页/AI 只产生候选或响应 | 检索允许名单见 runtime-contracts；不把原始 PDF 写入 Git |
 
 **架构**（参考 `ai_agent_platform` 的 MultiRecall/RRF/LongContext 模式，做个人级瘦身）：
 
@@ -36,6 +40,10 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
     → StudySessionService: QA → Quiz → 评估 → review-log
     → SQLite learning_state + FastAPI /api/v1/{search,qa,study-sessions,...}
 ```
+
+稳定契约（已落地，不另开里程碑）：数据源类型与入库门禁、embedding/索引参数表、
+`detail.code` 错误码、QA `generation_layer`、`/health` 的 P50/P95/P99。详见
+[`docs/standards/runtime-contracts.md`](standards/runtime-contracts.md)。
 
 ## 三、里程碑
 
@@ -114,23 +122,41 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 - **完整退出条件**：✅ 会话可跨重启恢复；工作台可完成学习闭环；离线 CI 与一键启动已落地；阶段测试、回归和平台测试保持通过。
 - **收口结论**：M5 作为 MVP 关闭。默认学习闭环与离线交付不再回退；通用运行时与可插拔数据源改由 M6 起按路线图建设。
 
-### M6–M10：通用学习 Agent Harness（规划中）
+### M6–M10：通用学习 Agent Harness（设计完成，尚未开工）
 > **最终依据**：本节（M6–M10）。辅助分析见 `docs/plans/references/`，冲突时以本文为准。
-> **当前状态**：M6a 未开工。M0–M5 回归必须持续全绿。
+> **当前状态**：先完成 M6a 前置 crawler 收口；M6a/M6b 仅完成设计。M0–M5 回归必须持续全绿。
 > **执行计划**：`docs/plans/m6a-harness-skeleton-plan.md`、`docs/plans/m6b-agent-core-plan.md`。
+> **评测基线**：默认只自动发现 OS/DS/CO 三课 90 题；Network 30 题是显式运行的扩展集，不进入默认门禁。
 
-- ⬜ **M6a Harness 骨架**：Source/Store/Tool/Runner 四协议；额外 Markdown 源注册；API 兼容 MVP；默认 Runner 仍是学习状态机。
-  - 执行计划：`docs/plans/m6a-harness-skeleton-plan.md`
-  - 招聘价值：工具协议是 Function Calling 的基础，面试可讲「可扩展的工具协议设计」。
-- ⬜ **M6b Agent 核心（ReAct + 工具调用）**：工具注册表 + Function Calling + ReAct 推理循环 + 安全护栏（步数/超时/重复熔断）+ 降级路径。
-  - 执行计划：`docs/plans/m6b-agent-core-plan.md`
-  - 招聘价值：★★★★★ 直接补齐 H1（Agent 推理循环）和 H2（工具调用）两个致命面试缺口。
-- ⬜ **M7 用户数据源与千级检索**：源注册/同步、FTS5、1k–3k chunk 基线。
-- ⬜ **M8 专业化存储**：统一学习 schema；默认 LanceDB；Qdrant 作为万级可选项。
-- ⬜ **M9 目标驱动计划**：外部 AI 按等级/掌握度/目标生成计划；按计划选题；监控偏差。
-- ⬜ **M10 Harness 对外**：知识包 manifest、Agent 评测（任务成功率/工具调用准确率/成本/延迟）、MCP 协议最小实现。
+- ⬜ **M6a-P0 crawler 前置收口**：登记既有 `tools/crawler/` 与 `tests/M6_crawler/`，固定独立依赖、marker、
+  CI/测试方式和人工审核后入库边界。crawler 默认写入 `platform/.cache/crawler-candidates/`，
+  不自动注册 Source，也不代表 M7 生命周期完成。入库门禁已按 runtime-contracts 生效。
+- ⬜ **M6a Harness 兼容骨架**：先完成契约收敛，再适配现有实现。
+  - 仓储按职责区分 LearningStateRepository、ReviewRepository、SourceRegistry 与 RetrievalIndex；复用现有
+    `SqliteLearningStore` 和 `VectorStore`，不创建承载所有数据的泛化 Store。
+  - Runner 必须表达跨请求的 `start/resume/get` 或 `step(event)` 语义；正式学习状态仍由现有状态机负责。
+  - Tool 使用 `ToolContext`、结构化 `ToolResult`、能力/副作用分类；领域写入不绕过状态机和领域服务。
+  - Source 预留稳定 source/document/chunk ID、logical URI、fingerprint/revision/delete 语义；M6a 只做启动期
+    静态额外 Markdown 源 bootstrap，持久化注册、增量同步、删除传播和多源隔离留给 M7。
+  - 保持现有 API/OpenAPI、旧会话恢复和默认三课 90 题基线兼容。
+  - 执行计划：`docs/plans/m6a-harness-skeleton-plan.md`。
+- ⬜ **M6b Agent 只读预览（工具调用决策层）**：独立 preview 入口 + ToolRegistry + provider-neutral
+  `LLMClient`/`ModelTurn` + 原生 provider tool-call adapter。文本 JSON 只能作为显式兼容 fallback，不能冒充
+  原生 Function Calling。仅开放 retrieve、quiz preview、review-due 等只读工具，禁止写会话、掌握度和复习历史。
+  - 预览循环采用 model turn → validate → authorize → execute → append result；不要求或持久化原始 Thought。
+  - 设总 deadline、模型/工具超时、turn/tool-call/token/cost/result-size 预算、取消、重复调用熔断和确定性终止。
+  - `agent_trace` 与状态机 `domain_trace` 分离；不记录原始 Thought、用户答案、知识正文或密钥。
+  - 不新增 `SA_RUNNER=react`，不接管 `/api/v1/study-sessions`，preview 失败也不启动状态机作为无条件回退。
+  - 执行计划：`docs/plans/m6b-agent-core-plan.md`。
+- ⬜ **M7 用户数据源与千级检索**：持久化源注册/同步、revision/delete、跨源隔离、FTS5 和 1k–3k chunk 基线。
+- ⬜ **M8 专业化存储**：统一控制面 schema；默认 LanceDB；Qdrant 作为万级可选项；保留离线降级。
+- ⬜ **M9 目标驱动计划**：外部 AI 按等级/掌握度/目标生成计划；按计划选题；监控进度和偏差。
+- ⬜ **M10 完整自主 Runner 与 Harness 对外**：在 M7–M9 契约稳定后实现可选自主 Runner、写工具授权、
+  checkpoint/resume、幂等副作用和失败恢复；建立 Agent 任务评测（成功率、工具选择/参数合法率、终止、成本、
+  延迟），并交付知识包 manifest 与 MCP 最小实现。状态机继续作为正式默认和无 LLM 降级路径。
 
-**总退出方向**：用户能自定义知识源，在百/千/万级数据上按自己的目标学，并看到计划执行情况；无外部 AI 时仍可降级运行。ReAct 作为可选 Runner 与学习状态机正交，不破坏教学法。
+**总退出方向**：用户能自定义知识源，在百/千/万级数据上按目标学习并看到计划执行情况；无外部 AI 时仍可
+运行。M6b 只验证隔离的只读工具调用，完整自主 Runner 到 M10 才作为与教学状态机正交的可选执行器落地。
 
 ## 四、风险与缓解
 
@@ -141,17 +167,21 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | 面试被追问「和 RAG demo 有何不同」 | docs/interview/README 已备 8 大追问答案；多用「数据驱动优化」叙事 |
 | 参考项目 Java/Spring 太重不适合 | 已确认 Python 栈 + 本地向量 + 降级路，仍借鉴其 MultiRecall/RRF 模式 |
 | 本机 GitHub 访问受限 | SSH 走 443 已配置；push 由用户手动完成 |
-| 做成空框架、课内体验变差 | M6 先兼容现有 API；默认 Runner 仍是学习状态机 |
+| 做成空框架、课内体验变差 | M6a 保持 API 与旧会话兼容；正式状态由学习状态机继续负责 |
+| Agent 预览误写学习状态 | M6b 使用独立只读入口和工具 allowlist；完整写工具与 Runner 后移 M10 |
+| Agent 失败后重复副作用 | M6b 不执行写工具；M10 在 checkpoint、授权和幂等契约完成后才接正式执行路径 |
+| crawler 产物污染默认知识包 | crawler 只生成候选 Markdown；人工审核并显式注册后才进入检索 |
 | 万级数据污染 Git 仓库 | 用户源放仓库外；Git 只存默认 pack 与配置 |
 | 外部 AI 把全书塞进上下文 | Planner 只使用目录摘要 + 掌握度，不喂原文全书 |
 
 ## 五、面试叙事核心（详见 docs/interview/README.md）
 
-一句话 + 5 个设计决策 + 8 个考点映射 + 3 个量化优化点（RAG 评测、切块调优、缓存命中）。
+一句话 + 5 个设计决策 + 学习状态机工具链 + 能力边界：正式路径是状态机；M6b 是只读 preview（未开工）；
+完整自主 Runner 在 M10 且不替换教学法。招聘对照原文不是执行计划。
 
 ---
 
-*创建：2026-08-10 · 版本：v2.0（2026-08-20：M6 拆为 M6a/M6b，ReAct 提前至 M6b，M10 增加 MCP）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · 版本：v2.2（2026-08-21：落地 runtime-contracts，统一面试口径）· 维护：每次会话开工查看本文档*
 
 
 

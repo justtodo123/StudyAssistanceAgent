@@ -1,202 +1,150 @@
-# M6b Agent 核心（ReAct + 工具调用）执行计划
+# M6b Agent 只读预览（工具调用决策层）执行计划
 
-> 版本：v1.0
-> 制定日期：2026-08-20
-> 当前状态：未开工
-> 适用范围：工具注册表 + Function Calling + ReAct 推理循环 + 安全护栏 + 降级路径
-> 前置条件：M6a 协议先行完成，Tool/Runner 协议已定义
-> 后续阶段：M7 用户数据源与千级检索
-> 招聘价值：★★★★★ 直接补齐 H1（Agent 推理循环）和 H2（工具调用）两个致命面试缺口
+> 版本：v2.0
+> 制定日期：2026-08-21
+> 当前状态：设计完成，未开工；前置为 M6a 契约与兼容骨架
+> 适用范围：provider-neutral 原生工具调用、只读工具预览、独立入口与安全预算
+> 后续阶段：M7–M9 完善数据源/存储/计划；M10 实现完整自主 Runner
+> 招聘价值：证明结构化 tool-use、权限边界和可观测预览链路，不宣称已有完整 ReAct Runner
 
-## 1. 背景
+## 1. 背景与阶段定位
 
-M6a 定义了 Source/Store/Tool/Runner 四协议，并将现有服务适配为 Tool 实现、学习状态机适配为 `StateMachineRunner`。
-但项目仍然是「确定性编排」——LLM 不参与工具选择，步骤由状态机硬编码。
+M6a 固化 Source/存储职责/Tool/Runner 契约，并保持学习状态机为正式路径。M6b 在此基础上验证模型
+能通过 provider-native 的结构化工具调用选择只读能力，但只提供隔离的 preview 入口。它不创建或修改
+正式学习会话，不提交答案，不写掌握度或复习历史，也不通过配置替换状态机。
 
-对照 Agent 岗招聘要求，**两个致命缺口**：
+“原生 Function Calling”指 provider/API 返回的结构化 tool-call block；提示模型输出 JSON 文本不是同一协议。
+若供应商不支持原生调用，可实现显式命名的 `TextJsonFallbackAdapter`，但必须单独计量、标记和验收，不能
+把 fallback 结果描述为原生工具调用。
 
-| 缺口 | 现状 | 面试风险 |
-| --- | --- | --- |
-| H1 Agent 推理循环（ReAct） | 无 LLM 自主循环，只有确定性状态机 | ★★★★★ 致命 |
-| H2 工具调用（Function Calling） | `tool_trace` 硬编码串联，无注册表 | ★★★★★ 致命 |
+### 1.1 阶段目标
 
-M6b 的目标是**在 M6a 协议层之上，实现 LLM 自主选择工具的推理循环**，同时保留状态机为默认路径和降级路径。
+1. 建立 provider-neutral 的 `LLMClient`/model-turn 边界和原生 provider adapter。
+2. 提供 ToolRegistry、JSON Schema 参数校验、权限检查和只读 allowlist。
+3. 完成受限的 model turn → validate → authorize → execute → append result 预览往返。
+4. 记录可审计的 agent trace，同时保持 domain trace 与正式学习状态隔离。
+5. 在没有 LLM 时保证正式状态机离线工作；preview 本身返回明确的未配置/不可用状态，不无条件接管。
 
-**为什么可以提前做（不等 M7–M9）**：
-- ReAct 循环只依赖 Tool 协议（M6a），不依赖用户数据源（M7）、存储替换（M8）或计划执行（M9）
-- 面试演示用默认知识包（OS/DS/CO 60 篇）足够
-- 状态机仍为默认路径，ReAct 是可选 Runner，不影响现有功能
+### 1.2 非目标
 
-## 2. 阶段目标与非目标
+- 不实现完整 ReAct/开放式自主循环，不持久化或要求原始 Thought 文本；
+- 不实现 `ReActRunner`，不新增 `SA_RUNNER=react`，不改正式 Runner 选择逻辑；
+- 不接管 `/api/v1/study-sessions`、工作台或任何正式学习闭环；
+- 不暴露 ReviewLog、掌握度、会话状态等写工具；
+- 不把 Agent 失败自动回退为状态机，也不在失败后重复执行领域副作用；
+- 不实现 checkpoint/resume、exactly-once/idempotent 写入，这些属于 M10；
+- 不用提示词 JSON 解析冒充 provider-native tool call；
+- 不做多模型路由、语义缓存或 MCP 对外化。
 
-### 2.1 阶段目标
+## 2. 核心契约
 
-1. 实现工具注册表：基于 M6a Tool 协议，用装饰器注册工具
-2. 实现 Function Calling：LLM 根据工具描述自主选择调用哪个工具
-3. 实现 ReAct 推理循环：Thought→Action→Observation→Final Answer
-4. 实现安全护栏：最大步数、单步超时、重复观测熔断
-5. 保留降级路径：无 LLM 时 100% 走原状态机
+### 2.1 Provider-neutral model turn
 
-### 2.2 非目标
+在领域 Tool 协议和供应商 SDK 之间增加适配层，至少表达：
 
-- 不替换现有学习状态机——ReAct 是可选 Runner，不是替换
-- 不实现多 Agent 协作（CrewAI/AutoGen）——投入产出比低
-- 不实现多模型路由——单 OpenAI 兼容接口 + 降级够用
-- 不实现语义缓存——那是 M8 或更后
-- 不引入 LangChain / LangGraph——自研轻量实现，面试可讲深度
-- 不做 MCP 协议——那是 M10
+- `ModelTurn`：消息/工具调用 block、`finish_reason`、usage、延迟和可选 cost 元数据；
+- `ToolCall`：`call_id`、规范化工具名、结构化 arguments、provider 元数据；
+- `ToolExecutionResult`：对应 `call_id`、成功数据或结构化错误、是否可重试和结果大小；
+- `LLMClient`：请求工具描述、接收结构化 turn、取消和超时，不把某一供应商类型泄露到领域层。
 
-## 3. 子阶段拆分
+原始 Thought 不是必须字段，不进入持久化 agent trace。trace 只保留决策结果、工具名、参数摘要/哈希、call_id、
+结果状态、guard 触发、usage、latency 和 fallback 标识；不得记录用户答案、知识正文、密钥或完整敏感参数。
 
-### M6b-1：工具注册表
+### 2.2 ToolRegistry 与授权
 
-**目标**：基于 M6a Tool 协议，实现装饰器注册和自动发现。
+ToolRegistry 负责注册、发现、描述序列化和按名称查找；工具描述采用实际 provider adapter 能消费的 schema。
+每个工具携带 read-only/idempotent/side-effect 能力元数据。preview 只允许：
 
-任务：
+- `retrieve/search`：检索知识片段和出处；
+- `quiz preview`：生成不写状态的题目预览；
+- `review-due`：读取待复习列表。
 
-- [ ] 新建 `platform/app/tool_registry.py`
-- [ ] 实现 `@tool` 装饰器：注册 `name`、`description`、`parameters`、`execute`
-- [ ] 实现 `ToolRegistry` 类：`register()`、`get()`、`list_tools()`、`get_tool_descriptions()`
-- [ ] `get_tool_descriptions()` 返回 Function Calling 格式的工具描述列表
-- [ ] 将 M6a 的 `RetrieveTool`、`QuizTool`、`ReviewDueTool`、`ReviewLogTool` 用装饰器注册
-- [ ] 在 `tests/M6b/` 增加注册、发现、描述格式测试
+`ReviewLogTool`、会话创建/答案提交、掌握度写入等即使未来在总注册表中存在，也必须被 preview allowlist 拒绝。
+`ToolContext` 携带权限、source namespace、learner scope、correlation ID、取消信号和预算。
 
-退出条件：
+### 2.3 独立预览入口
 
-- 注册表可列出所有已注册工具
-- 工具描述格式符合 OpenAI Function Calling 的 `tools` 参数规范
-- 注册表测试通过
+新增独立 preview service/endpoint 或 CLI（实现时在 M6a API 兼容边界内定名），返回预览答案、来源、结构化
+tool trace、终止原因和 usage 摘要。它不复用正式 `study-sessions` 写入入口，不创建 session，不写
+`learning_state.sqlite3` 或 `review_history.json`。正式 API 和工作台保持 M5 行为不变。
 
-**面试话术**：「工具用注册表+装饰器注册，新增工具只需加一个函数和装饰器，不需要改任何调用方代码。」
+## 3. 子阶段
 
-### M6b-2：Function Calling
-
-**目标**：让 LLM 根据工具描述自主选择调用哪个工具。
-
-任务：
-
-- [ ] 新建 `platform/app/function_calling.py`
-- [ ] 实现 `FunctionCaller` 类：
-  - `build_prompt(question, tools)` — 构建含工具描述的系统提示词
-  - `parse_response(llm_output)` — 解析 LLM 返回的 JSON，提取 `tool_name` 和 `arguments`
-  - `execute_call(tool_name, arguments)` — 从注册表获取工具并执行
-- [ ] 系统提示词模板：告诉 LLM 可用工具列表、调用格式（JSON）、约束条件
-- [ ] 解析 LLM 输出：支持 JSON 格式的 `{"tool": "retrieve", "arguments": {"question": "...", "course": "os"}}`
-- [ ] 错误处理：工具不存在、参数校验失败、LLM 输出格式错误
-- [ ] 在 `tests/M6b/` 增加提示词构建、响应解析、工具执行测试（mock LLM）
-
-退出条件：
-
-- 给定一个问题和工具列表，`FunctionCaller` 能构建提示词、解析响应、执行工具
-- 错误情况有明确的异常处理
-- 测试通过（使用 mock LLM，不依赖真实 API）
-
-**面试话术**：「Function Calling 的核心是工具描述序列化和结构化输出解析。我用 JSON Schema 描述工具参数，让 LLM 按格式输出工具调用。」
-
-### M6b-3：ReAct 推理循环
-
-**目标**：实现 Thought→Action→Observation→Final Answer 循环。
+### M6b-1：工具注册与只读目录
 
 任务：
 
-- [ ] 新建 `platform/app/react_agent.py`
-- [ ] 实现 `ReActAgent` 类：
-  - `run(question, course)` — 主循环入口
-  - `_think(question, history)` — 生成 Thought（LLM 推理当前应做什么）
-  - `_act(thought)` — 根据 Thought 选择工具并执行（Action + Observation）
-  - `_finalize(history)` — 生成 Final Answer（LLM 综合所有 Observation）
-- [ ] 循环逻辑：
-  1. 初始提示词：问题 + 可用工具列表
-  2. 每轮：LLM 输出 Thought → 选择 Action（工具调用）→ 获取 Observation
-  3. 将 Observation 注入下一轮上下文
-  4. LLM 输出 Final Answer 或达到步数限制
-- [ ] 上下文管理：历史 Thought/Action/Observation 拼接为完整上下文
-- [ ] Token 预算：上下文长度控制，避免超出模型限制
-- [ ] 在 `tests/M6b/` 增加循环执行、多步推理、上下文注入测试（mock LLM）
+- 实现 `ToolRegistry`：`register`、`get`、`list_tools`、provider schema 描述导出；
+- 将 Retrieve/Quiz-preview/Review-due 注册为只读工具；
+- 对写工具做显式 allowlist/deny test；
+- 测试名称冲突、未知工具、schema 缺失、权限拒绝和结构化错误。
 
-退出条件：
+退出条件：preview 获得的工具集合可审计，任何写工具不能通过参数或名称绕过授权。
 
-- 给定一个问题，`ReActAgent` 能完成至少一步 Thought→Action→Observation
-- 多步推理时，前一步的 Observation 正确注入下一步上下文
-- Final Answer 综合了所有 Observation
-- 测试通过（使用 mock LLM）
-
-**面试话术**：「我自研了 ReAct 循环，核心是上下文管理——每一步的 Observation 注入下一步，让 LLM 能基于已有信息决定是否继续。」
-
-### M6b-4：安全护栏
-
-**目标**：防止 ReAct 循环失控。
+### M6b-2：原生 provider adapter
 
 任务：
 
-- [ ] 在 `ReActAgent` 中实现三道防御：
-  1. **最大步数限制**：默认 8 步，超过强制生成 Final Answer
-  2. **单步超时**：默认 30s，超时终止当前步骤
-  3. **重复观测熔断**：同一 `action_name + observation_hash` 出现 ≥3 次立即停止
-- [ ] 每道防御触发时记录日志（`observability.log_operation`）
-- [ ] 最终必须落到讲解或复习记录，不允许空转
-- [ ] 在 `tests/M6b/` 增加步数限制、超时、重复熔断测试
+- 实现 provider-neutral `LLMClient`、`ModelTurn`、`ToolCall`、`ToolExecutionResult`；
+- 请求使用 provider 原生工具描述字段，读取结构化 tool-call block；
+- 校验 `call_id`、工具名、arguments JSON Schema 和结果关联；
+- 对不支持原生工具调用的 provider 实现独立的 `TextJsonFallbackAdapter`（可选），并在 trace/指标中标记；
+- mock provider 可离线运行，真实 provider smoke 只能是非阻塞/显式配置测试。
 
-退出条件：
+退出条件：原生 block、参数错误、未知工具、超时和 provider 错误均有稳定的结构化结果；文本 fallback 不被
+统计为原生 tool-call 成功。
 
-- 超过最大步数时循环终止，返回已有结果
-- 单步超时时有明确的超时处理
-- 重复观测时熔断生效
-- 所有防御触发时有结构化日志
+### M6b-3：受限只读预览编排
 
-**面试话术**：「ReAct 循环有三道防御：最大步数防无限循环，单步超时防工具卡死，重复观测熔断防 LLM 打转。每道防御触发都有日志，可追溯。」
-
-### M6b-5：Runner 适配与降级路径
-
-**目标**：将 `ReActAgent` 包装为 `ReActRunner`，通过配置切换。
-
-任务：
-
-- [ ] 新建 `platform/app/runners/react.py`
-- [ ] 实现 `ReActRunner`：实现 Runner 协议，内部调用 `ReActAgent`
-- [ ] 配置切换：`SA_RUNNER=state_machine`（默认）或 `SA_RUNNER=react`
-- [ ] 降级逻辑：
-  - `SA_RUNNER=react` 但无 `SA_LLM_API_KEY` → 自动降级为 `StateMachineRunner`
-  - ReAct 循环执行失败 → 捕获异常，降级为 `StateMachineRunner`
-  - 降级时记录日志
-- [ ] 更新 `main.py`：根据配置选择 Runner 实例
-- [ ] 现有 API 端点通过 Runner 调用（`study-sessions` 不变）
-- [ ] 在 `tests/M6b/` 增加 Runner 切换、降级、API 兼容测试
-
-退出条件：
-
-- `SA_RUNNER=state_machine` 时行为与 M5 完全一致
-- `SA_RUNNER=react` + 有 LLM key 时走 ReAct 循环
-- `SA_RUNNER=react` + 无 LLM key 时降级为状态机
-- ReAct 执行失败时降级为状态机
-- 所有现有 API 行为不变
-- 测试通过
-
-**面试话术**：「ReAct 是可选 Runner，通过配置切换。无 LLM 时自动降级为状态机，ReAct 失败也降级。两层正交：状态机保证教学法不被破坏，ReAct 保证 Agent 自主性。」
-
-### M6b-6：文档与收口
-
-**目标**：更新文档，反映 Agent 核心能力。
-
-任务：
-
-- [ ] 更新 `platform/README.md`：新增 ReAct 配置说明、工具注册表、降级路径
-- [ ] 更新 `docs/PLAN.md`：标记 M6b 完成状态
-- [ ] 更新 `docs/interview/README.md`：新增 ReAct 循环、工具注册表、降级设计的面试话术
-- [ ] 运行完整回归：M6b 测试 + M6a + M0_M2 + regression + platform/tests
-
-退出条件：
-
-- 所有文档与代码一致
-- 回归测试全部通过
-- 面试话术已更新
-
-## 4. 测试策略
-
-新增测试遵循阶段隔离，不修改 M0–M5 和 M6a 存量测试。
+每轮只允许如下流程：
 
 ```text
-tests/M6b/    工具注册表、Function Calling、ReAct 循环、安全护栏、Runner 切换/降级
+model turn
+  → 读取结构化 tool call
+  → schema validate
+  → authorize read-only tool
+  → execute with ToolContext
+  → append ToolExecutionResult
+  → 返回下一轮或确定性终止
+```
+
+预览可以有有限的工具往返，但不把它命名为开放式 ReAct，不要求 Final Answer 必须落到复习记录。需要
+模型综合结果时，只返回无副作用的预览回答；所有领域状态变化仍由正式状态机处理。
+
+### M6b-4：安全、预算与隐私
+
+至少实现并测试：
+
+- 总 deadline、模型调用超时、工具执行超时和取消传播；
+- 最大 model turns、tool calls、单次/总 token 与 cost budget；
+- 最大 tool-result bytes/tokens，超限时结构化截断或终止；
+- 规范化 `tool_name + arguments` 调用指纹的重复熔断；
+- 未知工具、写工具、越权 source/learner scope 立即拒绝；
+- 所有 guard 以确定性终止原因写入 agent trace；日志沿用既有敏感信息过滤规则。
+
+这些是 preview 的边界，不等同于 M10 的完整自主 Runner 护栏；checkpoint、恢复和写副作用仍后移。
+
+### M6b-5：离线评测与文档收口
+
+三层验收：
+
+1. **协议一致性**：mock provider 验证原生工具 schema、tool-call block、call_id、结果回传和错误映射；
+2. **离线 scripted tasks**：验证工具选择、参数合法率、只读任务成功率、终止、重复/越权拒绝、延迟与预算；
+3. **真实 provider smoke**：仅在显式配置 key 时运行，不阻塞离线 CI，不记录原始内容。
+
+同步 `platform/README.md`、`docs/PLAN.md`、`docs/plans/README.md` 和 `docs/interview/README.md`（实施阶段再更新）。
+明确写出 M6b 是只读 preview，完整自主 Runner 和 Agent 评测属于 M10。
+
+## 4. 测试策略与验收门禁
+
+新增测试建议放在 `tests/M6b/`，不修改 M0–M5 和 M6a 存量测试：
+
+```text
+test_tool_registry.py       注册、schema、allowlist 和写工具拒绝
+test_provider_adapter.py     native block、call_id、参数/错误映射、显式 text fallback
+test_preview_service.py      独立入口、只读往返、trace 和不写状态
+test_safety_budget.py        deadline、超时、调用/结果/token/cost/重复预算
+test_api_compatibility.py   正式 study-sessions/工作台不变
 ```
 
 验收顺序：
@@ -204,105 +152,54 @@ tests/M6b/    工具注册表、Function Calling、ReAct 循环、安全护栏�
 ```text
 tests/M6b/
   → tests/M6a/
-  → tests/M0_M2/
-  → tests/regression/
-  → platform/tests/
-  → 三课离线 RAG 评测
-  → 文档检查
-  → 人工审查与合并
+  → tests/M0_M2/ + tests/regression/ + platform/tests/
+  → 默认 OS/DS/CO 90 题离线 RAG 评测
+  → 可选真实 provider smoke → 文档/隐私检查
 ```
 
-## 5. 代码结构
+必须证明：preview 不创建/修改 study session，不提交答案，不写 review log；正式学习无 LLM 仍可运行；默认
+三课 Recall@3 不退化。不得把 collection-only 结果写成测试通过。
+
+## 5. 代码结构与配置规划
 
 ```text
 platform/app/
-  tool_registry.py      # 工具注册表 + @tool 装饰器
-  function_calling.py   # FunctionCaller：提示词构建 + 响应解析 + 工具执行
-  react_agent.py        # ReActAgent：Thought→Action→Observation→Final Answer 循环 + 安全护栏
-  runners/
-    __init__.py
-    state_machine.py    # StateMachineRunner（M6a 已创建）
-    react.py            # ReActRunner（包装 ReActAgent）
+  tool_registry.py
+  llm_client.py              # provider-neutral model turn 与 adapter 边界
+  preview_agent.py           # 受限只读预览编排，不是 ReActRunner
+  preview_service.py         # 独立入口与结果模型
 
 tests/M6b/
-  test_tool_registry.py     # 注册、发现、描述格式
-  test_function_calling.py  # 提示词构建、响应解析、工具执行
-  test_react_agent.py       # 循环执行、多步推理、上下文注入
-  test_safety.py            # 步数限制、超时、重复熔断
-  test_runner_switch.py     # Runner 切换、降级、API 兼容
+  test_tool_registry.py
+  test_provider_adapter.py
+  test_preview_service.py
+  test_safety_budget.py
+  test_api_compatibility.py
 ```
 
-## 6. 配置项
+配置必须使用 preview 专用命名空间，例如 `SA_AGENT_PREVIEW_ENABLED`、`SA_PREVIEW_MAX_TURNS`、
+`SA_PREVIEW_DEADLINE_SECONDS`、`SA_PREVIEW_TOOL_RESULT_LIMIT`；不得引入 `SA_RUNNER=react`，不得让 preview
+开关替换正式状态机。无 LLM key 时，正式学习路径照常降级；preview 返回受控的不可用结果。
 
-| 环境变量 | 默认值 | 说明 |
+## 6. 风险与后续归属
+
+| 风险 | M6b 决策 | 后续 |
 | --- | --- | --- |
-| `SA_RUNNER` | `state_machine` | Runner 类型：`state_machine` 或 `react` |
-| `SA_REACT_MAX_STEPS` | `8` | ReAct 最大步数 |
-| `SA_REACT_STEP_TIMEOUT` | `30` | 单步超时（秒） |
-| `SA_REACT_REPEAT_LIMIT` | `3` | 同一 action+observation 重复次数熔断阈值 |
+| JSON 文本被误称 Function Calling | 原生 block 优先，text fallback 单独命名/计量 | M10 统一 provider 评测 |
+| Agent 绕过只读边界 | ToolContext + allowlist + schema/权限校验 | M10 才增加写工具 |
+| 失败造成重复副作用 | preview 禁止写入，不做状态机 fallback | M10 checkpoint/幂等/恢复 |
+| 循环失控或成本不可控 | preview turns/calls/deadline/token/cost/result 预算 | M10 完整 Runner 护栏 |
+| trace 泄露学习内容 | 只记录摘要/哈希和安全元数据 | 持续复用 observability 过滤 |
 
-## 7. 风险与决策
+M10 的完整范围：可选自主 Runner、正式执行路径接入、写工具授权、checkpoint/resume、幂等副作用、失败恢复、
+Agent 任务评测、知识包 manifest 和 MCP 最小实现。M6b 完成不代表这些能力已实现。
 
-| 风险 | 决策 |
-| --- | --- |
-| ReAct 循环消耗大量 Token | 设置最大步数（8）和上下文长度控制；面试可讲「成本可控」 |
-| LLM 输出格式不稳定 | 支持 JSON 提取 + 容错解析；格式错误时重试一次或降级 |
-| ReAct 替换状态机导致教学法被破坏 | ReAct 是可选 Runner，配置切换；默认仍是状态机 |
-| 安全护栏过于宽松或严格 | 参数可配置；先用保守默认值，后续根据评测调整 |
-| 工具注册表过度设计 | 注册表只做 name→Tool 映射，不超过 100 行代码 |
-| mock LLM 测试不代表真实行为 | 真实 LLM 行为验证放在集成测试，不阻塞 M6b 验收 |
-
-## 8. 分支与提交建议
+## 7. 分支、提交与下一步
 
 ```text
-feature/m6b-agent-core
+feature/m6b-readonly-preview
 ```
 
-建议提交：
-
-```text
-feat(platform): add tool registry with decorator registration
-feat(platform): add function calling with prompt builder
-feat(platform): add ReAct agent with safety guards
-feat(platform): add ReActRunner with fallback to state machine
-test(platform): add M6b tool registry and ReAct tests
-docs(platform): document M6b agent core and ReAct config
-```
-
-合并方式：
-
-```powershell
-git switch master
-git pull --ff-only origin master
-git merge --no-ff feature/m6b-agent-core -m "merge: complete M6b agent core (ReAct + tool calling)"
-```
-
-## 9. 验收门禁
-
-- [ ] `tests/M6b/` 全部通过
-- [ ] `tests/M6a/` 全部通过
-- [ ] `tests/M0_M2/` 全部通过
-- [ ] `tests/regression/` 全部通过
-- [ ] `platform/tests/` 全部通过
-- [ ] 三课离线 RAG 评测 Recall@3 不退化
-- [ ] `SA_RUNNER=state_machine` 时所有 API 行为不变
-- [ ] `SA_RUNNER=react` + 有 LLM key 时 ReAct 循环可执行
-- [ ] `SA_RUNNER=react` + 无 LLM key 时降级为状态机
-- [ ] 安全护栏（步数/超时/重复）测试覆盖
-- [ ] `git diff --check` 和 Python 编译检查通过
-- [ ] 文档与代码一致
-
-## 10. 面试话术汇总
-
-| 能力 | 话术 |
-| --- | --- |
-| ReAct 循环 | 「我自研了 ReAct 循环，带最大步数/超时/重复观测熔断三道防御。核心是上下文管理——每一步的 Observation 注入下一步，让 LLM 能基于已有信息决定是否继续。」 |
-| 工具注册表 | 「工具用注册表+装饰器注册，新增工具只需加一个函数和装饰器，不需要改任何调用方代码。工具描述符合 OpenAI Function Calling 规范。」 |
-| Function Calling | 「Function Calling 的核心是工具描述序列化和结构化输出解析。我用 JSON Schema 描述工具参数，让 LLM 按格式输出工具调用。」 |
-| 降级设计 | 「ReAct 是可选 Runner，通过配置切换。无 LLM 时自动降级为状态机，ReAct 失败也降级。两层正交：状态机保证教学法不被破坏，ReAct 保证 Agent 自主性。」 |
-| 双层架构 | 「项目有两层：底层是面向学习闭环的领域状态机，编码了教学法；上层是可选的 ReAct 推理循环，让 LLM 自主选择工具。这不是通用 Agent 框架，而是领域 Agent 的双层架构。」 |
-
-## 11. 下一步
-
-M6b 完成后进入 M7：用户数据源与千级检索。
-届时 ReAct 循环可调用的工具将包含用户注册的额外源，而不仅是默认 `knowledge/`。
+建议提交：provider-neutral 契约、ToolRegistry/allowlist、原生 adapter、preview service、安全预算、测试、文档。
+不自动 push、不改写历史。M6b 后继续 M7–M9；待数据源、存储和计划执行契约稳定后，另行制定 M10 完整 Runner
+执行计划。

@@ -18,12 +18,17 @@ docs/
 │   ├── README.md          # 计划目录说明
 │   ├── references/        # 辅助计划决策的分析与事实调查
 │   │   ├── README.md
-│   │   └── agent-alignment-analysis.md
+│   │   ├── agent-alignment-analysis.md
+│   │   ├── recruitment-driven-feasibility.md
+│   │   └── stage-advancement-analysis.md
 │   ├── m3-engineering-execution-plan.md
 │   ├── m4-knowledge-base-scale-plan.md
-│   └── m5-agent-session-delivery-plan.md
+│   ├── m5-agent-session-delivery-plan.md
+│   ├── m6a-harness-skeleton-plan.md
+│   └── m6b-agent-core-plan.md
 ├── standards/             # 开发规范
-│   └── git-conventions.md # Git 提交规范（Conventional Commits）
+│   ├── git-conventions.md # Git 提交规范（Conventional Commits）
+│   └── runtime-contracts.md # 数据源门禁、检索参数、错误码、质量分层
 └── interview/             # 面试叙事（AI 应用开发岗）
     ├── README.md          # 一句话叙事 + 设计决策 + 考点映射 + 能力边界
     └── StudyAssistanceAgent_requirement.md  # Agent 招聘对齐原始调查
@@ -48,7 +53,11 @@ docs/
   [plans/m4-knowledge-base-scale-plan.md](plans/m4-knowledge-base-scale-plan.md)，课程条目已补齐，实现提交 `106164d` 已进入 `master`。
 - M5 会话化与交付计划见
   [plans/m5-agent-session-delivery-plan.md](plans/m5-agent-session-delivery-plan.md)，已作为 MVP 冻结。
-- M6–M10 摘要见 [PLAN.md](PLAN.md)；**最终计划依据是 PLAN.md**。
+- M6a/M6b 执行计划：
+  [plans/m6a-harness-skeleton-plan.md](plans/m6a-harness-skeleton-plan.md)（契约与兼容骨架，前置 crawler 收口）和
+  [plans/m6b-agent-core-plan.md](plans/m6b-agent-core-plan.md)（独立只读原生工具调用预览）。
+- 当前 M6b 不接管正式学习会话；完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测后移 M10。
+- 默认 RAG 评测仍为 OS/DS/CO 三课 90 题；Network 评测集为显式运行的独立扩展。
 - `plans/references/` 只存放辅助决策的分析与事实调查，**不能作为最终支撑来源**。
 
 ### reference/ — 外部资料索引
@@ -65,6 +74,7 @@ docs/
 ### standards/ — 开发规范
 
 - [git-conventions.md](standards/git-conventions.md)：Conventional Commits 规范，含类型表、scope 约定、撤销速查
+- [runtime-contracts.md](standards/runtime-contracts.md)：数据源类型与入库门禁、embedding/索引参数、稳定错误码、生成分层与 P99
 
 ### interview/ — 面试叙事
 
@@ -72,7 +82,7 @@ docs/
 - 一句话项目叙事
 - 5 个设计决策与能力映射
 - 考点映射、数据驱动优化实锤、常见追问
-- 现行能力边界：领域状态机编排，不是 ReAct / Function Calling
+- 现行能力边界：领域状态机编排，不是 ReAct / Function Calling；与 PLAN v2.2 / runtime-contracts 同一口径
 - 招聘对齐原始调查： [interview/StudyAssistanceAgent_requirement.md](interview/StudyAssistanceAgent_requirement.md)
 
 ---

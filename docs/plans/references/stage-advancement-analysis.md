@@ -5,7 +5,9 @@
 > 若本文与 PLAN 冲突，以 PLAN 为准；不要用本文开工、验收或改技术选型。
 > 日期：2026-08-20
 > 对照：[`docs/interview/StudyAssistanceAgent_requirement.md`](../../interview/StudyAssistanceAgent_requirement.md)
-> 不生成：`m6-harness-skeleton-plan.md`（按用户要求暂缓）
+> **历史状态提示（2026-08-21）**：本文保留当时的顺序分析。其“M6 不上 preview / 完整 Agent 留 M10”建议
+> 已被后续权威路线图细化为“M6b 只读工具调用预览，完整自主 Runner 仍在 M10”。涉及 M6/M10 范围时只以
+> [`docs/PLAN.md`](../../PLAN.md) 和对应执行计划为准。
 
 ## 1. 本文解决什么
 

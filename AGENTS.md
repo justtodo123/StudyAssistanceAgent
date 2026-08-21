@@ -10,7 +10,7 @@
 ```
 knowledge/      # ★ 知识库（课程笔记、例题、面经，项目核心资产）
 platform/       # Python 后端（FastAPI + 多路召回 RAG + 带出处问答）
-tests/          # ★ 迭代测试体系（阶段隔离架构，187 项）
+tests/          # ★ 迭代测试体系（阶段隔离架构；数量以 pytest 收集为准）
 tools/          # 辅助脚本（RAG 评测、一键启动、评测集 JSON）
 docs/           # 项目文档（PLAN 路线图、参考索引、开发规范、面试材料）
 proced_problem/ # 问题记录库（踩坑复盘，按序号排列）

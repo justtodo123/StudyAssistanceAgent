@@ -77,7 +77,7 @@ create -> qa -> explain -> quiz -> evaluate -> review-log -> completed
 - **「向量库为什么不用 Milvus / Chroma？」** → 个人规模（几百片）线性扫描足够，之后换弹性的接入即可，接口（vector_store.py）已抽象。
 - **「如何避免回答幻觉？」** → 勒令只基于检索片段、标注出处、无命中时明确说「知识库暂无」。
 - **「并发量表级？」** → 诚实：个人项目，但 FastAPI 异步 + 流式已具备；如要规模化再加缓存/分片（这反而是加分项——你知道边界）。
-- **「这算 Agent 吗？有没有 ReAct / Function Calling？」** → 学习会话是服务端状态机编排现有 QA/Quiz/Review，`tool_trace` 记录固定步骤；没有 LLM 自主选工具。招聘对照与是否立项见下方相关材料，不要把未实现能力讲成现状。
+- **「这算 Agent 吗？有没有 ReAct / Function Calling？」** → 现行正式路径是服务端教学状态机，`tool_trace` 记录固定步骤，没有 LLM 自主选工具。M6b 设计的是隔离的只读原生工具调用 preview（尚未开工），不是 ReAct。完整自主 Runner 在 M10，且是可选执行器，不替换状态机。
 
 ## 八、给简历的一句话亮点（可替换用）
 
@@ -85,16 +85,27 @@ create -> qa -> explain -> quiz -> evaluate -> review-log -> completed
 
 ## 九、相关材料与能力边界
 
-现行叙事讲的是**领域状态机编排的学习 Agent**：可讲混合检索、学习会话、`tool_trace`、离线降级和 90 题评测。
-这不是通用 ReAct / Function Calling，也不要把招聘对照清单当成已实现能力。
+现行叙事讲的是**领域状态机编排的学习 Agent**：混合检索、学习会话、`tool_trace`、离线降级、90 题评测，
+以及数据源门禁、稳定错误码、生成分层和延迟分位数。这不是通用 ReAct / Function Calling。
+
+与 [`docs/PLAN.md`](../PLAN.md) 同一口径：
+
+| 现状 | 下一步（未实现，不要讲成已有） |
+| --- | --- |
+| 正式 Runner = 学习状态机 | M6b：独立只读原生工具调用 preview |
+| crawler 只产候选，默认不入库 | M7：用户源注册与千级检索 |
+| SQLite 向量 + 线性余弦 | M8：LanceDB / 可选 Qdrant |
+| QA `generation_layer` + Recall@3 | M10：Agent 任务评测与可选自主 Runner |
 
 | 文件 | 用途 |
 | --- | --- |
-| [StudyAssistanceAgent_requirement.md](StudyAssistanceAgent_requirement.md) | 对照 Agent 招聘要求与参考架构的原始调查 |
-| [../plans/references/agent-alignment-analysis.md](../plans/references/agent-alignment-analysis.md) | 对本仓库的核实与是否立项建议；不是执行计划 |
+| [../standards/runtime-contracts.md](../standards/runtime-contracts.md) | 数据源 / 参数表 / 错误码 / 质量分层契约 |
+| [StudyAssistanceAgent_requirement.md](StudyAssistanceAgent_requirement.md) | 2026-08-20 招聘对照调查快照，**不是**执行计划 |
+| [../plans/references/agent-alignment-analysis.md](../plans/references/agent-alignment-analysis.md) | 辅助调查；与 PLAN 冲突时以 PLAN 为准 |
 
-被追问「为什么不做 ReAct」时：教学流程已知，所以默认走确定性闭环，保证复习记录和离线可用。分析结论是维持 M5 收口，暂不新开平台里程碑。
+被追问「为什么不做 ReAct」时：教学流程已知，默认走确定性闭环，保证复习记录和离线可用。
+ReAct 是可选策略，不替代教学状态机；完整自主循环放到 M10，避免在契约未稳时让模型改写掌握度和复习历史。
 
 ---
 
-*维护：2026-08-20 补充招聘对齐材料入口；面试前复习一句话、工具调用链、三个量化数字和能力边界。*
+*维护：2026-08-21 与 PLAN v2.2 / runtime-contracts 对齐；面试前复习一句话、工具调用链、三个量化数字和能力边界。*

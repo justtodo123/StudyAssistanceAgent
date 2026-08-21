@@ -20,7 +20,7 @@ knowledge/        # ★ 知识库（每门课程一个目录，含导航与条�
 platform/         # Python 后端（FastAPI + 多路召回 RAG + 带出处问答）
   app/            #   应用代码（入口/检索/向量/问答/索引/模型/配置）
   tests/          #   检索链路冒烟测试（40 项）
-tests/            # ★ 迭代测试体系（阶段隔离架构，187 项）
+tests/            # ★ 迭代测试体系（阶段隔离架构；数量以 pytest 收集为准）
   TEST_PLAN.md    #   测试计划文档
   conftest.py     #   跨阶段共享 fixtures
   M0_M2/          #   基线回归（18 项）

@@ -4,7 +4,8 @@
 > M0–M5 提供最小实现：默认计算机知识包、多路召回 RAG、学习会话与工作台。
 > M6 起按计划扩展：可插拔数据源、专业化存储、目标驱动学习计划与执行监控。
 
-**当前状态**：`v1.8 M6 规划中` — MVP（M5）可用；`python tools/start_local.py` 启动最小工作台。
+**当前状态**：`v1.8 M6 设计完成、实现未开工` — 当前先做 M6a-P0 crawler 收口；MVP（M5）可用，
+`python tools/start_local.py` 可启动最小工作台。
 阶段与定位以 [docs/PLAN.md](docs/PLAN.md) 为最终依据。
 
 ---
@@ -12,7 +13,7 @@
 ## 项目定位
 
 - 🎯 **目标**：通用学习 Agent harness，而不是单一课程聊天机器人
-- 📚 **默认知识包**：操作系统、数据结构、计算机组成原理、计算机网络（可替换/可追加用户源）
+- 📚 **默认知识包**：操作系统、数据结构、计算机组成原理、计算机网络；用户源接入仍为 M7 规划能力
 - 🧭 **使用方式**：工作台与 REST API 跑学习闭环；后续按用户画像与目标执行计划
 - 📦 **资料联动**：仓库内只放精炼 pack；用户自定义源在仓库外，不把 PDF/PPT 入库
 
@@ -23,12 +24,12 @@
 | 知识问答 | 基于知识库 + 外部资料回答课程问题，支持 LLM 生成或降级笔记摘要 | ✅ 已实现 |
 | 课程笔记管理 | 结构化笔记、例题、错题集的创建与检索 | ✅ 已实现（OS 20 篇 + DS 20 篇 + CO 20 篇 + Network 31 篇） |
 | 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（文件去重、课程过滤） |
-| RAG 评测 | 一条命令评测四课共 120 题，输出汇总指标和 JSON 报告 | ✅ 已实现（默认离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000、Network 待测） |
+| RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 已实现（离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000） |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 将改为目标/掌握度驱动 |
 | 用户数据源 | 自定义知识目录，规模百→千→万 | ⬜ M7 |
 | 专业化存储 | 控制面 SQLite + LanceDB，万级可选 Qdrant | ⬜ M8 |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ⬜ M9 |
-| Harness 框架 | Source/Store/Tool/Runner 可替换 | ⬜ M6 骨架起 |
+| Harness 框架 | M6a 契约/兼容骨架；M6b 独立只读工具调用预览；完整自主 Runner 在 M10 | ⬜ 设计完成，未开工 |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
@@ -82,7 +83,8 @@ StudyAssistanceAgent/
 │   ├── README.md          # 工具文档
 │   ├── run_evaluation.py  # 统一 RAG 评测入口（三课 90 题 / JSON 报告）
 │   ├── start_local.py     # 一键启动与 /health 检查
-│   └── evaluations/       # 评测集（JSON，每课一个文件）
+│   ├── crawler/           # 候选 Markdown 抓取/清洗/转换（M6a-P0 待收口）
+│   └── evaluations/       # 默认三课 90 题 + Network 30 题显式扩展集
 ├── tests/                 # ★ 迭代测试体系（阶段隔离架构）
 │   ├── TEST_PLAN.md       # 测试计划文档
 │   ├── conftest.py        # 跨阶段共享 fixtures
@@ -97,6 +99,7 @@ StudyAssistanceAgent/
 │   ├── M5c/               # 学习状态持久化测试（14 项）
 │   ├── M5d/               # 学习工作台测试（10 项）
 │   ├── M5e/               # 可复现交付测试（15 项）
+│   ├── M6_crawler/        # crawler 既有测试（M6a-P0 待收口）
 │   ├── regression/        # 跨阶段回归套件（21 项）
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
@@ -131,7 +134,7 @@ cd ..
 ./platform/.venv/Scripts/python tools/run_evaluation.py
 
 # 6. 运行迭代测试体系（根目录下）
-./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归（187 项）
+./platform/.venv/Scripts/python -m pytest tests/ -v            # 根级阶段测试与回归；以本次收集结果为准
 ./platform/.venv/Scripts/python -m pytest tests/M0_M2/ -v     # 基线回归
 ./platform/.venv/Scripts/python -m pytest tests/regression/ -v # 回归套件
 ./platform/.venv/Scripts/python -m pytest tests/ -m m3d        # M3d 文档检查
@@ -178,8 +181,11 @@ cd ..
 | [docs/demo.md](docs/demo.md) | 离线演示手册（一键启动与学习闭环） |
 | [docs/baselines.md](docs/baselines.md) | RAG 与交付延迟基线 |
 | [docs/standards/git-conventions.md](docs/standards/git-conventions.md) | Git 提交规范（Conventional Commits） |
+| [docs/standards/runtime-contracts.md](docs/standards/runtime-contracts.md) | 数据源门禁、检索参数、错误码、质量分层 |
 | [docs/plans/m3-engineering-execution-plan.md](docs/plans/m3-engineering-execution-plan.md) | M3 工程质量阶段执行记录（已完成） |
 | [docs/plans/m4-knowledge-base-scale-plan.md](docs/plans/m4-knowledge-base-scale-plan.md) | M4 课程知识库规模补齐计划（范围、验收、分支） |
+| [docs/plans/m6a-harness-skeleton-plan.md](docs/plans/m6a-harness-skeleton-plan.md) | M6a 契约与兼容骨架（含 crawler 前置收口） |
+| [docs/plans/m6b-agent-core-plan.md](docs/plans/m6b-agent-core-plan.md) | M6b 独立只读工具调用预览计划 |
 | [knowledge/README.md](knowledge/README.md) | 知识库导航与写作规范（含 51 条面经） |
 | [CLAUDE.md](CLAUDE.md) | Agent 项目级开发指导 |
 

@@ -1,293 +1,163 @@
-# M6a Harness 骨架（协议先行）执行计划
+# M6a Harness 骨架（契约先行）执行计划
 
-> 版本：v1.0
-> 制定日期：2026-08-20
-> 当前状态：未开工
-> 适用范围：Source/Store/Tool/Runner 四协议定义 + 额外 Markdown 源注册 + API 兼容 MVP
-> 前置条件：M0–M5 全部回归通过
-> 后续阶段：M6b Agent 核心（ReAct + 工具调用）
+> 版本：v2.0
+> 制定日期：2026-08-21
+> 当前状态：设计完成，未开工；前置为 M6a-P0 crawler 收口
+> 适用范围：Source/Store/Tool/Runner 契约、现有状态机兼容、启动期静态额外 Markdown 源
+> 后续阶段：M7 用户数据源生命周期；M6b 为独立的只读 Agent 预览
 
-## 1. 背景
+## 1. 背景与边界
 
-M0–M5 已完成最小学习闭环：60 篇课程条目、90 题评测、187 项测试、服务端会话状态机、工作台。
-但现有系统是「硬编码编排」——QA、Quiz、Review 服务直接调用，没有统一的协议层。
+M0–M5 已形成可离线运行的学习闭环：OS/DS/CO 三课 60 篇课程条目、默认 90 题评测、FastAPI
+学习会话状态机、SQLite 持久化和工作台。现有代码仍以具体服务之间的直接调用为主，M6a 先收敛
+契约，再做薄适配，不能用抽象破坏已经冻结的 API 和状态机。
 
-M6a 的目标是**抽象出四协议**（Source/Store/Tool/Runner），为 M6b 的 Function Calling 和 ReAct 循环打基础，同时不破坏现有 API 和学习闭环。
+`tools/crawler/` 与 `tests/M6_crawler/` 已存在，但 crawler 还不是完整 Source 生命周期。它在 M6a
+开工前单独收口：只生成候选 Markdown，经过人工审核和显式目录配置后才可进入知识源；不得自动改变
+默认 `knowledge/` 或默认三课 90 题评测。持久化源注册、增量同步、删除传播、多源隔离和千级索引留给 M7。
 
-**为什么协议先行**：
-- 工具注册表（M6b）依赖 Tool 协议——没有协议就没有 `name/description/parameters/execute`
-- Runner 协议让学习状态机和 ReAct 循环成为可替换的实现，而不是改代码
-- Source 协议让用户数据源（M7）能接入检索，而不是只用默认 `knowledge/`
+### 1.1 阶段目标
 
-## 2. 阶段目标与非目标
+1. 定义与现有实现一致的职责契约，不先创建泛化的“一统 Store”或一次性 Runner。
+2. 将现有学习状态机、确定性检索/测验/复习服务包装为可测试的适配边界。
+3. 支持启动期配置的额外 Markdown 源，同时保持默认源和 API 行为不变。
+4. 固化 crawler 的依赖、测试、CI 和人工审核边界。
 
-### 2.1 阶段目标
+### 1.2 非目标
 
-1. 定义 Source/Store/Tool/Runner 四协议（Python Protocol / ABC）
-2. 将现有 QA、Quiz、Review、Search 服务适配为 Tool 协议实现
-3. 将现有学习状态机适配为 Runner 协议实现
-4. 支持额外 Markdown 源通过配置注册（不改代码）
-5. 保持所有现有 API（`/api/v1/search|qa|quiz|study-sessions|...`）不变
+- 不实现 ReAct、Function Calling、Agent preview 或自主 Runner；
+- 不新增 `SA_RUNNER=react`，不改变 `/api/v1/study-sessions` 的执行路径；
+- 不把 `SqliteLearningStore` 改写成向量、文档或源注册的总 Store；
+- 不做用户源持久化注册、增量同步、删除、UI 或 1k–3k chunk 优化；
+- 不把 crawler 输出自动写入默认知识包或扩大默认评测集合；
+- 不引入新的外部存储依赖。
 
-### 2.2 非目标
+## 2. M6a-0：契约收敛与开工门禁
 
-- 不实现 ReAct 循环或 Function Calling（那是 M6b）
-- 不接入外部向量库（Milvus/Qdrant/LanceDB，那是 M8）
-- 不实现用户数据源同步（那是 M7）
-- 不实现目标驱动计划（那是 M9）
-- 不改变默认 Runner——学习状态机仍是默认路径
-- 不引入新依赖（纯 Python Protocol/ABC）
-- `learner_id=local` 够用，不做账号体系
+先写契约说明和 contract tests，再实现适配器。四类边界如下：
 
-## 3. 四协议设计
+### 2.1 Source
 
-### 3.1 Source 协议（数据源）
+Source 至少描述 `source_id`、`source_type`、source/document/chunk 的稳定命名空间、logical URI、
+内容 fingerprint、revision，以及未来的删除/失效语义。M6a 的 `MarkdownPackSource` 只在启动时读取默认
+`knowledge/` 和显式配置的额外目录；不得把绝对路径作为对外 ID 或日志字段。
 
-```python
-class Source(Protocol):
-    """知识数据源：提供可检索的知识块。"""
-    source_id: str
-    source_type: str  # "markdown_pack" | "user_directory" | ...
+### 2.2 存储职责
 
-    def list_chunks(self) -> list[SourceChunk]: ...
-    def get_chunk(self, chunk_id: str) -> SourceChunk | None: ...
-```
+不要使用原计划中混合会话和向量的 `Store`。按职责记录以下边界：
 
-现有适配：`knowledge/` 目录作为默认 `markdown_pack` 源。
-M7 扩展：用户注册的目录作为额外源。
+- `LearningStateRepository`：会话、答题、掌握度和恢复所需的控制状态；复用 `SqliteLearningStore`；
+- `ReviewRepository`：复习历史与待复习查询，可由现有 SQLite 实现提供；
+- `SourceRegistryRepository`：M7 才负责持久化用户源注册；M6a 仅保留启动配置；
+- `RetrievalIndex`/`VectorStore`：检索索引和向量生命周期；复用现有 `VectorStore` 协议及实现，
+  不把 LanceDB/Qdrant 写成学习状态存储。
 
-### 3.2 Store 协议（存储）
+### 2.3 Tool
 
-```python
-class Store(Protocol):
-    """学习状态存储：会话、答题记录、掌握度、复习历史。"""
-    def save_session(self, session: StudySession) -> None: ...
-    def get_session(self, session_id: str) -> StudySession | None: ...
-    def list_sessions(self, learner_id: str) -> list[StudySession]: ...
-    def save_review(self, entry: ReviewEntry) -> None: ...
-    def get_due_reviews(self, learner_id: str) -> list[ReviewEntry]: ...
-```
+Tool 使用 `ToolContext`（learner、source namespace、权限、取消/预算和 correlation ID）和结构化
+`ToolResult`（数据、来源、错误码、是否可重试、trace 元数据）。参数使用 JSON Schema；工具明确标记
+read-only、idempotent 或具有副作用。M6a 适配确定性服务，领域写入仍由 `StudySessionService` 和领域
+服务控制；工具存在不等于允许 Agent 调用。
 
-现有适配：`SqliteLearningStore` 已实现大部分接口，需对齐协议签名。
-M8 扩展：统一 schema + LanceDB/Qdrant。
+### 2.4 Runner
 
-### 3.3 Tool 协议（工具）
+Runner 必须表达跨请求生命周期，而不是只有 `run(context)`：至少定义 `start`、`resume/get` 和
+`step(event)`（或等价的状态快照、等待输入、取消、错误和副作用语义）。`StateMachineRunner` 是当前
+正式路径的薄包装，保持现有会话恢复、答案提交、评估和复习记录行为。M6b 不消费它来替换正式 API；
+完整自主 Runner 留给 M10。
 
-```python
-class Tool(Protocol):
-    """可被 Runner 调用的工具。"""
-    name: str
-    description: str
-    parameters: dict[str, Any]  # JSON Schema 格式
+## 3. 子阶段
 
-    def execute(self, **kwargs) -> ToolResult: ...
-```
-
-现有适配：QA 检索、Quiz 出题、Review-due 查询、Review-log 记录 → 各注册为一个 Tool。
-M6b 扩展：工具注册表 + Function Calling。
-
-### 3.4 Runner 协议（执行器）
-
-```python
-class Runner(Protocol):
-    """学习执行器：决定下一步做什么。"""
-    def run(self, context: RunnerContext) -> RunnerResult: ...
-```
-
-现有适配：`StudySessionService` 包装为 `StateMachineRunner`。
-M6b 扩展：`ReActRunner` 作为可选实现。
-
-## 4. 阶段拆分
-
-### M6a-1：协议定义与接口注册
-
-**目标**：定义四协议，创建 `platform/app/protocols.py`。
+### M6a-P0：crawler 前置收口
 
 任务：
 
-- [ ] 新建 `platform/app/protocols.py`，定义 `Source`、`Store`、`Tool`、`Runner` 四个 Protocol 类
-- [ ] 为每个协议编写 docstring 和类型注解
-- [ ] 定义 `SourceChunk`、`ToolResult`、`RunnerContext`、`RunnerResult` 数据类
-- [ ] 在 `tests/M6a/` 增加协议实例化和接口契约测试
-- [ ] 协议不导入任何业务模块，保持纯接口
+- 登记 `tools/crawler/`、`tests/M6_crawler/` 及 `tools/crawler/requirements.txt`；
+- 明确 fetch/clean/convert/dedup/pipeline 的输入输出、依赖安装和离线/在线边界；
+- 为 crawler 规划独立 `M6_crawler` marker、CI 安装/测试策略和可复现夹具；
+- 明确候选 Markdown 必须经人工审核、显式目录配置后才入源；默认 pack 和默认评测不受影响。
 
-退出条件：
+退出条件：crawler 阶段测试可独立运行，依赖和 CI 处理有文档，且不被宣称为 M7 Source 生命周期。
 
-- 四协议可被 import，有完整类型注解和 docstring
-- 协议测试通过
+### M6a-1：协议与契约测试
 
-### M6a-2：现有服务适配 Tool 协议
+- 创建 `platform/app/protocols.py`，定义 Source、职责拆分后的存储边界、Tool、Runner 数据类/协议；
+- 定义 `SourceChunk`、`ToolContext`、`ToolResult`、`RunnerContext`、`RunnerResult`；
+- 协议层不导入业务实现；
+- 覆盖结构化错误、权限/副作用标记、source/chunk ID 稳定性和跨请求状态契约。
 
-**目标**：把 QA、Quiz、Review-due、Review-log 适配为 Tool 实现。
+### M6a-2：现有服务适配
 
-任务：
+- 创建 `platform/app/tools/`，提供 Retrieve、Quiz、ReviewDue 等确定性适配器；
+- ReviewLog 若保留为领域服务适配，必须标为写工具，不能进入 M6b preview allowlist；
+- `StudySessionService` 保持直接、类型安全的领域调用，不强制通过通用 Tool envelope；
+- 创建 `platform/app/runners/state_machine.py`，包装现有状态机而不改变 API schema。
 
-- [ ] 新建 `platform/app/tools/` 包
-- [ ] 实现 `RetrieveTool`：包装 `MultiRecallService.recall()`
-- [ ] 实现 `QuizTool`：包装 `QuizService.generate()`
-- [ ] 实现 `ReviewDueTool`：包装 `ReviewSchedulerService.get_due()`
-- [ ] 实现 `ReviewLogTool`：包装 `ReviewSchedulerService.log_review()`
-- [ ] 每个 Tool 有 `name`、`description`、`parameters`（JSON Schema）和 `execute()`
-- [ ] 现有 `study_session.py` 通过 Tool 调用服务（内部重构，不改 API 契约）
-- [ ] 在 `tests/M6a/` 增加工具注册、调用和结果格式测试
+### M6a-3：启动期静态额外源
 
-退出条件：
+- 创建 `MarkdownPackSource`，包装现有索引能力；
+- 通过 `SA_EXTRA_SOURCES` 注册额外 Markdown 目录；
+- 为额外源生成不冲突的 source/document/chunk ID，并在检索融合中保留出处；
+- 不持久化注册、不做同步/删除、不泄露外部绝对路径；默认无额外源时与 M5 一致。
 
-- 每个 Tool 可独立调用，返回 `ToolResult`
-- `study-sessions` API 行为不变（回归测试通过）
-- 工具测试覆盖注册、调用、异常处理
+### M6a-4：文档与收口
 
-### M6a-3：Runner 协议适配
-
-**目标**：将学习状态机包装为 `StateMachineRunner`。
-
-任务：
-
-- [ ] 新建 `platform/app/runners/` 包
-- [ ] 实现 `StateMachineRunner`：包装现有 `StudySessionService`
-- [ ] Runner 的 `run()` 接收 `RunnerContext`（learner_id, topic, course），返回 `RunnerResult`（session_id, state, tool_trace）
-- [ ] 现有 API 端点通过 Runner 调用（内部重构，不改 API 契约）
-- [ ] 在 `tests/M6a/` 增加 Runner 状态转换和结果测试
-
-退出条件：
-
-- `StateMachineRunner` 可替代直接调用 `StudySessionService`
-- 所有现有 API 行为不变
-- Runner 测试覆盖正常流程和异常分支
-
-### M6a-4：Source 协议与额外源注册
-
-**目标**：将 `knowledge/` 适配为默认 Source，支持配置额外 Markdown 源。
-
-任务：
-
-- [ ] 实现 `MarkdownPackSource`：包装 `knowledge_index.build_index_cached()`
-- [ ] 支持通过 `SA_EXTRA_SOURCES` 环境变量注册额外 Markdown 目录
-- [ ] 额外源的 chunk 进入同一检索池，与默认源一起参与 RRF 融合
-- [ ] 在 `tests/M6a/` 增加额外源注册、chunk 发现和检索融合测试
-
-退出条件：
-
-- 默认 `knowledge/` 作为 `MarkdownPackSource` 正常工作
-- 配置额外目录后，检索结果包含额外源的内容
-- 不配置额外源时，行为与 M5 完全一致
-
-### M6a-5：文档与收口
-
-**目标**：更新文档，反映协议层状态。
-
-任务：
-
-- [ ] 更新 `platform/README.md`：新增协议说明和配置项
-- [ ] 更新 `docs/PLAN.md`：标记 M6a 完成状态
-- [ ] 更新 `docs/plans/README.md`：登记 M6a 计划状态
-- [ ] 运行完整回归：M6a 测试 + M0_M2 + regression + platform/tests
-
-退出条件：
-
-- 所有文档与代码一致
-- 回归测试全部通过
-
-## 5. 测试策略
-
-新增测试遵循阶段隔离，不修改 M0–M5 存量测试。
+同步 `platform/README.md`、`docs/PLAN.md`、`docs/plans/README.md` 和 `tests/TEST_PLAN.md`。完整验收顺序：
 
 ```text
-tests/M6a/    协议契约、工具注册/调用、Runner 状态转换、额外源注册
+tests/M6_crawler/
+  → tests/M6a/
+  → tests/M0_M2/ + tests/regression/ + platform/tests/
+  → 默认 OS/DS/CO 90 题离线 RAG 评测
+  → API/OpenAPI/链接检查 → 人工审查
 ```
 
-验收顺序：
+## 4. 测试与验收门禁
 
-```text
-tests/M6a/
-  → tests/M0_M2/
-  → tests/regression/
-  → platform/tests/
-  → 三课离线 RAG 评测
-  → 文档检查
-  → 人工审查与合并
-```
+新增测试放在 `tests/M6a/`，不修改 M0–M5 存量测试，至少覆盖：
 
-## 6. 代码结构
+- 协议 contract tests、旧会话恢复、`start/resume/step` 生命周期；
+- ToolContext、JSON Schema 参数、结构化错误和写工具拒绝；
+- 多 source ID 不冲突、revision/fingerprint、额外源检索融合；
+- 默认 API/OpenAPI 契约不变，外部绝对路径不出现在响应和日志；
+- 默认评测发现集合仍为 OS/DS/CO 共 90 题，Network 扩展集不自动加入；
+- crawler 依赖/测试可复现，候选产物不自动污染默认知识包。
+
+退出条件：M6a 测试和回归通过；默认三课 Recall@3 不退化；正式学习状态机仍是唯一当前 Runner；文档
+与实现边界一致。M6a 完成后可进入 M7；M6b 是其后的独立只读 preview，不是正式 Runner 替换。
+
+## 5. 代码结构与配置规划
 
 ```text
 platform/app/
-  protocols.py          # Source/Store/Tool/Runner 四协议 + 数据类
-  tools/
-    __init__.py
-    retrieve.py         # RetrieveTool
-    quiz.py             # QuizTool
-    review_due.py       # ReviewDueTool
-    review_log.py       # ReviewLogTool
-  runners/
-    __init__.py
-    state_machine.py    # StateMachineRunner（包装 StudySessionService）
-  sources/
-    __init__.py
-    markdown_pack.py    # MarkdownPackSource
+  protocols.py
+  tools/                 # 确定性工具适配器；写工具单独标记
+  runners/state_machine.py
+  sources/markdown_pack.py
 
-tests/M6a/
-  test_protocols.py     # 协议接口契约
-  test_tools.py         # 工具注册与调用
-  test_runners.py       # Runner 状态转换
-  test_sources.py       # 额外源注册
+tests/M6_crawler/       # crawler 前置收口（既有目录）
+tests/M6a/               # 契约、适配器、Runner、Source
 ```
 
-## 7. 风险与决策
+计划配置：`SA_EXTRA_SOURCES` 只表示启动期静态目录列表。crawler marker、独立依赖和 CI 安装是 M6a-P0
+实施项；在实际配置落地前不得宣称已完成。
+
+## 6. 风险与决策
 
 | 风险 | 决策 |
 | --- | --- |
-| 协议层增加复杂度，现有代码过度抽象 | 协议只做接口定义，不改核心算法；现有服务内部逻辑不变 |
-| Tool 协议与 M6b Function Calling 的 parameters 格式不兼容 | Tool 的 `parameters` 统一用 JSON Schema，M6b 直接复用 |
-| 额外源注册影响检索质量 | 默认源和额外源走同一 RRF 融合，Recall@3 回归不退化 |
-| Runner 协议过度设计 | `StateMachineRunner` 只是 `StudySessionService` 的薄包装，不引入新抽象层 |
-| 子阶段过多导致工期膨胀 | M6a-1 到 M6a-4 可合并为 2–3 个原子提交，不必严格按子阶段拆分 |
+| 抽象层破坏已有状态机 | 先做契约测试，适配器保持薄，`StudySessionService` 仍为领域权威 |
+| Store 边界继续混淆 | 学习状态、复习、源注册和检索索引分责，复用现有实现 |
+| crawler 污染默认 pack | 候选产物须人工审核并显式注册，默认评测集合固定 90 题 |
+| 额外源 ID 或路径泄露 | 稳定 namespace/逻辑 URI；绝对路径只留在受控本地配置 |
+| M6b 误用写工具 | 工具记录副作用分类，preview 另有只读 allowlist |
 
-## 8. 分支与提交建议
+## 7. 分支、提交与下一步
 
 ```text
 feature/m6a-harness-skeleton
 ```
 
-建议提交：
-
-```text
-feat(platform): add Source/Store/Tool/Runner protocols
-feat(platform): add tool adapters for QA/Quiz/Review
-feat(platform): add StateMachineRunner
-feat(platform): add extra source registration via config
-test(platform): add M6a protocol and integration tests
-docs(platform): document M6a harness skeleton
-```
-
-合并方式：
-
-```powershell
-git switch master
-git pull --ff-only origin master
-git merge --no-ff feature/m6a-harness-skeleton -m "merge: complete M6a harness skeleton"
-```
-
-## 9. 验收门禁
-
-- [ ] `tests/M6a/` 全部通过
-- [ ] `tests/M0_M2/` 全部通过
-- [ ] `tests/regression/` 全部通过
-- [ ] `platform/tests/` 全部通过
-- [ ] 三课离线 RAG 评测 Recall@3 不退化
-- [ ] 所有现有 API 行为不变（`/api/v1/search|qa|quiz|study-sessions|review-log|review-due`）
-- [ ] `git diff --check` 和 Python 编译检查通过
-- [ ] 文档与代码一致
-
-## 10. 面试话术
-
-M6a 完成后可讲：
-
-> 我设计了四层协议架构：Source 管数据源接入，Store 管状态持久化，Tool 管可调用能力，Runner 管执行策略。
-> 现有学习状态机是 Runner 的一个实现，后面做 ReAct 时只需要加一个新 Runner，不需要改底层服务。
-> 这是**面向变化点的设计**——我知道下一步要加 LLM 自主决策，所以先把变化点隔离出来。
-
-## 11. 下一步
-
-M6a 完成后进入 M6b：基于 Tool 协议实现工具注册表 + Function Calling + ReAct 循环。
-详见 `docs/plans/m6b-agent-core-plan.md`。
+建议提交：crawler 收口、协议与 contract tests、适配器与 StateMachineRunner、静态 Source、文档与回归。
+不自动 push、不修改历史。M6a 后进入 M7 Source 生命周期；M6b 只读 Agent preview 依赖 M6a 契约，完整
+自主 Runner、写工具、checkpoint/幂等和 Agent 评测依赖 M7–M9 后在 M10 实现。

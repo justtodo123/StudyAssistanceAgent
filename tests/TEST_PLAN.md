@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-18（M0-M4 已完成；M5a~M5e 已完成）
+> 起始日期：2026-08-17 · 更新：2026-08-21（M6 crawler 前置收口规划；M6a/M6b 尚未实施）
 
 ## 一、测试策略总览
 
@@ -79,11 +79,18 @@ tests/
 │   ├── test_eval_smoke.py        # 评测冒烟
 │   └── test_docs.py              # 基线/缓存/演示文档
 │
-├── regression/           # 跨阶段回归套件
-│   ├── conftest.py       # 回归专用 fixtures
+├── M6_crawler/             # crawler 前置收口（既有测试，尚未纳入默认 CI）
+│   ├── test_cleaner.py     # 清洗
+│   ├── test_converter.py   # Markdown 转换
+│   ├── test_dedup.py       # 去重
+│   └── test_pipeline.py    # pipeline 编排
+│
+├── regression/             # 跨阶段回归套件
+│   ├── conftest.py         # 回归专用 fixtures
 │   ├── test_api_contract.py      # API 契约稳定性
 │   ├── test_rag_quality.py       # RAG 质量回归
-│   └── test_data_integrity.py    # 数据完整性
+│   ├── test_data_integrity.py    # 数据完整性
+│   └── test_runtime_contracts.py # 错误码、分位数、入库门禁、生成分层
 │
 └── utils/                # 测试工具（非测试文件）
     └── helpers.py        # 通用断言与辅助函数
@@ -109,15 +116,9 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/` | 187 项 | 187 collected | 阶段测试 + 回归套件（M0_M2 18、M3a 22、M3b 13、M3c 10、M3d 6、M4 14、M5a 26、M5b 18、M5c 14、M5d 10、M5e 15、regression 21） |
-| `platform/tests/` | 40 项 | 40 passed | 原始平台冒烟/功能测试 |
-| M3 验收门禁 | 130 项 | 130 passed | 根级测试 90 项 + 平台原始测试 40 项；包含 M3d 文档检查 |
-| M4 验收门禁 | 144 项 | 144 passed | 根级测试 104 项 + 平台原始测试 40 项；包含知识库规模检查 |
-| M5a 本阶段 | 26 项 | 26 passed | 参数解析、评测集发现、指标聚合、报告格式 |
-| M5b 本阶段 | 18 项 | 18 passed | 状态机、评估、降级、API 契约 |
-| M5c 本阶段 | 14 项 | 14 passed | 仓储、迁移、恢复、幂等、并发 |
-| M5d 本阶段 | 10 项 | 10 passed | 首页视图、API 白名单、学习闭环 |
-| M5e 本阶段 | 15 项 | 15 passed | CI、一键启动、评测冒烟、交付文档 |
+| 根级 `tests/`（含 M6_crawler） | 以当前 `pytest --collect-only` 为准 | 历史文档数字不作通过声明 | 阶段测试 + 回归套件；M6 crawler 尚待纳入默认 CI |
+| `platform/tests/` | 40 项 | 历史 M5 验收已通过 | 原始平台冒烟/功能测试 |
+| M6 crawler 前置门禁 | 待收口 | 未纳入默认 CI | 依赖、marker、在线/离线边界和人工审核流程待补齐 |
 
 M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。受限 Windows 环境若默认临时目录不可写，可使用工作区内的 `pytest --basetemp=.tmp-test\...`。
 
@@ -278,9 +279,9 @@ pytest tests/M0_M2/ -v         # 基线回归
 
 | 测试文件 | 验证范围 | 运行时机 |
 |----------|----------|----------|
-| `test_api_contract.py` | 全部 8 个 API 端点的请求/响应 schema 不变 | 每阶段 |
-| `test_rag_quality.py` | OS/DS/CO 三课 Recall@3 ≥ 0.8（量化基线） | M3a（向量库变更）|
-| `test_data_integrity.py` | 知识库条目 frontmatter 完整、评测集格式合法 | M3c（数据变更）|
+| `test_api_contract.py` | 核心 API 端点的请求/响应 schema 不变 | 每阶段 |
+| `test_rag_quality.py` | OS/DS/CO 三课 Recall@3 ≥ 0.8（默认 90 题基线） | M3a/M6a/M6b |
+| `test_data_integrity.py` | 知识库条目 frontmatter 完整、默认评测集格式合法 | 数据变更 |
 
 ### 阶段 5：M4 — 课程知识库规模补齐（已完成并进入 master）
 
@@ -349,6 +350,26 @@ pytest tests/M0_M2/ -v         # 基线回归
 | `test_eval_smoke.py` | 冒烟 | `--smoke` 限制已标注题量 |
 | `test_docs.py` | 文档 | 冷/热启动与会话基线、缓存说明、工具链 |
 
+### 阶段 11：M6a-P0 — crawler 前置收口（规划中）
+
+**对应开发任务**：登记既有 crawler、固定独立依赖/marker/CI 策略，明确人工审核和 Source 边界。
+
+| 范围 | 验证点 |
+| --- | --- |
+| `tests/M6_crawler/` | cleaner、converter、dedup、pipeline 行为可复现 |
+| `tools/crawler/requirements.txt` | crawler 依赖与平台核心依赖分离，安装策略明确 |
+| 评测/知识包隔离 | crawler 不自动写入默认 `knowledge/`，不扩大 OS/DS/CO 默认 90 题 |
+| 人工审核边界 | 候选 Markdown 仅在审核和显式注册后才能进入 Source |
+
+M6a-P0 不等同于 M7 Source 生命周期；持久化注册、同步、删除传播和多源隔离留待 M7。
+
+### 阶段 12：M6a/M6b 测试规划（尚未实施）
+
+M6a 覆盖协议 contract tests、StateMachineRunner 兼容、旧会话恢复、静态额外 Source、多源 ID 不冲突、
+绝对路径不泄露和默认 90 题不退化。M6b 只覆盖 provider-native tool-call block、call_id/schema/错误映射、
+只读 allowlist、写工具拒绝、独立 preview 入口、预算/终止和“不创建或修改正式 session/review log”。
+M6b 不列 ReAct Runner 切换；完整自主 Runner、写工具、checkpoint/幂等和 Agent 任务评测属于 M10。
+
 ## 三、执行矩阵
 
 | 阶段 | 本阶段测试 | 回归测试 | 基线测试 | RAG 评测 |
@@ -363,7 +384,10 @@ pytest tests/M0_M2/ -v         # 基线回归
 | M5b 学习会话 | `tests/M5b/` | `tests/regression/` | `tests/M0_M2/` | — |
 | M5c 学习持久化 | `tests/M5c/` | `tests/regression/` | `tests/M0_M2/` | — |
 | M5d 学习工作台 | `tests/M5d/` | `tests/regression/` | `tests/M0_M2/` | — |
-| M5e 可复现交付 | `tests/M5e/` | `tests/regression/` | `tests/M0_M2/` | — |
+| M5e 可复现交付 | `tests/M5e/` | `tests/regression/` | `tests/M0_M2/` | `python tools/run_evaluation.py --smoke` |
+| M6 crawler 前置 | `tests/M6_crawler/`（收口后纳入 CI） | `tests/regression/` | `tests/M0_M2/` | 默认 90 题发现 + smoke |
+| M6a 契约骨架 | `tests/M6a/`（规划） | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
+| M6b 只读预览 | `tests/M6b/`（规划） | `tests/regression/` | `tests/M0_M2/` | 默认 90 题；可选 provider smoke |
 
 ## 四、pytest 配置
 
@@ -430,4 +454,4 @@ pytest tests/ -v -n auto
 
 ---
 
-*维护：每阶段开发完成后更新本计划。当前基线：根级 187 项（M0-M5 + 回归），平台原始测试 40 项（2026-08-18）。*
+*维护：每阶段开发完成后更新本计划。当前根级测试数量以 pytest 收集结果为准；历史 M5 验收记录为平台原始测试 40 项，M6 crawler 已存在但尚未纳入默认 CI。*
