@@ -15,6 +15,11 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
+_TITLE_STRIP_CHARS = "，。、；：？！\"'《》（）()[]{}"
+_CONTENT_STRIP_CHARS = _TITLE_STRIP_CHARS + "-#*>`"
+_TITLE_STRIP_TABLE = str.maketrans("", "", _TITLE_STRIP_CHARS)
+_CONTENT_STRIP_TABLE = str.maketrans("", "", _CONTENT_STRIP_CHARS)
+
 
 @dataclass
 class DedupIndex:
@@ -76,14 +81,13 @@ def _normalize_title(title: str) -> str:
     """标题归一化：去空白、标点、统一大小写。"""
     title = title.strip().lower()
     title = re.sub(r"\s+", "", title)
-    title = re.sub(r"[，。、；：？！""''《》（）()\[\]{}]", "", title)
-    return title
+    return title.translate(_TITLE_STRIP_TABLE)
 
 
 def _content_fingerprint(content: str) -> str:
     """内容指纹：取前 500 个有效字符的 SHA-1。"""
     # 去空白和标点，取前 500 字符
     cleaned = re.sub(r"\s+", "", content)
-    cleaned = re.sub(r"[，。、；：？！""''《》（）()\[\]{}\-#*>`]", "", cleaned)
+    cleaned = cleaned.translate(_CONTENT_STRIP_TABLE)
     sample = cleaned[:500]
     return hashlib.sha1(sample.encode("utf-8")).hexdigest()
