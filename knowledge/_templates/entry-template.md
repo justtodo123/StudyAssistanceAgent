@@ -10,6 +10,8 @@ tags: [核心主题, 子主题]
 difficulty: 中等
 updated: 2026-08-10
 source: docs/reference/{course}.md
+source_type: human_markdown
+ingest_status: approved
 ---
 ```
 

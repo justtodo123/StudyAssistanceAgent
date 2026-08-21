@@ -22,7 +22,8 @@ knowledge/
 │   ├── co/                # CO 面经
 │   ├── rag-agent/         # RAG/Agent 工程面经
 │   └── project/           # 项目介绍与系统设计面经
-└── _templates/            # 条目模板（新建条目时复制）
+├── _templates/            # 条目模板（新建条目时复制）
+└── _inbox/                # 待审核候选（不进入检索）
 ```
 
 ## 每门课程目录的 README 应包含
@@ -42,6 +43,8 @@ tags: [topic1, topic2]
 difficulty: 入门 | 中等 | 进阶
 updated: 2026-08-10
 source: 参考的外部资料路径或书目（可省略，指向 docs/reference 索引）
+source_type: human_markdown  # 可选；网页候选为 web_candidate，审核后为 web_reviewed
+ingest_status: approved      # 可选；candidate 不会进入检索
 ---
 ```
 

@@ -64,6 +64,8 @@ class TestPipeline:
         # 验证文件内容
         content = md_files[0].read_text(encoding="utf-8")
         assert "course: network" in content
+        assert "source_type: web_candidate" in content
+        assert "ingest_status: candidate" in content
 
     def test_skip_failed_fetch(self, tmp_path: Path) -> None:
         """抓取失败的 URL 应被跳过。"""

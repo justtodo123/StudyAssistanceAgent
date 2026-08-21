@@ -18,6 +18,8 @@ class TestToKnowledgeMarkdown:
         assert md.startswith("---\n")
         assert "title: TCP三次握手" in md
         assert "course: network" in md
+        assert "source_type: web_candidate" in md
+        assert "ingest_status: candidate" in md
 
     def test_frontmatter_has_updated_date(self, sample_text: str) -> None:
         """frontmatter 应包含 updated 日期。"""

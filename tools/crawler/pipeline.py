@@ -1,8 +1,9 @@
 """爬虫管道：串联 fetch → clean → convert → dedup → write。
 
 用法：
-    python -m tools.crawler.pipeline --urls tools/crawler/urls/network.json --output knowledge/network/
+    python -m tools.crawler.pipeline --urls tools/crawler/urls/network.json
     python -m tools.crawler.pipeline --urls tools/crawler/urls/network.json --dry-run
+    # default output: platform/.cache/crawler-candidates/{course}
 """
 
 from __future__ import annotations
@@ -17,6 +18,9 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
+_PLATFORM = _ROOT / "platform"
+if str(_PLATFORM) not in sys.path:
+    sys.path.insert(0, str(_PLATFORM))
 
 from tools.crawler.cleaner import clean_html, extract_title
 from tools.crawler.converter import ArticleMeta, slug_from_title, to_knowledge_markdown
@@ -32,6 +36,7 @@ def run_pipeline(
     *,
     dry_run: bool = False,
     delay: float = 2.0,
+    allow_knowledge_write: bool = False,
 ) -> dict:
     """执行完整的爬虫管道。
 
@@ -44,6 +49,12 @@ def run_pipeline(
     Returns:
         统计信息 dict
     """
+    from app.source_policy import assert_crawler_output_allowed
+
+    assert_crawler_output_allowed(
+        output_dir, allow_knowledge_write=allow_knowledge_write
+    )
+
     # 1. 加载 URL 列表
     with open(url_file, encoding="utf-8") as f:
         entries = json.load(f)
@@ -131,9 +142,14 @@ def run_pipeline(
 def main() -> None:
     parser = argparse.ArgumentParser(description="知识库爬虫管道")
     parser.add_argument("--urls", required=True, help="URL 列表 JSON 文件路径")
-    parser.add_argument("--output", default=None, help="输出目录（默认根据 URL 文件中的 course 推断）")
+    parser.add_argument("--output", default=None, help="输出目录（默认 platform/.cache/crawler-candidates/{course}）")
     parser.add_argument("--dry-run", action="store_true", help="试运行，不写文件")
     parser.add_argument("--delay", type=float, default=2.0, help="请求间隔（秒）")
+    parser.add_argument(
+        "--allow-knowledge-write",
+        action="store_true",
+        help="显式允许写入 knowledge/（仍不会自动进入检索，除非 frontmatter 已审核）",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -150,9 +166,23 @@ def main() -> None:
         with open(url_file, encoding="utf-8") as f:
             entries = json.load(f)
         course = entries[0].get("course", "unknown") if entries else "unknown"
-        output_dir = _ROOT / "knowledge" / course
+        from app.source_policy import default_crawler_output_dir
 
-    stats = run_pipeline(url_file, output_dir, dry_run=args.dry_run, delay=args.delay)
+        output_dir = default_crawler_output_dir(course)
+
+    from app.source_policy import SourceIngestDenied
+
+    try:
+        stats = run_pipeline(
+            url_file,
+            output_dir,
+            dry_run=args.dry_run,
+            delay=args.delay,
+            allow_knowledge_write=args.allow_knowledge_write,
+        )
+    except SourceIngestDenied as exc:
+        logger.error("%s", exc)
+        sys.exit(2)
     print(json.dumps(stats, indent=2, ensure_ascii=False))
 
 

@@ -58,6 +58,8 @@ def _build_frontmatter(meta: ArticleMeta) -> str:
         "tags": meta.tags,
         "difficulty": meta.difficulty,
         "updated": date.today().isoformat(),
+        "source_type": "web_candidate",
+        "ingest_status": "candidate",
     }
     if meta.source_url:
         data["source_url"] = meta.source_url

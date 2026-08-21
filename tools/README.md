@@ -9,10 +9,14 @@ tools/
 ├── README.md              # 本文件（工具文档）
 ├── run_evaluation.py      # ★ 统一 RAG 评测入口
 ├── start_local.py         # 一键启动工作台并做 /health 检查
-└── evaluations/           # 课程评测集（每课一个 JSON 文件）
-    ├── os.json            # 操作系统 38 题
-    ├── ds.json            # 数据结构 28 题
-    └── co.json            # 计算机组成原理 24 题
+├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 待收口）
+│   ├── requirements.txt   # crawler 独立依赖
+│   └── fetcher/cleaner/converter/dedup/pipeline
+└── evaluations/           # 课程评测集
+    ├── os.json            # 操作系统 38 题（默认）
+    ├── ds.json            # 数据结构 28 题（默认）
+    ├── co.json            # 计算机组成原理 24 题（默认）
+    └── network.json       # 计算机网络 30 题（独立扩展，不自动发现）
 ```
 
 ## run_evaluation.py — RAG 效果评估
@@ -84,11 +88,23 @@ python tools/run_evaluation.py --smoke
 | --- | --- | --- | --- |
 | [os.json](evaluations/os.json) | 操作系统 | 38 | ✅ 已建 |
 | [ds.json](evaluations/ds.json) | 数据结构 | 28 | ✅ 已建 |
-| [co.json](evaluations/co.json) | 计算机组成原理 | 24 | ✅ 已建 |
+| [co.json](evaluations/co.json) | 计算机组成原理 | 24 | ✅ 默认套件 |
+| [network.json](evaluations/network.json) | 计算机网络 | 30 | 🧩 独立扩展；仅通过 `--test-set` 显式运行 |
 
-合计 **90 题**。M5a 离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000。
+默认套件合计 **90 题**。M5a 离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000。
+新增 JSON 文件不会自动扩大默认发现集合；默认课程仍由评测入口显式限定为 OS/DS/CO。额外课程先使用
+`--test-set tools/evaluations/{course}.json` 运行，待路线图和测试契约更新后再考虑加入默认套件。
 
-> 新增课程评测集：新建 `evaluations/{course}.json`，格式同上。
+## crawler/ — 候选 Markdown 资料处理
+
+crawler 提供 fetch、clean、convert、dedup 和 pipeline 能力，依赖单独记录在
+`tools/crawler/requirements.txt`。它当前属于 **M6a-P0 前置收口**：
+
+- 默认输出 `platform/.cache/crawler-candidates/{course}`，不自动写入或注册默认 `knowledge/`；
+- 未加 `--allow-knowledge-write` 时拒绝写入课程目录；候选必须人工审核后才能检索；
+- `tests/M6_crawler/` 覆盖 cleaner/converter/dedup/pipeline，以及默认不入库门禁；
+- marker、CI 依赖安装和独立执行策略仍是待实施收口项；
+- crawler 的存在不代表 M7 的持久化源注册、同步、删除传播或多源隔离已经完成。
 
 ## start_local.py — 一键启动
 
@@ -102,5 +118,5 @@ python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-18（M5e 一键启动与评测冒烟）· 维护：随新增工具脚本与评测集同步更新*
+*创建：2026-08-11 · 更新：2026-08-21（crawler 默认写入候选目录，禁止直接入库）· 维护：随新增工具脚本与评测集同步更新*
 
