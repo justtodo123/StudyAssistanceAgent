@@ -64,7 +64,10 @@ class TestCrawlerOutputGate:
 class TestIndexSkip:
     def test_inbox_and_candidates_are_not_indexable(self) -> None:
         assert is_indexable_relative_path("os/deadlock.md")
-        assert is_indexable_frontmatter({})
+        assert is_indexable_frontmatter({"course": "os"})
+        assert not is_indexable_frontmatter({})
+        assert not is_indexable_relative_path("README.md")
+        assert not is_indexable_relative_path("os/README.md")
         assert not is_indexable_relative_path("_inbox/raw.md")
         assert not is_indexable_relative_path("_templates/entry-template.md")
         assert not is_indexable_frontmatter(
@@ -72,7 +75,7 @@ class TestIndexSkip:
         )
         assert not is_indexable_frontmatter({"source_type": "ai_draft"})
         assert is_indexable_frontmatter(
-            {"source_type": "web_reviewed", "ingest_status": "approved"}
+            {"course": "os", "source_type": "web_reviewed", "ingest_status": "approved"}
         )
 
     def test_built_index_skips_inbox(self, knowledge_chunks) -> None:
@@ -80,5 +83,13 @@ class TestIndexSkip:
             chunk.file
             for chunk in knowledge_chunks
             if "/_inbox/" in chunk.file.replace("\\", "/")
+        ]
+        assert leaked == []
+
+    def test_built_index_skips_navigation_readme(self, knowledge_chunks) -> None:
+        leaked = [
+            chunk.file
+            for chunk in knowledge_chunks
+            if chunk.file.replace("\\", "/").endswith("README.md")
         ]
         assert leaked == []

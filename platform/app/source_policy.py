@@ -76,10 +76,17 @@ def assert_crawler_output_allowed(
 
 def is_indexable_relative_path(rel_posix: str) -> bool:
     parts = [part for part in rel_posix.split("/") if part]
+    if not parts:
+        return False
+    if parts[-1].lower() == "readme.md":
+        return False
     return not any(part in SKIP_DIR_NAMES for part in parts)
 
 
 def is_indexable_frontmatter(meta: dict) -> bool:
+    course = str(meta.get("course") or "").strip()
+    if not course:
+        return False
     raw_type = str(meta.get("source_type") or SourceType.HUMAN_MARKDOWN).strip()
     raw_status = str(meta.get("ingest_status") or IngestStatus.APPROVED).strip()
     try:

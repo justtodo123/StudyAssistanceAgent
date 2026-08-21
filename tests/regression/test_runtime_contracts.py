@@ -68,7 +68,9 @@ class TestGenerationLayer:
 class TestSourceIngestGate:
     def test_default_notes_remain_indexable(self):
         assert is_indexable_relative_path("os/deadlock.md")
-        assert is_indexable_frontmatter({})
+        assert is_indexable_frontmatter({"course": "os"})
+        assert not is_indexable_frontmatter({})
+        assert not is_indexable_relative_path("README.md")
 
     def test_inbox_and_candidates_are_not_indexable(self):
         assert not is_indexable_relative_path("_inbox/raw.md")
@@ -78,7 +80,7 @@ class TestSourceIngestGate:
         )
         assert not is_indexable_frontmatter({"source_type": "ai_draft"})
         assert is_indexable_frontmatter(
-            {"source_type": "web_reviewed", "ingest_status": "approved"}
+            {"course": "os", "source_type": "web_reviewed", "ingest_status": "approved"}
         )
 
     def test_crawler_cannot_write_default_knowledge(self):

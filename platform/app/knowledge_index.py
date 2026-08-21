@@ -76,7 +76,7 @@ def build_index(root: Path | None = None) -> list[RetrievalChunk]:
         rel = md.relative_to(root).as_posix()
         if not is_indexable_relative_path(rel):
             continue
-        text = md.read_text(encoding="utf-8")
+        text = md.read_text(encoding="utf-8-sig")
         meta = _parse_frontmatter(text)
         if not is_indexable_frontmatter(meta):
             continue
