@@ -6,137 +6,93 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
-import re
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
+from .markdown_parser import _FRONTMATTER_RE, parse_frontmatter, split_headings
 from .models import RetrievalChunk
 
-_FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
-_YAML_FIELD_RE = re.compile(r"^(\w[\w-]*)\s*:\s*(.*)$")
+_INDEX_CACHE_DIR = Path(__file__).resolve().parents[1] / ".cache"
+
+# Kept as private compatibility aliases for existing callers while parsing lives
+# in a neutral module shared by the legacy index and M6a source adapter.
+_parse_frontmatter = parse_frontmatter
+_split_headings = split_headings
 
 
-def _parse_frontmatter(text: str) -> dict[str, Any]:
-    """解析 Markdown 开头 YAML frontmatter，容错失败（不完整则返回空）。"""
-    m = _FRONTMATTER_RE.match(text)
-    if not m:
-        return {}
-    data: dict[str, Any] = {}
-    for line in m.group(1).splitlines():
-        fm = _YAML_FIELD_RE.match(line.strip())
-        if not fm:
-            continue
-        key, val = fm.group(1), fm.group(2).strip().strip('"').strip("'")
-        if key == "tags":
-            # 兼容两种写法：[] / [a, b] / a,b
-            val = [t.strip().strip('"') for t in val.strip("[]").split(",") if t.strip()]
-        else:
-            val = val.strip()
-        data[key] = val
-    return data
+@dataclass(frozen=True, slots=True)
+class IndexSnapshot:
+    """Legacy retrieval view bound to one materialized source generation."""
+
+    generation: str
+    chunks: tuple[RetrievalChunk, ...]
 
 
-def _split_headings(text: str) -> list[tuple[str, str]]:
-    """按 ## 标题切分为小节，返回 [(title, body)]，至少保留一个整块。"""
-    lines = text.splitlines()
-    sections: list[tuple[str, list[str]]] = []
-    current_title = ""
-    current: list[str] = []
-    for line in lines:
-        if line.startswith("## "):
-            if current:
-                sections.append((current_title, current))
-            current_title = line[3:].strip()
-            current = []
-        else:
-            current.append(line)
-    if current or not sections:
-        sections.append((current_title, current))
-    return [(t, "\n".join(b).strip()) for t, b in sections if "\n".join(b).strip()]
+def materialize_index(root: Path | None = None) -> IndexSnapshot:
+    """Build a validated legacy snapshot while retaining its portable generation."""
+    from .retrieval_index import DefaultPackRetrievalIndex
+    from .sources.markdown_pack import MarkdownPackSource
 
-
-def _chunk_id(file: Path, title: str) -> str:
-    raw = f"{file.relative_to(file.anchor)}#{title}"
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
+    source_snapshot = MarkdownPackSource(root).materialize()
+    index = DefaultPackRetrievalIndex.from_source_snapshot(source_snapshot)
+    return IndexSnapshot(index.generation, index.chunks)
 
 
 def build_index(root: Path | None = None) -> list[RetrievalChunk]:
-    """扫描知识库目录，返回全部检索切片。root 默认取配置中的 KNOWLEDGE_ROOT。"""
-    from . import config
-    from .source_policy import is_indexable_frontmatter, is_indexable_relative_path
-
-    root = root or config.KNOWLEDGE_ROOT
-    chunks: list[RetrievalChunk] = []
-    if not root.exists():
-        return chunks
-
-    for md in sorted(root.rglob("*.md")):
-        rel = md.relative_to(root).as_posix()
-        if not is_indexable_relative_path(rel):
-            continue
-        text = md.read_text(encoding="utf-8-sig")
-        meta = _parse_frontmatter(text)
-        if not is_indexable_frontmatter(meta):
-            continue
-        body = _FRONTMATTER_RE.sub("", text)
-        for title, content in _split_headings(body):
-            if len(content) < config.CHUNK_MIN_CHARS:
-                continue
-            chunks.append(
-                RetrievalChunk(
-                    id=_chunk_id(md, title),
-                    file=f"knowledge/{rel}",
-                    title=title or (meta.get("title", "") or md.stem),
-                    course=meta.get("course", ""),
-                    tags=meta.get("tags", []),
-                    difficulty=meta.get("difficulty", ""),
-                    updated=meta.get("updated", ""),
-                    content=content,
-                )
-            )
-    return chunks
-
-
-def _latest_mtime(root: Path) -> float:
-    """知识库内最晚修改时间，作为缓存失效依据。"""
-    if not root.exists():
-        return 0.0
-    return max((p.stat().st_mtime for p in root.rglob("*.md")), default=0.0)
+    """Materialize the default Markdown source as legacy retrieval chunks."""
+    return list(materialize_index(root).chunks)
 
 
 def build_index_cached(root: Path | None = None) -> list[RetrievalChunk]:
-    """带 JSON 缓存的索引构建：md 时间戳未变则读缓存，避免重复扫描。
-    缓存写入数据目录 .cache/（已在 .gitignore 忽略）。"""
+    """Return a cached legacy view only when it matches the full source generation.
+
+    The public return type remains a list of ``RetrievalChunk`` values. Cache
+    validity is driven by the materialized portable source snapshot rather than
+    host timestamps, so moved roots and non-latest file edits cannot publish a
+    stale mixed-ID corpus.
+    """
+    return list(build_index_snapshot_cached(root).chunks)
+
+
+def build_index_snapshot_cached(root: Path | None = None) -> IndexSnapshot:
+    """Return a legacy index snapshot cached by portable source generation."""
     from . import config
     from .observability import metrics
 
     root = root or config.KNOWLEDGE_ROOT
-    cache_dir = Path(__file__).resolve().parents[1] / ".cache"
+    snapshot = materialize_index(root)
+    cache_dir = _INDEX_CACHE_DIR
     cache_path = cache_dir / "knowledge_index.json"
     meta_path = cache_dir / "knowledge_index.meta.json"
     cache_dir.mkdir(exist_ok=True)
 
-    if cache_path.exists():
+    if cache_path.exists() and meta_path.exists():
         try:
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
-            if meta.get("latest_mtime", -1) == _latest_mtime(root):
+            if meta.get("generation") == snapshot.generation:
                 data = json.loads(cache_path.read_text(encoding="utf-8"))
-                chunks = [RetrievalChunk(**c) for c in data]
-                metrics.record_index_cache(hit=True, index_size=len(chunks))
-                return chunks
+                chunks = tuple(RetrievalChunk(**chunk) for chunk in data)
+                if meta.get("count") == len(chunks):
+                    metrics.record_index_cache(hit=True, index_size=len(chunks))
+                    return IndexSnapshot(snapshot.generation, chunks)
         except Exception:
             pass  # 缓存损坏则重建
 
-    chunks = build_index(root)
-    metrics.record_index_cache(hit=False, index_size=len(chunks))
+    metrics.record_index_cache(hit=False, index_size=len(snapshot.chunks))
     cache_path.write_text(
-        json.dumps([c.model_dump() for c in chunks], ensure_ascii=False, indent=2),
+        json.dumps([chunk.model_dump() for chunk in snapshot.chunks], ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     meta_path.write_text(
-        json.dumps({"latest_mtime": _latest_mtime(root), "count": len(chunks)}),
+        json.dumps(
+            {
+                "generation": snapshot.generation,
+                "count": len(snapshot.chunks),
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
-    return chunks
+    return snapshot

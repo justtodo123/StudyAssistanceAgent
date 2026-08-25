@@ -2,7 +2,7 @@
 
 > 版本：v2.3
 > 制定日期：2026-08-21
-> 当前状态：八项强制设计决策、保护基线与负责人批准均已闭合；`ADMITTED / IN_PROGRESS`，M6a-1 协议契约正在实施
+> 当前状态：八项强制设计决策、保护基线与负责人批准均已闭合；`ADMITTED / IN_PROGRESS`；M6a-1 协议契约已完成本地检查点，M6a-2 默认知识包适配已交付并待完整门禁复验
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)；最终状态权威为 [`docs/PLAN.md`](../PLAN.md)
 > 适用范围：Source/Store/Tool/Runner 契约、现有状态机兼容、启动期静态额外 Markdown 源
 > 后续阶段：M7 用户数据源生命周期；M6b 为独立的只读 Agent 预览
@@ -11,7 +11,9 @@
 
 M6a-P0 crawler 与 2026-08-25 保护基线均已形成真实前置证据；八项强制设计决策已经用户逐项确认并
 按 §0.4 闭合为 `RESOLVED`。用户/项目负责人于 2026-08-25 明确批准“M6a 可以开工”，因此本计划现为
-`ADMITTED / IN_PROGRESS`。M6a-1 已开始生产实施；该状态只授权按第 3 节实施，不代表整个 M6a 已完成。
+`ADMITTED / IN_PROGRESS`。M6a-1 已完成本地协议契约检查点；M6a-2 默认 `knowledge-pack` 的
+Source / SourceChunk / RetrievalIndex 兼容适配已交付并待完整回归门禁复验；该状态只授权按第 3 节实施，
+不代表整个 M6a 已完成。
 
 ### 0.1 前置证据
 
@@ -53,7 +55,7 @@ M6a-P0 crawler 与 2026-08-25 保护基线均已形成真实前置证据；八�
 | plan_revision | v2.3 |
 | decision_set_version | m6a-decision-set-v1 |
 
-批准记录已经闭合，M6a 已按第 3 节顺序开始生产实施。M6a-1 协议契约及其隔离 contract tests 正在完成，交付状态为
+批准记录已经闭合，M6a 已按第 3 节顺序开始生产实施。M6a-1 协议契约及其隔离 contract tests 已形成独立本地检查点；M6a-2 默认知识包适配及其真实链路测试已加入当前候选树，交付状态仍为
 `IN_PROGRESS`。第 4 节 contract tests 和 benchmark 是实施/退出门禁，不是准入前置证据。
 
 ### 0.4 八项强制决策（最终选定）
@@ -337,24 +339,19 @@ Runner 必须表达跨请求生命周期，而不是只有 `run(context)`：至�
 - 协议层不导入业务实现；
 - 覆盖结构化错误、权限/副作用标记、source/chunk ID 稳定性和跨请求状态契约。
 
-### M6a-2：现有服务适配
+### M6a-2：默认 knowledge-pack 兼容适配
+
+- 创建中立 Markdown parser、`MarkdownPackSource` 和 `DefaultPackRetrievalIndex`，复用既有切块/门禁规则，不替换旧 `RetrievalChunk` 或 VectorStore API；
+- 为默认 `knowledge-pack` 生成不依赖宿主路径的 logical URI、document/chunk ID、revision/fingerprint/generation，并在完整快照发布前验证 namespace、唯一性和 case-fold 冲突；
+- 让旧 `build_index()` / `build_index_cached()` 与 Search/QA 继续返回兼容的 `knowledge/{logical_uri}` 出处，检索结果缓存按 generation 隔离；
+- 使用真实仓库知识包和受控 Markdown fixture 覆盖 relocation、内容变更/删除、快照替换、路径隐私及旧链路检索回归；不在本子阶段实现额外源、运行时 Source 生命周期、Tool Registry 或 Agent Runner。
+
+### 后续 M6a-3：确定性工具/状态机适配与启动期静态额外源
 
 - 创建 `platform/app/tools/`，提供 Retrieve、Quiz、ReviewDue 等确定性适配器；
 - ReviewLog 若保留为领域服务适配，必须标为写工具，不能进入 M6b preview allowlist；
-- `StudySessionService` 保持直接、类型安全的领域调用，不强制通过通用 Tool envelope；
-- 创建 `platform/app/runners/state_machine.py`，包装现有状态机而不改变 API schema。
-
-### M6a-3：启动期静态额外源
-
-- 创建 `MarkdownPackSource`，包装现有索引能力；
-- 通过 `SA_EXTRA_SOURCES` 注册额外 Markdown 目录；
-- 为额外源生成不冲突的 source/document/chunk ID，并在 Search/QA 结果中以兼容方式附加 source metadata；
-  现有公开 `file` 字段继续保留；
-- M6a 的额外 Source 只传播到 Search/QA 及 QA 提供的安全出处，不自动改变 Quiz、Review Plan、默认评测或
-  crawler 注册；
-- 不持久化注册、不做运行时同步/删除、不泄露外部绝对路径；默认无额外源时与 M5 一致；
-- 静态 Source 重建采用完整快照替换并清理 stale BM25、vector 和 result-cache 数据。M6a 只承诺这种
-  重建清理；运行时 delete API、tombstone、增量删除传播和生命周期历史属于 M7。
+- 创建 `platform/app/runners/state_machine.py`，包装现有状态机而不改变 API schema；
+- 在默认包适配稳定并通过其保护回归后，再实现 `SA_EXTRA_SOURCES` 启动期静态额外 Markdown 源；运行时注册、同步、删除和生命周期仍属于 M7。
 
 ### M6a-4：文档与收口
 

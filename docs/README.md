@@ -69,7 +69,7 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 - M5 会话化与交付计划见
   [plans/m5-agent-session-delivery-plan.md](plans/m5-agent-session-delivery-plan.md)，已作为 MVP 冻结。
 - M6a/M6b 执行计划：
-  [plans/m6a-harness-skeleton-plan.md](plans/m6a-harness-skeleton-plan.md)（契约与兼容骨架，M6a-1 协议契约实施中）和
+  [plans/m6a-harness-skeleton-plan.md](plans/m6a-harness-skeleton-plan.md)（契约与兼容骨架；M6a-1 已形成局部检查点，M6a-2 默认包适配待完整门禁复验）和
   [plans/m6b-agent-core-plan.md](plans/m6b-agent-core-plan.md)（独立只读原生工具调用预览）。M6a 当前为
   `ADMITTED / IN_PROGRESS`，M6b 仍为 `BLOCKED / NOT_STARTED`；准入规则见
   [standards/stage-admission-gates.md](standards/stage-admission-gates.md)，

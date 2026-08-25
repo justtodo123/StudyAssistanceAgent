@@ -35,7 +35,11 @@ platform/
 │   ├── bm25.py            # BM25 关键词检索（中文 bigram + 英文整词分词）
 │   ├── vector_store.py    # SQLite/内存向量后端（BGE 可选；当前均为线性余弦）
 │   ├── qa.py              # 问答服务（LLM 生成 / 降级笔记摘要）
-│   ├── knowledge_index.py # 知识库索引（Markdown 切分 + frontmatter 解析 + JSON 缓存）
+│   ├── knowledge_index.py # 知识库索引兼容视图（Markdown 快照 + JSON 缓存）
+│   ├── markdown_parser.py # 共享 Markdown frontmatter/H2 解析原语
+│   ├── protocols.py       # M6a provider-neutral harness 契约
+│   ├── retrieval_index.py # M6a 默认包快照到旧 RetrievalChunk 的兼容适配器
+│   ├── sources/           # 默认知识包 Source 适配器（见子目录 README）
 │   ├── source_policy.py   # 数据源类型与入库门禁
 │   ├── errors.py          # 稳定错误码
 │   ├── observability.py   # 进程内延迟/缓存指标与结构化日志
@@ -115,7 +119,8 @@ GET /health
 `event`、`duration_ms`、`result_count`，以及可选的 `course`、`mode`、`cache_hit`。
 问题正文、检索内容、API key、密码、token 和 Authorization 不会写入日志。
 
-检索服务使用有界的进程内结果缓存；知识库索引使用 `.cache/knowledge_index.json` 缓存。
+检索服务使用有界的进程内结果缓存，键按默认知识包 generation 隔离；知识库索引使用
+`.cache/knowledge_index.json` 与 generation 元数据缓存。内容变更导致 generation 改变时，旧索引视图和结果缓存不会复用。
 `/health` 的延迟和缓存字段用于运行时诊断，不作为持久化监控指标。
 完整参数表、错误码和生成分层见 [docs/standards/runtime-contracts.md](../docs/standards/runtime-contracts.md)。
 

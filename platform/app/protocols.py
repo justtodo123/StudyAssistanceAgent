@@ -224,15 +224,32 @@ class RetrievalSnapshotWriter(Protocol):
 
 
 def validate_source_snapshot(source: Source) -> SourceDescriptor:
-    """Validate that each emitted chunk belongs to the described source."""
+    """Validate that a source publishes one complete, internally consistent snapshot."""
     descriptor = source.describe()
     if not isinstance(descriptor, SourceDescriptor):
         raise ProtocolValidationError("source descriptor must be a SourceDescriptor")
+
+    seen_uris: set[str] = set()
+    seen_document_ids: set[str] = set()
+    seen_chunk_ids: set[str] = set()
+    seen_casefold_uris: set[str] = set()
     for chunk in source.iter_chunks():
         if not isinstance(chunk, SourceChunk):
             raise ProtocolValidationError("source must emit SourceChunk values")
         if chunk.identity.source_id != descriptor.source_id:
             raise ProtocolValidationError("source chunk namespace must match descriptor")
+        logical_uri = chunk.identity.logical_uri
+        casefold_uri = logical_uri.casefold()
+        if casefold_uri in seen_casefold_uris and logical_uri not in seen_uris:
+            raise ProtocolValidationError("source logical URIs must not case-fold collide")
+        if chunk.identity.document_id in seen_document_ids and logical_uri not in seen_uris:
+            raise ProtocolValidationError("source document IDs must be unique")
+        if chunk.chunk_id in seen_chunk_ids:
+            raise ProtocolValidationError("source chunk IDs must be unique")
+        seen_uris.add(logical_uri)
+        seen_casefold_uris.add(casefold_uri)
+        seen_document_ids.add(chunk.identity.document_id)
+        seen_chunk_ids.add(chunk.chunk_id)
     return descriptor
 
 

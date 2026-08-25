@@ -4,7 +4,9 @@
 > M0–M5 提供最小实现：默认计算机知识包、多路召回 RAG、学习会话与工作台。
 > M6 起按计划扩展：可插拔数据源、专业化存储、目标驱动学习计划与执行监控。
 
-**当前状态**：M6a-P0 crawler 已收口；八项决策、保护基线与负责人批准已闭合；M6a 为 `ADMITTED / IN_PROGRESS`，正在实施 M6a-1 协议契约；M6b–M10 仍为 `BLOCKED / NOT_STARTED`；M0–M5 MVP 可用。
+**当前状态**：M6a-P0 crawler 已收口；八项决策、保护基线与负责人批准已闭合；M6a-1 协议契约已形成
+本地检查点，M6a-2 默认 `knowledge-pack` 兼容适配已交付并待完整门禁复验；M6a 保持
+`ADMITTED / IN_PROGRESS`，M6b–M10 仍为 `BLOCKED / NOT_STARTED`；M0–M5 MVP 可用。
 `python tools/start_local.py` 可启动最小工作台。阶段、准入与定位以 [docs/PLAN.md](docs/PLAN.md) 为最终依据；
 统一硬门禁见 [stage-admission-gates.md](docs/standards/stage-admission-gates.md)。
 
@@ -29,7 +31,7 @@
 | 用户数据源 | 自定义知识目录，规模百→千→万 | ⬜ M7 |
 | 专业化存储 | 当前 SQLite；M8 规划 LanceDB，万级可选 Qdrant | ⬜ M8 |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ⬜ M9 |
-| Harness 框架 | M6a-1 正在实现 provider-neutral 协议契约；M6b–M10 仍被准入门禁阻断，只读预览与自主 Runner 尚未实现 | 🔄 M6a `ADMITTED / IN_PROGRESS` |
+| Harness 框架 | M6a-1 provider-neutral 协议契约已形成局部检查点；M6a-2 默认知识包兼容适配待完整门禁复验。M6b–M10 仍被准入门禁阻断，只读预览与自主 Runner 尚未实现 | 🔄 M6a `ADMITTED / IN_PROGRESS` |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |

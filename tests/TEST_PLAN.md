@@ -386,13 +386,16 @@ pytest tests/M0_M2/ -v         # 基线回归
 
 M6a-P0 不等同于 M7 Source 生命周期；持久化注册、同步、删除传播和多源隔离留待 M7。
 
-### 阶段 12：M6a 契约测试（进行中）与 M6b 规划
+### 阶段 12：M6a 契约与默认包兼容测试（进行中）及 M6b 规划
 
-M6a 已于 2026-08-25 获准并进入 `ADMITTED / IN_PROGRESS`。M6a-1 在 `tests/M6a/` 实施独立
-`m6a` marker 的协议 contract tests：逻辑 Source/document/chunk 身份、职责拆分后的存储边界、Tool 的权限与
-副作用分类、结构化安全错误，以及跨请求 Runner 生命周期。该层只验证 provider-neutral 契约；不得替换
-`StudySessionService` 的状态转换、答题评估、持久化或 review-log 权威，也不提前实现 M6a-2/M6a-3 的适配、静态额外
-Source、索引快照或任何 M6b 能力。
+M6a 已于 2026-08-25 获准并进入 `ADMITTED / IN_PROGRESS`。M6a-1 的 `tests/M6a/` 独立 `m6a` marker
+协议 contract tests 已形成局部检查点：逻辑 Source/document/chunk 身份、职责拆分后的存储边界、Tool 的权限与
+副作用分类、结构化安全错误，以及跨请求 Runner 生命周期。
+
+M6a-2 在同一隔离目录增加默认 `knowledge-pack` 的真实链路测试：`MarkdownPackSource`、完整快照、稳定逻辑
+identity、generation 隔离缓存、reallocation、内容变更/删除、case-fold 冲突和旧 `RetrievalChunk` 出处兼容。
+适配层不替换 `StudySessionService` 的状态转换、答题评估、持久化或 review-log 权威，也不提前实现静态额外
+Source、运行时 Source 生命周期、Tool Registry、Agent Runner 或任何 M6b 能力。M6a-2 仍待完整门禁复验。
 
 M6a 开工前的继承保护基线已于 2026-08-25 在受标识候选树上真实复验：focused privacy/API/SSE/recovery 32 项、M3b
 13 项、原始 platform 40 项、根级 271 项通过（另有 1 项显式 online crawler smoke 跳过），crawler offline 52 项通过
@@ -422,7 +425,7 @@ allowlist、写工具拒绝、独立 preview 入口、预算/终止和“不创�
 | M5d 学习工作台 | `tests/M5d/` | `tests/regression/` | `tests/M0_M2/` | — |
 | M5e 可复现交付 | `tests/M5e/` | `tests/regression/` + `platform/tests/` | `tests/M0_M2/` | smoke + 独立 slow 90 题门禁 |
 | M6 crawler 前置 | `pytest tests/M6_crawler -m "m6_crawler and not online"` | `tests/regression/` | `tests/M0_M2/` | 默认 90 题发现 + smoke |
-| M6a-1 协议契约 | `tests/M6a/`（`m6a`） | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
+| M6a-1/M6a-2 契约与默认包适配 | `tests/M6a/`（`m6a`） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | `tools/run_evaluation.py` |
 | M6b 只读预览 | `tests/M6b/`（获准后规划） | `tests/regression/` | `tests/M0_M2/` | 默认 90 题；可选 provider smoke |
 | M7–M10 准入准备 | 不创建阶段测试目录；当前仅治理一致性门禁 | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
 
