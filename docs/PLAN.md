@@ -130,12 +130,12 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 > **统一门禁**：[`stage-admission-gates.md`](standards/stage-admission-gates.md) 定义决策、准入、撤销与禁止事项；
 > [`stage-admission-gates.json`](standards/stage-admission-gates.json) 只用于机器检查，不能单独批准阶段。
 > **保护基线**：M0–M5 回归必须持续全绿；默认自动发现 OS/DS/CO 三课 90 题，Network 30 题仍为显式扩展集。
-> 2026-08-24 当前 checkout 离线复测 Recall@3：OS 0.987、DS 0.929、CO 1.000，加权 0.972；
-> 2026-08-18 的 1.000/0.929/1.000、加权 0.978 作为历史 M5a 基线保留。
+> 2026-08-25 M6a 保护基线已在受标识候选树上真实复验并满足 prerequisite；这不构成 M6a 批准或能力实现。
+> 当前证据：`docs/baselines.md`；默认 Recall@3 为 OS 0.987、DS 0.929、CO 1.000，加权 0.972。
 
 | 阶段 | 准入 | 交付 | 准备/执行计划 | 当前结论 |
 | --- | --- | --- | --- | --- |
-| M6a | `BLOCKED` | `NOT_STARTED` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | crawler P0 仅为前置证据；八项强制设定仍 `OPEN` |
+| M6a | `BLOCKED` | `NOT_STARTED` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制设计决策已 `RESOLVED`，保护基线 prerequisite 已 `SATISFIED`；仍缺用户/项目负责人批准，不代表准入或实现 |
 | M6b | `BLOCKED` | `NOT_STARTED` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | M6a 退出和八项 provider/运行设定均未闭合 |
 | M7 | `BLOCKED` | `NOT_STARTED` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 等待 M6a Source 契约；生命周期设定仍 `OPEN` |
 | M8 | `BLOCKED` | `NOT_STARTED` | [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md) | 等待 M7 退出；后端选择与迁移设定仍 `OPEN` |
@@ -216,4 +216,4 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.3（不是产品发布版本）· 更新：2026-08-24（统一当前实现、历史基线与 M6 边界）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · PLAN 文档修订：v2.4（不是产品发布版本）· 更新：2026-08-25（闭合 M6a 八项决策与保护基线 prerequisite，准入仍阻断）· 维护：每次会话开工查看本文档*

@@ -1,47 +1,50 @@
 # M6a Harness 骨架（契约先行）执行计划
 
-> 版本：v2.0
+> 版本：v2.3
 > 制定日期：2026-08-21
-> 当前状态：设计草案已形成；`BLOCKED / NOT_STARTED`，未获准开工
+> 当前状态：八项强制设计决策与保护基线已闭合；负责人批准仍未闭合，保持
+> `BLOCKED / NOT_STARTED`，未获准开工
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)；最终状态权威为 [`docs/PLAN.md`](../PLAN.md)
 > 适用范围：Source/Store/Tool/Runner 契约、现有状态机兼容、启动期静态额外 Markdown 源
 > 后续阶段：M7 用户数据源生命周期；M6b 为独立的只读 Agent 预览
 
 ## 0. 准入状态与强制设定
 
-M6a-P0 crawler 已完成只构成前置证据，不批准 M6a 生产实现。在本节全部决策闭合、保护基线有真实
-通过证据并由用户/项目负责人批准前，本计划持续为 `BLOCKED / NOT_STARTED`。计划中的代码结构、配置名和
-实施顺序均为获准后的拟议内容，不是当前能力。
+M6a-P0 crawler 与 2026-08-25 保护基线均已形成真实前置证据；八项强制设计决策已经用户逐项确认并
+按 §0.4 闭合为 `RESOLVED`。这些内容仍不构成阶段批准。在用户/项目负责人批准闭合前，本计划持续为
+`BLOCKED / NOT_STARTED`。计划中的代码结构、配置名和实施顺序均为获准后的
+拟议内容，不是当前能力。
 
 ### 0.1 前置证据
 
 | Prerequisite ID | 当前状态 | 准入所需证据 |
 | --- | --- | --- |
 | `M6A-P0` | `SATISFIED` | `tests/M6_crawler/` 与 `.github/workflows/offline-ci.yml` |
-| `M6A-PROTECTED-BASELINE` | `OPEN` | 当前 revision 上 API/OpenAPI/SSE、旧会话恢复、`platform/tests/` 40 项和默认 90 题质量门禁的真实通过记录；`collect-only` 不算通过 |
+| `M6A-PROTECTED-BASELINE` | `SATISFIED` | 2026-08-25 候选树真实证据：`docs/baselines.md`；路径隐私 blocker 已关闭；focused privacy/API/SSE/recovery 32 项、M3b 13 项、原始 `platform/tests/` 40 项、根级 271 项通过（1 项显式 online smoke 跳过）、crawler offline 52 项通过（1 项 online deselected）、slow 90 题质量门禁 3 项通过；评测 OS 38 + DS 28 + CO 24 = 90，Recall@3 为 0.987 / 0.929 / 1.000，汇总 0.972，报告 SHA-256 `5db638a9cdb59081c2dc6ecea09a873fb31ad07e369364d6bcaa6a3ecbba00ca`。仍缺负责人批准，M6a 保持 `BLOCKED / NOT_STARTED` |
 
 ### 0.2 强制决策
 
 | Decision ID | 状态 | 准入前必须选定并留证的内容 |
 | --- | --- | --- |
-| `M6A-SOURCE-POLICY` | `OPEN` | 缺失/非法 `source_type` 与 `ingest_status`、candidate 内容和部分源加载失败的拒绝、启动失败或 last-good 语义；可信默认 pack 的兼容例外不得扩散到用户源 |
-| `M6A-IDENTITY` | `OPEN` | `source_id + logical_uri → document_id`、确定性 chunk key、schema version、URI 规范化、冲突和迁移；绝对路径不得进入稳定 ID 或对外结果 |
-| `M6A-EXTRA-SOURCES` | `OPEN` | 启动期额外源配置的精确 schema、允许目录、优先级、校验、错误语义及 Search/QA-only 传播边界 |
-| `M6A-CACHE-KEYS` | `OPEN` | source/revision/generation、fingerprint、解析/切块版本、检索配置、embedding 与生成参数进入各层 cache key 的规则和失效矩阵 |
-| `M6A-SNAPSHOT-SWITCH` | `OPEN` | staging、校验、原子 generation 切换、重建期间读取、中断恢复、stale 清理、上一 generation 保留及回滚触发 |
-| `M6A-SOURCE-LIMITS` | `OPEN` | 源数、文件数、单文件/总字节、chunk 数、启动/重建时间支持上限与超限行为 |
-| `M6A-WORKER-TOPOLOGY` | `OPEN` | 单 worker 限制，或多 worker 的刷新所有权、锁、读一致性和启动竞争语义 |
-| `M6A-TRACE-RETENTION` | `OPEN` | audit metadata 的存储、容量、保留期、轮转/删除、访问和脱敏；正文、答案、密钥及绝对路径不得写入 trace |
+| `M6A-SOURCE-POLICY` | `RESOLVED` | 最终选定值、行为、阈值、证据、责任人与日期见 §0.4 |
+| `M6A-IDENTITY` | `RESOLVED` | 最终选定值、行为、阈值、证据、责任人与日期见 §0.4 |
+| `M6A-EXTRA-SOURCES` | `RESOLVED` | 最终选定值、行为、阈值、证据、责任人与日期见 §0.4 |
+| `M6A-CACHE-KEYS` | `RESOLVED` | 最终选定值、行为、阈值、证据、责任人与日期见 §0.4 |
+| `M6A-SNAPSHOT-SWITCH` | `RESOLVED` | 最终选定值、行为、阈值、证据、责任人与日期见 §0.4 |
+| `M6A-SOURCE-LIMITS` | `RESOLVED` | 最终选定值、行为、阈值、证据、责任人与日期见 §0.4 |
+| `M6A-WORKER-TOPOLOGY` | `RESOLVED` | 最终选定值、行为、阈值、证据、责任人与日期见 §0.4 |
+| `M6A-TRACE-RETENTION` | `RESOLVED` | 最终选定值、行为、阈值、证据、责任人与日期见 §0.4 |
 
-每项从 `OPEN` 改为 `RESOLVED` 时，必须按统一政策记录选定值、默认与覆盖、校验/失败行为、兼容与隐私影响、
-适用阈值、证据、责任人和日期。候选列表、`TBD` 或“实现时决定”不能闭合决策。
+八项决策已按统一政策记录唯一选定值、默认与覆盖、失败语义、兼容性、隐私、量化阈值、证据、责任人和日期，
+并同步为 `RESOLVED`。实现、保护基线、阶段批准和退出测试仍是相互独立的后续门禁；不得以设计决策已闭合
+宣称能力已经实现或阶段已经准入。
 
 ### 0.3 全量准入检查与批准
 
-- [ ] 八项强制决策全部为 `RESOLVED`，且阶段计划与登记表证据一致；
-- [ ] M6a-P0 与保护基线证据在待实施 revision 上真实有效；
-- [ ] 已逐项确认统一政策中的 M0–M5 兼容不变量；
-- [ ] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表状态一致；
+- [x] 八项强制决策全部为 `RESOLVED`，且阶段计划与登记表证据一致；
+- [x] M6a-P0 与保护基线证据在待实施候选树上真实有效；
+- [x] 已由保护基线逐项验证统一政策中的 M0–M5 兼容不变量；
+- [x] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表当前状态一致；
 - [ ] 用户或项目负责人完成批准记录。
 
 | 批准字段 | 当前值 |
@@ -55,6 +58,180 @@ M6a-P0 crawler 已完成只构成前置证据，不批准 M6a 生产实现。在
 批准记录为空，因此当前不得创建生产协议/适配器、运行时开关、schema migration、依赖、worker、部署配置或正式
 执行路径。允许的工作仅限设定澄清、契约/测试/benchmark 方案、只读调查和另行批准的可丢弃实验。获准后才可
 实施第 3 节子阶段；第 4 节 contract tests 和 benchmark 是实施/退出门禁，不是尚未实现却要求在开工前通过的证据。
+
+### 0.4 八项强制决策（最终选定）
+
+> decision_set_version：`m6a-decision-set-v1`
+> 原始提案：Codex / `m6a-codex-2026-08-25-v1`
+> 决策确认：justtodo123 / 2026-08-25
+> 当前状态：八项均为 `RESOLVED`；这里只闭合设计决策，不代表 M6a 已准入或已经实现。
+
+本节按统一政策记录唯一选定值、默认与覆盖、失败语义、兼容性、隐私、量化阈值、证据和责任人。
+现有代码引用只证明兼容约束或实施差距；实现、保护基线与阶段批准仍须分别留证。
+
+#### M6A-SOURCE-POLICY
+
+- **状态 / 选定值**：`RESOLVED` —
+  `trusted-default-missing-fields; reject-explicit-invalid; reviewed-crawler-override; last-good-default-pack`。
+- **默认与范围**：默认检索源固定为 `source_id=knowledge-pack`。只允许 `human_markdown`、`web_reviewed` 且
+  `ingest_status=approved`；`web_candidate`、`ai_draft` 永不检索。可信默认 pack 缺失 `source_type` /
+  `ingest_status` 时分别兼容为 `human_markdown` / `approved`；显式非法枚举拒绝该文件并记录逻辑 URI，不得
+  回退为 approved。额外源不享受缺字段兼容，任一 frontmatter 错误都拒绝整源。
+- **允许覆盖**：保留 crawler 的显式人工 `allow_knowledge_write=True` / `--allow-knowledge-write`，但它只绕过
+  输出目录门禁，不改变候选 frontmatter，也不自动批准或索引。`SA_KNOWLEDGE_ROOT` 可替换可信默认 pack 根，
+  source ID 不变；`SA_EXTRA_SOURCES_STRICT=false` 只允许忽略失败额外源，不能放宽内容规则。
+- **校验与失败**：缺 `course`、README、`_templates/`、`_inbox/` 按既有 eligibility 跳过。默认 pack 根不可读、
+  解析后无可检索文件或构建失败时，有 last-good 就继续服务 last-good；首次无 last-good 则启动失败，
+  `SOURCE_LOAD_FAILED`。额外源失败时 strict 模式启动失败，非 strict 模式整源省略；禁止部分提交。
+- **兼容、隐私与阈值**：合法的 M0–M5 笔记行为不变；获准实施时只收紧显式非法枚举的兼容回退。
+  错误只记录 source ID、logical URI、错误码和计数，不记录正文或绝对路径。默认 pack 不得被静默截断或变成
+  空集合，默认 90 题集合须在保护基线中复验。
+- **证据**：`docs/standards/runtime-contracts.md` §1、`platform/app/source_policy.py`、
+  `tests/M6_crawler/test_ingest_gate.py`、`tests/regression/test_runtime_contracts.py`。
+- **责任人 / 日期**：justtodo123 / 2026-08-25（用户逐项确认）。
+
+#### M6A-IDENTITY
+
+- **状态 / 选定值**：`RESOLVED` — `sha256(source_id+logical_uri) v1; portable-casefold-conflict; no-host-paths`。
+- **默认与范围**：身份 schema 为 `sa.source.identity.v1`，切块 schema 为 `sa.chunk.markdown-h2.v1`。
+  默认 source ID 为 `knowledge-pack`。对外 `logical_uri` 保存发现时大小写并规范为 NFC、POSIX 相对路径；另以
+  `NFC(casefold(NFC(logical_uri)))` 作为可移植冲突键。`document_id` 和 `chunk_id` 使用现有候选 SHA-256 公式的
+  32 个十六进制字符；fingerprint、revision、generation 的职责保持分离。
+- **允许覆盖**：额外源必须显式提供匹配 `^[a-z][a-z0-9-]{1,62}$` 的 source ID。`knowledge-pack`、
+  `crawler-candidates` 以及所有以 `user-` 开头的值均为保留命名空间。不得用绝对路径、mtime 或查询串派生 ID；
+  schema 公式变更必须 bump version 并全量失效。
+- **校验与失败**：绝对/UNC/盘符/越界/控制字符/非 Markdown URI 拒绝。任一源内出现 case-fold 冲突时拒绝该
+  候选源 generation，不以“排序后第一份”消歧。manifest 同时保存每个截断 ID 的完整 preimage digest；同一
+  截断 ID 对应不同 preimage 时以 `SOURCE_IDENTITY_CONFLICT` 拒绝整源，不自动加盐或重编号。
+- **兼容、隐私与阈值**：默认 pack 公开 `file` 继续为 `knowledge/{logical_uri}`；内部 ID 重算只触发索引重建。
+  `/health.knowledge_root` 保留字段与 string 类型，但值改为逻辑标识 `knowledge-pack`，不得返回宿主路径。
+  响应、模型/工具结果、日志和 trace 的宿主绝对路径泄露数必须为 0；1200 chunks 内 ID 冲突必须为 0。
+- **证据**：本计划 §2.1、`platform/app/knowledge_index.py::_chunk_id`、`platform/app/models.py`、
+  `platform/app/main.py` 的现行 `/health` 差距。
+- **责任人 / 日期**：justtodo123 / 2026-08-25（用户逐项确认）。
+
+#### M6A-EXTRA-SOURCES
+
+- **状态 / 选定值**：`RESOLVED` — `SA_EXTRA_SOURCES JSON; DEFAULT_ONLY / DEFAULT_PLUS_EXTRAS scopes`。
+- **默认与范围**：未配置时行为与 M5 相同。`SA_EXTRA_SOURCES` 为禁止附加字段的 JSON 数组，每项必须含合法
+  `source_id`、本地可读 `root` 和 `human_markdown|web_reviewed`。定义内部检索 scope：公开 Search、QA 和
+  QA SSE handler 显式使用 `DEFAULT_PLUS_EXTRAS`；Study Session、Quiz、Review Plan、Review Due、默认评测和
+  crawler 固定使用 `DEFAULT_ONLY`，调用方不得依赖全局默认值。scope 必须进入结果 cache key。
+- **允许覆盖**：仅允许启动期 `SA_EXTRA_SOURCES` 与 `SA_EXTRA_SOURCES_STRICT`；不提供请求级 scope、运行时
+  注册、YAML 或目录自动发现。`SA_KNOWLEDGE_ROOT` 是操作员显式信任的默认 pack 根，即使位于仓库外也继续使用
+  `knowledge-pack` 与公开 `knowledge/{logical_uri}`；所有根 realpath 后不得互相包含或重叠。
+- **校验与失败**：非法 JSON/schema/source ID/type/root、符号链接越界、根重叠，或 extra 位于仓库生产/测试树、
+  `.git`、crawler candidate cache 时，报 `SOURCE_CONFIG_INVALID`。内容失败遵循 strict 策略且不发布部分结果。
+  extra 的公开 file 为 `extra://{source_id}/{logical_uri}`，不得回显 root。
+- **兼容、隐私与阈值**：不配置 extra 时 API/OpenAPI 和默认集合零变化；公开 Search/QA 只增加既有 sources
+  数组中的逻辑出处，不新增必填字段。Study Session 持久化来源中 extra 命中数必须为 0；默认 90 题发现集中
+  extra 文件数必须为 0。最多 3 个 extra，具体资源 cap 由 `M6A-SOURCE-LIMITS` 约束。
+- **证据**：`platform/app/config.py`、`platform/app/qa.py`、`platform/app/study_session.py` 及本计划 §3 M6a-3。
+- **责任人 / 日期**：justtodo123 / 2026-08-25（用户逐项确认）。
+
+#### M6A-CACHE-KEYS
+
+- **状态 / 选定值**：`RESOLVED` — `build-input digest separated from published generation; scoped atomic cache`。
+- **默认与范围**：解析/构建缓存使用 `build_input_digest`，只包含 source ID/revision、identity/chunk schema、
+  parser version 和 chunk 配置，不包含 generation。向量 key 包含 chunk ID/fingerprint、embedding 模型/维度/
+  归一化和 schema。检索结果 key 包含已发布 generation、HMAC query digest、scope、top-k、threshold、course、
+  BM25/RRF/vector 配置；默认容量 128。M6a 不缓存 LLM 答案。
+- **允许覆盖**：`SA_RESULT_CACHE_SIZE=0..512`，默认 128；0 关闭。非法值启动失败并返回
+  `CACHE_CONFIG_INVALID`。mtime 不得作为唯一失效输入。
+- **校验与失败**：缺 key、schema 不匹配或解码失败均为 miss，并清理损坏条目。BM25、vector、manifest 先在
+  同一 staging generation 完成；结果缓存为该 generation 创建空 namespace，只有 `CURRENT` 成功切换后才可写。
+  任一持久存储失败不得发布；旧 generation 结果不得被新请求读取。
+- **兼容、隐私与保留**：无向量模型时仍可 keyword-only；`/health.cache_status` 语义保留。缓存仅位于
+  `platform/.cache/`，query 使用与 runtime trace 相同的进程内 HMAC 假名化；不缓存答案、用户答案或密钥。
+  extra 移除后，成功切换时立即清理所有含该源的未发布缓存和旧结果 namespace；快照正文/向量按
+  `M6A-SNAPSHOT-SWITCH` 清理。当前 cap workload 下 cache-hit p95 target ≤20ms，须由准入 benchmark 留证。
+- **证据**：`platform/app/knowledge_index.py`、`platform/app/retrieval.py`、`platform/app/vector_store.py` 的现行
+  key/mtime/fingerprint 行为，以及本计划 §2.5。
+- **责任人 / 日期**：justtodo123 / 2026-08-25（用户逐项确认）。
+
+#### M6A-SNAPSHOT-SWITCH
+
+- **状态 / 选定值**：`RESOLVED` — `staging-validate-atomic; revision-bound reduction confirmation; retain-1`。
+- **默认与范围**：BM25、vector 和 manifest 写入 `platform/.cache/index/gen-{n+1}/`；全部 fsync/校验后，以
+  `os.replace` 原子更新 `CURRENT`。请求开始时固定 generation，重建期间继续读 last-good。成功发布后通常保留
+  一个 `PREVIOUS`；M6a 只做完整快照，不做 M7 的增量 tombstone。
+- **允许覆盖**：`SA_INDEX_REBUILD_TIMEOUT_S` 默认 180，范围 30–300 秒；snapshot retain 固定 1。若默认 pack
+  chunk 数相对 last-good 减少超过 50%，首次构建以 `SNAPSHOT_REDUCTION_CONFIRMATION_REQUIRED` 拒绝并输出候选
+  revision 与逻辑计数；只有重启时设置 `SA_EXPECTED_DEFAULT_PACK_REVISION=<candidate-revision>` 精确匹配才允许
+  发布。确认只绑定该 revision，不授权后续删减。
+- **校验与失败**：发布前验证身份唯一、无宿主路径、scope 隔离、存储 manifest/checksum 一致和资源 cap。
+  校验、timeout、fsync 或 CURRENT 切换失败时删除 staging、保留 last-good，报 `SNAPSHOT_SWITCH_FAILED`；首次
+  无 last-good 则启动失败。结果缓存只在切换后启用新 namespace。
+- **兼容、隐私与保留**：学习状态 SQLite、review history 和旧 session 不参与切换。若新配置删除 extra source，
+  新 generation 成功后立即删除所有含该 source ID 的 staging、构建缓存和 `PREVIOUS`；该次允许无 PREVIOUS，
+  不为回滚保留已撤下源正文或向量。其他情况下只保留一个 PREVIOUS，更旧和失败 staging 在启动/切换后清理。
+- **workload / 阈值**：keyword 重建 target ≤15s，本地模型已缓存的向量重建 target ≤180s；重建期间有
+  last-good 时空结果响应数必须为 0。目标须按 `M6A-SOURCE-LIMITS` 的固定 benchmark 留证。
+- **证据**：本计划 §2.5、§3 M6a-3，以及 `platform/app/vector_store.py::replace_all/is_synced` 的现行差距。
+- **责任人 / 日期**：justtodo123 / 2026-08-25（用户逐项确认）。
+
+#### M6A-SOURCE-LIMITS
+
+- **状态 / 选定值**：`RESOLVED` — `per-source plus aggregate caps; fail-whole-default-pack; measured targets`。
+- **默认上限**：
+
+  | 资源 | 每源默认 | 聚合默认 | 可配置硬顶 |
+  | --- | ---: | ---: | ---: |
+  | Source 数 | — | 1 默认 + 3 extra | 固定 4 |
+  | Markdown 文件 | 250 | 500 | 500 / 1000 |
+  | 源总字节 | 4 MiB | 8 MiB | 8 MiB / 16 MiB |
+  | chunks | 600 | 1200 | 1000 / 2000 |
+  | 单文件 | 256 KiB | — | 512 KiB |
+
+- **允许覆盖**：分别使用 `SA_SOURCE_MAX_FILES_PER_SOURCE/TOTAL`、`SA_SOURCE_MAX_BYTES_PER_SOURCE/TOTAL`、
+  `SA_SOURCE_MAX_CHUNKS_PER_SOURCE/TOTAL` 和 `SA_SOURCE_MAX_FILE_BYTES`；必须为正整数、每源值不大于 total、
+  且不超过表中“每源 / 聚合”硬顶。非法配置启动失败，`SOURCE_CONFIG_INVALID`。
+- **校验与失败**：在解析后、发布前同时检查逐源和聚合 cap，不静默截断。默认 pack 任一文件/源/聚合 cap
+  超限都拒绝整个候选 generation并保留 last-good；首次无 last-good 启动失败，`SOURCE_LIMIT_EXCEEDED`。
+  extra 超限拒绝整源并遵循 strict 策略。错误只含 source ID 和逻辑计数。
+- **兼容、隐私与 workload**：当前默认 pack 应低于默认 cap，但 Codex 的 142 文件/261730 B/约 688 sections
+  只作为待复现实测的观察值，不是准入证据。准入 benchmark 固定到待实施 revision：Windows、8 GiB RAM、
+  本地 SSD、单进程；以达到默认聚合 cap 的默认+合成 extra workload 跑 5 次冷启动，keyword 每次 ≤15s、已缓存
+  embedding 模型的 vector 每次 ≤180s；至少 200 个固定查询测 Search p95 ≤200ms、cache-hit p95 ≤20ms。
+  记录命令、revision、硬件、样本和原始 JSON。1k–3k workload 留给 M7。
+- **证据**：`docs/standards/runtime-contracts.md` §2、M7 计划的规模边界及 Codex 2026-08-25 观察记录。
+- **责任人 / 日期**：justtodo123 / 2026-08-25（用户逐项确认）。
+
+#### M6A-WORKER-TOPOLOGY
+
+- **状态 / 选定值**：`RESOLVED` — `strict single service process / single uvicorn worker`。
+- **默认与范围**：M6a 只支持一个服务进程和一个 worker；不提供 `SA_INDEX_READONLY` 或第二只读进程。
+  服务进程在整个生命周期持有 `platform/.cache/index/service.lock`；generation 发布另用同进程互斥，避免线程/
+  task 重入。`--reload` 的 watcher 不算服务进程，实际 app 子进程获取 lifetime lock，重启交接最多等待 5 秒。
+- **允许覆盖与失败**：`WEB_CONCURRENCY`、`UVICORN_WORKERS` 或受支持启动器的 worker 值必须为 1；大于 1、
+  检测到第二服务进程、5 秒内无法取得 service lock，均启动失败并报 `WORKER_TOPOLOGY_UNSUPPORTED`。
+  不允许“拿不到锁但只读服务”。文档和 `tools/start_local.py` 只提供单 worker 命令。
+- **兼容、隐私与阈值**：现有本地启动、测试和评测均为单进程，行为不变；不引入 broker、worker 或外部服务。
+  lock 只含 PID、随机 nonce 和启动时间，不含源路径或正文；并发 publisher 数必须为 1。多 worker 吞吐和 p95
+  不属于 M6a 承诺。
+- **证据**：`tools/start_local.py`、`platform/README.md` 及 `platform/app/retrieval.py` 的进程内缓存模型。
+- **责任人 / 日期**：justtodo123 / 2026-08-25（用户逐项确认）。
+
+#### M6A-TRACE-RETENTION
+
+- **状态 / 选定值**：`RESOLVED` — `runtime_trace separate; memory-1000; opt-in 7d/8MiB JSONL`。
+- **默认与范围**：新观测数据统一命名 `runtime_trace`，不得称为或写入 M5 持久化 `tool_trace`；状态机的
+  domain events 保持原语义。默认 `SA_TRACE_SINK=memory`、ring 容量 1000。允许字段仅为 operation/status/
+  duration/error/side-effect/generation/cache-hit 和假名化后的 correlation/source/document/chunk/query 标识；禁止
+  正文、答案、prompt、Thought、密钥、原始 query 和绝对路径。
+- **假名化与覆盖**：进程启动时用 OS CSPRNG 生成不落盘的 HMAC-SHA256 key，标识截取 128 bits；同一进程内
+  可关联，跨重启不可关联。`SA_TRACE_SINK=memory|jsonl|off`；memory max 100–5000。jsonl 默认 7 天/8 MiB，
+  可配 1–30 天、上限 32 MiB，最多 2 个轮转文件，固定写入 `platform/.cache/traces/runtime-trace.jsonl`。
+- **校验与失败**：非法 sink/range/path 启动失败，`TRACE_CONFIG_INVALID`。目录/文件以 0700/0600 请求创建并
+  继承当前用户 ACL，禁止符号链接和 cache 外路径。序列化前 allowlist；redaction 失败丢弃事件并增加
+  `trace_redaction_failed_total`。运行期写入、轮转或删除失败时立即禁用本进程磁盘 sink，继续 memory ring，并
+  增加 `trace_sink_disabled_total`；不得因审计 IO 终止学习服务。
+- **兼容、隐私与阈值**：现有 `log_operation()` 字段和 `/health` 聚合样本保留；不改变 session、review history
+  或公开 API。默认磁盘 trace 字节数为 0；opt-in 最长 30 天/32 MiB/2 rotations；密钥、正文、答案和宿主路径
+  落盘条数必须为 0。trace 不提交 Git、不发送外部服务。
+- **证据**：本计划 §2.5、`platform/app/observability.py`、`docs/standards/runtime-contracts.md` §4，以及现有
+  persisted `tool_trace` 契约。
+- **责任人 / 日期**：justtodo123 / 2026-08-25（用户逐项确认）。
 
 ## 1. 背景与边界
 
@@ -89,7 +266,7 @@ M0–M5 已形成可离线运行的学习闭环：OS/DS/CO 三课 60 篇课程�
 ### 2.1 Source
 
 Source 至少描述 `source_id`、`source_type`、source/document/chunk 的稳定命名空间、logical URI、
-内容 fingerprint、revision，以及未来的删除/失效语义。身份规则固定如下：
+内容 fingerprint、revision，以及未来的删除/失效语义。下列内容是 §0.4 已闭合身份政策的契约摘要：
 
 - `source_id` 是逻辑命名空间，不直接使用本机挂载目录或绝对路径；移动本地目录不改变对外身份；
 - `logical_uri` 是 Source 内可移植的文档地址；不同 Source 中相同相对路径不得冲突；
@@ -228,6 +405,8 @@ tests/M6a/               # 契约、适配器、Runner、Source
 实施项；在实际配置落地前不得宣称已完成。
 
 ## 6. 风险与拟定方向（不得替代强制决策）
+
+下表只是风险备忘。八项强制决策的最终选定值和约束以 §0.4 为准。
 
 | 风险 | 决策 |
 | --- | --- |

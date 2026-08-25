@@ -199,4 +199,27 @@ SA_USE_VECTOR=false HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 \
 
 ---
 
-*创建：2026-08-12 · 更新：2026-08-24（区分历史 M5a 基线与当前 checkout 离线复测）· 维护：知识库、评测集或检索策略变化后复测并追加记录*
+## M6a 保护基线复验 — 2026-08-25（当前候选树，未提交）
+
+本记录只关闭 `M6A-PROTECTED-BASELINE` 前置证据，不批准或启动 M6a。
+
+- 候选树：`HEAD=86e4ed8ae5f08d3dcd532e3d0e492553f03f91b4`；受测环境为 Windows 11、Python 3.13.3、pytest 9.1.1。
+- 离线环境：`SA_USE_VECTOR=false`、`HF_HUB_OFFLINE=1`、`TRANSFORMERS_OFFLINE=1`。
+- 受测实现/测试变更的 tracked diff digest（证据文档更新前）：
+  `b8119aadc2c5abd36a5a71517ad3aeeb67f25b606a49a4bc608a2cb80db27672`。
+- 新增隐私回归文件 SHA-256：
+  `a161d60fc684d8dd5276472899b9efb64700c5602105aa26340ae7b4f5b7ae8e`。
+- 真实测试结果：
+  - focused API/OpenAPI/SSE/privacy/recovery：32 passed；
+  - `tests/M3b/`：13 passed；`platform/tests/`：40 passed；
+  - `tests/`：271 passed, 1 skipped（仅显式 online crawler smoke）；
+  - crawler offline gate：52 passed, 1 deselected；
+  - `tests/regression/test_rag_quality.py -m slow`：3 passed。
+- 默认评测命令：
+  `SA_USE_VECTOR=false HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 ./platform/.venv/Scripts/python tools/run_evaluation.py -k 1,3,5 --report reports/m6a-protected-baseline.json`
+- 评测发现 OS 38 + DS 28 + CO 24 = 90，Network 未自动加入；Recall@3：OS 0.987、DS 0.929、CO 1.000，汇总 0.972。
+- JSON 报告 SHA-256：
+  `5db638a9cdb59081c2dc6ecea09a873fb31ad07e369364d6bcaa6a3ecbba00ca`。
+- 路径隐私回归同时覆盖 `/health`、Search、QA、QA SSE、OpenAPI、日志及 LLM 异常 fallback；宿主路径未出现在响应或日志中。
+
+*创建：2026-08-12 · 更新：2026-08-25（追加 M6a 保护基线真实复验；证据文档本身不改变已受测实现）· 维护：知识库、评测集或检索策略变化后复测并追加记录*

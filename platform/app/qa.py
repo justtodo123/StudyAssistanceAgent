@@ -25,6 +25,7 @@ class QaService:
         started = time.perf_counter()
         results: list[RetrievalChunk] = []
         mode = "keyword-only"
+        fallback_note: str | None = None
         try:
             results, mode = self._recall.recall(req.question, req.top_k, course=req.course)
 
@@ -39,12 +40,12 @@ class QaService:
                         sources=results,
                         generation_layer=layer,
                     )
-                except Exception as exc:
-                    self._fallback_note = f"LLM generation failed; used local summary: {exc}"
+                except Exception:
+                    fallback_note = "LLM generation failed; used local summary."
 
             text = self._summarize(results)
-            if getattr(self, "_fallback_note", None):
-                text = text + "\n\n" + self._fallback_note
+            if fallback_note:
+                text = text + "\n\n" + fallback_note
             layer = "no_hit" if not results else "note_summary"
             return QaResponse(
                 question=req.question,

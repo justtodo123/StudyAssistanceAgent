@@ -89,7 +89,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "UP",
         "vector_engine": vector_engine,
-        "knowledge_root": str(config.KNOWLEDGE_ROOT),
+        "knowledge_root": "knowledge-pack",
         "index_size": len(chunks),
         "cache_status": snapshot["cache_status"],
         "avg_latency_ms": snapshot["avg_latency_ms"],

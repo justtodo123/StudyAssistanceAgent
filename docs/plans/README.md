@@ -18,7 +18,7 @@
 
 - **最终计划依据**：[`docs/PLAN.md`](../PLAN.md)（定位、里程碑、退出方向）
 - 已完成：M3 / M4 / M5（MVP 最小实现）
-- 当前前置：M6a-P0 crawler 已收口；M6a/M6b 已完成设计、尚未开工
+- 当前前置：M6a-P0 crawler 已收口；M6a/M6b 已形成设计/准备草案、尚未获准开工
 - M6a：契约先行的兼容骨架，明确逻辑 Source 身份、快照失效/清理、Search/QA 传播边界和状态机唯一权威；
   M6b：通过 M6a/API/SSE/平台/90 题门禁后才能开工的独立只读原生工具调用预览；完整自主 Runner 属于 M10
 - M6b 与 M7 都以 M6a 退出证据为共同必要前置；各自还必须满足专属保护基线、决策和负责人批准，彼此不互为前置；M8 依赖 M7，M9 依赖 M7/M8，M10 依赖 M7–M9
@@ -46,7 +46,7 @@
 | `m3-engineering-execution-plan.md` | 项目工程执行计划 | M3d 收口与最终回归完成，已合并到 `master`（2026-08-18） |
 | `m4-knowledge-base-scale-plan.md` | 项目工程执行计划 | 三门课程各补齐至 20 篇，已进入 `master`（2026-08-18） |
 | `m5-agent-session-delivery-plan.md` | 项目工程执行计划 | M5 已收口，作为 MVP 冻结（2026-08-18） |
-| `m6a-harness-skeleton-plan.md` | 项目工程执行计划 | M6a 契约与兼容骨架；`BLOCKED / NOT_STARTED` |
+| `m6a-harness-skeleton-plan.md` | 项目工程执行计划 | 八项决策已 `RESOLVED`、保护基线 prerequisite 已 `SATISFIED`；仍缺负责人批准，保持 `BLOCKED / NOT_STARTED` |
 | `m6b-agent-core-plan.md` | 项目工程执行计划 | M6b 独立只读原生工具调用预览；`BLOCKED / NOT_STARTED` |
 | `m7-source-lifecycle-plan.md` | 阶段准入准备计划 | M7 Source 生命周期与千级检索；`BLOCKED / NOT_STARTED` |
 | `m8-specialized-storage-plan.md` | 阶段准入准备计划 | M8 专业化存储选择、迁移与 fallback；`BLOCKED / NOT_STARTED` |

@@ -14,17 +14,88 @@
       "delivery_status": "NOT_STARTED",
       "prerequisites": [
         {"id": "M6A-P0", "status": "SATISFIED", "evidence": ["tests/M6_crawler", ".github/workflows/offline-ci.yml"]},
-        {"id": "M6A-PROTECTED-BASELINE", "status": "OPEN", "evidence": []}
+        {"id": "M6A-PROTECTED-BASELINE", "status": "SATISFIED", "evidence": ["docs/baselines.md", "tests/TEST_PLAN.md", "tests/regression/test_path_privacy.py"]}
       ],
       "mandatory_decisions": [
-        {"id": "M6A-SOURCE-POLICY", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6A-IDENTITY", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6A-EXTRA-SOURCES", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6A-CACHE-KEYS", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6A-SNAPSHOT-SWITCH", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6A-SOURCE-LIMITS", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6A-WORKER-TOPOLOGY", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6A-TRACE-RETENTION", "status": "OPEN", "value": null, "evidence": []}
+        {
+          "id": "M6A-SOURCE-POLICY",
+          "status": "RESOLVED",
+          "value": "trusted-default-missing-fields; reject-explicit-invalid; reviewed-crawler-override; last-good-default-pack",
+          "evidence": [
+            "docs/plans/m6a-harness-skeleton-plan.md#M6A-SOURCE-POLICY",
+            "docs/standards/runtime-contracts.md",
+            "tests/M6_crawler/test_ingest_gate.py"
+          ]
+        },
+        {
+          "id": "M6A-IDENTITY",
+          "status": "RESOLVED",
+          "value": "sha256(source_id+logical_uri) v1; portable-casefold-conflict; no-host-paths",
+          "evidence": [
+            "docs/plans/m6a-harness-skeleton-plan.md#M6A-IDENTITY",
+            "platform/app/knowledge_index.py",
+            "platform/app/main.py"
+          ]
+        },
+        {
+          "id": "M6A-EXTRA-SOURCES",
+          "status": "RESOLVED",
+          "value": "SA_EXTRA_SOURCES JSON; DEFAULT_ONLY / DEFAULT_PLUS_EXTRAS scopes",
+          "evidence": [
+            "docs/plans/m6a-harness-skeleton-plan.md#M6A-EXTRA-SOURCES",
+            "platform/app/qa.py",
+            "platform/app/study_session.py"
+          ]
+        },
+        {
+          "id": "M6A-CACHE-KEYS",
+          "status": "RESOLVED",
+          "value": "build-input digest separated from published generation; scoped atomic cache",
+          "evidence": [
+            "docs/plans/m6a-harness-skeleton-plan.md#M6A-CACHE-KEYS",
+            "platform/app/knowledge_index.py",
+            "platform/app/retrieval.py",
+            "platform/app/vector_store.py"
+          ]
+        },
+        {
+          "id": "M6A-SNAPSHOT-SWITCH",
+          "status": "RESOLVED",
+          "value": "staging-validate-atomic; revision-bound reduction confirmation; retain-1",
+          "evidence": [
+            "docs/plans/m6a-harness-skeleton-plan.md#M6A-SNAPSHOT-SWITCH",
+            "platform/app/vector_store.py"
+          ]
+        },
+        {
+          "id": "M6A-SOURCE-LIMITS",
+          "status": "RESOLVED",
+          "value": "per-source plus aggregate caps; fail-whole-default-pack; measured targets",
+          "evidence": [
+            "docs/plans/m6a-harness-skeleton-plan.md#M6A-SOURCE-LIMITS",
+            "docs/standards/runtime-contracts.md"
+          ]
+        },
+        {
+          "id": "M6A-WORKER-TOPOLOGY",
+          "status": "RESOLVED",
+          "value": "strict single service process / single uvicorn worker",
+          "evidence": [
+            "docs/plans/m6a-harness-skeleton-plan.md#M6A-WORKER-TOPOLOGY",
+            "tools/start_local.py",
+            "platform/README.md"
+          ]
+        },
+        {
+          "id": "M6A-TRACE-RETENTION",
+          "status": "RESOLVED",
+          "value": "runtime_trace separate; memory-1000; opt-in 7d/8MiB JSONL",
+          "evidence": [
+            "docs/plans/m6a-harness-skeleton-plan.md#M6A-TRACE-RETENTION",
+            "platform/app/observability.py",
+            "docs/standards/runtime-contracts.md"
+          ]
+        }
       ],
       "approval": {"approved_by": null, "approved_at": null, "approval_reference": null, "plan_revision": null, "decision_set_version": null}
     },

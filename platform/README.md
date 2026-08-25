@@ -87,7 +87,7 @@ GET /health
 {
   "status": "UP",
   "vector_engine": "sqlite",
-  "knowledge_root": ".../knowledge",
+  "knowledge_root": "knowledge-pack",
   "index_size": 123,
   "cache_status": "warm",
   "avg_latency_ms": 0.06,
@@ -101,7 +101,7 @@ GET /health
 
 字段说明：
 - `vector_engine`：当前向量后端；可为 `linear` / `sqlite`，不可用时带 `-unavailable` 后缀。
-- `knowledge_root`：知识库根目录路径，仅用于诊断配置，不包含密钥。
+- `knowledge_root`：默认知识包的稳定逻辑标识 `knowledge-pack`，不返回宿主机目录路径。
 - `index_size`：当前索引中的有效 Markdown 切片数。
 - `cache_status`：进程内最近一次索引/检索缓存状态，取值为 `cold`、`warm` 或 `unknown`。
 - `avg_latency_ms`：当前进程保留的最近操作样本平均耗时（毫秒）；服务重启后重新统计。

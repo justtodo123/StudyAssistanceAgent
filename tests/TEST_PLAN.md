@@ -302,6 +302,7 @@ pytest tests/M0_M2/ -v         # 基线回归
 | `test_ci_contract.py` | 结构化解析 workflow 的 job/env/step，验证平台基线、非 slow 回归、完整 RAG 门禁与 crawler 隔离 | CI 变更 |
 | `test_docs_consistency.py` | 当前/历史基线、默认评测范围、可演进准入状态组合、Decision/Prerequisite ID、批准逻辑与 M6b/M7 sibling 关系 | 文档/路线图/准入变更 |
 | `test_governance_contract.py` | docs 导航链接；全部未来阶段未准入时，拒绝受限生产路径、runtime 标识和未来专属依赖 | 文档导航/阻断期生产树变更 |
+| `test_path_privacy.py` | `/health` 逻辑 Source 标识、Search/QA/SSE/OpenAPI/日志无宿主路径泄露 | API、配置或可观测性变更 |
 
 ### 阶段 5：M4 — 课程知识库规模补齐（已完成并进入 master）
 
@@ -387,7 +388,11 @@ M6a-P0 不等同于 M7 Source 生命周期；持久化注册、同步、删除�
 
 ### 阶段 12：M6a/M6b 测试规划（尚未实施）
 
-M6a–M10 当前全部为 `BLOCKED / NOT_STARTED`，不创建 M6a–M10 阶段测试目录或实现通过数量。现阶段由
+M6a–M10 当前全部为 `BLOCKED / NOT_STARTED`，不创建 M6a–M10 阶段能力测试目录。M6a 开工前的继承保护基线已于
+2026-08-25 在受标识候选树上真实复验：focused privacy/API/SSE/recovery 32 项、M3b 13 项、原始 platform 40 项、
+根级 271 项通过（另有 1 项显式 online crawler smoke 跳过），crawler offline 52 项通过（1 项 online deselected），
+slow 90 题质量门禁 3 项通过。详细命令、候选树 digest 与指标见 `docs/baselines.md`；该证据只满足 prerequisite，
+不构成 M6a 能力实现或负责人批准。现阶段由
 `test_docs_consistency.py` 解析机器登记，检查可演进状态组合、Decision/Prerequisite ID、M6b/M7 sibling 关系和
 批准逻辑；`test_governance_contract.py` 检查 docs 导航及阻断期受限生产路径、runtime 标识和未来专属依赖。
 这些 CI 一致性门禁只降低误实施风险，不构成阶段能力测试、开工批准或外部不可篡改安全边界。
@@ -474,8 +479,10 @@ pytest tests/ -v -n auto
 ### 5.2 修改存量测试的红线
 
 - ❌ **不要**修改 `tests/conftest.py` 的已有 fixtures（只能追加）
-- ❌ **不要**修改其他阶段的测试文件
+- ❌ **不要**修改其他阶段的测试文件；若已冻结的公开契约与安全/隐私不变量直接冲突，必须在获批计划中逐项记录唯一迁移例外
 - ✅ 可以在 `tests/regression/` 新增回归用例
+- 本次 `/health.knowledge_root` 从宿主路径迁移为逻辑标识 `knowledge-pack`，仅收紧
+  `tests/M3b/test_health_enhanced.py::test_health_shows_knowledge_root` 的旧 suffix 断言；其他历史阶段测试保持不变
 - ✅ 可以在 `tests/utils/` 新增工具函数
 
 ### 5.3 测试数据管理
