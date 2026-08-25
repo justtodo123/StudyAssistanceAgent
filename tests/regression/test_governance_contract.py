@@ -81,13 +81,29 @@ class TestGovernanceNavigation:
 
 class TestBlockedStageProductionTree:
     def test_unadmitted_stages_do_not_add_future_production_surfaces(self, repo_root):
-        stages = _load_registry(repo_root)["stages"]
-        if not all(stage["admission_status"] != "ADMITTED" for stage in stages):
-            return
-
-        unexpected_paths = [
+        stages = {
+            stage["stage"]: stage
+            for stage in _load_registry(repo_root)["stages"]
+        }
+        m6a = stages["M6a"]
+        m6a_paths = {
+            "platform/app/protocols.py",
+            "platform/app/tools",
+            "platform/app/runners",
+            "tests/M6a",
+        }
+        m6a_implementation_started = (
+            m6a["admission_status"] == "ADMITTED"
+            and m6a["delivery_status"] in {"IN_PROGRESS", "COMPLETE"}
+        )
+        blocked_paths = [
             relative_path
             for relative_path in FUTURE_STAGE_PATHS
+            if relative_path not in m6a_paths or not m6a_implementation_started
+        ]
+        unexpected_paths = [
+            relative_path
+            for relative_path in blocked_paths
             if (repo_root / relative_path).exists()
         ]
         assert unexpected_paths == []

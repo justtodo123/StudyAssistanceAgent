@@ -10,7 +10,7 @@
     {
       "stage": "M6a",
       "plan": "docs/plans/m6a-harness-skeleton-plan.md",
-      "admission_status": "BLOCKED",
+      "admission_status": "ADMITTED",
       "delivery_status": "NOT_STARTED",
       "prerequisites": [
         {"id": "M6A-P0", "status": "SATISFIED", "evidence": ["tests/M6_crawler", ".github/workflows/offline-ci.yml"]},
@@ -97,7 +97,7 @@
           ]
         }
       ],
-      "approval": {"approved_by": null, "approved_at": null, "approval_reference": null, "plan_revision": null, "decision_set_version": null}
+      "approval": {"approved_by": "justtodo123", "approved_at": "2026-08-25", "approval_reference": "User instruction: M6a 可以开工", "plan_revision": "v2.3", "decision_set_version": "m6a-decision-set-v1"}
     },
     {
       "stage": "M6b",

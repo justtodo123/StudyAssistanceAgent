@@ -2,8 +2,7 @@
 
 > 版本：v2.3
 > 制定日期：2026-08-21
-> 当前状态：八项强制设计决策与保护基线已闭合；负责人批准仍未闭合，保持
-> `BLOCKED / NOT_STARTED`，未获准开工
+> 当前状态：八项强制设计决策、保护基线与负责人批准均已闭合；`ADMITTED / NOT_STARTED`，已获准开工
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)；最终状态权威为 [`docs/PLAN.md`](../PLAN.md)
 > 适用范围：Source/Store/Tool/Runner 契约、现有状态机兼容、启动期静态额外 Markdown 源
 > 后续阶段：M7 用户数据源生命周期；M6b 为独立的只读 Agent 预览
@@ -11,16 +10,15 @@
 ## 0. 准入状态与强制设定
 
 M6a-P0 crawler 与 2026-08-25 保护基线均已形成真实前置证据；八项强制设计决策已经用户逐项确认并
-按 §0.4 闭合为 `RESOLVED`。这些内容仍不构成阶段批准。在用户/项目负责人批准闭合前，本计划持续为
-`BLOCKED / NOT_STARTED`。计划中的代码结构、配置名和实施顺序均为获准后的
-拟议内容，不是当前能力。
+按 §0.4 闭合为 `RESOLVED`。用户/项目负责人于 2026-08-25 明确批准“M6a 可以开工”，因此本计划现为
+`ADMITTED / NOT_STARTED`。该状态只授权按第 3 节实施，不代表任何 M6a 生产能力已经完成。
 
 ### 0.1 前置证据
 
 | Prerequisite ID | 当前状态 | 准入所需证据 |
 | --- | --- | --- |
 | `M6A-P0` | `SATISFIED` | `tests/M6_crawler/` 与 `.github/workflows/offline-ci.yml` |
-| `M6A-PROTECTED-BASELINE` | `SATISFIED` | 2026-08-25 候选树真实证据：`docs/baselines.md`；路径隐私 blocker 已关闭；focused privacy/API/SSE/recovery 32 项、M3b 13 项、原始 `platform/tests/` 40 项、根级 271 项通过（1 项显式 online smoke 跳过）、crawler offline 52 项通过（1 项 online deselected）、slow 90 题质量门禁 3 项通过；评测 OS 38 + DS 28 + CO 24 = 90，Recall@3 为 0.987 / 0.929 / 1.000，汇总 0.972，报告 SHA-256 `5db638a9cdb59081c2dc6ecea09a873fb31ad07e369364d6bcaa6a3ecbba00ca`。仍缺负责人批准，M6a 保持 `BLOCKED / NOT_STARTED` |
+| `M6A-PROTECTED-BASELINE` | `SATISFIED` | 2026-08-25 候选树真实证据：`docs/baselines.md`；路径隐私 blocker 已关闭；focused privacy/API/SSE/recovery 32 项、M3b 13 项、原始 `platform/tests/` 40 项、根级 271 项通过（1 项显式 online smoke 跳过）、crawler offline 52 项通过（1 项 online deselected）、slow 90 题质量门禁 3 项通过；评测 OS 38 + DS 28 + CO 24 = 90，Recall@3 为 0.987 / 0.929 / 1.000，汇总 0.972，报告 SHA-256 `5db638a9cdb59081c2dc6ecea09a873fb31ad07e369364d6bcaa6a3ecbba00ca`。该 prerequisite 已闭合；M6a 准入状态另见 §0.3 |
 
 ### 0.2 强制决策
 
@@ -45,19 +43,18 @@ M6a-P0 crawler 与 2026-08-25 保护基线均已形成真实前置证据；八�
 - [x] M6a-P0 与保护基线证据在待实施候选树上真实有效；
 - [x] 已由保护基线逐项验证统一政策中的 M0–M5 兼容不变量；
 - [x] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表当前状态一致；
-- [ ] 用户或项目负责人完成批准记录。
+- [x] 用户或项目负责人完成批准记录。
 
 | 批准字段 | 当前值 |
 | --- | --- |
-| approved_by | — |
-| approved_at | — |
-| approval_reference | — |
-| plan_revision | — |
-| decision_set_version | — |
+| approved_by | justtodo123 |
+| approved_at | 2026-08-25 |
+| approval_reference | 用户指令：“M6a 可以开工” |
+| plan_revision | v2.3 |
+| decision_set_version | m6a-decision-set-v1 |
 
-批准记录为空，因此当前不得创建生产协议/适配器、运行时开关、schema migration、依赖、worker、部署配置或正式
-执行路径。允许的工作仅限设定澄清、契约/测试/benchmark 方案、只读调查和另行批准的可丢弃实验。获准后才可
-实施第 3 节子阶段；第 4 节 contract tests 和 benchmark 是实施/退出门禁，不是尚未实现却要求在开工前通过的证据。
+批准记录已经闭合，M6a 可按第 3 节顺序开始生产实施。当前交付状态仍为 `NOT_STARTED`；首次生产实现提交开始后
+再同步为 `IN_PROGRESS`。第 4 节 contract tests 和 benchmark 是实施/退出门禁，不是准入前置证据。
 
 ### 0.4 八项强制决策（最终选定）
 

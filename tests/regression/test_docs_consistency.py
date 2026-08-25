@@ -20,11 +20,14 @@ class TestProjectStatusConsistency:
         root = _read(repo_root, "README.md")
         plan = _read(repo_root, "docs/PLAN.md")
 
+        assert "M6a-P0 crawler 已收口" in root
+        assert "M6a 已获准开工" in plan
+        assert "M6b–M10" in root
+        assert "M6–M10" in plan
         for text in (root, plan):
-            assert "M6a-P0 crawler 已收口" in text
-            assert "M6a–M10" in text
             assert "BLOCKED / NOT_STARTED" in text
-        assert "未获准开工" in root
+        assert "ADMITTED / NOT_STARTED" in root
+        assert "M6b–M10 仍为 `BLOCKED / NOT_STARTED`" in root
         assert "M10" in root and "自主 Runner" in root
         assert "课程笔记创建" not in root
         assert "错题集管理" not in root
