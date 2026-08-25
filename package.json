@@ -2,7 +2,7 @@
   "name": "study-assistance-agent",
   "version": "0.1.0",
   "private": true,
-  "description": "面向大学计算机专业学生的个人学习助手（Claude Code Agent 工作流 + 知识库）",
+  "description": "通用学习 Agent harness 仓库的 Commitizen 工具元数据（非产品版本）",
   "scripts": {
     "commit": "cz"
   },

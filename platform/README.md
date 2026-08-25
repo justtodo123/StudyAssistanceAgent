@@ -1,16 +1,20 @@
 # Platform — FastAPI RAG 后端
 
-> StudyAssistanceAgent 的 Python 后端服务。提供知识库检索、带出处问答、SSE 流式输出、复习计划生成和学习工作台。
+> StudyAssistanceAgent 的 Python 后端服务。提供学习工作台、知识库检索、带出处问答、SSE 流式输出、
+> 测验、复习计划/排程和服务端学习会话。
 
 ## 架构
 
 ```
-提问 → MultiRecallService（course 过滤前置）
-         ├─ 路1: LocalVectorStore（BGE 余弦，可选依赖）
-         └─ 路2: Bm25Search（bigram 关键词）
-      → RRF 融合（k=60）+ 文件级去重
-      → QaService: LLM 生成（勒令带出处）| 降级笔记摘要（句子边界截断）
-      → FastAPI /api/v1/{search, qa, qa/stream, quiz, review-plan, review-log, review-due}
+提问 / 工作台 GET /
+  → MultiRecallService（course 过滤前置）
+       ├─ 路1: SqliteVectorStore（BGE 可选；持久化 + 线性余弦）
+       │        └─ SA_VECTOR_STORE=linear 时使用内存 LocalVectorStore
+       └─ 路2: Bm25Search（bigram 关键词）
+    → RRF 融合（k=60）+ 文件级去重
+    → QaService: LLM 生成 | 降级笔记摘要
+    → StudySessionService: QA → Quiz → 评估 → review-log
+    → FastAPI 工作台与 /api/v1/{search,qa,qa/stream,quiz,review-plan,review-log,review-due,study-sessions}
 ```
 
 **M1d 优化**：课程过滤前移至检索阶段（避免无关课程占位）、RRF 结果按文件去重（同文件只保留最高分 chunk）、摘要截断在句子边界。
@@ -29,7 +33,7 @@ platform/
 │   ├── config.py          # 环境变量配置（dotenv → 常量）
 │   ├── retrieval.py       # 多路召回 + RRF 融合（MultiRecallService）
 │   ├── bm25.py            # BM25 关键词检索（中文 bigram + 英文整词分词）
-│   ├── vector_store.py    # 本地 BGE 向量存储（可选依赖，未装时优雅降级）
+│   ├── vector_store.py    # SQLite/内存向量后端（BGE 可选；当前均为线性余弦）
 │   ├── qa.py              # 问答服务（LLM 生成 / 降级笔记摘要）
 │   ├── knowledge_index.py # 知识库索引（Markdown 切分 + frontmatter 解析 + JSON 缓存）
 │   ├── source_policy.py   # 数据源类型与入库门禁
@@ -48,7 +52,7 @@ platform/
 │   ├── test_review_scheduler.py # 复习排程测试（9 个用例）
 │   └── test_study_assistant.py # 多轮工具编排集成测试（6 个用例）
 ├── requirements.txt       # 核心依赖
-├── requirements-dev.txt   # 开发依赖（pytest 等）
+├── requirements-dev.txt   # 开发依赖（pytest、httpx2、PyYAML）
 └── .env.example           # 环境变量模板（复制为 .env 后修改）
 ```
 
@@ -288,6 +292,8 @@ Content-Type: application/json
 | `SA_TOP_K` | `5` | 检索返回数量 |
 | `SA_BM25_POOL` | `0` | BM25 候选池大小（`0`=全库检索，个人规模下推荐） |
 | `SA_USE_VECTOR` | `true` | 是否启用向量检索 |
+| `SA_VECTOR_STORE` | `sqlite` | 向量后端；`linear` 使用内存 `LocalVectorStore` |
+| `SA_VECTOR_STORE_PATH` | `platform/.cache/vector_store.sqlite3` | 默认 `SqliteVectorStore` 持久化路径 |
 | `SA_EMBEDDING_MODEL` | `BAAI/bge-small-zh-v1.5` | BGE 嵌入模型名 |
 | `SA_EMBEDDING_NORMALIZE` | `true` | 向量 L2 归一化 |
 | `SA_EMBEDDING_DIM` | `512` | BGE-small-zh 期望维度（入库仍校验） |
@@ -376,12 +382,13 @@ python -m venv .venv
 
 > `sentence-transformers` 为可选依赖：安装后自动启用本地 BGE 向量检索；未安装则降级为纯关键词（BM25）检索，功能不断。
 
+## 当前向量存储
+
+默认后端是由 `SA_VECTOR_STORE_PATH` 配置的持久化 `SqliteVectorStore`；设置
+`SA_VECTOR_STORE=linear` 可切换到内存 `LocalVectorStore`。两者当前都使用线性余弦检索，ANN、LanceDB 与
+Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知识内容或模型变化时自动重建；编码器
+不可用时检索降级为 BM25。
+
 ---
 
-*创建：2026-08-11 · 更新：2026-08-21（同步 M6 只读预览边界与三课评测基线）· 维护：随 API 变更同步更新*
-
-
-
-## M3a vector storage
-
-The default backend is a persistent SQLite vector store configured by `SA_VECTOR_STORE_PATH`. Set `SA_VECTOR_STORE=linear` to use the original in-memory backend. The index stores chunk fingerprints and the embedding model name, and rebuilds automatically when knowledge content or the model changes. SQLite itself does not require `sentence-transformers`; text queries still require an encoder, and unavailable encoders fall back to BM25.
+*创建：2026-08-11 · 更新：2026-08-24（统一 API、SQLite 存储与 M6 规划边界）· 维护：随 API 变更同步更新*

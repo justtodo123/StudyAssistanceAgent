@@ -32,9 +32,17 @@ jobs:
         run: |
           python -m pip install -r platform/requirements.txt -r platform/requirements-dev.txt
 
+      - name: Run protected platform baseline
+        run: |
+          python -m pytest platform/tests -q --tb=short
+
       - name: Run stage tests and regression
         run: |
           python -m pytest tests/M0_M2 tests/M3a tests/M3b tests/M3c tests/M3d tests/M4 tests/M5a tests/M5b tests/M5c tests/M5d tests/M5e tests/regression -q --tb=short -m "not slow"
+
+      - name: Run full RAG quality gate
+        run: |
+          python -m pytest tests/regression/test_rag_quality.py -q --tb=short -m slow
 
       - name: Run evaluation smoke
         run: |

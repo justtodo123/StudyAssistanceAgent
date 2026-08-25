@@ -4,7 +4,8 @@
 
 ## 项目概述
 
-**个人计算机学习助手**。目标用户是大学计算机专业学生（本人）。以 **Agent 工作流 + 本地 Markdown 知识库** 为核心形态：
+**通用学习 Agent harness（内置计算机课程默认 pack）**。当前主要服务大学计算机专业学生，
+以 **Agent 工作流 + 本地 Markdown 知识库** 为核心形态；M7 才实现用户源注册与生命周期：
 - 外部原始课程资料存放在 `D:\111_Others_Subjects`（**不复制进仓库**，人工整理；仓库仅维护索引与精炼笔记）。
 - 知识库本体是仓库内的 `knowledge/` 目录（Markdown 笔记，越精炼越好，不存大文件）。
 
@@ -30,7 +31,7 @@ tests/            # ★ 迭代测试体系（阶段隔离架构；数量以 pyte
   M3d/            #   文档完整性测试
   M4/             #   课程知识库规模测试
   M5a/ ~ M5e/     #   评测、会话、持久化、工作台、离线交付
-  regression/     #   跨阶段回归套件（21 项）
+  regression/     #   跨阶段回归套件（数量以 pytest 收集为准）
   utils/          #   测试工具函数
 tools/            # 辅助脚本（RAG 评测脚本 + 课程评测集 JSON）
 docs/             # 项目文档：PLAN、reference 索引、standards、interview
