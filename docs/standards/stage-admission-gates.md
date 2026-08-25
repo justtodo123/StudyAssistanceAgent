@@ -26,8 +26,9 @@ M6a–M10 涉及 Source 身份、索引生命周期、外部模型、专业存�
 | 交付 | `IN_PROGRESS` | 已获准并正在实施 |
 | 交付 | `COMPLETE` | 已满足阶段退出条件 |
 
-M6a 的强制决策、前置证据与负责人批准已闭合，当前为 `ADMITTED + NOT_STARTED`：已获准实施，但尚未开始
-生产交付。M6b–M10 仍为 `BLOCKED + NOT_STARTED`。M6a-P0 crawler 本身只构成前置证据，不单独批准阶段。
+M6a 的强制决策、前置证据与负责人批准已闭合，当前为 `ADMITTED / IN_PROGRESS`：已获准实施，
+M6a-1 协议契约正在进行。M6b–M10 仍为 `BLOCKED / NOT_STARTED`。M6a-P0 crawler 本身只构成前置证据，
+不单独批准阶段。
 
 ## 3. 决策完成标准
 

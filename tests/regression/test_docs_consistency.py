@@ -26,7 +26,8 @@ class TestProjectStatusConsistency:
         assert "M6–M10" in plan
         for text in (root, plan):
             assert "BLOCKED / NOT_STARTED" in text
-        assert "ADMITTED / NOT_STARTED" in root
+        assert "ADMITTED / IN_PROGRESS" in root
+        assert "M6a-1 协议契约" in root
         assert "M6b–M10 仍为 `BLOCKED / NOT_STARTED`" in root
         assert "M10" in root and "自主 Runner" in root
         assert "课程笔记创建" not in root

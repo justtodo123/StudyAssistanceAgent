@@ -118,8 +118,10 @@ class TestBlockedStageProductionTree:
             for path in production_files
             if path.suffix in {".py", ".js", ".html"}
         )
+        allowed_m6a_identifiers = {"SourceRegistry"} if m6a_implementation_started else set()
         for identifier in FUTURE_RUNTIME_IDENTIFIERS:
-            assert identifier not in production_text
+            if identifier not in allowed_m6a_identifiers:
+                assert identifier not in production_text
         for api_path in FUTURE_API_PATHS:
             assert api_path not in production_text
 

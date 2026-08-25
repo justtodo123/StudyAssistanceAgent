@@ -2,7 +2,7 @@
 
 > 版本：v2.3
 > 制定日期：2026-08-21
-> 当前状态：八项强制设计决策、保护基线与负责人批准均已闭合；`ADMITTED / NOT_STARTED`，已获准开工
+> 当前状态：八项强制设计决策、保护基线与负责人批准均已闭合；`ADMITTED / IN_PROGRESS`，M6a-1 协议契约正在实施
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)；最终状态权威为 [`docs/PLAN.md`](../PLAN.md)
 > 适用范围：Source/Store/Tool/Runner 契约、现有状态机兼容、启动期静态额外 Markdown 源
 > 后续阶段：M7 用户数据源生命周期；M6b 为独立的只读 Agent 预览
@@ -11,7 +11,7 @@
 
 M6a-P0 crawler 与 2026-08-25 保护基线均已形成真实前置证据；八项强制设计决策已经用户逐项确认并
 按 §0.4 闭合为 `RESOLVED`。用户/项目负责人于 2026-08-25 明确批准“M6a 可以开工”，因此本计划现为
-`ADMITTED / NOT_STARTED`。该状态只授权按第 3 节实施，不代表任何 M6a 生产能力已经完成。
+`ADMITTED / IN_PROGRESS`。M6a-1 已开始生产实施；该状态只授权按第 3 节实施，不代表整个 M6a 已完成。
 
 ### 0.1 前置证据
 
@@ -53,8 +53,8 @@ M6a-P0 crawler 与 2026-08-25 保护基线均已形成真实前置证据；八�
 | plan_revision | v2.3 |
 | decision_set_version | m6a-decision-set-v1 |
 
-批准记录已经闭合，M6a 可按第 3 节顺序开始生产实施。当前交付状态仍为 `NOT_STARTED`；首次生产实现提交开始后
-再同步为 `IN_PROGRESS`。第 4 节 contract tests 和 benchmark 是实施/退出门禁，不是准入前置证据。
+批准记录已经闭合，M6a 已按第 3 节顺序开始生产实施。M6a-1 协议契约及其隔离 contract tests 正在完成，交付状态为
+`IN_PROGRESS`。第 4 节 contract tests 和 benchmark 是实施/退出门禁，不是准入前置证据。
 
 ### 0.4 八项强制决策（最终选定）
 

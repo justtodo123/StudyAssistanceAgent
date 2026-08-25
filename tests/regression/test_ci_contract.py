@@ -33,6 +33,7 @@ class TestOfflineCiContract:
         assert "python -m pytest platform/tests -q --tb=short" in commands
         assert any(
             command.startswith("python -m pytest tests/M0_M2")
+            and "tests/M6a" in command
             and "tests/regression" in command
             and '-m "not slow"' in command
             for command in commands

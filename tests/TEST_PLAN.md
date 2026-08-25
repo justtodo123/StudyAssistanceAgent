@@ -386,21 +386,25 @@ pytest tests/M0_M2/ -v         # 基线回归
 
 M6a-P0 不等同于 M7 Source 生命周期；持久化注册、同步、删除传播和多源隔离留待 M7。
 
-### 阶段 12：M6a/M6b 测试规划（尚未实施）
+### 阶段 12：M6a 契约测试（进行中）与 M6b 规划
 
-M6a–M10 当前全部为 `BLOCKED / NOT_STARTED`，不创建 M6a–M10 阶段能力测试目录。M6a 开工前的继承保护基线已于
-2026-08-25 在受标识候选树上真实复验：focused privacy/API/SSE/recovery 32 项、M3b 13 项、原始 platform 40 项、
-根级 271 项通过（另有 1 项显式 online crawler smoke 跳过），crawler offline 52 项通过（1 项 online deselected），
-slow 90 题质量门禁 3 项通过。详细命令、候选树 digest 与指标见 `docs/baselines.md`；该证据只满足 prerequisite，
-不构成 M6a 能力实现或负责人批准。现阶段由
-`test_docs_consistency.py` 解析机器登记，检查可演进状态组合、Decision/Prerequisite ID、M6b/M7 sibling 关系和
-批准逻辑；`test_governance_contract.py` 检查 docs 导航及阻断期受限生产路径、runtime 标识和未来专属依赖。
-这些 CI 一致性门禁只降低误实施风险，不构成阶段能力测试、开工批准或外部不可篡改安全边界。
+M6a 已于 2026-08-25 获准并进入 `ADMITTED / IN_PROGRESS`。M6a-1 在 `tests/M6a/` 实施独立
+`m6a` marker 的协议 contract tests：逻辑 Source/document/chunk 身份、职责拆分后的存储边界、Tool 的权限与
+副作用分类、结构化安全错误，以及跨请求 Runner 生命周期。该层只验证 provider-neutral 契约；不得替换
+`StudySessionService` 的状态转换、答题评估、持久化或 review-log 权威，也不提前实现 M6a-2/M6a-3 的适配、静态额外
+Source、索引快照或任何 M6b 能力。
 
-获准实施后，M6a 才覆盖协议 contract tests、StateMachineRunner 兼容、旧会话恢复、静态额外 Source、多源 ID
-不冲突、绝对路径不泄露和默认 90 题不退化。M6b 只覆盖 provider-native tool-call block、call_id/schema/错误映射、
-只读 allowlist、写工具拒绝、独立 preview 入口、预算/终止和“不创建或修改正式 session/review log”。M6b 不列
-ReAct Runner 切换；完整自主 Runner、写工具、checkpoint/幂等和 Agent 任务评测属于 M10。
+M6a 开工前的继承保护基线已于 2026-08-25 在受标识候选树上真实复验：focused privacy/API/SSE/recovery 32 项、M3b
+13 项、原始 platform 40 项、根级 271 项通过（另有 1 项显式 online crawler smoke 跳过），crawler offline 52 项通过
+（1 项 online deselected），slow 90 题质量门禁 3 项通过。详细命令、候选树 digest 与指标见 `docs/baselines.md`；该
+证据满足 prerequisite，但不替代 M6a 实施/退出证据。`test_docs_consistency.py` 解析机器登记，检查可演进状态组合、
+Decision/Prerequisite ID、M6b/M7 sibling 关系和批准逻辑；`test_governance_contract.py` 检查 docs 导航、M6a 实施路径、
+阻断阶段的受限生产路径、runtime 标识和未来专属依赖。这些 CI 一致性门禁只降低误实施风险，不构成外部不可篡改安全边界。
+
+M6a 后续还覆盖 StateMachineRunner 兼容、旧会话恢复、静态额外 Source、多源 ID 不冲突、绝对路径不泄露和默认 90 题
+不退化。M6b 仍为 `BLOCKED / NOT_STARTED`，只规划 provider-native tool-call block、call_id/schema/错误映射、只读
+allowlist、写工具拒绝、独立 preview 入口、预算/终止和“不创建或修改正式 session/review log”。M6b 不列 ReAct Runner
+切换；完整自主 Runner、写工具、checkpoint/幂等和 Agent 任务评测属于 M10。
 
 ## 三、执行矩阵
 
@@ -418,7 +422,7 @@ ReAct Runner 切换；完整自主 Runner、写工具、checkpoint/幂等和 Age
 | M5d 学习工作台 | `tests/M5d/` | `tests/regression/` | `tests/M0_M2/` | — |
 | M5e 可复现交付 | `tests/M5e/` | `tests/regression/` + `platform/tests/` | `tests/M0_M2/` | smoke + 独立 slow 90 题门禁 |
 | M6 crawler 前置 | `pytest tests/M6_crawler -m "m6_crawler and not online"` | `tests/regression/` | `tests/M0_M2/` | 默认 90 题发现 + smoke |
-| M6a 契约骨架 | `tests/M6a/`（规划） | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
+| M6a-1 协议契约 | `tests/M6a/`（`m6a`） | `tests/regression/` | `tests/M0_M2/` | `tools/run_evaluation.py` |
 | M6b 只读预览 | `tests/M6b/`（获准后规划） | `tests/regression/` | `tests/M0_M2/` | 默认 90 题；可选 provider smoke |
 | M7–M10 准入准备 | 不创建阶段测试目录；当前仅治理一致性门禁 | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
 
