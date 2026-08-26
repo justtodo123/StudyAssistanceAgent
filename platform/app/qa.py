@@ -14,12 +14,18 @@ from typing import Any
 from . import config
 from .models import QaRequest, QaResponse, RetrievalChunk
 from .observability import log_operation, metrics
-from .retrieval import MultiRecallService
+from .retrieval import MultiRecallService, RetrievalScope
 
 
 class QaService:
-    def __init__(self) -> None:
-        self._recall = MultiRecallService()
+    def __init__(
+        self,
+        recall: MultiRecallService | None = None,
+        *,
+        scope: RetrievalScope = RetrievalScope.DEFAULT_ONLY,
+    ) -> None:
+        self._recall = recall or MultiRecallService()
+        self._scope = scope
 
     def answer(self, req: QaRequest) -> QaResponse:
         started = time.perf_counter()
@@ -27,7 +33,12 @@ class QaService:
         mode = "keyword-only"
         fallback_note: str | None = None
         try:
-            results, mode = self._recall.recall(req.question, req.top_k, course=req.course)
+            results, mode = self._recall.recall(
+                req.question,
+                req.top_k,
+                course=req.course,
+                scope=self._scope,
+            )
 
             if req.use_llm and config.LLM_API_KEY:
                 try:

@@ -34,7 +34,13 @@ from .models import (
 from .learning_store import ReviewHistoryRepositoryAdapter, SqliteLearningStore
 from .qa import QaService
 from .quiz import QuizService
-from .retrieval import MultiRecallService
+from .retrieval import MultiRecallService, RetrievalScope
+from .snapshot_publisher import CombinedSnapshotPublisher
+from .worker_topology import (
+    ServiceLock,
+    enforce_single_worker_topology,
+    service_lock_path,
+)
 from .review_plan import ReviewPlanService
 from .review_scheduler import ReviewSchedulerService
 from .study_session import IllegalSessionStateError, SessionNotFoundError, StudySessionService
@@ -48,8 +54,15 @@ app = FastAPI(
 _STATIC_DIR = Path(__file__).resolve().parent / "static"
 _WORKBENCH_INDEX = _STATIC_DIR / "workbench" / "index.html"
 
-_recall = MultiRecallService()
-_qa = QaService()
+_snapshot_publisher = CombinedSnapshotPublisher(
+    config.INDEX_CACHE_PATH,
+    expected_default_revision=config.EXPECTED_DEFAULT_PACK_REVISION,
+)
+_service_lock = ServiceLock(service_lock_path())
+
+
+_recall = MultiRecallService(snapshot_provider=_snapshot_publisher.view)
+_qa = QaService(_recall, scope=RetrievalScope.DEFAULT_PLUS_EXTRAS)
 _review_plan = ReviewPlanService()
 _quiz = QuizService()
 _learning_store = SqliteLearningStore(config.LEARNING_STORE_PATH)
@@ -57,11 +70,31 @@ _review_scheduler = ReviewSchedulerService(
     repository=ReviewHistoryRepositoryAdapter(_learning_store)
 )
 _study_sessions = StudySessionService(
-    qa_service=_qa,
+    qa_service=QaService(_recall, scope=RetrievalScope.DEFAULT_ONLY),
     quiz_service=_quiz,
     review_scheduler=_review_scheduler,
     session_repository=_learning_store,
 )
+
+
+def _initialize_runtime() -> None:
+    """Take the single-worker lock and publish one complete snapshot."""
+    enforce_single_worker_topology()
+    _service_lock.acquire()
+    try:
+        _snapshot_publisher.publish()
+    except Exception:
+        _service_lock.release()
+        raise
+
+
+def _shutdown_runtime() -> None:
+    """Release the process-lifetime service lock."""
+    _service_lock.release()
+
+
+app.router.add_event_handler("startup", _initialize_runtime)
+app.router.add_event_handler("shutdown", _shutdown_runtime)
 
 
 @app.get("/", include_in_schema=False)
@@ -74,7 +107,6 @@ def workbench() -> FileResponse:
 
 @app.get("/health")
 def health() -> dict[str, Any]:
-    from .knowledge_index import build_index_cached
     from .observability import metrics
     from .vector_store import LocalVectorStore, SqliteVectorStore
 
@@ -83,7 +115,9 @@ def health() -> dict[str, Any]:
     else:
         vector_engine = "linear" if LocalVectorStore.available() else "linear-unavailable"
 
-    chunks = build_index_cached()
+    _generation, chunks = _snapshot_publisher.view(
+        RetrievalScope.DEFAULT_PLUS_EXTRAS
+    )
     metrics.set_index_size(len(chunks))
     snapshot = metrics.snapshot()
     return {
@@ -103,7 +137,12 @@ def health() -> dict[str, Any]:
 
 @app.post("/api/v1/search", response_model=SearchResponse)
 def search(req: SearchRequest) -> SearchResponse:
-    results, mode = _recall.recall(req.question, req.top_k, course=req.course)
+    results, mode = _recall.recall(
+        req.question,
+        req.top_k,
+        course=req.course,
+        scope=RetrievalScope.DEFAULT_PLUS_EXTRAS,
+    )
     if not req.use_vector and results:
         # 模拟「关闭向量」仅观察关键词路：BM25 单路重算
         results = bm25_only(req.question, req.top_k, req.course)
@@ -190,9 +229,10 @@ def submit_study_answer(
 def bm25_only(question: str, top_k: int, course: str | None = None):
     """关闭向量时展示关键词单路效果（示意，供可观测对比）。"""
     from .bm25 import Bm25Search
-    from .knowledge_index import build_index_cached
 
-    chunks = build_index_cached()
+    _generation, chunks = _snapshot_publisher.view(
+        RetrievalScope.DEFAULT_PLUS_EXTRAS
+    )
     if course:
         chunks = [c for c in chunks if c.course == course]
     pool = chunks if config.BM25_POOL <= 0 else chunks[: config.BM25_POOL]

@@ -25,8 +25,7 @@ class TestVectorFallback:
         from app.retrieval import MultiRecallService, _VectorHolder
 
         # 重置惰性单例缓存 + 禁用向量
-        _VectorHolder._loaded = False
-        _VectorHolder._store = None
+        _VectorHolder.reset()
         with patch("app.config.VECTOR_ENABLED", False):
             service = MultiRecallService()
             results, mode = service.recall("进程调度", top_k=3)
@@ -37,8 +36,7 @@ class TestVectorFallback:
         """降级模式下检索不应为空。"""
         from app.retrieval import MultiRecallService, _VectorHolder
 
-        _VectorHolder._loaded = False
-        _VectorHolder._store = None
+        _VectorHolder.reset()
         with patch("app.config.VECTOR_ENABLED", False):
             service = MultiRecallService()
             for query in ["死锁", "快速排序", "Cache 替换"]:
@@ -49,8 +47,7 @@ class TestVectorFallback:
         """降级模式返回的结果路径仍以 knowledge/ 开头。"""
         from app.retrieval import MultiRecallService, _VectorHolder
 
-        _VectorHolder._loaded = False
-        _VectorHolder._store = None
+        _VectorHolder.reset()
         with patch("app.config.VECTOR_ENABLED", False):
             service = MultiRecallService()
             results, _ = service.recall("虚拟内存", top_k=3)

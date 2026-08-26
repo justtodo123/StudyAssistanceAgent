@@ -119,9 +119,9 @@ python tools/start_local.py --check  # 只检查健康状态
 python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 ```
 
-默认设置 `SA_USE_VECTOR=false`、`HF_HUB_OFFLINE=1`，不要求 LLM key。演示步骤见 [docs/demo.md](../docs/demo.md)。
+默认设置 `SA_USE_VECTOR=false`、`HF_HUB_OFFLINE=1`，并以 `--workers 1` 启动唯一 uvicorn worker；不要求 LLM key。演示步骤见 [docs/demo.md](../docs/demo.md)。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-24（区分当前复测与历史 M5a 基线）· 维护：随新增工具脚本与评测集同步更新*
+*创建：2026-08-11 · 更新：2026-08-26（一键启动固定单 worker）· 维护：随新增工具脚本与评测集同步更新*
 

@@ -11,7 +11,7 @@
       "stage": "M6a",
       "plan": "docs/plans/m6a-harness-skeleton-plan.md",
       "admission_status": "ADMITTED",
-      "delivery_status": "IN_PROGRESS",
+      "delivery_status": "COMPLETE",
       "prerequisites": [
         {"id": "M6A-P0", "status": "SATISFIED", "evidence": ["tests/M6_crawler", ".github/workflows/offline-ci.yml"]},
         {"id": "M6A-PROTECTED-BASELINE", "status": "SATISFIED", "evidence": ["docs/baselines.md", "tests/TEST_PLAN.md", "tests/regression/test_path_privacy.py"]}

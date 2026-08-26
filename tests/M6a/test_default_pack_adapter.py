@@ -193,7 +193,7 @@ class TestGenerationAwareRecall:
         service = MultiRecallService()
 
         first, _ = service.recall("死锁", top_k=3)
-        first_generation = service._generation
+        first_generation = service._generation_by_scope["DEFAULT_ONLY"]
         assert first
         service.recall("死锁", top_k=3)
         assert len(service._result_cache) == 1
@@ -201,7 +201,7 @@ class TestGenerationAwareRecall:
         _write_note(root, "os/avoidance.md", "死锁避免算法可通过银行家算法验证安全序列。")
         second, _ = service.recall("银行家算法", top_k=3)
 
-        assert service._generation != first_generation
+        assert service._generation_by_scope["DEFAULT_ONLY"] != first_generation
         assert any(chunk.file == "knowledge/os/avoidance.md" for chunk in second)
         assert len(service._result_cache) == 1
 

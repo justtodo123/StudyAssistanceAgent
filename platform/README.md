@@ -39,7 +39,13 @@ platform/
 │   ├── markdown_parser.py # 共享 Markdown frontmatter/H2 解析原语
 │   ├── protocols.py       # M6a provider-neutral harness 契约
 │   ├── retrieval_index.py # M6a 默认包快照到旧 RetrievalChunk 的兼容适配器
-│   ├── sources/           # 默认知识包 Source 适配器（见子目录 README）
+│   ├── sources/           # 默认知识包与静态额外源适配器（见子目录 README）
+│   ├── combined_snapshot.py # 默认包 + 启动期额外源的不可变组合快照
+│   ├── snapshot_publisher.py # 原子发布 CURRENT/PREVIOUS 与 last-good
+│   ├── worker_topology.py # 单进程 / 单 worker service.lock 门禁
+│   ├── source_config.py   # SA_EXTRA_SOURCES 与资源上限解析
+│   ├── tools/             # 确定性 Retrieve/Quiz/ReviewDue 适配器
+│   ├── runners/           # StateMachineRunner 薄适配
 │   ├── source_policy.py   # 数据源类型与入库门禁
 │   ├── errors.py          # 稳定错误码
 │   ├── observability.py   # 进程内延迟/缓存指标与结构化日志
@@ -119,8 +125,11 @@ GET /health
 `event`、`duration_ms`、`result_count`，以及可选的 `course`、`mode`、`cache_hit`。
 问题正文、检索内容、API key、密码、token 和 Authorization 不会写入日志。
 
-检索服务使用有界的进程内结果缓存，键按默认知识包 generation 隔离；知识库索引使用
-`.cache/knowledge_index.json` 与 generation 元数据缓存。内容变更导致 generation 改变时，旧索引视图和结果缓存不会复用。
+检索服务使用有界的进程内结果缓存，键按 scope + generation 隔离：`DEFAULT_ONLY` 使用 default generation，
+`DEFAULT_PLUS_EXTRAS` 使用 combined generation。额外源变更不会清空默认包缓存。知识库索引使用
+`.cache/knowledge_index.json` 与 generation 元数据缓存。内容变更导致对应 generation 改变时，旧索引视图和结果缓存不会复用。
+服务启动只允许一个进程、一个 uvicorn worker；锁文件为 `platform/.cache/index/service.lock`，
+含 pid/nonce/started_at。`WEB_CONCURRENCY`/`UVICORN_WORKERS` 必须为 1 或未设置；不支持 `SA_INDEX_READONLY`。
 `/health` 的延迟和缓存字段用于运行时诊断，不作为持久化监控指标。
 完整参数表、错误码和生成分层见 [docs/standards/runtime-contracts.md](../docs/standards/runtime-contracts.md)。
 
@@ -312,12 +321,16 @@ Content-Type: application/json
 | `SA_LLM_TEMPERATURE` | `0.3` | 生成温度 |
 | `SA_LLM_TIMEOUT_S` | `60` | 单次生成超时（秒） |
 | `SA_LEARNING_STORE_PATH` | `platform/.cache/learning_state.sqlite3` | 学习会话与复习历史 SQLite |
+| `SA_INDEX_CACHE_PATH` | `platform/.cache/index` | 组合快照与 `service.lock` |
+| `SA_EXTRA_SOURCES` | `[]` | 启动期静态额外 Markdown 源，最多 3 个；只进 Search/QA |
+| `SA_EXTRA_SOURCES_STRICT` | `true` | 额外源失败时拒绝整次发布 |
+| `SA_EXPECTED_DEFAULT_PACK_REVISION` | 空 | 默认包大幅缩减时的精确 revision 确认 |
 
-## M6 规划边界（尚未实现）
+## M6 边界
 
-M6a 将在不改变现有 API 的前提下收敛 Source/存储职责/Tool/Runner 契约；M6b 只增加独立、只读的原生
-工具调用 preview，不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。
-完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。当前配置表和 API 清单不包含这些规划能力。
+M6a 已完成 Source/存储职责/Tool/Runner 薄适配、启动期静态额外源、default/combined generation 分离、单进程拓扑门禁和文档收口。
+M6b 仍未实现：只增加独立、只读的原生工具调用 preview，不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。
+完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。当前 API 清单不包含这些规划能力。
 
 默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
@@ -379,7 +392,7 @@ python -m venv .venv
 ./.venv/Scripts/python -m pip install -r requirements.txt
 
 # 启动 API / 学习工作台
-./.venv/Scripts/uvicorn app.main:app --reload   # http://127.0.0.1:8000/
+./.venv/Scripts/uvicorn app.main:app --workers 1   # http://127.0.0.1:8000/
 
 # 跑测试
 ./.venv/Scripts/python -m pytest tests/ -q
@@ -396,4 +409,4 @@ Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知�
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-24（统一 API、SQLite 存储与 M6 规划边界）· 维护：随 API 变更同步更新*
+*创建：2026-08-11 · 更新：2026-08-26（M6a-3 单进程锁、generation 分离与静态额外源）· 维护：随 API 变更同步更新*

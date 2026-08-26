@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-26（登记 M6a-1/M6a-2 自动化门禁与当前测试基线）
+> 起始日期：2026-08-17 · 更新：2026-08-26（登记 M6a-3 完成并进入 M6a-4 收口）
 
 ## 一、测试策略总览
 
@@ -92,9 +92,17 @@ tests/
 │   ├── test_ci.py          # crawler CI 契约
 │   └── test_online_smoke.py      # 显式在线 smoke（默认跳过）
 │
-├── M6a/                    # M6a 契约与默认 knowledge-pack 适配门禁
-│   ├── test_protocols.py         # Source/Tool/Runner 协议契约
-│   └── test_default_pack_adapter.py # 默认包身份、索引、快照与路径隐私
+├── M6a/                    # M6a 契约、默认包、工具/状态机、静态额外源与拓扑门禁
+│   ├── test_protocols.py              # Source/Tool/Runner 协议契约
+│   ├── test_default_pack_adapter.py   # 默认包身份、索引、快照与路径隐私
+│   ├── test_tool_adapters.py          # 确定性 Retrieve/Quiz/ReviewDue 适配器
+│   ├── test_state_machine_runner.py   # 状态机 Runner 兼容与恢复
+│   ├── test_extra_sources_config.py   # SA_EXTRA_SOURCES 启动配置与限额
+│   ├── test_extra_sources_retrieval.py # 组合快照 scope 与检索隔离
+│   ├── test_snapshot_publication.py   # 原子发布与 last-good
+│   ├── test_worker_topology.py        # 单进程 service lock / worker 门禁
+│   ├── test_cache_lifecycle.py        # default/combined generation 与缓存生命周期
+│   └── test_closeout_contracts.py     # M6a-4 API/OpenAPI/链接收口
 │
 ├── regression/             # 跨阶段回归套件
 │   ├── conftest.py         # 回归专用 fixtures
@@ -131,11 +139,13 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/`（含 M6_crawler、M6a） | 312 项 | 2026-08-26：311 passed、1 skipped（显式 online smoke） | 阶段测试 + 回归套件；crawler 走独立 job `crawler-offline` |
-| `tests/M6a/` | 36 项 | 2026-08-26：36 passed | M6a-1 协议契约与 M6a-2 默认包适配；不包含 M6a-3 |
-| `tests/regression/` | 46 项 | 已包含于根级全量运行并通过 | 含 SSE、结构化 CI、可演进准入、导航/生产树和 slow RAG 质量门禁 |
+| 根级 `tests/`（含 M6_crawler、M6a） | 396 项 | 2026-08-26：395 passed、1 skipped（显式 online smoke） | 阶段测试 + 回归套件；含 M6a-4 closeout |
+| `tests/M6a/` | 124 项 | 2026-08-26：124 passed | 含 worker topology、generation 分离、缓存生命周期与 API/OpenAPI/链接收口 |
+| `tests/regression/` | 52 项 | 2026-08-26：52 passed | 含 SSE、结构化 CI、可演进准入、导航/生产树和 slow RAG 质量门禁 |
 | `platform/tests/` | 40 项 | 2026-08-26：40 passed | 受保护的原始平台冒烟/功能测试，不由根级测试取代 |
-| 合并 `tests platform/tests` | 352 项 | 根级 311 passed、1 skipped；平台 40 passed | skip 为显式 online crawler smoke；不是失败 |
+| 合并 `tests platform/tests` | 436 项 | 根级 395 passed、1 skipped；平台 40 passed | skip 为显式 online crawler smoke |
+| `tests/M6_crawler/` 离线 | 52 项 + 1 deselected | 2026-08-26：52 passed | `m6_crawler and not online` |
+| `tests/M0_M2/` | 18 项 | 2026-08-26：18 passed | 基线回归 |
 | 根级 `tests/M0_M2/` | 18 项 | 历史基线 | 从平台原始测试提炼的关键断言，与 `platform/tests/` 同时保留 |
 | M6 crawler 前置门禁 | `tests/M6_crawler/` | 独立 job `crawler-offline` | marker `m6_crawler`；默认 mock HTTP；在线 smoke 仅 workflow_dispatch |
 
@@ -393,17 +403,16 @@ pytest tests/M0_M2/ -v         # 基线回归
 
 M6a-P0 不等同于 M7 Source 生命周期；持久化注册、同步、删除传播和多源隔离留待 M7。
 
-### 阶段 12：M6a 契约与默认包兼容测试（进行中）及 M6b 规划
+### 阶段 12：M6a 契约与默认包兼容测试（已完成）及 M6b 规划
 
-M6a 已于 2026-08-25 获准并进入 `ADMITTED / IN_PROGRESS`。M6a-1 的 `tests/M6a/` 独立 `m6a` marker
+M6a 已于 2026-08-25 获准并进入 `ADMITTED / IN_PROGRESS`，现已收口为 `ADMITTED / COMPLETE`。M6a-1 的 `tests/M6a/` 独立 `m6a` marker
 协议 contract tests 已形成局部检查点：逻辑 Source/document/chunk 身份、职责拆分后的存储边界、Tool 的权限与
 副作用分类、结构化安全错误，以及跨请求 Runner 生命周期。
 
 M6a-2 在同一隔离目录增加默认 `knowledge-pack` 的真实链路测试：`MarkdownPackSource`、完整快照、稳定逻辑
 identity、generation 隔离缓存、reallocation、内容变更/删除、case-fold 冲突和旧 `RetrievalChunk` 出处兼容。
 适配层不替换 `StudySessionService` 的状态转换、答题评估、持久化或 review-log 权威，也不提前实现静态额外
-Source、运行时 Source 生命周期、Tool Registry、Agent Runner 或任何 M6b 能力。M6a-2 自动化门禁已于
-2026-08-26 通过；M6a-3 尚未开始。
+Source、运行时 Source 生命周期、Tool Registry、Agent Runner 或任何 M6b 能力。M6a-2 自动化门禁已于 2026-08-26 通过；M6a-3 的工具/状态机/静态额外源、default/combined generation 分离和单进程 service lock 门禁随后闭合，M6a-4 文档/API/OpenAPI/链接收口已完成。
 
 M6a 开工前的继承保护基线已于 2026-08-25 在受标识候选树上真实复验：focused privacy/API/SSE/recovery 32 项、M3b
 13 项、原始 platform 40 项、根级 271 项通过（另有 1 项显式 online crawler smoke 跳过），crawler offline 52 项通过
@@ -433,7 +442,7 @@ allowlist、写工具拒绝、独立 preview 入口、预算/终止和“不创�
 | M5d 学习工作台 | `tests/M5d/` | `tests/regression/` | `tests/M0_M2/` | — |
 | M5e 可复现交付 | `tests/M5e/` | `tests/regression/` + `platform/tests/` | `tests/M0_M2/` | smoke + 独立 slow 90 题门禁 |
 | M6 crawler 前置 | `pytest tests/M6_crawler -m "m6_crawler and not online"` | `tests/regression/` | `tests/M0_M2/` | 默认 90 题发现 + smoke |
-| M6a-1/M6a-2 契约与默认包适配 | `tests/M6a/`（`m6a`） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | `tools/run_evaluation.py` |
+| M6a-1/M6a-2/M6a-3 契约、适配与拓扑门禁 | `tests/M6a/`（`m6a`） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | `tools/run_evaluation.py` |
 | M6b 只读预览 | `tests/M6b/`（获准后规划） | `tests/regression/` | `tests/M0_M2/` | 默认 90 题；可选 provider smoke |
 | M7–M10 准入准备 | 不创建阶段测试目录；当前仅治理一致性门禁 | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
 

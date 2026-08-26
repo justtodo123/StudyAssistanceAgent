@@ -1,8 +1,8 @@
 # M6a Harness 骨架（契约先行）执行计划
 
-> 版本：v2.3
+> 版本：v2.5
 > 制定日期：2026-08-21
-> 当前状态：八项强制设计决策、保护基线与负责人批准均已闭合；`ADMITTED / IN_PROGRESS`；M6a-1 协议契约和 M6a-2 默认知识包适配的自动化门禁已通过，M6a-3 尚未开始
+> 当前状态：八项强制设计决策、保护基线与负责人批准均已闭合；`ADMITTED / COMPLETE`
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)；最终状态权威为 [`docs/PLAN.md`](../PLAN.md)
 > 适用范围：Source/Store/Tool/Runner 契约、现有状态机兼容、启动期静态额外 Markdown 源
 > 后续阶段：M7 用户数据源生命周期；M6b 为独立的只读 Agent 预览
@@ -11,9 +11,9 @@
 
 M6a-P0 crawler 与 2026-08-25 保护基线均已形成真实前置证据；八项强制设计决策已经用户逐项确认并
 按 §0.4 闭合为 `RESOLVED`。用户/项目负责人于 2026-08-25 明确批准“M6a 可以开工”，因此本计划现为
-`ADMITTED / IN_PROGRESS`。M6a-1 协议契约和 M6a-2 默认 `knowledge-pack` 的
-Source / SourceChunk / RetrievalIndex 兼容适配已通过自动化回归门禁；M6a-3 尚未开始。该状态只授权按第 3 节继续实施，
-不代表整个 M6a 已完成。
+`ADMITTED / COMPLETE`。M6a-1 协议契约和 M6a-2 默认 `knowledge-pack` 的
+Source / SourceChunk / RetrievalIndex 兼容适配、M6a-3 工具/状态机/静态额外源/单进程拓扑门禁与 M6a-4 文档/API/OpenAPI/链接收口均已完成。
+M6a 交付状态现为 `COMPLETE`，不自动批准 M6b 或 M7。
 
 ### 0.1 前置证据
 
@@ -56,8 +56,8 @@ Source / SourceChunk / RetrievalIndex 兼容适配已通过自动化回归门禁
 | decision_set_version | m6a-decision-set-v1 |
 
 批准记录已经闭合，M6a 已按第 3 节顺序开始生产实施。M6a-1 协议契约及其隔离 contract tests、M6a-2
-默认知识包适配及其真实链路测试均已通过自动化门禁；M6a-3 尚未开始，M6a 交付状态仍为
-`IN_PROGRESS`。第 4 节 contract tests 和 benchmark 是实施/退出门禁，不是准入前置证据。
+默认知识包适配、M6a-3 工具/状态机/静态额外源/service lock 与 M6a-4 收口均已通过；M6a 交付状态为
+`COMPLETE`。第 4 节 contract tests 和 benchmark 是实施/退出门禁，不是准入前置证据。
 
 ### 0.4 八项强制决策（最终选定）
 
@@ -347,14 +347,39 @@ Runner 必须表达跨请求生命周期，而不是只有 `run(context)`：至�
 - 让旧 `build_index()` / `build_index_cached()` 与 Search/QA 继续返回兼容的 `knowledge/{logical_uri}` 出处，检索结果缓存按 generation 隔离；
 - 使用真实仓库知识包和受控 Markdown fixture 覆盖 relocation、内容变更/删除、快照替换、路径隐私及旧链路检索回归；不在本子阶段实现额外源、运行时 Source 生命周期、Tool Registry 或 Agent Runner。
 
-### 后续 M6a-3：确定性工具/状态机适配与启动期静态额外源
+### M6a-3：确定性工具/状态机适配与启动期静态额外源
+
+退出条件：✅ 已落地。
 
 - 创建 `platform/app/tools/`，提供 Retrieve、Quiz、ReviewDue 等确定性适配器；
 - ReviewLog 若保留为领域服务适配，必须标为写工具，不能进入 M6b preview allowlist；
 - 创建 `platform/app/runners/state_machine.py`，包装现有状态机而不改变 API schema；
-- 在默认包适配稳定并通过其保护回归后，再实现 `SA_EXTRA_SOURCES` 启动期静态额外 Markdown 源；运行时注册、同步、删除和生命周期仍属于 M7。
+- 实现 `SA_EXTRA_SOURCES` 启动期静态额外 Markdown 源；运行时注册、同步、删除和生命周期仍属于 M7；
+- 分离 default generation 与 combined generation，检索缓存按 scope 独立失效；
+- 落实单进程 / 单 worker service lock：`platform/.cache/index/service.lock`，拒绝 `WEB_CONCURRENCY`/`UVICORN_WORKERS`≠1、`SA_INDEX_READONLY` 和第二服务进程。
 
 ### M6a-4：文档与收口
+
+退出条件：✅ 已完成。已同步根 README、`platform/README.md`、`docs/PLAN.md`、`docs/plans/README.md` 和 `tests/TEST_PLAN.md`。
+M6a 收口矩阵（2026-08-26，当前 checkout = parent `b9bb31b` + 本提交工作区）：
+
+```text
+pytest tests/M6_crawler -m "m6_crawler and not online"   # 52 passed, 1 deselected
+pytest tests/M6a                                         # 124 passed
+pytest tests/M0_M2                                       # 18 passed
+pytest tests/regression                                   # 52 passed
+pytest platform/tests                                     # 40 passed
+pytest tests                                              # 395 passed, 1 skipped
+SA_USE_VECTOR=false HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 \
+  ./platform/.venv/Scripts/python tools/run_evaluation.py -k 1,3,5 --report reports/m6a-closeout.json
+```
+
+默认 90 题离线 BM25：OS 38 + DS 28 + CO 24；Recall@3 = 0.987 / 0.929 / 1.000，汇总 0.972。
+报告 SHA-256 `54ba84bb8bfae744ed827502004106058c9dc1823863d865251fd421bf9a55e6`。
+API/OpenAPI/链接检查：`tests/M6a/test_closeout_contracts.py` + `tests/regression/test_api_contract.py` +
+`test_path_privacy.py` + `test_sse_contract.py` + `test_governance_contract.py` + `tests/M3d/test_docs.py`，30 passed。
+人工审查：公开 API/OpenAPI 路径未增加；无 host path；额外源只进 Search/QA；单进程 service lock 已文档化；
+default/combined generation 分离；正式 Runner 仍是学习状态机；默认 90 题 Recall@3 未退化。
 
 同步 `platform/README.md`、`docs/PLAN.md`、`docs/plans/README.md` 和 `tests/TEST_PLAN.md`。完整验收顺序：
 

@@ -9,6 +9,9 @@ from __future__ import annotations
 
 import time
 from collections import OrderedDict
+from collections.abc import Callable
+from enum import StrEnum
+from pathlib import Path
 from threading import RLock
 
 from . import config
@@ -20,28 +23,76 @@ from .vector_store import LocalVectorStore, SqliteVectorStore, VectorStore
 RRF_K = config.RRF_K
 
 
-class _VectorHolder:
-    """惰性单例：避免未装依赖/首次加载阻塞无向量需求的请求。"""
+class RetrievalScope(StrEnum):
+    """Select the immutable source view used by one retrieval request."""
 
-    _store: VectorStore | None = None
-    _loaded = False
+    DEFAULT_ONLY = "DEFAULT_ONLY"
+    DEFAULT_PLUS_EXTRAS = "DEFAULT_PLUS_EXTRAS"
+
+
+class _VectorHolder:
+    """Lazy vector stores isolated by immutable retrieval scope and generation."""
+
+    _stores: dict[tuple[str, str], VectorStore] = {}
     _lock = RLock()
+    _max_generations = 2
 
     @classmethod
-    def get(cls) -> VectorStore | None:
+    def get(cls, scope: RetrievalScope, generation: str) -> VectorStore | None:
         if not config.VECTOR_ENABLED or not cls._available():
             return None
+        key = (scope.value, generation)
         with cls._lock:
-            if not cls._loaded:
+            store = cls._stores.get(key)
+            if store is None:
                 if config.VECTOR_STORE == "linear":
-                    cls._store = LocalVectorStore(config.EMBEDDING_MODEL)
+                    store = LocalVectorStore(config.EMBEDDING_MODEL)
                 else:
-                    cls._store = SqliteVectorStore(
+                    store = SqliteVectorStore(
                         config.EMBEDDING_MODEL,
-                        db_path=config.VECTOR_STORE_PATH,
+                        db_path=cls._sqlite_path(scope, generation),
                     )
-                cls._loaded = True
-            return cls._store
+                cls._stores[key] = store
+                cls._evict(scope, keep=key)
+            return store
+
+    @classmethod
+    def _evict(
+        cls,
+        scope: RetrievalScope,
+        *,
+        keep: tuple[str, str],
+    ) -> None:
+        candidates = [
+            key
+            for key in cls._stores
+            if key[0] == scope.value and key != keep
+        ]
+        while len(candidates) >= cls._max_generations:
+            key = candidates.pop(0)
+            store = cls._stores.pop(key)
+            close = getattr(store, "close", None)
+            if callable(close):
+                close()
+
+    @classmethod
+    def reset(cls) -> None:
+        """Release process-local stores; persisted cache files remain untouched."""
+        with cls._lock:
+            stores = tuple(cls._stores.values())
+            cls._stores.clear()
+        for store in stores:
+            close = getattr(store, "close", None)
+            if callable(close):
+                close()
+
+    @staticmethod
+    def _sqlite_path(scope: RetrievalScope, generation: str) -> Path:
+        path = config.VECTOR_STORE_PATH
+        suffix = path.suffix or ".sqlite3"
+        return path.with_name(
+            f"{path.stem}-{scope.value.lower()}-{generation}{suffix}"
+        )
 
     @staticmethod
     def _available() -> bool:
@@ -58,11 +109,19 @@ class _VectorHolder:
 class MultiRecallService:
     """多路召回统一入口。向量不可用或失败时优雅回退到纯关键词路。"""
 
-    def __init__(self) -> None:
-        self._chunks: list[RetrievalChunk] | None = None
-        self._generation: str | None = None
+    def __init__(
+        self,
+        snapshot_provider: Callable[
+            [RetrievalScope], tuple[str, list[RetrievalChunk]]
+        ]
+        | None = None,
+    ) -> None:
+        self._snapshot_provider = snapshot_provider
+        self._chunks_by_scope: dict[str, list[RetrievalChunk]] = {}
+        self._generation_by_scope: dict[str, str] = {}
         self._result_cache: OrderedDict[
-            tuple[str, str, int, float, str | None], tuple[list[RetrievalChunk], str]
+            tuple[str, str, str, int, float, str | None],
+            tuple[list[RetrievalChunk], str],
         ] = OrderedDict()
         self._cache_capacity = 128
         self._lock = RLock()
@@ -77,6 +136,7 @@ class MultiRecallService:
         top_k: int = 5,
         threshold: float | None = None,
         course: str | None = None,
+        scope: RetrievalScope = RetrievalScope.DEFAULT_ONLY,
     ) -> tuple[list[RetrievalChunk], str]:
         """Return fused results from exactly one current source generation."""
         started = time.perf_counter()
@@ -84,12 +144,15 @@ class MultiRecallService:
             threshold = config.VECTOR_THRESHOLD
 
         with self._lock:
-            generation, chunks = self._load_snapshot()
-            if generation != self._generation:
-                self._generation = generation
-                self._chunks = chunks
-                self._result_cache.clear()
-            cache_key = (generation, question, top_k, threshold, course)
+            generation, chunks = self._load_snapshot(scope)
+            scope_key = scope.value
+            if self._generation_by_scope.get(scope_key) != generation:
+                self._generation_by_scope[scope_key] = generation
+                self._chunks_by_scope[scope_key] = chunks
+                stale_keys = [key for key in self._result_cache if key[1] == scope_key]
+                for key in stale_keys:
+                    del self._result_cache[key]
+            cache_key = (generation, scope_key, question, top_k, threshold, course)
             cached = self._result_cache.get(cache_key)
             if cached is not None:
                 results, mode = cached
@@ -111,7 +174,7 @@ class MultiRecallService:
             pool = chunks if config.BM25_POOL <= 0 else chunks[: config.BM25_POOL]
             routes: list[list[RetrievalChunk]] = []
 
-            vector_store = _VectorHolder.get()
+            vector_store = _VectorHolder.get(scope, generation)
             if vector_store is not None:
                 try:
                     if not vector_store.is_synced(chunks):
@@ -187,7 +250,13 @@ class MultiRecallService:
             return interview + course_notes + navigation
         return course_notes + interview + navigation
 
-    def _load_snapshot(self) -> tuple[str, list[RetrievalChunk]]:
+    def _load_snapshot(
+        self,
+        scope: RetrievalScope = RetrievalScope.DEFAULT_ONLY,
+    ) -> tuple[str, list[RetrievalChunk]]:
+        if self._snapshot_provider is not None:
+            return self._snapshot_provider(scope)
+
         from .knowledge_index import build_index_snapshot_cached
 
         snapshot = build_index_snapshot_cached()

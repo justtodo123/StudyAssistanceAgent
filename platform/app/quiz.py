@@ -39,13 +39,19 @@ _CONCEPT_TEMPLATES = [
 class QuizService:
     """测验生成器。"""
 
-    def generate(self, req: QuizRequest) -> QuizResponse:
+    def generate(
+        self,
+        req: QuizRequest,
+        *,
+        rng: random.Random | None = None,
+    ) -> QuizResponse:
         """根据请求生成测验。"""
+        random_source = rng or random
         # 收集三个数据源的题目
         pool: list[QuizQuestion] = []
         pool.extend(self._load_example_questions(req.course))
         pool.extend(self._load_retrieval_questions(req.course))
-        pool.extend(self._load_concept_questions(req.course))
+        pool.extend(self._load_concept_questions(req.course, rng=random_source))
 
         # 按条件筛选
         filtered = self._filter(pool, req.difficulty, req.topics)
@@ -53,7 +59,7 @@ class QuizService:
         # 随机采样
         count = min(req.count, len(filtered))
         if count > 0:
-            questions = random.sample(filtered, count)
+            questions = random_source.sample(filtered, count)
         else:
             questions = []
 
@@ -160,7 +166,12 @@ class QuizService:
 
     # ── 数据源 3：概念模板 ────────────────────────────────────────────────────
 
-    def _load_concept_questions(self, course: str) -> list[QuizQuestion]:
+    def _load_concept_questions(
+        self,
+        course: str,
+        *,
+        rng: random.Random | Any = random,
+    ) -> list[QuizQuestion]:
         """从知识条目的 tags 生成概念型问题。"""
         chunks = build_index_cached()
         # 收集该课程所有 tags（去重）
@@ -174,7 +185,7 @@ class QuizService:
 
         questions: list[QuizQuestion] = []
         for tag, source in all_tags.items():
-            template = random.choice(_CONCEPT_TEMPLATES)
+            template = rng.choice(_CONCEPT_TEMPLATES)
             questions.append(
                 QuizQuestion(
                     question=template.format(tag=tag),

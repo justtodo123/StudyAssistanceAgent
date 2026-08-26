@@ -372,6 +372,15 @@ class RunnerContext:
     correlation_id: str = field(default_factory=lambda: secrets.token_hex(16))
     permissions: frozenset[str] = frozenset()
     cancelled: bool = False
+    input: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.input, Mapping):
+            raise ProtocolValidationError("runner input must be an object")
+        try:
+            json.dumps(self.input, ensure_ascii=False)
+        except (TypeError, ValueError) as exc:
+            raise ProtocolValidationError("runner input must be JSON serializable") from exc
 
 
 class RunnerEventType(StrEnum):
