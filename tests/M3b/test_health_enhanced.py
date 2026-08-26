@@ -33,7 +33,7 @@ class TestEnhancedHealth:
 
     def test_health_shows_knowledge_root(self, test_client):
         data = test_client.get("/health").json()
-        assert data["knowledge_root"].endswith("knowledge")
+        assert data["knowledge_root"] == "knowledge-pack"
 
     def test_health_shows_index_stats(self, test_client):
         data = test_client.get("/health").json()

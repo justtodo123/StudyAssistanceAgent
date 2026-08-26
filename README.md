@@ -4,9 +4,9 @@
 > M0–M5 提供最小实现：默认计算机知识包、多路召回 RAG、学习会话与工作台。
 > M6 起按计划扩展：可插拔数据源、专业化存储、目标驱动学习计划与执行监控。
 
-**当前状态**：`v1.8 M6 设计完成、实现未开工` — M6a-P0 crawler 已收口；MVP（M5）可用，
-`python tools/start_local.py` 可启动最小工作台。
-阶段与定位以 [docs/PLAN.md](docs/PLAN.md) 为最终依据。
+**当前状态**：M6a-P0 crawler 已收口；八项决策、保护基线与负责人批准已闭合；M6a-1 协议契约至 M6a-4 收口已完成，状态为 `ADMITTED / COMPLETE`；M6b–M10 仍为 `BLOCKED / NOT_STARTED`；M0–M5 MVP 可用。
+`python tools/start_local.py` 可启动最小工作台。阶段、准入与定位以 [docs/PLAN.md](docs/PLAN.md) 为最终依据；
+统一硬门禁见 [stage-admission-gates.md](docs/standards/stage-admission-gates.md)。
 
 ---
 
@@ -21,15 +21,15 @@
 
 | 能力 | 说明 | 状态 |
 | --- | --- | --- |
-| 知识问答 | 基于知识库 + 外部资料回答课程问题，支持 LLM 生成或降级笔记摘要 | ✅ 已实现 |
-| 课程笔记管理 | 结构化笔记、例题、错题集的创建与检索 | ✅ 已实现（OS 20 篇 + DS 20 篇 + CO 20 篇 + Network 31 篇） |
-| 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（文件去重、课程过滤） |
-| RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 已实现（离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000） |
+| 知识问答 | 基于已索引 Markdown 知识库回答问题，支持 LLM 生成或降级笔记摘要；crawler 候选默认不检索 | ✅ 已实现 |
+| 课程知识维护 | 通过 Markdown + frontmatter 文件维护、索引和检索精炼笔记与例题 | ✅ 已实现（OS 20 篇 + DS 20 篇 + CO 20 篇 + Network 31 篇） |
+| 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（默认 `SqliteVectorStore`，线性余弦；可显式切换内存 `LocalVectorStore`） |
+| RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 当前复测 Recall@3：OS 0.987、DS 0.929、CO 1.000，加权 0.972 |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 将改为目标/掌握度驱动 |
 | 用户数据源 | 自定义知识目录，规模百→千→万 | ⬜ M7 |
-| 专业化存储 | 控制面 SQLite + LanceDB，万级可选 Qdrant | ⬜ M8 |
+| 专业化存储 | 当前 SQLite；M8 规划 LanceDB，万级可选 Qdrant | ⬜ M8 |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ⬜ M9 |
-| Harness 框架 | M6a 契约/兼容骨架；M6b 独立只读工具调用预览；完整自主 Runner 在 M10 | ⬜ 设计完成，未开工 |
+| Harness 框架 | M6a-1 至 M6a-4 已完成：协议、默认包、工具/状态机、静态额外源、单进程拓扑与文档收口。M6b–M10 仍被准入门禁阻断，只读预览与自主 Runner 尚未实现 | ✅ M6a `ADMITTED / COMPLETE` |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
@@ -64,7 +64,7 @@ StudyAssistanceAgent/
 │   │   ├── main.py        # FastAPI 入口（search/qa/quiz/review/study-sessions + 工作台）
 │   │   ├── retrieval.py   # 多路召回 + RRF 融合
 │   │   ├── bm25.py        # BM25 关键词检索（bigram 分词）
-│   │   ├── vector_store.py# 本地 BGE 向量存储（可选依赖）
+│   │   ├── vector_store.py# SQLite/内存 BGE 向量后端（当前线性余弦）
 │   │   ├── qa.py          # 问答服务（LLM 生成 / 降级笔记摘要）
 │   │   ├── knowledge_index.py # 知识库索引（Markdown 切分 + 缓存）
 │   │   ├── review_plan.py # 复习计划服务（分日学习计划生成）
@@ -89,18 +89,14 @@ StudyAssistanceAgent/
 │   ├── TEST_PLAN.md       # 测试计划文档
 │   ├── conftest.py        # 跨阶段共享 fixtures
 │   ├── M0_M2/             # 基线回归测试（18 项）
-│   ├── M3a/               # 向量库迁移测试（22 项）
-│   ├── M3b/               # 可观测性测试（13 项）
-│   ├── M3c/               # 面经库测试（10 项）
-│   ├── M3d/               # 文档完整性测试（6 项）
-│   ├── M4/                # 课程知识库规模测试（14 项）
-│   ├── M5a/               # 评测入口测试（26 项）
-│   ├── M5b/               # 学习会话测试（18 项）
-│   ├── M5c/               # 学习状态持久化测试（14 项）
-│   ├── M5d/               # 学习工作台测试（10 项）
-│   ├── M5e/               # 可复现交付测试（15 项）
+│   ├── M3a/               # 向量库迁移测试
+│   ├── M3b/               # 可观测性测试
+│   ├── M3c/               # 面经库测试
+│   ├── M3d/               # 文档完整性测试
+│   ├── M4/                # 课程知识库规模测试
+│   ├── M5a/ ~ M5e/       # 评测、会话、持久化、工作台、离线交付
 │   ├── M6_crawler/        # crawler P0 离线测试（独立 marker / CI 已收口）
-│   ├── regression/        # 跨阶段回归套件（21 项）
+│   ├── regression/        # 跨阶段回归套件
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
 │   ├── README.md          # 导航与记录列表
@@ -153,7 +149,7 @@ cd ..
 | 端点 | 方法 | 说明 |
 | --- | --- | --- |
 | `/` | GET | 最小学习工作台（讲解、作答、反馈、复习记录） |
-| `/health` | GET | 健康检查（向量引擎、知识库路径、索引/缓存/延迟指标、LLM 配置状态） |
+| `/health` | GET | 健康检查（向量引擎、默认知识包逻辑标识、索引/缓存/延迟指标、LLM 配置状态） |
 | `/api/v1/search` | POST | 检索知识库片段（多路召回 + RRF 融合） |
 | `/api/v1/qa` | POST | 问答（检索 → 可选 LLM 生成 → 带出处回答） |
 | `/api/v1/qa/stream` | POST | 流式问答（SSE，同上但逐段输出） |
@@ -182,10 +178,15 @@ cd ..
 | [docs/baselines.md](docs/baselines.md) | RAG 与交付延迟基线 |
 | [docs/standards/git-conventions.md](docs/standards/git-conventions.md) | Git 提交规范（Conventional Commits） |
 | [docs/standards/runtime-contracts.md](docs/standards/runtime-contracts.md) | 数据源门禁、检索参数、错误码、质量分层 |
+| [docs/standards/stage-admission-gates.md](docs/standards/stage-admission-gates.md) | M6a–M10 决策、准入、撤销与阻断规则（PLAN 为最终权威） |
 | [docs/plans/m3-engineering-execution-plan.md](docs/plans/m3-engineering-execution-plan.md) | M3 工程质量阶段执行记录（已完成） |
 | [docs/plans/m4-knowledge-base-scale-plan.md](docs/plans/m4-knowledge-base-scale-plan.md) | M4 课程知识库规模补齐计划（范围、验收、分支） |
 | [docs/plans/m6a-harness-skeleton-plan.md](docs/plans/m6a-harness-skeleton-plan.md) | M6a 契约与兼容骨架（含 crawler 前置收口） |
-| [docs/plans/m6b-agent-core-plan.md](docs/plans/m6b-agent-core-plan.md) | M6b 独立只读工具调用预览计划 |
+| [docs/plans/m6b-agent-core-plan.md](docs/plans/m6b-agent-core-plan.md) | M6b 独立只读工具调用预览准备计划（被阻断） |
+| [docs/plans/m7-source-lifecycle-plan.md](docs/plans/m7-source-lifecycle-plan.md) | M7 用户 Source 生命周期准入准备（被阻断） |
+| [docs/plans/m8-specialized-storage-plan.md](docs/plans/m8-specialized-storage-plan.md) | M8 专业化检索存储准入准备（被阻断） |
+| [docs/plans/m9-goal-driven-planning-plan.md](docs/plans/m9-goal-driven-planning-plan.md) | M9 目标驱动学习计划准入准备（被阻断） |
+| [docs/plans/m10-autonomous-runner-plan.md](docs/plans/m10-autonomous-runner-plan.md) | M10 自主 Runner 与 Harness 对外准入准备（被阻断） |
 | [knowledge/README.md](knowledge/README.md) | 知识库导航与写作规范（含 51 条面经） |
 | [CLAUDE.md](CLAUDE.md) | Agent 项目级开发指导 |
 
@@ -197,7 +198,3 @@ cd ..
 ## License
 
 [MIT](LICENSE)
-
-
-
-> **M4 status (2026-08-18):** M3d and M4 are now on `master`. M4 expands OS/DS/CO to 20 entries each (60 course entries total) and adds 15 evaluation questions. The M3c interview bank still contains 51 entries and is integrated with indexing, search, and QA sources.

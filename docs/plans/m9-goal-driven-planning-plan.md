@@ -1,0 +1,77 @@
+# M9 目标驱动学习计划准备计划
+
+> 当前状态：设计准备；`BLOCKED / NOT_STARTED`，未获准开工
+> 前置：M7 用户源生命周期与 M8 存储契约退出证据
+> 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
+> 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
+
+## 1. 范围与非目标
+
+M9 规划基于 Goal、目标日期、用户等级、掌握度与授权 Source scope 生成版本化学习计划，按正式学习事件跟踪完成、
+跳过、偏差和重规划。Planner 只能提出计划和建议，不成为第二套 mastery 或会话状态权威。
+
+本阶段不实现写工具自主循环、checkpoint/EffectLedger 或 MCP；这些属于 M10。计划文件存在不批准外部 AI 接入、
+新 API、schema migration 或正式状态路径修改。
+
+## 2. 前置证据与继承不变量
+
+| Prerequisite ID | 当前状态 | 准入所需证据 |
+| --- | --- | --- |
+| `M9-M7-EXIT` | `OPEN` | M7 Source lifecycle、scope/isolation、revision/delete 和离线 fallback 退出证据 |
+| `M9-M8-EXIT` | `OPEN` | M8 control schema、migration/parity/fallback 或明确维持当前后端的批准结论与退出证据 |
+
+`StudySessionService` 与领域仓储继续掌握正式状态转换、答案评估和 mastery 写入。现有 review-plan 与
+study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时仍有确定性路径；授权 Source 内容和用户数据
+不得越界进入 provider、日志或 trace。
+
+## 3. 强制决策
+
+| Decision ID | 状态 | 准入前必须选定并留证的内容 |
+| --- | --- | --- |
+| `M9-PLANNER-INPUT-SCHEMA` | `OPEN` | Goal、目标日、用户等级、mastery snapshot、source scope、限制条件的版本化 schema、校验与拒绝行为 |
+| `M9-PLAN-SCHEMA` | `OPEN` | Plan/PlanRevision/PlanTask/ProgressEvent 的字段、身份、状态转换、验证、可重放和 schema 升级 |
+| `M9-MASTERY-SCHEMA` | `OPEN` | mastery 量表、置信度、证据、时间、衰减、来源、缺失值和旧数据迁移规则 |
+| `M9-MASTERY-AUTHORITY` | `OPEN` | `StudySessionService`/领域仓储的唯一正式写入边界，planner 建议的隔离、采纳与冲突处理 |
+| `M9-EXECUTION-DEVIATION` | `OPEN` | 选题、完成、跳过、过期、偏差指标、重规划触发、版本关系和并发事件语义 |
+| `M9-EXTERNAL-AI` | `OPEN` | provider/model、发送字段、隐私/保留、认证、timeout/cost、失败行为及确定性无 LLM fallback |
+| `M9-EVALUATION` | `OPEN` | 计划有效性、先修关系、source grounding、遵循度、偏差、可重放性、延迟、成本的 workload 与阈值 |
+| `M9-COMPATIBILITY` | `OPEN` | 现有 review-plan/study-session API、SQLite 数据、默认工作台和 M0–M5 行为的映射、迁移及回滚 |
+
+所有决策都需明确默认、覆盖、输入校验、失败、隐私/兼容影响、适用阈值、证据、责任人和日期。外部模型可以生成
+自由文本不等于计划 schema 已闭合；没有确定性 fallback 的候选方案保持 `OPEN`。
+
+## 4. 准入检查与批准记录
+
+- [ ] M7/M8 数据、scope、revision 和存储契约退出证据有效；
+- [ ] 八项强制决策全部 `RESOLVED`，schema 与 authority 不冲突；
+- [ ] 外部 AI 最小披露、失败和无 LLM fallback 可验证；
+- [ ] evaluation workload、样本、阈值和人工评审口径冻结；
+- [ ] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表一致；
+- [ ] 用户或项目负责人完成批准。
+
+| 批准字段 | 当前值 |
+| --- | --- |
+| approved_by | — |
+| approved_at | — |
+| approval_reference | — |
+| plan_revision | — |
+| decision_set_version | — |
+
+批准为空，M9 保持 `BLOCKED / NOT_STARTED`。Agent 不得自行批准。
+
+## 5. 获准后的拟实施顺序
+
+1. 先冻结 planner input、plan、mastery 和 progress event schema；
+2. 以确定性规则生成最小计划并验证现有 API/SQLite 兼容；
+3. 接入只读 mastery snapshot 和授权 Source 摘要，不复制领域写入；
+4. 实现偏差事件与版本化重规划，再增加可选外部 AI adapter；
+5. 在冻结任务集上比较确定性与 AI 路径，达标后才扩大 rollout。
+
+拟新增 `tests/M9/` 覆盖 schema、authority、deviation/replan、provider privacy/failure、fallback 和兼容；评测必须验证
+source grounding 与先修关系，而非只检查 JSON 可解析。退出条件包括正式 mastery 只有一个写入权威、计划可重放、
+默认学习闭环与 90 题不退化、无 LLM 路径可运行，以及冻结评测达标。
+
+## 6. 撤销与后续边界
+
+mastery 定义、Source scope、计划 schema、provider 隐私政策或 evaluation workload 变化时必须 `REVOKED`。
+M10 必须等待 M9 的真实退出证据，不能把 planner 建议误作自主写入授权。

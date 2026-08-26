@@ -2,10 +2,59 @@
 
 > 版本：v2.0
 > 制定日期：2026-08-21
-> 当前状态：设计完成，未开工；前置为 M6a 契约与兼容骨架
+> 当前状态：设计草案已形成；`BLOCKED / NOT_STARTED`，未获准开工
+> 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)；最终状态权威为 [`docs/PLAN.md`](../PLAN.md)
 > 适用范围：provider-neutral 原生工具调用、只读工具预览、独立入口与安全预算
-> 后续阶段：M7–M9 完善数据源/存储/计划；M10 实现完整自主 Runner
+> 后续阶段：M6b 与 M7 均以 M6a 退出证据为共同必要前置，并各自需要专属保护基线、决策和批准；彼此不互为前置；M8/M9/M10 依赖见 PLAN；M10 实现完整自主 Runner
 > 招聘价值：证明结构化 tool-use、权限边界和可观测预览链路，不宣称已有完整 ReAct Runner
+
+## 0. 准入状态与强制设定
+
+M6a 完成是必要前置，但不会自动批准 M6b。M6a 退出证据、保护基线和下列 M6b 专属运行设定全部闭合并由
+用户/项目负责人批准前，本计划持续为 `BLOCKED / NOT_STARTED`。任何 provider、endpoint、预算或配置示例都
+只是获准后的拟议内容。
+
+### 0.1 前置证据
+
+| Prerequisite ID | 当前状态 | 准入所需证据 |
+| --- | --- | --- |
+| `M6B-M6A-EXIT` | `OPEN` | M6a 契约、Source identity、快照切换、兼容和隐私退出证据 |
+| `M6B-PROTECTED-BASELINE` | `OPEN` | 当前 revision 上 API/OpenAPI/SSE、旧会话恢复、`platform/tests/` 40 项与默认 90 题质量门禁真实通过；`collect-only` 不算通过 |
+
+### 0.2 强制决策
+
+| Decision ID | 状态 | 准入前必须选定并留证的内容 |
+| --- | --- | --- |
+| `M6B-PROVIDER` | `OPEN` | 首个 provider/model、原生 tool-call/finish reason 能力、文本 JSON fallback 是否允许及独立计量规则 |
+| `M6B-ENDPOINT-AUTH` | `OPEN` | preview 入口、base URL/endpoint、认证变量、secret/TLS/proxy 边界和 provider 不可用语义 |
+| `M6B-TIMEOUT-BUDGETS` | `OPEN` | 总 deadline、模型/工具 timeout、最大 turn/call/token/cost/result bytes 的具体默认值、覆盖范围及拒绝行为 |
+| `M6B-RETRY` | `OPEN` | 可重试错误、次数、backoff/jitter、取消行为，以及已完成工具调用不得重复执行的规则 |
+| `M6B-CONCURRENCY` | `OPEN` | 单 preview/进程并发、parallel tool call、结果顺序、取消传播、rate limit 与过载响应 |
+| `M6B-TRACE` | `OPEN` | trace 字段、参数 hash/脱敏、存储、访问、保留与删除，并继承 M6a 三层可见性 |
+| `M6B-P95` | `OPEN` | workload、冷/热条件、并发、硬件、样本数、p95 指标及是否作为阻断阈值 |
+| `M6B-FAILURE-SEMANTICS` | `OPEN` | 默认关闭、preview 专用结构化失败、熔断/终止；失败绝不创建或修改正式 session |
+
+每项必须满足统一决策完成标准；`TBD`、未选 provider 列表、没有 workload 的 p95 或“实现时调参”都保持 `OPEN`。
+
+### 0.3 全量准入检查与批准
+
+- [ ] M6a 退出与保护基线证据全部有效；
+- [ ] 八项 M6b 强制决策全部为 `RESOLVED` 并有证据、责任人和日期；
+- [ ] 已确认 M6b 隔离、默认关闭、只读且不接管 `study-sessions`；
+- [ ] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表状态一致；
+- [ ] 用户或项目负责人完成批准记录。
+
+| 批准字段 | 当前值 |
+| --- | --- |
+| approved_by | — |
+| approved_at | — |
+| approval_reference | — |
+| plan_revision | — |
+| decision_set_version | — |
+
+批准记录为空，因此当前不得添加 provider 依赖、preview endpoint/runtime flag、外部服务或生产执行路径，也不得以
+CI、README 或发布说明声称只读 preview 已交付。允许的工作仅限设定澄清、契约/评测方案、只读调查和另行批准的
+可丢弃实验。获准后才可实施第 4 节子阶段和第 5 节测试。
 
 ## 1. 背景与阶段定位
 
@@ -30,27 +79,38 @@ M6a 固化 Source/存储职责/Tool/Runner 契约，并保持学习状态机为�
 - 不实现完整 ReAct/开放式自主循环，不持久化或要求原始 Thought 文本；
 - 不实现 `ReActRunner`，不新增 `SA_RUNNER=react`，不改正式 Runner 选择逻辑；
 - 不接管 `/api/v1/study-sessions`、工作台或任何正式学习闭环；
-- 不暴露 ReviewLog、掌握度、会话状态等写工具；
+- 不暴露 ReviewLog、掌握度、会话状态、Source 注册/删除等写工具；
 - 不把 Agent 失败自动回退为状态机，也不在失败后重复执行领域副作用；
 - 不实现 checkpoint/resume、exactly-once/idempotent 写入，这些属于 M10；
 - 不用提示词 JSON 解析冒充 provider-native tool call；
 - 不做多模型路由、语义缓存或 MCP 对外化。
 
-## 2. 核心契约
+## 2. 开工门禁与契约复用
 
-### 2.1 Provider-neutral model turn
+M6b 只有在以下 M6a 证据全部通过后才能开工：Source/Tool/Runner contract tests、旧会话恢复、路径隐私、
+现有 API/OpenAPI 兼容、SSE contract、受保护的 `platform/tests/` 40 项，以及默认 OS/DS/CO 90 题的完整
+离线质量门禁。collect-only 只用于计数，不能替代这些通过证据。
+
+M6b 必须直接复用 M6a 的 `ToolContext`、`ToolResult`、Source identity、授权和 trace 契约；provider adapter
+只负责把 `call_id` 与 provider block 映射到既有工具结果，不得再定义平行的领域 result envelope。用户响应、
+模型/工具可见限量结果和 audit trace 继续使用 M6a 的三层可见性；`agent_trace` 与状态机 `domain_trace` 分离，
+不得记录知识正文、用户答案、密钥或宿主机绝对路径。
+
+## 3. 核心契约
+
+### 3.1 Provider-neutral model turn
 
 在领域 Tool 协议和供应商 SDK 之间增加适配层，至少表达：
 
 - `ModelTurn`：消息/工具调用 block、`finish_reason`、usage、延迟和可选 cost 元数据；
 - `ToolCall`：`call_id`、规范化工具名、结构化 arguments、provider 元数据；
-- `ToolExecutionResult`：对应 `call_id`、成功数据或结构化错误、是否可重试和结果大小；
+- `ToolExecutionResult`：provider 层对既有 M6a `ToolResult` 的 `call_id` 关联视图，不复制领域成功/错误 envelope；
 - `LLMClient`：请求工具描述、接收结构化 turn、取消和超时，不把某一供应商类型泄露到领域层。
 
 原始 Thought 不是必须字段，不进入持久化 agent trace。trace 只保留决策结果、工具名、参数摘要/哈希、call_id、
 结果状态、guard 触发、usage、latency 和 fallback 标识；不得记录用户答案、知识正文、密钥或完整敏感参数。
 
-### 2.2 ToolRegistry 与授权
+### 3.2 ToolRegistry 与授权
 
 ToolRegistry 负责注册、发现、描述序列化和按名称查找；工具描述采用实际 provider adapter 能消费的 schema。
 每个工具携带 read-only/idempotent/side-effect 能力元数据。preview 只允许：
@@ -62,13 +122,14 @@ ToolRegistry 负责注册、发现、描述序列化和按名称查找；工具�
 `ReviewLogTool`、会话创建/答案提交、掌握度写入等即使未来在总注册表中存在，也必须被 preview allowlist 拒绝。
 `ToolContext` 携带权限、source namespace、learner scope、correlation ID、取消信号和预算。
 
-### 2.3 独立预览入口
+### 3.3 独立预览入口
 
-新增独立 preview service/endpoint 或 CLI（实现时在 M6a API 兼容边界内定名），返回预览答案、来源、结构化
-tool trace、终止原因和 usage 摘要。它不复用正式 `study-sessions` 写入入口，不创建 session，不写
-`learning_state.sqlite3` 或 `review_history.json`。正式 API 和工作台保持 M5 行为不变。
+新增独立 preview service/endpoint 或 CLI（实现时在 M6a API 兼容边界内定名），默认关闭；启用后返回预览答案、
+来源、结构化 tool trace、终止原因和 usage 摘要。它不复用正式 `study-sessions` 写入入口，不创建 session，
+不写 `learning_state.sqlite3`。未配置、不可用或执行失败时返回 preview 专用结构化结果，不创建正式 session
+作为回退。
 
-## 3. 子阶段
+## 4. 子阶段
 
 ### M6b-1：工具注册与只读目录
 
@@ -135,7 +196,7 @@ model turn
 同步 `platform/README.md`、`docs/PLAN.md`、`docs/plans/README.md` 和 `docs/interview/README.md`（实施阶段再更新）。
 明确写出 M6b 是只读 preview，完整自主 Runner 和 Agent 评测属于 M10。
 
-## 4. 测试策略与验收门禁
+## 5. 测试策略与验收门禁
 
 新增测试建议放在 `tests/M6b/`，不修改 M0–M5 和 M6a 存量测试：
 
@@ -160,7 +221,7 @@ tests/M6b/
 必须证明：preview 不创建/修改 study session，不提交答案，不写 review log；正式学习无 LLM 仍可运行；默认
 三课 Recall@3 不退化。不得把 collection-only 结果写成测试通过。
 
-## 5. 代码结构与配置规划
+## 6. 代码结构与配置规划
 
 ```text
 platform/app/
@@ -181,7 +242,7 @@ tests/M6b/
 `SA_PREVIEW_DEADLINE_SECONDS`、`SA_PREVIEW_TOOL_RESULT_LIMIT`；不得引入 `SA_RUNNER=react`，不得让 preview
 开关替换正式状态机。无 LLM key 时，正式学习路径照常降级；preview 返回受控的不可用结果。
 
-## 6. 风险与后续归属
+## 7. 风险、拟定方向与后续归属（不得替代强制决策）
 
 | 风险 | M6b 决策 | 后续 |
 | --- | --- | --- |
@@ -194,12 +255,11 @@ tests/M6b/
 M10 的完整范围：可选自主 Runner、正式执行路径接入、写工具授权、checkpoint/resume、幂等副作用、失败恢复、
 Agent 任务评测、知识包 manifest 和 MCP 最小实现。M6b 完成不代表这些能力已实现。
 
-## 7. 分支、提交与下一步
+## 8. 分支、提交与下一步
 
 ```text
 feature/m6b-readonly-preview
 ```
 
 建议提交：provider-neutral 契约、ToolRegistry/allowlist、原生 adapter、preview service、安全预算、测试、文档。
-不自动 push、不改写历史。M6b 后继续 M7–M9；待数据源、存储和计划执行契约稳定后，另行制定 M10 完整 Runner
-执行计划。
+不自动 push、不改写历史。M6b 与 M7 均以 M6a 退出证据为共同必要前置，并在各自决策、专属保护基线和批准闭合后独立推进，彼此不互为前置；M8/M9 依赖 M7，M10 依赖 M7–M9。

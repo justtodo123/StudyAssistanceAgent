@@ -91,9 +91,12 @@ python tools/run_evaluation.py --smoke
 | [co.json](evaluations/co.json) | 计算机组成原理 | 24 | ✅ 默认套件 |
 | [network.json](evaluations/network.json) | 计算机网络 | 30 | 🧩 独立扩展；仅通过 `--test-set` 显式运行 |
 
-默认套件合计 **90 题**。M5a 离线 BM25 Recall@3：OS 1.000、DS 0.929、CO 1.000。
-新增 JSON 文件不会自动扩大默认发现集合；默认课程仍由评测入口显式限定为 OS/DS/CO。额外课程先使用
-`--test-set tools/evaluations/{course}.json` 运行，待路线图和测试契约更新后再考虑加入默认套件。
+默认套件合计 **90 题**。2026-08-24 当前 checkout 离线 BM25 Recall@3：OS 0.987、DS 0.929、
+CO 1.000，加权 0.972；2026-08-18 的 1.000/0.929/1.000、加权 0.978 作为历史 M5a 基线保留，
+详见 [docs/baselines.md](../docs/baselines.md)。Network 30 题和其他新增 JSON 文件都不会自动扩大默认发现集合；
+默认课程仍由评测入口显式限定为 OS/DS/CO。额外课程先使用 `--test-set tools/evaluations/{course}.json` 运行，
+待路线图和测试契约
+更新后再考虑加入默认套件。
 
 ## crawler/ — 候选 Markdown 资料处理
 
@@ -116,9 +119,9 @@ python tools/start_local.py --check  # 只检查健康状态
 python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 ```
 
-默认设置 `SA_USE_VECTOR=false`、`HF_HUB_OFFLINE=1`，不要求 LLM key。演示步骤见 [docs/demo.md](../docs/demo.md)。
+默认设置 `SA_USE_VECTOR=false`、`HF_HUB_OFFLINE=1`，并以 `--workers 1` 启动唯一 uvicorn worker；不要求 LLM key。演示步骤见 [docs/demo.md](../docs/demo.md)。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-21（crawler P0：离线 marker 与独立 CI）· 维护：随新增工具脚本与评测集同步更新*
+*创建：2026-08-11 · 更新：2026-08-26（一键启动固定单 worker）· 维护：随新增工具脚本与评测集同步更新*
 

@@ -1,16 +1,20 @@
 # Platform — FastAPI RAG 后端
 
-> StudyAssistanceAgent 的 Python 后端服务。提供知识库检索、带出处问答、SSE 流式输出、复习计划生成和学习工作台。
+> StudyAssistanceAgent 的 Python 后端服务。提供学习工作台、知识库检索、带出处问答、SSE 流式输出、
+> 测验、复习计划/排程和服务端学习会话。
 
 ## 架构
 
 ```
-提问 → MultiRecallService（course 过滤前置）
-         ├─ 路1: LocalVectorStore（BGE 余弦，可选依赖）
-         └─ 路2: Bm25Search（bigram 关键词）
-      → RRF 融合（k=60）+ 文件级去重
-      → QaService: LLM 生成（勒令带出处）| 降级笔记摘要（句子边界截断）
-      → FastAPI /api/v1/{search, qa, qa/stream, quiz, review-plan, review-log, review-due}
+提问 / 工作台 GET /
+  → MultiRecallService（course 过滤前置）
+       ├─ 路1: SqliteVectorStore（BGE 可选；持久化 + 线性余弦）
+       │        └─ SA_VECTOR_STORE=linear 时使用内存 LocalVectorStore
+       └─ 路2: Bm25Search（bigram 关键词）
+    → RRF 融合（k=60）+ 文件级去重
+    → QaService: LLM 生成 | 降级笔记摘要
+    → StudySessionService: QA → Quiz → 评估 → review-log
+    → FastAPI 工作台与 /api/v1/{search,qa,qa/stream,quiz,review-plan,review-log,review-due,study-sessions}
 ```
 
 **M1d 优化**：课程过滤前移至检索阶段（避免无关课程占位）、RRF 结果按文件去重（同文件只保留最高分 chunk）、摘要截断在句子边界。
@@ -29,9 +33,19 @@ platform/
 │   ├── config.py          # 环境变量配置（dotenv → 常量）
 │   ├── retrieval.py       # 多路召回 + RRF 融合（MultiRecallService）
 │   ├── bm25.py            # BM25 关键词检索（中文 bigram + 英文整词分词）
-│   ├── vector_store.py    # 本地 BGE 向量存储（可选依赖，未装时优雅降级）
+│   ├── vector_store.py    # SQLite/内存向量后端（BGE 可选；当前均为线性余弦）
 │   ├── qa.py              # 问答服务（LLM 生成 / 降级笔记摘要）
-│   ├── knowledge_index.py # 知识库索引（Markdown 切分 + frontmatter 解析 + JSON 缓存）
+│   ├── knowledge_index.py # 知识库索引兼容视图（Markdown 快照 + JSON 缓存）
+│   ├── markdown_parser.py # 共享 Markdown frontmatter/H2 解析原语
+│   ├── protocols.py       # M6a provider-neutral harness 契约
+│   ├── retrieval_index.py # M6a 默认包快照到旧 RetrievalChunk 的兼容适配器
+│   ├── sources/           # 默认知识包与静态额外源适配器（见子目录 README）
+│   ├── combined_snapshot.py # 默认包 + 启动期额外源的不可变组合快照
+│   ├── snapshot_publisher.py # 原子发布 CURRENT/PREVIOUS 与 last-good
+│   ├── worker_topology.py # 单进程 / 单 worker service.lock 门禁
+│   ├── source_config.py   # SA_EXTRA_SOURCES 与资源上限解析
+│   ├── tools/             # 确定性 Retrieve/Quiz/ReviewDue 适配器
+│   ├── runners/           # StateMachineRunner 薄适配
 │   ├── source_policy.py   # 数据源类型与入库门禁
 │   ├── errors.py          # 稳定错误码
 │   ├── observability.py   # 进程内延迟/缓存指标与结构化日志
@@ -48,7 +62,7 @@ platform/
 │   ├── test_review_scheduler.py # 复习排程测试（9 个用例）
 │   └── test_study_assistant.py # 多轮工具编排集成测试（6 个用例）
 ├── requirements.txt       # 核心依赖
-├── requirements-dev.txt   # 开发依赖（pytest 等）
+├── requirements-dev.txt   # 开发依赖（pytest、httpx2、PyYAML）
 └── .env.example           # 环境变量模板（复制为 .env 后修改）
 ```
 
@@ -83,7 +97,7 @@ GET /health
 {
   "status": "UP",
   "vector_engine": "sqlite",
-  "knowledge_root": ".../knowledge",
+  "knowledge_root": "knowledge-pack",
   "index_size": 123,
   "cache_status": "warm",
   "avg_latency_ms": 0.06,
@@ -97,7 +111,7 @@ GET /health
 
 字段说明：
 - `vector_engine`：当前向量后端；可为 `linear` / `sqlite`，不可用时带 `-unavailable` 后缀。
-- `knowledge_root`：知识库根目录路径，仅用于诊断配置，不包含密钥。
+- `knowledge_root`：默认知识包的稳定逻辑标识 `knowledge-pack`，不返回宿主机目录路径。
 - `index_size`：当前索引中的有效 Markdown 切片数。
 - `cache_status`：进程内最近一次索引/检索缓存状态，取值为 `cold`、`warm` 或 `unknown`。
 - `avg_latency_ms`：当前进程保留的最近操作样本平均耗时（毫秒）；服务重启后重新统计。
@@ -111,7 +125,11 @@ GET /health
 `event`、`duration_ms`、`result_count`，以及可选的 `course`、`mode`、`cache_hit`。
 问题正文、检索内容、API key、密码、token 和 Authorization 不会写入日志。
 
-检索服务使用有界的进程内结果缓存；知识库索引使用 `.cache/knowledge_index.json` 缓存。
+检索服务使用有界的进程内结果缓存，键按 scope + generation 隔离：`DEFAULT_ONLY` 使用 default generation，
+`DEFAULT_PLUS_EXTRAS` 使用 combined generation。额外源变更不会清空默认包缓存。知识库索引使用
+`.cache/knowledge_index.json` 与 generation 元数据缓存。内容变更导致对应 generation 改变时，旧索引视图和结果缓存不会复用。
+服务启动只允许一个进程、一个 uvicorn worker；锁文件为 `platform/.cache/index/service.lock`，
+含 pid/nonce/started_at。`WEB_CONCURRENCY`/`UVICORN_WORKERS` 必须为 1 或未设置；不支持 `SA_INDEX_READONLY`。
 `/health` 的延迟和缓存字段用于运行时诊断，不作为持久化监控指标。
 完整参数表、错误码和生成分层见 [docs/standards/runtime-contracts.md](../docs/standards/runtime-contracts.md)。
 
@@ -288,6 +306,8 @@ Content-Type: application/json
 | `SA_TOP_K` | `5` | 检索返回数量 |
 | `SA_BM25_POOL` | `0` | BM25 候选池大小（`0`=全库检索，个人规模下推荐） |
 | `SA_USE_VECTOR` | `true` | 是否启用向量检索 |
+| `SA_VECTOR_STORE` | `sqlite` | 向量后端；`linear` 使用内存 `LocalVectorStore` |
+| `SA_VECTOR_STORE_PATH` | `platform/.cache/vector_store.sqlite3` | 默认 `SqliteVectorStore` 持久化路径 |
 | `SA_EMBEDDING_MODEL` | `BAAI/bge-small-zh-v1.5` | BGE 嵌入模型名 |
 | `SA_EMBEDDING_NORMALIZE` | `true` | 向量 L2 归一化 |
 | `SA_EMBEDDING_DIM` | `512` | BGE-small-zh 期望维度（入库仍校验） |
@@ -301,12 +321,16 @@ Content-Type: application/json
 | `SA_LLM_TEMPERATURE` | `0.3` | 生成温度 |
 | `SA_LLM_TIMEOUT_S` | `60` | 单次生成超时（秒） |
 | `SA_LEARNING_STORE_PATH` | `platform/.cache/learning_state.sqlite3` | 学习会话与复习历史 SQLite |
+| `SA_INDEX_CACHE_PATH` | `platform/.cache/index` | 组合快照与 `service.lock` |
+| `SA_EXTRA_SOURCES` | `[]` | 启动期静态额外 Markdown 源，最多 3 个；只进 Search/QA |
+| `SA_EXTRA_SOURCES_STRICT` | `true` | 额外源失败时拒绝整次发布 |
+| `SA_EXPECTED_DEFAULT_PACK_REVISION` | 空 | 默认包大幅缩减时的精确 revision 确认 |
 
-## M6 规划边界（尚未实现）
+## M6 边界
 
-M6a 将在不改变现有 API 的前提下收敛 Source/存储职责/Tool/Runner 契约；M6b 只增加独立、只读的原生
-工具调用 preview，不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。
-完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。当前配置表和 API 清单不包含这些规划能力。
+M6a 已完成 Source/存储职责/Tool/Runner 薄适配、启动期静态额外源、default/combined generation 分离、单进程拓扑门禁和文档收口。
+M6b 仍未实现：只增加独立、只读的原生工具调用 preview，不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。
+完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。当前 API 清单不包含这些规划能力。
 
 默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
@@ -368,7 +392,7 @@ python -m venv .venv
 ./.venv/Scripts/python -m pip install -r requirements.txt
 
 # 启动 API / 学习工作台
-./.venv/Scripts/uvicorn app.main:app --reload   # http://127.0.0.1:8000/
+./.venv/Scripts/uvicorn app.main:app --workers 1   # http://127.0.0.1:8000/
 
 # 跑测试
 ./.venv/Scripts/python -m pytest tests/ -q
@@ -376,12 +400,13 @@ python -m venv .venv
 
 > `sentence-transformers` 为可选依赖：安装后自动启用本地 BGE 向量检索；未安装则降级为纯关键词（BM25）检索，功能不断。
 
+## 当前向量存储
+
+默认后端是由 `SA_VECTOR_STORE_PATH` 配置的持久化 `SqliteVectorStore`；设置
+`SA_VECTOR_STORE=linear` 可切换到内存 `LocalVectorStore`。两者当前都使用线性余弦检索，ANN、LanceDB 与
+Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知识内容或模型变化时自动重建；编码器
+不可用时检索降级为 BM25。
+
 ---
 
-*创建：2026-08-11 · 更新：2026-08-21（同步 M6 只读预览边界与三课评测基线）· 维护：随 API 变更同步更新*
-
-
-
-## M3a vector storage
-
-The default backend is a persistent SQLite vector store configured by `SA_VECTOR_STORE_PATH`. Set `SA_VECTOR_STORE=linear` to use the original in-memory backend. The index stores chunk fingerprints and the embedding model name, and rebuilds automatically when knowledge content or the model changes. SQLite itself does not require `sentence-transformers`; text queries still require an encoder, and unavailable encoders fall back to BM25.
+*创建：2026-08-11 · 更新：2026-08-26（M6a-3 单进程锁、generation 分离与静态额外源）· 维护：随 API 变更同步更新*

@@ -97,10 +97,9 @@ def wait_for_health(url: str, timeout: float) -> dict[str, Any]:
     return last
 
 
-def start_server(host: str, port: int, use_vector: bool) -> subprocess.Popen[Any]:
-    env = apply_offline_defaults(use_vector, os.environ.copy())
-    env["SA_USE_VECTOR"] = "true" if use_vector else "false"
-    command = [
+def build_server_command(host: str, port: int) -> list[str]:
+    """Launch exactly one uvicorn worker; reload/multi-worker are unsupported."""
+    return [
         sys.executable,
         "-m",
         "uvicorn",
@@ -109,8 +108,27 @@ def start_server(host: str, port: int, use_vector: bool) -> subprocess.Popen[Any
         host,
         "--port",
         str(port),
+        "--workers",
+        "1",
     ]
-    return subprocess.Popen(command, cwd=str(PLATFORM_DIR), env=env)
+
+
+def apply_single_worker_env(env: dict[str, str]) -> dict[str, str]:
+    """Force the supported single-writer topology for the child process."""
+    env["WEB_CONCURRENCY"] = "1"
+    env["UVICORN_WORKERS"] = "1"
+    return env
+
+
+def start_server(host: str, port: int, use_vector: bool) -> subprocess.Popen[Any]:
+    env = apply_offline_defaults(use_vector, os.environ.copy())
+    env["SA_USE_VECTOR"] = "true" if use_vector else "false"
+    apply_single_worker_env(env)
+    return subprocess.Popen(
+        build_server_command(host, port),
+        cwd=str(PLATFORM_DIR),
+        env=env,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -91,10 +91,7 @@ def is_indexable_frontmatter(meta: dict) -> bool:
     raw_status = str(meta.get("ingest_status") or IngestStatus.APPROVED).strip()
     try:
         source_type = SourceType(raw_type)
-    except ValueError:
-        source_type = SourceType.HUMAN_MARKDOWN
-    try:
         ingest_status = IngestStatus(raw_status)
     except ValueError:
-        ingest_status = IngestStatus.APPROVED
+        return False
     return ingest_status == IngestStatus.APPROVED and source_type in SEARCHABLE_SOURCE_TYPES

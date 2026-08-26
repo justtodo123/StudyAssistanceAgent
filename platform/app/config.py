@@ -47,6 +47,13 @@ LEARNING_STORE_PATH = Path(
         str(REPO_ROOT / "platform" / ".cache" / "learning_state.sqlite3"),
     )
 )
+INDEX_CACHE_PATH = Path(
+    os.getenv(
+        "SA_INDEX_CACHE_PATH",
+        str(REPO_ROOT / "platform" / ".cache" / "index"),
+    )
+)
+EXPECTED_DEFAULT_PACK_REVISION = os.getenv("SA_EXPECTED_DEFAULT_PACK_REVISION") or None
 
 # ===== LLM（OpenAI 兼容）=====
 LLM_BASE_URL = os.getenv("SA_LLM_BASE_URL", "")
