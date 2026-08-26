@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-24（治理收口复核；补充结构化 CI、准入状态机、导航与阻断期生产树门禁）
+> 起始日期：2026-08-17 · 更新：2026-08-26（登记 M6a-1/M6a-2 自动化门禁与当前测试基线）
 
 ## 一、测试策略总览
 
@@ -92,6 +92,10 @@ tests/
 │   ├── test_ci.py          # crawler CI 契约
 │   └── test_online_smoke.py      # 显式在线 smoke（默认跳过）
 │
+├── M6a/                    # M6a 契约与默认 knowledge-pack 适配门禁
+│   ├── test_protocols.py         # Source/Tool/Runner 协议契约
+│   └── test_default_pack_adapter.py # 默认包身份、索引、快照与路径隐私
+│
 ├── regression/             # 跨阶段回归套件
 │   ├── conftest.py         # 回归专用 fixtures
 │   ├── test_api_contract.py      # API 契约稳定性
@@ -127,14 +131,17 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/`（含 M6_crawler） | 266 项 | 2026-08-24 合并运行：265 passed、1 skipped（显式 online smoke） | 阶段测试 + 回归套件；crawler 走独立 job `crawler-offline` |
-| `tests/regression/` | 46 项 | 治理聚焦 15 passed；完整回归已纳入 306 项合并运行 | 含 SSE、结构化 CI、可演进准入、导航/生产树和 3 项 slow RAG 质量门禁 |
-| `platform/tests/` | 40 项 | 2026-08-24 合并运行：40 passed | 受保护的原始平台冒烟/功能测试，不由根级 18 项取代 |
-| 合并 `tests platform/tests` | 306 项 | 2026-08-24：305 passed、1 skipped，25.60s | skip 为显式 online crawler smoke；不是失败 |
+| 根级 `tests/`（含 M6_crawler、M6a） | 312 项 | 2026-08-26：311 passed、1 skipped（显式 online smoke） | 阶段测试 + 回归套件；crawler 走独立 job `crawler-offline` |
+| `tests/M6a/` | 36 项 | 2026-08-26：36 passed | M6a-1 协议契约与 M6a-2 默认包适配；不包含 M6a-3 |
+| `tests/regression/` | 46 项 | 已包含于根级全量运行并通过 | 含 SSE、结构化 CI、可演进准入、导航/生产树和 slow RAG 质量门禁 |
+| `platform/tests/` | 40 项 | 2026-08-26：40 passed | 受保护的原始平台冒烟/功能测试，不由根级测试取代 |
+| 合并 `tests platform/tests` | 352 项 | 根级 311 passed、1 skipped；平台 40 passed | skip 为显式 online crawler smoke；不是失败 |
 | 根级 `tests/M0_M2/` | 18 项 | 历史基线 | 从平台原始测试提炼的关键断言，与 `platform/tests/` 同时保留 |
 | M6 crawler 前置门禁 | `tests/M6_crawler/` | 独立 job `crawler-offline` | marker `m6_crawler`；默认 mock HTTP；在线 smoke 仅 workflow_dispatch |
 
-M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。2026-08-24 治理收口后，crawler 离线门禁为 52 passed、1 deselected；默认 OS/DS/CO 90 题 keyword-only Recall@3 为 0.972。受限 Windows 环境若默认临时目录不可写，可使用工作区内的 `pytest --basetemp=.tmp-test\...`。
+M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。2026-08-26 M6a-2 复验中，根级测试为
+311 passed、1 skipped，平台原始测试为 40 passed；默认 OS/DS/CO 90 题 keyword-only Recall@3 为
+0.972。受限 Windows 环境若默认临时目录不可写，可使用工作区内的 `pytest --basetemp=.tmp-test\...`。
 
 ### 阶段 0：基线建立（M0-M2 回归）
 
@@ -395,7 +402,8 @@ M6a 已于 2026-08-25 获准并进入 `ADMITTED / IN_PROGRESS`。M6a-1 的 `test
 M6a-2 在同一隔离目录增加默认 `knowledge-pack` 的真实链路测试：`MarkdownPackSource`、完整快照、稳定逻辑
 identity、generation 隔离缓存、reallocation、内容变更/删除、case-fold 冲突和旧 `RetrievalChunk` 出处兼容。
 适配层不替换 `StudySessionService` 的状态转换、答题评估、持久化或 review-log 权威，也不提前实现静态额外
-Source、运行时 Source 生命周期、Tool Registry、Agent Runner 或任何 M6b 能力。M6a-2 仍待完整门禁复验。
+Source、运行时 Source 生命周期、Tool Registry、Agent Runner 或任何 M6b 能力。M6a-2 自动化门禁已于
+2026-08-26 通过；M6a-3 尚未开始。
 
 M6a 开工前的继承保护基线已于 2026-08-25 在受标识候选树上真实复验：focused privacy/API/SSE/recovery 32 项、M3b
 13 项、原始 platform 40 项、根级 271 项通过（另有 1 项显式 online crawler smoke 跳过），crawler offline 52 项通过

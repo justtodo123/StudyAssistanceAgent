@@ -153,6 +153,30 @@ SA_USE_VECTOR=false HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 \
 3. 当前加权 Recall@3 为 0.972；自动门禁仍按每门课程阈值判断，不把某次精确快照固化为硬编码阈值。
 4. Network 评测集继续通过 `--test-set tools/evaluations/network.json` 显式运行，不扩大默认 90 题集合。
 
+## M6a-2 自动化门禁复验 — 2026-08-26（当前 checkout）
+
+本记录关闭 M6a-2 默认 `knowledge-pack` 兼容适配的自动化复验，不批准或完成整个 M6a；M6a-3
+（确定性工具、StateMachineRunner 与启动期静态额外源）尚未开始。
+
+- 分支：`feature/m6a-harness-skeleton`；工作区复验前保持 clean，复验后仅包含本次证据文档改动。
+- 环境：Windows 11 Home，Python 3.13.3，pytest 9.1.1，Git Bash；使用现有 `platform/.venv`。
+- 默认离线评测命令：
+  `SA_USE_VECTOR=false HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 ./platform/.venv/Scripts/python tools/run_evaluation.py -k 1,3,5`
+- 默认评测发现 OS 38 + DS 28 + CO 24 = 90；Network 未自动加入。
+- Recall@3：OS 0.987、DS 0.929、CO 1.000，汇总 0.972；三课均满足 `Recall@3 >= 0.8`。
+- 根级测试命令：`./platform/.venv/Scripts/python -m pytest tests/ -q`；312 collected，311 passed、1 skipped。
+- 根级 skip 为显式在线 crawler smoke，符合默认离线门禁，不是失败。
+- M6a 阶段测试：`tests/M6a/` 共 36 项，全部通过（协议契约 26 项、默认包适配 10 项）。
+- 受保护平台测试命令：`./platform/.venv/Scripts/python -m pytest platform/tests/ -q`；40 项全部通过。
+- 边界人工审查：API/OpenAPI 兼容字段未发现无意变化；Search/QA/SSE/OpenAPI、日志和 LLM fallback
+  未发现宿主绝对路径；默认评测仍固定为 OS/DS/CO 三课 90 题；未发现 M6b ToolRegistry/preview 或
+  M7 运行时 Source 生命周期能力被提前接入。M6a-3 生产目录尚未创建。
+
+### 复验结论
+
+M6a-1 协议契约与 M6a-2 默认包适配的自动化门禁通过，默认 RAG 质量未低于保护基线；M6a 仍为
+`ADMITTED / IN_PROGRESS`，下一步应实施 M6a-3，不应推进 M6b 或 M7。
+
 ## M3b 可观测性基线 — 2026-08-18
 
 ### 测试环境与统计口径
@@ -222,4 +246,4 @@ SA_USE_VECTOR=false HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 \
   `5db638a9cdb59081c2dc6ecea09a873fb31ad07e369364d6bcaa6a3ecbba00ca`。
 - 路径隐私回归同时覆盖 `/health`、Search、QA、QA SSE、OpenAPI、日志及 LLM 异常 fallback；宿主路径未出现在响应或日志中。
 
-*创建：2026-08-12 · 更新：2026-08-25（追加 M6a 保护基线真实复验；证据文档本身不改变已受测实现）· 维护：知识库、评测集或检索策略变化后复测并追加记录*
+*创建：2026-08-12 · 更新：2026-08-26（追加 M6a-2 自动化门禁复验与边界审查证据）· 维护：知识库、评测集或检索策略变化后复测并追加记录*

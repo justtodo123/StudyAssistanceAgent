@@ -2,7 +2,7 @@
 
 > 版本：v2.3
 > 制定日期：2026-08-21
-> 当前状态：八项强制设计决策、保护基线与负责人批准均已闭合；`ADMITTED / IN_PROGRESS`；M6a-1 协议契约已完成本地检查点，M6a-2 默认知识包适配已交付并待完整门禁复验
+> 当前状态：八项强制设计决策、保护基线与负责人批准均已闭合；`ADMITTED / IN_PROGRESS`；M6a-1 协议契约和 M6a-2 默认知识包适配的自动化门禁已通过，M6a-3 尚未开始
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)；最终状态权威为 [`docs/PLAN.md`](../PLAN.md)
 > 适用范围：Source/Store/Tool/Runner 契约、现有状态机兼容、启动期静态额外 Markdown 源
 > 后续阶段：M7 用户数据源生命周期；M6b 为独立的只读 Agent 预览
@@ -11,8 +11,8 @@
 
 M6a-P0 crawler 与 2026-08-25 保护基线均已形成真实前置证据；八项强制设计决策已经用户逐项确认并
 按 §0.4 闭合为 `RESOLVED`。用户/项目负责人于 2026-08-25 明确批准“M6a 可以开工”，因此本计划现为
-`ADMITTED / IN_PROGRESS`。M6a-1 已完成本地协议契约检查点；M6a-2 默认 `knowledge-pack` 的
-Source / SourceChunk / RetrievalIndex 兼容适配已交付并待完整回归门禁复验；该状态只授权按第 3 节实施，
+`ADMITTED / IN_PROGRESS`。M6a-1 协议契约和 M6a-2 默认 `knowledge-pack` 的
+Source / SourceChunk / RetrievalIndex 兼容适配已通过自动化回归门禁；M6a-3 尚未开始。该状态只授权按第 3 节继续实施，
 不代表整个 M6a 已完成。
 
 ### 0.1 前置证据
@@ -55,7 +55,8 @@ Source / SourceChunk / RetrievalIndex 兼容适配已交付并待完整回归门
 | plan_revision | v2.3 |
 | decision_set_version | m6a-decision-set-v1 |
 
-批准记录已经闭合，M6a 已按第 3 节顺序开始生产实施。M6a-1 协议契约及其隔离 contract tests 已形成独立本地检查点；M6a-2 默认知识包适配及其真实链路测试已加入当前候选树，交付状态仍为
+批准记录已经闭合，M6a 已按第 3 节顺序开始生产实施。M6a-1 协议契约及其隔离 contract tests、M6a-2
+默认知识包适配及其真实链路测试均已通过自动化门禁；M6a-3 尚未开始，M6a 交付状态仍为
 `IN_PROGRESS`。第 4 节 contract tests 和 benchmark 是实施/退出门禁，不是准入前置证据。
 
 ### 0.4 八项强制决策（最终选定）

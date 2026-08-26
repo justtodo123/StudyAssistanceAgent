@@ -3,7 +3,7 @@
 > 通用学习 Agent 的 harness 框架。M0–M5 是最小实现（默认计算机知识包 + 学习闭环）。
 > **双目标**：① 按用户目标把任意知识源学完（产品价值）；② 可讲清 Agent harness / RAG / 计划执行（工程价值）。
 > 状态图例：⬜ 未开始 ｜ 🔄 进行中 ｜ ✅ 完成
-> **当前阶段**：M6a 已获准开工，当前为 `ADMITTED / IN_PROGRESS`：M6a-1 协议契约已形成局部检查点，M6a-2 默认 `knowledge-pack` 兼容适配待完整门禁复验；M6b–M10 仍为 `BLOCKED / NOT_STARTED`。里程碑、准入与退出方向以**本文**为准。
+> **当前阶段**：M6a 已获准开工，当前为 `ADMITTED / IN_PROGRESS`：M6a-1 协议契约和 M6a-2 默认 `knowledge-pack` 兼容适配的自动化门禁已通过，M6a-3 尚未开始；M6b–M10 仍为 `BLOCKED / NOT_STARTED`。里程碑、准入与退出方向以**本文**为准。
 > **准入门禁**：[`docs/standards/stage-admission-gates.md`](standards/stage-admission-gates.md)；机器登记见
 > [`stage-admission-gates.json`](standards/stage-admission-gates.json)。计划或登记表单独变更均不能批准阶段。
 > `docs/plans/references/` 只辅助决策，不是最终依据。
@@ -135,7 +135,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 
 | 阶段 | 准入 | 交付 | 准备/执行计划 | 当前结论 |
 | --- | --- | --- | --- | --- |
-| M6a | `ADMITTED` | `IN_PROGRESS` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制决策与保护基线已闭合；justtodo123 于 2026-08-25 批准开工，M6a-1 协议契约已形成局部检查点，M6a-2 默认包适配待完整门禁复验 |
+| M6a | `ADMITTED` | `IN_PROGRESS` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制决策与保护基线已闭合；justtodo123 于 2026-08-25 批准开工，M6a-1 与 M6a-2 自动化门禁已通过，M6a-3 尚未开始 |
 | M6b | `BLOCKED` | `NOT_STARTED` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | M6a 退出和八项 provider/运行设定均未闭合 |
 | M7 | `BLOCKED` | `NOT_STARTED` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 等待 M6a Source 契约；生命周期设定仍 `OPEN` |
 | M8 | `BLOCKED` | `NOT_STARTED` | [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md) | 等待 M7 退出；后端选择与迁移设定仍 `OPEN` |
@@ -151,8 +151,8 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
   CI job `crawler-offline` 安装 `tools/crawler/requirements.txt` 并跑 `-m "m6_crawler and not online"`。
   默认写入 `platform/.cache/crawler-candidates/`，不自动注册 Source。在线 smoke 仅显式
   `workflow_dispatch`。不代表 M7 生命周期完成。
-- 🔄 **M6a Harness 兼容骨架**：M6a-1 协议契约已形成局部检查点；M6a-2 已为默认
-  `knowledge-pack` 实现 Source / SourceChunk / RetrievalIndex 薄兼容适配，正待完整门禁复验。
+- 🔄 **M6a Harness 兼容骨架**：M6a-1 协议契约和 M6a-2 默认 `knowledge-pack` 的
+  Source / SourceChunk / RetrievalIndex 薄兼容适配已通过自动化门禁；M6a-3 确定性工具、状态机 Runner 与启动期静态额外源适配尚未开始。
   - 仓储按职责区分 LearningStateRepository、ReviewRepository、SourceRegistry 与 RetrievalIndex；复用现有
     `SqliteLearningStore` 和 `VectorStore`，不创建承载所有数据的泛化 Store。
   - Runner 必须表达跨请求的 `start/resume/get` 或 `step(event)` 语义；正式学习状态仍由现有状态机负责。
@@ -217,4 +217,4 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.4（不是产品发布版本）· 更新：2026-08-25（M6a 决策、保护基线与负责人批准已闭合；M6a-1 协议契约交付进行中）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · PLAN 文档修订：v2.4（不是产品发布版本）· 更新：2026-08-26（M6a-1 与 M6a-2 自动化门禁已通过；M6a-3 尚未开始）· 维护：每次会话开工查看本文档*
