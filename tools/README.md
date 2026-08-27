@@ -9,6 +9,7 @@ tools/
 ├── README.md              # 本文件（工具文档）
 ├── run_evaluation.py      # ★ 统一 RAG 评测入口
 ├── start_local.py         # 一键启动工作台并做 /health 检查
+├── source_inventory.py    # 外部资料只读盘点（不复制、不解析全文、不建索引）
 ├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   ├── requirements.txt   # crawler 独立依赖
 │   └── fetcher/cleaner/converter/dedup/pipeline
@@ -111,6 +112,40 @@ crawler 提供 fetch、clean、convert、dedup 和 pipeline 能力，依赖单�
   在线 smoke 仅 `workflow_dispatch` + `crawler_online_smoke=true`；
 - crawler 的存在不代表 M7 的持久化源注册、同步、删除传播或多源隔离已经完成。
 
+
+## source_inventory.py — 外部资料只读盘点
+
+扫描 `D:\\111_Others_Subjects`（或 `--root`）生成机器可读的文件级 manifest。只读：不复制原始文件、不解析全文、不修改外部目录、不建立向量索引。也不构成 M7 Source 生命周期开工。
+
+### 用法
+
+```bash
+# 默认扫描 D:\\111_Others_Subjects，写出 reports/source-inventory.json
+# 和精简 summary（均 gitignored）
+python tools/source_inventory.py
+
+# 指定根目录与输出
+python tools/source_inventory.py --root "D:/111_Others_Subjects" --output reports/source-inventory.json
+```
+
+每条记录至少包含：`logical_uri`、`course_candidate`、`format`、`size`、`fingerprint`、`classification`、`extraction_support`、`duplicate_status`、`risk_flags`。
+`logical_uri` 是相对 POSIX 路径，报告不回显宿主机绝对路径。
+
+默认排除并计入 summary，而不是当成学习资料：
+
+- Unity `Library` / `Temp` / `Logs`（以及 Unity 工程内的 `Assets` / `ProjectSettings` / `Packages`）
+- `.venv`、`site-packages`、`node_modules`、`__pycache__`
+- DLL / EXE / OBJ / PDB 等构建产物
+- 虚拟磁盘（ISO / VMDK / VDI / VHD 等）
+- 模型与超限二进制
+- 重复文件（manifest 保留 duplicate 标记，unique_candidates 不计）
+- 超限压缩包（默认 64MiB）
+
+`classification` 把课件/笔记记为 `study_document`，把 HTML 另记为 `webpage`，避免 Unity 教程网页缓存被算成几千份课件。
+目标是得到真正可整理的资料规模，而不是把 Unity Library 里的工程文件误认为学习资料。
+
+离线测试：`pytest tests/source_inventory -m source_inventory`。
+
 ## start_local.py — 一键启动
 
 ```bash
@@ -123,5 +158,5 @@ python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-26（一键启动固定单 worker）· 维护：随新增工具脚本与评测集同步更新*
+*创建：2026-08-11 · 更新：2026-08-27（新增外部资料只读盘点）· 维护：随新增工具脚本与评测集同步更新*
 

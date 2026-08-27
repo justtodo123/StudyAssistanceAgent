@@ -57,12 +57,28 @@
 
 ## 整理工作量估算（原始资料规模）
 
-> 约 34 个分类目录，总量约 **40 万+ 文件**（含 `My unity` 等海量工程目录）。知识库只需整理**精炼笔记**，不与原始文件同步。
+> 约 34 个分类目录。原始遍历会把 Unity `Library` 等工程缓存算进去，从而出现「38 万个文件」的错觉。
+> 只读盘点：`python tools/source_inventory.py`（2026-08-27 对 `D:/111_Others_Subjects` 扫描）。
+> 不复制原文、不解析全文、不改外部目录、不建索引；报告在 `reports/source-inventory.json`（gitignored）。
+
+| 口径 | 文件数 | 体积 |
+| --- | ---: | ---: |
+| 磁盘上看到的全部文件 | 384,280 | 108.3 GB |
+| 被排除的工程/缓存/重复/大文件 | 317,082 | 101.7 GB |
+| 去重后的候选文件 | 67,198 | 6.6 GB |
+| 其中课件/笔记 `study_document` | 2,732 | — |
+| 其中网页缓存 `webpage`（多为 Unity 教程 HTML） | 31,087 | — |
+| 其中源代码 `source_code` | 11,064 | — |
+
+排除大户：Unity `Library/Temp/Logs` 189,289；引擎资源 71,393；`.venv` 20,070；重复文件 13,265；DLL/EXE/OBJ/PDB 等 12,691；`node_modules` 9,227；虚拟磁盘 11 个但约 56 GB。
 
 ## 常用操作
 
 ```bash
-# 统计某个外部目录的文件规模
+# 只读盘点外部资料根（推荐）
+python tools/source_inventory.py
+
+# 统计某个外部目录的原始文件规模（含工程文件，仅作对照）
 find "D:/111_Others_Subjects/操作系统" -type f | wc -l
 
 # 全文检索某个主题是否已在知识库整理

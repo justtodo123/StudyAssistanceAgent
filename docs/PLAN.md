@@ -137,7 +137,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | --- | --- | --- | --- | --- |
 | M6a | `ADMITTED` | `COMPLETE` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制决策与保护基线已闭合；justtodo123 于 2026-08-25 批准开工，M6a-1 与 M6a-2 自动化门禁已通过，M6a-4 已完成收口 |
 | M6b | `BLOCKED` | `NOT_STARTED` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | M6a 退出和八项 provider/运行设定均未闭合 |
-| M7 | `BLOCKED` | `NOT_STARTED` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 等待 M6a Source 契约；生命周期设定仍 `OPEN` |
+| M7 | `BLOCKED` | `NOT_STARTED` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | M6a Source 契约退出证据已映射；十二项强制决策与 M7 保护基线仍 `OPEN`；未获批准 |
 | M8 | `BLOCKED` | `NOT_STARTED` | [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md) | 等待 M7 退出；后端选择与迁移设定仍 `OPEN` |
 | M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | 等待 M7/M8；计划/mastery 权威设定仍 `OPEN` |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | 等待 M7–M9；写授权、恢复与 rollout 设定仍 `OPEN` |
@@ -178,8 +178,10 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
     和幂等写继续排除；preview 失败也不启动状态机作为无条件回退。
   - 执行计划：`docs/plans/m6b-agent-core-plan.md`。
 - ⬜ **M7 用户数据源与千级检索**：准备计划见
-  [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md)；生命周期 schema、同步/删除、跨源隔离、
-  FTS5 tokenizer、规模和 1k–3k workload 未闭合前保持阻断。
+  [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md)；`M7-M6A-SOURCE-CONTRACT` 已映射 M6a 退出证据，
+  但不批准开工。生命周期、同步/删除、隔离、tokenizer、规模、benchmark、fallback，以及新增的文件级 manifest、
+  parser matrix、normalized document 与 provenance 仍为 `OPEN`。只读盘点 `tools/source_inventory.py` 是 collect-only，
+  不构成 M7 开工。Agent 不得自行批准。
 - ⬜ **M8 专业化存储**：准备计划见
   [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md)；以 M7 benchmark 决定后端，LanceDB/Qdrant
   都是待决候选，不能在依赖、迁移、parity、fallback 和选择阈值闭合前成为默认。
@@ -217,4 +219,4 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.6（不是产品发布版本）· 更新：2026-08-26（M6a-4 收口完成，交付状态 `COMPLETE`）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · PLAN 文档修订：v2.6（不是产品发布版本）· 更新：2026-08-27（映射 M7 的 M6a Source 契约证据；M7 仍阻断）· 维护：每次会话开工查看本文档*

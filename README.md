@@ -83,6 +83,7 @@ StudyAssistanceAgent/
 │   ├── README.md          # 工具文档
 │   ├── run_evaluation.py  # 统一 RAG 评测入口（三课 90 题 / JSON 报告）
 │   ├── start_local.py     # 一键启动与 /health 检查
+│   ├── source_inventory.py # 外部资料只读盘点（不复制原文、不建索引）
 │   ├── crawler/           # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   └── evaluations/       # 默认三课 90 题 + Network 30 题显式扩展集
 ├── tests/                 # ★ 迭代测试体系（阶段隔离架构）

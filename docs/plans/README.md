@@ -48,7 +48,7 @@ M6a 已完成强制决策、前置证据和负责人批准，现为 `ADMITTED / 
 | `m5-agent-session-delivery-plan.md` | 项目工程执行计划 | M5 已收口，作为 MVP 冻结（2026-08-18） |
 | `m6a-harness-skeleton-plan.md` | 项目工程执行计划 | M6a-4 收口完成；`ADMITTED / COMPLETE` |
 | `m6b-agent-core-plan.md` | 项目工程执行计划 | M6b 独立只读原生工具调用预览；`BLOCKED / NOT_STARTED` |
-| `m7-source-lifecycle-plan.md` | 阶段准入准备计划 | M7 Source 生命周期与千级检索；`BLOCKED / NOT_STARTED` |
+| `m7-source-lifecycle-plan.md` | 阶段准入准备计划 | M7 Source 生命周期与千级检索；M6a Source 契约已映射；十二项决策仍 OPEN；`BLOCKED / NOT_STARTED` |
 | `m8-specialized-storage-plan.md` | 阶段准入准备计划 | M8 专业化存储选择、迁移与 fallback；`BLOCKED / NOT_STARTED` |
 | `m9-goal-driven-planning-plan.md` | 阶段准入准备计划 | M9 目标驱动计划、mastery 与偏差；`BLOCKED / NOT_STARTED` |
 | `m10-autonomous-runner-plan.md` | 阶段准入准备计划 | M10 自主 Runner、写副作用与 Harness；`BLOCKED / NOT_STARTED` |

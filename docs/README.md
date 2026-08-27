@@ -89,6 +89,7 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 映射层：将 `D:\111_Others_Subjects` 中的原始资料目录登记为可检索的索引。
 - 主索引：[reference/README.md](reference/README.md) — 按优先级分类（核心专业课 / 专业拓展 / 其他）
 - 各课程索引：`reference/{course}.md` — 记录该课程原始资料的路径、文件类型、整理状态
+- 只读盘点：`tools/source_inventory.py` 输出文件级 manifest，区分工程文件与学习资料；不替代本目录的人工登记
 
 **维护规则**：
 - 新增外部资料 → 在 [reference/README.md](reference/README.md) 中加一行，并新建/追加对应课程索引文件

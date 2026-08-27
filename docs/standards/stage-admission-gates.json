@@ -126,7 +126,17 @@
       "admission_status": "BLOCKED",
       "delivery_status": "NOT_STARTED",
       "prerequisites": [
-        {"id": "M7-M6A-SOURCE-CONTRACT", "status": "OPEN", "evidence": []},
+        {"id": "M7-M6A-SOURCE-CONTRACT", "status": "SATISFIED", "evidence": [
+          "docs/plans/m6a-harness-skeleton-plan.md",
+          "docs/plans/m7-source-lifecycle-plan.md",
+          "docs/standards/runtime-contracts.md",
+          "tests/M6a/test_protocols.py",
+          "tests/M6a/test_default_pack_adapter.py",
+          "tests/M6a/test_extra_sources_config.py",
+          "tests/M6a/test_cache_lifecycle.py",
+          "tests/M6a/test_snapshot_publication.py",
+          "tests/regression/test_path_privacy.py"
+        ]},
         {"id": "M7-PROTECTED-BASELINE", "status": "OPEN", "evidence": []}
       ],
       "mandatory_decisions": [
@@ -137,7 +147,11 @@
         {"id": "M7-FTS5-TOKENIZER", "status": "OPEN", "value": null, "evidence": []},
         {"id": "M7-SCALE-LIMITS", "status": "OPEN", "value": null, "evidence": []},
         {"id": "M7-BENCHMARK", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-OFFLINE-FALLBACK", "status": "OPEN", "value": null, "evidence": []}
+        {"id": "M7-OFFLINE-FALLBACK", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M7-SOURCE-MANIFEST", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M7-PARSER-MATRIX", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M7-NORMALIZED-DOCUMENT", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M7-PROVENANCE", "status": "OPEN", "value": null, "evidence": []}
       ],
       "approval": {"approved_by": null, "approved_at": null, "approval_reference": null, "plan_revision": null, "decision_set_version": null}
     },
