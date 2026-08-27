@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-26（登记 M6a-3 完成并进入 M6a-4 收口）
+> 起始日期：2026-08-17 · 更新：2026-08-27（登记外部资料只读盘点测试）
 
 ## 一、测试策略总览
 
@@ -104,6 +104,13 @@ tests/
 │   ├── test_cache_lifecycle.py        # default/combined generation 与缓存生命周期
 │   └── test_closeout_contracts.py     # M6a-4 API/OpenAPI/链接收口
 │
+├── source_inventory/       # 外部资料只读盘点（不构成 M7 开工）
+│   ├── conftest.py         # source_inventory marker + 迷你资料树
+│   ├── test_classify.py    # 格式/课程/跳过规则
+│   ├── test_scan.py        # 排除工程文件、去重、只读
+│   ├── test_inventory_cli.py # 默认根目录与输出隔离
+│   └── test_privacy.py     # 无宿主绝对路径、不解析/不索引
+│
 ├── regression/             # 跨阶段回归套件
 │   ├── conftest.py         # 回归专用 fixtures
 │   ├── test_api_contract.py      # API 契约稳定性
@@ -139,11 +146,12 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/`（含 M6_crawler、M6a） | 396 项 | 2026-08-26：395 passed、1 skipped（显式 online smoke） | 阶段测试 + 回归套件；含 M6a-4 closeout |
+| 根级 `tests/`（含 M6_crawler、M6a、source_inventory） | 417 项 | 2026-08-27：416 passed、1 skipped（显式 online smoke） | 阶段测试 + 回归套件；含只读盘点 21 项 |
 | `tests/M6a/` | 124 项 | 2026-08-26：124 passed | 含 worker topology、generation 分离、缓存生命周期与 API/OpenAPI/链接收口 |
-| `tests/regression/` | 52 项 | 2026-08-26：52 passed | 含 SSE、结构化 CI、可演进准入、导航/生产树和 slow RAG 质量门禁 |
-| `platform/tests/` | 40 项 | 2026-08-26：40 passed | 受保护的原始平台冒烟/功能测试，不由根级测试取代 |
-| 合并 `tests platform/tests` | 436 项 | 根级 395 passed、1 skipped；平台 40 passed | skip 为显式 online crawler smoke |
+| `tests/source_inventory/` | 21 项 | 2026-08-27：21 passed | 外部资料只读盘点；tmp_path 迷你树，不扫描真实外部目录，不构成 M7 开工 |
+| `tests/regression/` | 52 项 | 2026-08-27：52 passed | 含 SSE、结构化 CI、可演进准入、导航/生产树和 slow RAG 质量门禁 |
+| `platform/tests/` | 40 项 | 2026-08-27：40 passed | 受保护的原始平台冒烟/功能测试，不由根级测试取代 |
+| 合并 `tests platform/tests` | 457 项 | 根级 416 passed、1 skipped；平台 40 passed | skip 为显式 online crawler smoke |
 | `tests/M6_crawler/` 离线 | 52 项 + 1 deselected | 2026-08-26：52 passed | `m6_crawler and not online` |
 | `tests/M0_M2/` | 18 项 | 2026-08-26：18 passed | 基线回归 |
 | 根级 `tests/M0_M2/` | 18 项 | 历史基线 | 从平台原始测试提炼的关键断言，与 `platform/tests/` 同时保留 |
@@ -444,6 +452,7 @@ allowlist、写工具拒绝、独立 preview 入口、预算/终止和“不创�
 | M6 crawler 前置 | `pytest tests/M6_crawler -m "m6_crawler and not online"` | `tests/regression/` | `tests/M0_M2/` | 默认 90 题发现 + smoke |
 | M6a-1/M6a-2/M6a-3 契约、适配与拓扑门禁 | `tests/M6a/`（`m6a`） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | `tools/run_evaluation.py` |
 | M6b 只读预览 | `tests/M6b/`（获准后规划） | `tests/regression/` | `tests/M0_M2/` | 默认 90 题；可选 provider smoke |
+| 外部资料只读盘点 | `tests/source_inventory/`（`source_inventory`） | 不要求 | 使用 tmp_path 迷你树 | 不建索引、不计入 RAG 门禁 |
 | M7–M10 准入准备 | 不创建阶段测试目录；当前仅治理一致性门禁 | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
 
 ## 四、pytest 配置
@@ -472,6 +481,9 @@ pytest tests/M5e/ -v -m m5e
 
 # 运行 crawler P0 离线测试（需 tools/crawler/requirements.txt）
 pytest tests/M6_crawler -v -m "m6_crawler and not online"
+
+# 运行外部资料只读盘点测试（使用 tmp_path 迷你树，不扫描真实 D:\111_Others_Subjects）
+pytest tests/source_inventory -v -m source_inventory
 
 # 显式 crawler 在线 smoke（默认不跑）
 # Unix: CRAWLER_ONLINE=1 pytest tests/M6_crawler -v -m "m6_crawler and online"
@@ -521,5 +533,6 @@ pytest tests/ -v -n auto
 ---
 
 *维护：每阶段开发完成后更新本计划。当前根级/回归总数以 `pytest --collect-only` 为准，collect-only 不等于
-测试通过；平台原始测试固定保留 40 项并在 offline CI 独立运行。crawler P0 使用独立 marker `m6_crawler`
-和 job `crawler-offline`；默认 OS/DS/CO 90 题质量门禁独立运行 slow 回归。*
+测试通过。2026-08-27 根级实际结果为 417 collected、416 passed、1 skipped；平台原始测试固定保留 40 项并在
+offline CI 独立运行。crawler P0 使用独立 marker `m6_crawler` 和 job `crawler-offline`；只读盘点使用
+`source_inventory`；默认 OS/DS/CO 90 题质量门禁独立运行 slow 回归。*
