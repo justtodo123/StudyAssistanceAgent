@@ -78,7 +78,7 @@ create -> qa -> explain -> quiz -> evaluate -> review-log -> completed
 - **「向量库为什么不用 Milvus / Chroma？」** → 个人规模（几百片）线性扫描足够，之后换弹性的接入即可，接口（vector_store.py）已抽象。
 - **「如何避免回答幻觉？」** → 勒令只基于检索片段、标注出处、无命中时明确说「知识库暂无」。
 - **「并发量表级？」** → 诚实：个人项目，但 FastAPI 异步 + 流式已具备；如要规模化再加缓存/分片（这反而是加分项——你知道边界）。
-- **「这算 Agent 吗？有没有 ReAct / Function Calling？」** → 现行正式路径是服务端教学状态机，`tool_trace` 记录固定步骤，没有 LLM 自主选工具。M6b 设计的是隔离的只读原生工具调用 preview（尚未开工），不是 ReAct。完整自主 Runner 在 M10，且是可选执行器，不替换状态机。
+- **「这算 Agent 吗？有没有 ReAct / Function Calling？」** → 正式路径仍是服务端教学状态机；M6b 另行实现了默认关闭、独立 Bearer 认证的只读原生工具调用 preview，模型只能从 `retrieve`、`quiz_preview`、`review_due` 中选择，不写学习状态。这是受限 native tool-use loop，不是 ReAct；完整自主 Runner 在 M10，且不替换状态机。
 
 ## 八、给简历的一句话亮点（可替换用）
 
@@ -91,12 +91,12 @@ create -> qa -> explain -> quiz -> evaluate -> review-log -> completed
 
 与 [`docs/PLAN.md`](../PLAN.md) 同一口径：
 
-| 现状 | 下一步（未实现，不要讲成已有） |
+| 当前已实现 | 后续（不要讲成已有） |
 | --- | --- |
-| 正式 Runner = 学习状态机 | M6b：独立只读原生工具调用 preview |
-| crawler 只产候选，默认不入库 | M7：用户源注册与千级检索 |
-| SQLite 向量 + 线性余弦 | M8：LanceDB / 可选 Qdrant |
-| QA `generation_layer` + Recall@3 | M10：Agent 任务评测与可选自主 Runner |
+| 正式 Runner = 学习状态机；M6b = 默认关闭的独立只读 native tool-use preview | M10：可选自主 Runner、写工具、checkpoint 与 Agent 任务评测 |
+| crawler 只产候选，默认不入库 | M7：用户源注册、生命周期与千级检索 |
+| SQLite 向量 + 线性余弦 | M8：按 benchmark 选择专业存储 |
+| QA `generation_layer` + Recall@3；preview 离线 fake-provider p95 5.179 ms | 真实 provider smoke 仅显式手工运行，不作为 SLA |
 
 | 文件 | 用途 |
 | --- | --- |
@@ -104,9 +104,11 @@ create -> qa -> explain -> quiz -> evaluate -> review-log -> completed
 | [StudyAssistanceAgent_requirement.md](StudyAssistanceAgent_requirement.md) | 2026-08-20 招聘对照调查快照，**不是**执行计划 |
 | [../plans/references/agent-alignment-analysis.md](../plans/references/agent-alignment-analysis.md) | 辅助调查；与 PLAN 冲突时以 PLAN 为准 |
 
-被追问「为什么不做 ReAct」时：教学流程已知，默认走确定性闭环，保证复习记录和离线可用。
-ReAct 是可选策略，不替代教学状态机；完整自主循环放到 M10，避免在契约未稳时让模型改写掌握度和复习历史。
+被追问「为什么不做 ReAct」时：教学流程已知，默认走确定性闭环，保证复习记录和离线可用。M6b 只验证
+provider-native 只读工具选择，并用 deadline、预算、重试、并发和稳定终止语义收紧风险；prompt 与受限工具结果会发送给
+Anthropic。当前只运行了 fake-provider 离线门禁，没有发起真实 Anthropic 请求。完整自主循环放到 M10，避免在契约未稳时
+让模型改写掌握度和复习历史。
 
 ---
 
-*维护：2026-08-24 与 PLAN / runtime-contracts 当前口径对齐；面试前复习一句话、工具调用链、三个量化数字和能力边界。*
+*维护：2026-08-28 与 PLAN / runtime-contracts / M6b closeout 口径对齐；面试前复习一句话、两条隔离执行路径、量化数字和能力边界。*

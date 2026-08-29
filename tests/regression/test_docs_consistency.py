@@ -21,14 +21,16 @@ class TestProjectStatusConsistency:
         plan = _read(repo_root, "docs/PLAN.md")
 
         assert "M6a-P0 crawler 已收口" in root
-        assert "M6a 已获准开工" in plan
-        assert "M6b–M10" in root
+        assert "M6a 为 `ADMITTED / COMPLETE`" in plan
+        assert "M6b 默认关闭的只读 Agent Preview 已完成全部 closeout 门禁" in root
+        assert "M6b `ADMITTED / COMPLETE`" in root
+        assert "M7–M10" in root
         assert "M6–M10" in plan
         for text in (root, plan):
             assert "BLOCKED / NOT_STARTED" in text
         assert "ADMITTED / COMPLETE" in root
-        assert "M6a-1 协议契约" in root
-        assert "M6b–M10 仍为 `BLOCKED / NOT_STARTED`" in root
+        assert "M6a 契约与兼容骨架" in root
+        assert "M7–M10 `BLOCKED / NOT_STARTED`" in root
         assert "M10" in root and "自主 Runner" in root
         assert "课程笔记创建" not in root
         assert "错题集管理" not in root
@@ -214,8 +216,10 @@ class TestStageAdmissionConsistency:
             stage["stage"]: stage
             for stage in _load_admission_registry(repo_root)["stages"]
         }
-        m6b_prerequisites = {item["id"] for item in stages["M6b"]["prerequisites"]}
-        m7_prerequisites = {item["id"] for item in stages["M7"]["prerequisites"]}
+        m6b = stages["M6b"]
+        m7 = stages["M7"]
+        m6b_prerequisites = {item["id"] for item in m6b["prerequisites"]}
+        m7_prerequisites = {item["id"] for item in m7["prerequisites"]}
 
         assert m6b_prerequisites == {
             "M6B-M6A-EXIT",
@@ -227,6 +231,51 @@ class TestStageAdmissionConsistency:
         }
         assert not any("M7" in item for item in m6b_prerequisites)
         assert not any("M6B" in item for item in m7_prerequisites)
+
+        assert m6b["admission_status"] == "ADMITTED"
+        assert m6b["delivery_status"] == "COMPLETE"
+        assert m6b["approval"] == {
+            "approved_by": "justtodo123",
+            "approved_at": "2026-08-27",
+            "approval_reference": (
+                "docs/plans/m6b-agent-core-plan.md#03-全量准入检查与批准"
+            ),
+            "plan_revision": "v2.1",
+            "decision_set_version": "m6b-decision-set-v1",
+        }
+
+        assert m7["admission_status"] == "BLOCKED"
+        assert m7["delivery_status"] == "NOT_STARTED"
+        assert len(m7["mandatory_decisions"]) == 12
+        m7_decisions = {
+            decision["id"]: decision["status"]
+            for decision in m7["mandatory_decisions"]
+        }
+        assert m7_decisions == {
+            "M7-LIFECYCLE-SCHEMA": "RESOLVED",
+            "M7-SYNC-SEMANTICS": "RESOLVED",
+            "M7-DELETE-SEMANTICS": "RESOLVED",
+            "M7-ISOLATION": "RESOLVED",
+            "M7-FTS5-TOKENIZER": "RESOLVED",
+            "M7-SCALE-LIMITS": "RESOLVED",
+            "M7-BENCHMARK": "RESOLVED",
+            "M7-OFFLINE-FALLBACK": "RESOLVED",
+            "M7-SOURCE-MANIFEST": "RESOLVED",
+            "M7-PARSER-MATRIX": "RESOLVED",
+            "M7-NORMALIZED-DOCUMENT": "RESOLVED",
+            "M7-PROVENANCE": "RESOLVED",
+        }
+        m7_baseline = next(
+            prerequisite
+            for prerequisite in m7["prerequisites"]
+            if prerequisite["id"] == "M7-PROTECTED-BASELINE"
+        )
+        assert m7_baseline == {
+            "id": "M7-PROTECTED-BASELINE",
+            "status": "OPEN",
+            "evidence": [],
+        }
+        assert all(value is None for value in m7["approval"].values())
 
     def test_authority_and_navigation_match_registry_state(self, repo_root):
         registry = _load_admission_registry(repo_root)

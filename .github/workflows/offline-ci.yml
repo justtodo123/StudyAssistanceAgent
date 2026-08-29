@@ -38,7 +38,21 @@ jobs:
 
       - name: Run stage tests and regression
         run: |
-          python -m pytest tests/M0_M2 tests/M3a tests/M3b tests/M3c tests/M3d tests/M4 tests/M5a tests/M5b tests/M5c tests/M5d tests/M5e tests/M6a tests/regression -q --tb=short -m "not slow"
+          python -m pytest tests/M0_M2 tests/M3a tests/M3b tests/M3c tests/M3d tests/M4 tests/M5a tests/M5b tests/M5c tests/M5d tests/M5e tests/M6a tests/M6b tests/regression -q --tb=short -m "not slow and not m6b_benchmark"
+
+      - name: Run blocking M6b offline preview benchmark
+        env:
+          M6B_BENCHMARK_EVIDENCE_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          M6B_BENCHMARK_REPORT: reports/m6b-offline-preview-benchmark-${{ github.run_id }}-${{ github.run_attempt }}.json
+        run: |
+          python -m pytest tests/M6b -q --tb=short -m m6b_benchmark
+
+      - name: Upload sanitized M6b benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: m6b-offline-preview-benchmark-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/m6b-offline-preview-benchmark-${{ github.run_id }}-${{ github.run_attempt }}.json
+          if-no-files-found: error
 
       - name: Run full RAG quality gate
         run: |

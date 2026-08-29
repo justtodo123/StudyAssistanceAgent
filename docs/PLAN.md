@@ -3,7 +3,9 @@
 > 通用学习 Agent 的 harness 框架。M0–M5 是最小实现（默认计算机知识包 + 学习闭环）。
 > **双目标**：① 按用户目标把任意知识源学完（产品价值）；② 可讲清 Agent harness / RAG / 计划执行（工程价值）。
 > 状态图例：⬜ 未开始 ｜ 🔄 进行中 ｜ ✅ 完成
-> **当前阶段**：M6a 已获准开工，当前为 `ADMITTED / COMPLETE`；M6b–M10 仍为 `BLOCKED / NOT_STARTED`。里程碑、准入与退出方向以**本文**为准。
+> **当前阶段**：M6a 为 `ADMITTED / COMPLETE`；M6b 默认关闭的只读 Agent Preview 已实现并通过首轮 closeout，
+> 当前为 `ADMITTED / COMPLETE`，全部 closeout 门禁与证据同步已完成；M7–M10 仍为 `BLOCKED / NOT_STARTED`。
+> 里程碑、准入与退出方向以**本文**为准。
 > **准入门禁**：[`docs/standards/stage-admission-gates.md`](standards/stage-admission-gates.md)；机器登记见
 > [`stage-admission-gates.json`](standards/stage-admission-gates.json)。计划或登记表单独变更均不能批准阶段。
 > `docs/plans/references/` 只辅助决策，不是最终依据。
@@ -125,7 +127,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 - **完整退出条件**：✅ 会话可跨重启恢复；工作台可完成学习闭环；离线 CI 与一键启动已落地；阶段测试、回归和平台测试保持通过。
 - **收口结论**：M5 作为 MVP 关闭。默认学习闭环与离线交付不再回退；通用运行时与可插拔数据源改由 M6 起按路线图建设。
 
-### M6–M10：通用学习 Agent Harness（M6a 已准入，其余阻断）
+### M6–M10：通用学习 Agent Harness（M6a/M6b 已完成，其余阻断）
 > **最终依据**：本节（M6–M10）。辅助分析见 `docs/plans/references/`，冲突时以本文为准。
 > **统一门禁**：[`stage-admission-gates.md`](standards/stage-admission-gates.md) 定义决策、准入、撤销与禁止事项；
 > [`stage-admission-gates.json`](standards/stage-admission-gates.json) 只用于机器检查，不能单独批准阶段。
@@ -136,8 +138,8 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | 阶段 | 准入 | 交付 | 准备/执行计划 | 当前结论 |
 | --- | --- | --- | --- | --- |
 | M6a | `ADMITTED` | `COMPLETE` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制决策与保护基线已闭合；justtodo123 于 2026-08-25 批准开工，M6a-1 与 M6a-2 自动化门禁已通过，M6a-4 已完成收口 |
-| M6b | `BLOCKED` | `NOT_STARTED` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | M6a 退出和八项 provider/运行设定均未闭合 |
-| M7 | `BLOCKED` | `NOT_STARTED` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | M6a Source 契约退出证据已映射；十二项强制决策与 M7 保护基线仍 `OPEN`；未获批准 |
+| M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
+| M7 | `BLOCKED` | `NOT_STARTED` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策（含 provenance）已闭合；M7 保护基线仍 `OPEN`、批准为空，故继续阻断；数据扩展 runbook 仅为非权威未来参考，未获批准 |
 | M8 | `BLOCKED` | `NOT_STARTED` | [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md) | 等待 M7 退出；后端选择与迁移设定仍 `OPEN` |
 | M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | 等待 M7/M8；计划/mastery 权威设定仍 `OPEN` |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | 等待 M7–M9；写授权、恢复与 rollout 设定仍 `OPEN` |
@@ -165,22 +167,33 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
     `domain_trace`/`agent_trace` 分离。运行时删除、tombstone 与增量删除传播留给 M7。
   - 保持现有 API/OpenAPI、旧会话恢复和默认三课 90 题基线兼容。
   - 执行计划：`docs/plans/m6a-harness-skeleton-plan.md`。
-- ⬜ **M6b Agent 只读预览（工具调用决策层）**：独立 preview 入口 + ToolRegistry + provider-neutral
-  `LLMClient`/`ModelTurn` + 原生 provider tool-call adapter。文本 JSON 只能作为显式兼容 fallback，不能冒充
-  原生 Function Calling。仅开放 retrieve、quiz preview、review-due 等只读工具，禁止写会话、掌握度和复习历史。
-  - 预览循环采用 model turn → validate → authorize → execute → append result；不要求或持久化原始 Thought。
-  - 设总 deadline、模型/工具超时、turn/tool-call/token/cost/result-size 预算、取消、重复调用熔断和确定性终止。
-  - 开工前须通过 M6a contract、旧会话恢复、路径隐私、API/OpenAPI、SSE、平台 40 项和完整 90 题门禁；
-    复用 M6a `ToolContext`/`ToolResult`/Source identity/授权/trace，不建立平行 envelope。
-  - preview 默认关闭；失败返回 preview 专用结构化结果，不创建正式 session 作为回退。`agent_trace` 与状态机
-    `domain_trace` 分离；不记录原始 Thought、用户答案、知识正文、密钥或绝对路径。
-  - 不新增 `SA_RUNNER=react`，不接管 `/api/v1/study-sessions`。Source 注册/删除、学习状态写入、checkpoint
-    和幂等写继续排除；preview 失败也不启动状态机作为无条件回退。
+- ✅ **M6b Agent 只读预览（工具调用决策层）**：获批范围、closeout 门禁与证据同步均已完成，当前为
+  `ADMITTED / COMPLETE`。独立 `POST /api/v1/agent-preview` 仅在启动前显式启用并配置至少
+  32 UTF-8 字节的 Bearer secret 时注册；默认应用与 OpenAPI 无该路由。
+  - 使用官方 Anthropic SDK、固定 `claude-opus-5`、adaptive thinking、low effort 和原生 strict
+    `tool_use/tool_result`；provider-neutral adapter 不把 SDK 对象、thinking 或原始 provider 数据泄露到领域边界。
+  - 显式 allowlist 仅开放 `retrieve`、`quiz_preview`、`review_due`，注册与执行双重校验
+    `READ + NONE + idempotent + read permission`；preview 检索使用 `DEFAULT_PLUS_EXTRAS`，正式学习会话继续固定
+    `DEFAULT_ONLY`。
+  - manual loop 受总 deadline、model/token-count/tool timeout、turn/call/token/cost/result/answer 预算、容量 2、
+    retry/no-replay、重复调用熔断、取消和稳定 termination reason 约束；失败不创建正式 session 或写领域状态。
+  - HMAC `agent_trace` 与状态机 `domain_trace` 分离，只保留 allowlist 元数据并在响应后丢弃。prompt 与受限工具结果会
+    发送给 Anthropic；本地日志、trace、错误、OpenAPI、持久化与未授权边界不得泄露 prompt、正文、凭据、路径或
+    provider 原始响应。
+  - `tests/M6b/` 2026-08-28 首轮 111 项全通过；阻断性 fake-provider benchmark 为 20 次 warm-up、200 次
+    measured、并发 2，p95 5.179 ms，0 unexpected termination，replay consistency 100%。该 p95 只属于首轮
+    closeout，不得与后续 stabilization 证据混用。
+  - 2026-08-29 stabilization：当前共收集 129 项（普通套件 126 passed、3 deselected；专用 `m6b_benchmark`
+    3 passed）。独立 evidence `stabilization-20260829-03` 的同规模 benchmark 为 p95 9.252 ms，200 次
+    `completed`，意外终止 0，重放一致率 100%。真实 Anthropic smoke 未运行，不据此声称 provider 性能。
+  - 不新增 `SA_RUNNER=react`，不接管 `/api/v1/study-sessions`；写工具、checkpoint/幂等、自主 Runner 和 Agent
+    任务评测仍属于 M10。
   - 执行计划：`docs/plans/m6b-agent-core-plan.md`。
-- ⬜ **M7 用户数据源与千级检索**：准备计划见
+- ⬜ **M7 用户数据源与千级检索**：当前暂停继续扩写。准备计划见
   [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md)；`M7-M6A-SOURCE-CONTRACT` 已映射 M6a 退出证据，
-  但不批准开工。生命周期、同步/删除、隔离、tokenizer、规模、benchmark、fallback，以及新增的文件级 manifest、
-  parser matrix、normalized document 与 provenance 仍为 `OPEN`。只读盘点 `tools/source_inventory.py` 是 collect-only，
+  但不批准开工。`data-expansion-runbook.md` 只保留为 M7 获准后的非权威未来参考，不关闭任何决策、保护基线或批准。
+  生命周期 schema、同步、删除、隔离、tokenizer、规模限制、offline fallback、benchmark、文件级 manifest、parser matrix、normalized document 与 provenance 决策均已闭合；M7 专属保护基线仍为 `OPEN`。
+  只读盘点 `tools/source_inventory.py` 是 collect-only，
   不构成 M7 开工。Agent 不得自行批准。
 - ⬜ **M8 专业化存储**：准备计划见
   [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md)；以 M7 benchmark 决定后端，LanceDB/Qdrant
@@ -214,9 +227,9 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 
 ## 五、面试叙事核心（详见 docs/interview/README.md）
 
-一句话 + 5 个设计决策 + 学习状态机工具链 + 能力边界：正式路径是状态机；M6b 是只读 preview（未开工）；
-完整自主 Runner 在 M10 且不替换教学法。招聘对照原文不是执行计划。
+一句话 + 5 个设计决策 + 学习状态机工具链 + 能力边界：正式路径是状态机；M6b 是已完成收口且默认关闭的
+只读 native tool-call preview；完整自主 Runner 在 M10 且不替换教学法。招聘对照原文不是执行计划。
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.6（不是产品发布版本）· 更新：2026-08-27（映射 M7 的 M6a Source 契约证据；M7 仍阻断）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · PLAN 文档修订：v2.9（不是产品发布版本）· 更新：2026-08-28（M6b 只读 preview 已完成 closeout；M7 暂停且仍阻断）· 维护：每次会话开工查看本文档*

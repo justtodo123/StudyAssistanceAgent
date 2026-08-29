@@ -27,6 +27,7 @@ docs/
 │   ├── m6a-harness-skeleton-plan.md
 │   ├── m6b-agent-core-plan.md
 │   ├── m7-source-lifecycle-plan.md
+│   ├── data-expansion-runbook.md # M7 获准后才可参考的非权威数据扩展手册
 │   ├── m8-specialized-storage-plan.md
 │   ├── m9-goal-driven-planning-plan.md
 │   └── m10-autonomous-runner-plan.md
@@ -71,10 +72,11 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 - M6a/M6b 执行计划：
   [plans/m6a-harness-skeleton-plan.md](plans/m6a-harness-skeleton-plan.md)（契约与兼容骨架；M6a-1 协议契约与 M6a-2 默认包适配的自动化门禁已通过，M6a-3 与 M6a-4 已完成）和
   [plans/m6b-agent-core-plan.md](plans/m6b-agent-core-plan.md)（独立只读原生工具调用预览）。M6a 当前为
-  `ADMITTED / COMPLETE`，M6b 仍为 `BLOCKED / NOT_STARTED`；准入规则见
+  `ADMITTED / COMPLETE`。M6b 已完成 M6a 退出证据、八项强制决策、专属保护基线和独立人工批准，当前为
+  `ADMITTED / COMPLETE`；获批的默认关闭只读 preview 已完成全部 closeout 门禁与证据同步；准入规则见
   [standards/stage-admission-gates.md](standards/stage-admission-gates.md)，
   机器登记见 [standards/stage-admission-gates.json](standards/stage-admission-gates.json)。M6b/M7 以 M6a 退出证据为
-  共同必要前置，但须分别闭合专属保护基线、决策和批准，彼此不互为前置。
+  共同必要前置，但仍须分别满足专属保护基线、决策和批准，彼此不互为前置。
 - M7–M10 准入准备计划：
   [plans/m7-source-lifecycle-plan.md](plans/m7-source-lifecycle-plan.md)、
   [plans/m8-specialized-storage-plan.md](plans/m8-specialized-storage-plan.md)、
@@ -109,7 +111,7 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 - 一句话项目叙事
 - 5 个设计决策与能力映射
 - 考点映射、数据驱动优化实锤、常见追问
-- 现行能力边界：领域状态机编排，不是 ReAct / Function Calling；与 PLAN / runtime-contracts 当前口径一致
+- 现行能力边界：正式路径是领域状态机；M6b 另有默认关闭的只读 native tool-call preview，不是 ReAct 或完整自主 Runner
 - 招聘对齐原始调查： [interview/StudyAssistanceAgent_requirement.md](interview/StudyAssistanceAgent_requirement.md)
 
 ---
@@ -123,4 +125,4 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-24（统一 M6 状态、评测范围与能力边界）· 维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-08-28（M6b 只读 preview 已完成 closeout；M7 仍阻断）· 维护：随项目演进同步更新*

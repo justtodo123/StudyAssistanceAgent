@@ -4,7 +4,9 @@
 > M0–M5 提供最小实现：默认计算机知识包、多路召回 RAG、学习会话与工作台。
 > M6 起按计划扩展：可插拔数据源、专业化存储、目标驱动学习计划与执行监控。
 
-**当前状态**：M6a-P0 crawler 已收口；八项决策、保护基线与负责人批准已闭合；M6a-1 协议契约至 M6a-4 收口已完成，状态为 `ADMITTED / COMPLETE`；M6b–M10 仍为 `BLOCKED / NOT_STARTED`；M0–M5 MVP 可用。
+**当前状态**：M6a-P0 crawler 已收口；M6a 为 `ADMITTED / COMPLETE`；
+M6b 默认关闭的只读 Agent Preview 已完成全部 closeout 门禁，状态为 `ADMITTED / COMPLETE`；
+M7–M10 仍为 `BLOCKED / NOT_STARTED`；M0–M5 MVP 可用。
 `python tools/start_local.py` 可启动最小工作台。阶段、准入与定位以 [docs/PLAN.md](docs/PLAN.md) 为最终依据；
 统一硬门禁见 [stage-admission-gates.md](docs/standards/stage-admission-gates.md)。
 
@@ -29,7 +31,7 @@
 | 用户数据源 | 自定义知识目录，规模百→千→万 | ⬜ M7 |
 | 专业化存储 | 当前 SQLite；M8 规划 LanceDB，万级可选 Qdrant | ⬜ M8 |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ⬜ M9 |
-| Harness 框架 | M6a-1 至 M6a-4 已完成：协议、默认包、工具/状态机、静态额外源、单进程拓扑与文档收口。M6b–M10 仍被准入门禁阻断，只读预览与自主 Runner 尚未实现 | ✅ M6a `ADMITTED / COMPLETE` |
+| Harness 框架 | M6a 已收口；M6b 默认关闭的只读 preview 已完成 closeout；完整 Runner 未实现 | ✅ M6a/M6b `ADMITTED / COMPLETE`；M7–M10 `BLOCKED / NOT_STARTED` |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
@@ -75,6 +77,10 @@ StudyAssistanceAgent/
 │   │   ├── observability.py # 进程内指标与结构化日志
 │   │   ├── models.py      # Pydantic 领域模型
 │   │   ├── config.py      # 环境变量配置
+│   │   ├── llm_client.py  # M6b provider-neutral Anthropic adapter
+│   │   ├── tool_registry.py # M6b 只读工具 allowlist 与结果投影
+│   │   ├── preview_agent.py # M6b bounded native tool-use loop
+│   │   ├── preview_service.py # M6b 默认关闭的独立认证 API surface
 │   │   └── static/           # 最小学习工作台静态页
 │   ├── tests/             # 冒烟测试
 │   ├── requirements.txt   # Python 依赖
@@ -97,6 +103,8 @@ StudyAssistanceAgent/
 │   ├── M4/                # 课程知识库规模测试
 │   ├── M5a/ ~ M5e/       # 评测、会话、持久化、工作台、离线交付
 │   ├── M6_crawler/        # crawler P0 离线测试（独立 marker / CI 已收口）
+│   ├── M6a/               # M6a harness 契约与兼容骨架测试
+│   ├── M6b/               # M6b 只读 Agent Preview 隔离测试与离线 benchmark
 │   ├── regression/        # 跨阶段回归套件
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
@@ -161,6 +169,7 @@ cd ..
 | `/api/v1/study-sessions` | POST | 创建学习会话（检索讲解并出题） |
 | `/api/v1/study-sessions/{id}` | GET | 查询学习会话状态与工具轨迹 |
 | `/api/v1/study-sessions/{id}/answers` | POST | 提交答案并评估掌握度 |
+| `/api/v1/agent-preview` | POST | 默认不注册；显式启用并认证后的 M6b 只读 native tool-call preview |
 
 > 完整 API 文档、配置说明、架构图见 [platform/README.md](platform/README.md)。
 
@@ -183,8 +192,9 @@ cd ..
 | [docs/plans/m3-engineering-execution-plan.md](docs/plans/m3-engineering-execution-plan.md) | M3 工程质量阶段执行记录（已完成） |
 | [docs/plans/m4-knowledge-base-scale-plan.md](docs/plans/m4-knowledge-base-scale-plan.md) | M4 课程知识库规模补齐计划（范围、验收、分支） |
 | [docs/plans/m6a-harness-skeleton-plan.md](docs/plans/m6a-harness-skeleton-plan.md) | M6a 契约与兼容骨架（含 crawler 前置收口） |
-| [docs/plans/m6b-agent-core-plan.md](docs/plans/m6b-agent-core-plan.md) | M6b 独立只读工具调用预览准备计划（被阻断） |
-| [docs/plans/m7-source-lifecycle-plan.md](docs/plans/m7-source-lifecycle-plan.md) | M7 用户 Source 生命周期准入准备（被阻断） |
+| [docs/plans/m6b-agent-core-plan.md](docs/plans/m6b-agent-core-plan.md) | M6b 独立只读工具调用预览执行计划（已完成 closeout） |
+| [docs/plans/m7-source-lifecycle-plan.md](docs/plans/m7-source-lifecycle-plan.md) | M7 用户 Source 生命周期准入准备（暂停继续扩写；仍被阻断） |
+| [docs/plans/data-expansion-runbook.md](docs/plans/data-expansion-runbook.md) | M7 获准后的未来参考手册；非权威，不关闭 M7 决策、保护基线或批准 |
 | [docs/plans/m8-specialized-storage-plan.md](docs/plans/m8-specialized-storage-plan.md) | M8 专业化检索存储准入准备（被阻断） |
 | [docs/plans/m9-goal-driven-planning-plan.md](docs/plans/m9-goal-driven-planning-plan.md) | M9 目标驱动学习计划准入准备（被阻断） |
 | [docs/plans/m10-autonomous-runner-plan.md](docs/plans/m10-autonomous-runner-plan.md) | M10 自主 Runner 与 Harness 对外准入准备（被阻断） |

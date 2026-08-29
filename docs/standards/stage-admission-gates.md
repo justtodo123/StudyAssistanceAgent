@@ -27,8 +27,10 @@ M6a–M10 涉及 Source 身份、索引生命周期、外部模型、专业存�
 | 交付 | `COMPLETE` | 已满足阶段退出条件 |
 
 M6a 的强制决策、前置证据与负责人批准已闭合，当前为 `ADMITTED / COMPLETE`：已获准实施，
-M6a-1 协议契约与 M6a-2 默认 `knowledge-pack` 兼容适配的自动化门禁已通过，M6a-3 与 M6a-4 已完成。M6b–M10 仍为
-`BLOCKED / NOT_STARTED`。M6a-P0 crawler 本身只构成前置证据，不单独批准阶段。
+M6a-1 协议契约与 M6a-2 默认 `knowledge-pack` 兼容适配的自动化门禁已通过，M6a-3 与 M6a-4 已完成。
+M6b 的前置证据、八项决策、保护基线与独立批准也已闭合；获批的默认关闭只读 preview 已完成全部 closeout 门禁，
+当前为 `ADMITTED / COMPLETE`。M7–M10 仍为 `BLOCKED / NOT_STARTED`。M7 的十二项强制决策（含 provenance）均已冻结为 `RESOLVED`，但专属保护基线仍为 `OPEN`，且批准记录为空，因此这些决策关闭不构成阶段准入。M6a-P0 crawler
+本身只构成前置证据，不单独批准阶段。
 
 ## 3. 决策完成标准
 
@@ -43,6 +45,11 @@ M6a-1 协议契约与 M6a-2 默认 `knowledge-pack` 兼容适配的自动化门�
 7. 可量化验收阈值及 workload（适用时）；
 8. 可追溯证据；
 9. 决策责任人和日期。
+
+涉及删除、撤销或不可逆数据处置的决策，还必须明确：
+- 逻辑不可见、物理清理、审计保留和 hard-delete receipt 的边界；
+- last-good、缓存、索引、出处和并发运行在删除期间的可见性；
+- 清理失败、重试、幂等重放和 receipt 未完成时的 fail-closed 行为。
 
 `TBD`、空值、“稍后决定”、“实现时决定”或未选择的多个方案都必须保持 `OPEN`。
 调查材料和 `collect-only` 结果不能替代真实的设计结论或测试通过证据。

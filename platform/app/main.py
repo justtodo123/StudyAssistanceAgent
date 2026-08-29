@@ -77,6 +77,26 @@ _study_sessions = StudySessionService(
 )
 
 
+if config.AGENT_PREVIEW_ENABLED:
+    from .preview_service import PreviewService, build_preview_router
+    from .tool_registry import ToolRegistry
+    from .tools.quiz import QuizTool
+    from .tools.retrieve import RetrieveTool
+    from .tools.review_due import ReviewDueTool
+
+    _preview_registry = ToolRegistry()
+    _preview_registry.register(RetrieveTool(_recall))
+    _preview_registry.register(QuizTool(_quiz))
+    _preview_registry.register(ReviewDueTool(_review_scheduler))
+    _preview_service = PreviewService(
+        token=config.AGENT_PREVIEW_TOKEN,
+        provider_key=config.ANTHROPIC_API_KEY,
+        registry=_preview_registry,
+        limits=config.AGENT_PREVIEW_LIMITS,
+    )
+    app.include_router(build_preview_router(_preview_service))
+
+
 def _initialize_runtime() -> None:
     """Take the single-worker lock and publish one complete snapshot."""
     enforce_single_worker_topology()
