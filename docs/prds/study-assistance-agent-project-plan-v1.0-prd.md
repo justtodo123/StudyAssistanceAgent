@@ -3,7 +3,7 @@
 > **文档定位**：本文件是 `requirements-clarity` 澄清记录，不是路线图，也不是开工许可。
 > **最终里程碑与准入仍以 `docs/PLAN.md` 为准。**
 > 测试通过不能替代 `ADMITTED` 准入批准。
-> 当前禁止创建 M6a 生产模块、运行时开关、新 schema、新 worker/依赖或正式 API 路径。
+> 当前仅允许在各自批准范围内实施已获准阶段；M6b 的批准只覆盖默认关闭的只读 Agent Preview，不包含 M7。
 
 ## 需求描述
 
@@ -17,11 +17,11 @@
   - 本地 Markdown 知识库 + BM25/向量多路召回 + 带出处问答
   - 正式学习状态机：讲解、测验、评估、复习记录、跨重启恢复
   - 最小工作台与 REST API
-  - M6b 隔离只读 Agent 预览；M10 可选自主 Runner
+  - M6b 已实现的默认关闭隔离只读 Agent 预览；M10 可选自主 Runner
 - **功能边界**：
   - 包括：已完成的 M0–M5 MVP；后续按准入推进 M6a–M10
   - 不包括：用 Runner 替换状态机；默认把网页/AI 草稿写入检索库；把用户源或 PDF 写入 Git
-  - 不包括：在 `BLOCKED` 期间开始 M6a 生产编码
+  - 不包括：在 `BLOCKED` 期间开始对应阶段的生产编码；M6b 批准不授权 M7
 - **用户场景**：
   1. 打开工作台完成今日待复习、讲解、作答、反馈
   2. 通过 API 检索/问答/出题/复习，无 LLM 时仍返回笔记摘要
@@ -39,25 +39,27 @@
 - **架构选择**：Python + FastAPI + SQLite；检索为 BM25 + 可选 BGE + RRF。不把外部向量库或容器编排设为默认依赖。
 - **关键组件**：`MultiRecallService`、`QaService`、`StudySessionService`、工作台、评测入口；M6b/M10 为独立 preview/Runner。
 - **数据存储**：`learning_state.sqlite3` 与 `vector_store.sqlite3`；用户原始材料和大文件保存在仓库外，Git 只存默认 pack、精炼笔记与配置；Source Registry、revision、索引控制数据和 manifest 的本地持久化边界由 M7/M8/M10 对应阶段契约决定，不得把用户原始材料复制进 Git。
-- **接口设计**：保持现有 `/api/v1/search|qa|quiz|review-*|study-sessions`；M6b/M10 不得接管 `study-sessions`。
+- **接口设计**：保持现有 `/api/v1/search|qa|quiz|review-*|study-sessions`；M6b 仅在显式启用时注册独立
+  `/api/v1/agent-preview`，M6b/M10 均不得接管 `study-sessions`。
 
 ### 约束条件
 - **性能要求**：继承现有 `/health` 分位数与默认 OS/DS/CO 90 题 Recall@3 保护基线；M6b–M10 仍须分别冻结与自身能力匹配的 workload、p50/p95、资源、成本和质量阈值，作为对应阶段的额外准入/退出门禁，不得用现有 90 题基线替代。
 - **兼容性**：一键启动 `python tools/start_local.py`；相对路径 + 环境变量配置；不强制 LLM、BGE、Docker、Qdrant。
-- **安全性**：API/日志/trace 不泄露宿主机绝对路径、密钥、用户答案或知识正文。
+- **安全性**：API、日志、trace、错误、OpenAPI 和持久化不泄露宿主机绝对路径、密钥、用户答案或知识正文。
+  M6b 为提供 preview 会把 prompt 与受限工具结果发送给 Anthropic；上述“不泄漏”约束针对本地和未授权边界。
 - **可扩展性**：M7 才引入用户源生命周期；M8 才按 benchmark 选择专业存储。
 
 ### 依赖顺序
 - M6a-P0 已收口，只构成 M6a 前置证据，不批准 M6a。
 - M6b 以 M6a 退出证据为共同必要前置，并须独立满足 `M6B-PROTECTED-BASELINE`、专属决策和批准；不依赖 M7。
 - M7 以 `M7-M6A-SOURCE-CONTRACT` 为共同必要前置，并须独立满足 `M7-PROTECTED-BASELINE`、专属决策和批准；不依赖 M6b。
-- M6b 与 M7 彼此不互为前置；当前均为 `BLOCKED / NOT_STARTED`，获准前不得并行开工。
+- M6b 与 M7 彼此不互为前置；M6b 当前为 `ADMITTED / COMPLETE`，M7 仍为 `BLOCKED / NOT_STARTED`；M7 获准前不得开工。
 - M8 依赖 M7；M9 依赖 M7 与 M8；M10 依赖 M7–M9，不以 M6b 为写路径或 Source 生命周期前置。
 
 ### 风险评估
 - **技术风险**：Runner 误写学习状态。缓解：状态机独占正式写入；M6b 只读；M10 完成授权/checkpoint/幂等后才写。
 - **依赖风险**：外部 LLM 或模型下载失败。缓解：摘要降级与 `SA_USE_VECTOR=false` 离线路径。
-- **进度风险**：把准备计划当成开工许可。缓解：M6a 仅因独立门禁与负责人批准成为 `ADMITTED / NOT_STARTED`；M6b–M10 仍为 `BLOCKED / NOT_STARTED`，以 `docs/PLAN.md` 为准。
+- **进度风险**：把准备计划当成开工许可。缓解：各阶段仅因独立门禁与负责人批准成为 `ADMITTED`；M6b 当前为 `ADMITTED / COMPLETE`，M7–M10 仍为 `BLOCKED / NOT_STARTED`，以 `docs/PLAN.md` 为准。
 
 ## 验收标准
 
@@ -89,14 +91,16 @@
 ### 阶段1：准备
 **目标**：保持 M0–M5 可交付，不提前实现被阻断阶段
 - [x] 以 `docs/PLAN.md` 为最终状态权威
-- [x] M6a 准入前仅做设定澄清与准备计划；M6b–M10 在获准前不写入生产模块
+- [x] M6a 准入前仅做设定澄清与准备计划；M6b 已按独立批准实现默认关闭的只读 preview；M7–M10 在获准前不写入生产模块
 - **交付物**：现行 MVP + 准备计划
 - **时间**：已完成 / 持续维护
 
 ### 阶段2：核心开发
-**目标**：按准入顺序推进，不改现有里程碑切分；本阶段仅适用于已获 `ADMITTED` 的阶段。M6a 已获准但尚未开始生产实现，M6b–M10 尚未进入核心开发
-- [ ] **未来验收** M6a：契约与兼容骨架，不改正式 API（`ADMITTED / NOT_STARTED`）
-- [ ] **未来验收** M6b：隔离只读 preview；以 M6a 退出证据为共同必要前置，另须 M6b 专属保护基线，不依赖 M7（`BLOCKED / NOT_STARTED`）
+**目标**：按准入顺序推进，不改现有里程碑切分；本阶段仅适用于已获 `ADMITTED` 的阶段。M6a 已完成；M6b
+默认关闭的隔离只读 preview 已完成全部 closeout 门禁与证据同步；M7–M10 尚未进入核心开发。
+- [x] **现行保护** M6a：契约与兼容骨架，不改正式 API（`ADMITTED / COMPLETE`）
+- [x] **收口验收** M6b：阶段隔离、隐私/零写入、离线 benchmark、回归和文档门禁均已通过，
+  已切换为 `ADMITTED / COMPLETE`；该收口不依赖或批准 M7
 - [ ] **未来验收** M7：用户源生命周期；以 M6a Source 契约为共同必要前置，另须 `M7-PROTECTED-BASELINE`，不依赖 M6b（`BLOCKED / NOT_STARTED`）
 - [ ] **未来验收** M8–M9：专业化存储与目标计划（分别依赖 M7 / M7+M8）
 - [ ] **未来验收** M10：可选自主 Runner，状态机仍为默认；依赖 M7–M9，不以 M6b 为写前置

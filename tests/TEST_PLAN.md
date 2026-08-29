@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-27（登记外部资料只读盘点测试）
+> 起始日期：2026-08-17 · 更新：2026-08-29（M6b stabilization 复测与历史/当前测试库存同步）
 
 ## 一、测试策略总览
 
@@ -104,6 +104,18 @@ tests/
 │   ├── test_cache_lifecycle.py        # default/combined generation 与缓存生命周期
 │   └── test_closeout_contracts.py     # M6a-4 API/OpenAPI/链接收口
 │
+├── M6b/                    # 默认关闭、只读 Agent Preview 阶段测试
+│   ├── README.md                      # 范围、离线命令与 benchmark 说明
+│   ├── test_llm_client.py             # Anthropic adapter、native replay 与隐私
+│   ├── test_preview_agent.py          # tool loop、预算、重试、取消与终止
+│   ├── test_preview_service.py        # route、Bearer auth、容量与 HTTP envelope
+│   ├── test_main_preview_integration.py # 默认关闭/启用 app 与 OpenAPI
+│   ├── test_preview_config.py         # 严格布尔值与只能收紧的配置
+│   ├── test_tool_registry.py          # allowlist、schema、授权与结果投影
+│   ├── test_preview_read_only.py      # scope 隔离与 SQLite 零领域写入
+│   ├── test_preview_privacy.py        # prompt/body/secret/path 日志边界
+│   └── test_preview_benchmark.py      # 20 warm-up、200 measured、并发 2、p95
+│
 ├── source_inventory/       # 外部资料只读盘点（不构成 M7 开工）
 │   ├── conftest.py         # source_inventory marker + 迷你资料树
 │   ├── test_classify.py    # 格式/课程/跳过规则
@@ -146,20 +158,26 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/`（含 M6_crawler、M6a、source_inventory） | 417 项 | 2026-08-27：416 passed、1 skipped（显式 online smoke） | 阶段测试 + 回归套件；含只读盘点 21 项 |
-| `tests/M6a/` | 124 项 | 2026-08-26：124 passed | 含 worker topology、generation 分离、缓存生命周期与 API/OpenAPI/链接收口 |
+| 根级 `tests/`（含 M6_crawler、M6a、M6b、source_inventory，不含 `platform/tests/`） | 546 项 | 2026-08-29 实测：545 passed、1 skipped；2026-08-28 首轮：527 passed、1 skipped | 阶段测试 + 回归套件；M6b 当前 129 项（普通 126 + 专用 benchmark 3；首轮 111 项） |
+| `tests/M6b/` | 129 项 | 2026-08-29 当前：普通套件 126 passed、3 deselected；benchmark 3 passed；2026-08-28 首轮：111 passed | fake provider；native tool loop、API/auth、隐私、零写入与独立 blocking benchmark |
+| `tests/M6a/` | 124 项 | 2026-08-28：124 passed | 含 worker topology、generation 分离、缓存生命周期与 API/OpenAPI/链接收口 |
 | `tests/source_inventory/` | 21 项 | 2026-08-27：21 passed | 外部资料只读盘点；tmp_path 迷你树，不扫描真实外部目录，不构成 M7 开工 |
-| `tests/regression/` | 52 项 | 2026-08-27：52 passed | 含 SSE、结构化 CI、可演进准入、导航/生产树和 slow RAG 质量门禁 |
-| `platform/tests/` | 40 项 | 2026-08-27：40 passed | 受保护的原始平台冒烟/功能测试，不由根级测试取代 |
-| 合并 `tests platform/tests` | 457 项 | 根级 416 passed、1 skipped；平台 40 passed | skip 为显式 online crawler smoke |
-| `tests/M6_crawler/` 离线 | 52 项 + 1 deselected | 2026-08-26：52 passed | `m6_crawler and not online` |
-| `tests/M0_M2/` | 18 项 | 2026-08-26：18 passed | 基线回归 |
+| `tests/regression/` 非 slow | 49 selected | 2026-08-28：49 passed、3 deselected | 含 SSE、结构化 CI、准入治理、导航与生产树契约 |
+| `tests/regression/test_rag_quality.py` slow | 3 项 | 2026-08-28：3 passed | 默认 OS/DS/CO 90 题 Recall@3 门禁 |
+| `platform/tests/` | 40 项 | 2026-08-28：40 passed | 受保护的原始平台冒烟/功能测试，不由根级测试取代 |
+| 合并 `tests platform/tests` | 586 项 | 2026-08-29 实测：585 passed、1 skipped | 根级 `tests/` 546 项 + `platform/tests/` 40 项；skip 为显式 online crawler smoke |
+| `tests/M6_crawler/` 离线 | 52 项 + 1 deselected | 2026-08-28：52 passed | `m6_crawler and not online` |
+| `tests/M0_M2/` | 18 项 | 2026-08-28：18 passed | 基线回归 |
 | 根级 `tests/M0_M2/` | 18 项 | 历史基线 | 从平台原始测试提炼的关键断言，与 `platform/tests/` 同时保留 |
 | M6 crawler 前置门禁 | `tests/M6_crawler/` | 独立 job `crawler-offline` | marker `m6_crawler`；默认 mock HTTP；在线 smoke 仅 workflow_dispatch |
 
-M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。2026-08-26 M6a-2 复验中，根级测试为
-311 passed、1 skipped，平台原始测试为 40 passed；默认 OS/DS/CO 90 题 keyword-only Recall@3 为
-0.972。受限 Windows 环境若默认临时目录不可写，可使用工作区内的 `pytest --basetemp=.tmp-test\...`。
+M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。2026-08-28 M6b 首轮 closeout 复验中，根级测试为
+527 passed、1 skipped，平台原始测试为 40 passed；2026-08-29 stabilization 复测中，合并 `tests platform/tests`
+套件为 585 passed、1 skipped。当前 limiter/evidence stabilization 使用显式 marker 分离：M6b 普通套件 126 passed，
+benchmark 3 passed。默认 OS/DS/CO 90 题 keyword-only Recall@3 为 0.972。当前 blocking benchmark 使用 20 次 warm-up、
+200 次 measured、并发 2，evidence `stabilization-20260829-03` 的 p95 为 9.252 ms，200 次均以 `completed` 结束且
+规范化重放一致率 100%。受限 Windows 环境若默认临时目录不可写，可使用工作区内的
+`pytest --basetemp=.tmp-test\...`。
 
 ### 阶段 0：基线建立（M0-M2 回归）
 
@@ -411,28 +429,29 @@ pytest tests/M0_M2/ -v         # 基线回归
 
 M6a-P0 不等同于 M7 Source 生命周期；持久化注册、同步、删除传播和多源隔离留待 M7。
 
-### 阶段 12：M6a 契约与默认包兼容测试（已完成）及 M6b 规划
+### 阶段 12：M6a 契约收口与 M6b 只读 Agent Preview（已完成 closeout）
 
-M6a 已于 2026-08-25 获准并进入 `ADMITTED / IN_PROGRESS`，现已收口为 `ADMITTED / COMPLETE`。M6a-1 的 `tests/M6a/` 独立 `m6a` marker
-协议 contract tests 已形成局部检查点：逻辑 Source/document/chunk 身份、职责拆分后的存储边界、Tool 的权限与
-副作用分类、结构化安全错误，以及跨请求 Runner 生命周期。
+M6a 已于 2026-08-25 获准，现已收口为 `ADMITTED / COMPLETE`。M6a-1 至 M6a-4 冻结了逻辑
+Source/document/chunk 身份、职责分离存储、Tool 权限与副作用、稳定安全错误、跨请求 Runner 生命周期、默认
+`knowledge-pack` 兼容、静态额外源、default/combined generation 分离和单进程 service lock。正式
+`StudySessionService` 仍独占状态转换、答题评估、持久化与 review-log。
 
-M6a-2 在同一隔离目录增加默认 `knowledge-pack` 的真实链路测试：`MarkdownPackSource`、完整快照、稳定逻辑
-identity、generation 隔离缓存、reallocation、内容变更/删除、case-fold 冲突和旧 `RetrievalChunk` 出处兼容。
-适配层不替换 `StudySessionService` 的状态转换、答题评估、持久化或 review-log 权威，也不提前实现静态额外
-Source、运行时 Source 生命周期、Tool Registry、Agent Runner 或任何 M6b 能力。M6a-2 自动化门禁已于 2026-08-26 通过；M6a-3 的工具/状态机/静态额外源、default/combined generation 分离和单进程 service lock 门禁随后闭合，M6a-4 文档/API/OpenAPI/链接收口已完成。
+M6b 已按独立批准进入 `ADMITTED / COMPLETE`，并实现隔离、默认关闭、只读的 provider-native Agent Preview：
+官方 Anthropic adapter、provider-neutral turn/call/usage、只读 `ToolRegistry`、native `tool_use/tool_result` replay、
+有限 loop、独立 Bearer 入口、预算/终止语义和 HMAC 元数据 trace。Preview 使用 `DEFAULT_PLUS_EXTRAS`；正式学习
+会话保持 `DEFAULT_ONLY`。所有成功和失败路径均不得创建 session、提交答案或写 review/mastery/source 状态。
 
-M6a 开工前的继承保护基线已于 2026-08-25 在受标识候选树上真实复验：focused privacy/API/SSE/recovery 32 项、M3b
-13 项、原始 platform 40 项、根级 271 项通过（另有 1 项显式 online crawler smoke 跳过），crawler offline 52 项通过
-（1 项 online deselected），slow 90 题质量门禁 3 项通过。详细命令、候选树 digest 与指标见 `docs/baselines.md`；该
-证据满足 prerequisite，但不替代 M6a 实施/退出证据。`test_docs_consistency.py` 解析机器登记，检查可演进状态组合、
-Decision/Prerequisite ID、M6b/M7 sibling 关系和批准逻辑；`test_governance_contract.py` 检查 docs 导航、M6a 实施路径、
-阻断阶段的受限生产路径、runtime 标识和未来专属依赖。这些 CI 一致性门禁只降低误实施风险，不构成外部不可篡改安全边界。
+`tests/M6b/` 当前 129 项（普通套件 126 项、专用 benchmark 3 项；2026-08-28 首轮为 111 项）覆盖 adapter、原生调用与 replay、注册/授权、malformed arguments、retry/timeout/cancel、
+budget、duplicate/multiple call、provider stop reason、默认无路由、auth-before-provider-config、并发、scope 隔离、
+SQLite 零领域写入、隐私 canary、真实同步工具容量与确定性重放。阻断性 benchmark 使用真实 PreviewService/PreviewAgent/ToolRegistry、
+三个真实只读工具、BM25 warm snapshot 和 scripted fake provider，固定 20 次 warm-up、200 次 measured、并发 2；
+专用 `m6b_benchmark` marker 从普通 M6b 套件中显式分离。2026-08-29 evidence `stabilization-20260829-03` 的 p95 为
+9.252 ms，200 次均 `completed`，规范化重放一致率 100%。默认门禁不配置 provider 凭据、
+不联网；真实 Anthropic smoke 仅手工显式 opt-in，本次未运行，也不作为默认 CI 或性能声明。
 
-M6a 后续还覆盖 StateMachineRunner 兼容、旧会话恢复、静态额外 Source、多源 ID 不冲突、绝对路径不泄露和默认 90 题
-不退化。M6b 仍为 `BLOCKED / NOT_STARTED`，只规划 provider-native tool-call block、call_id/schema/错误映射、只读
-allowlist、写工具拒绝、独立 preview 入口、预算/终止和“不创建或修改正式 session/review log”。M6b 不列 ReAct Runner
-切换；完整自主 Runner、写工具、checkpoint/幂等和 Agent 任务评测属于 M10。
+M6b 不实现 ReAct Runner、写工具、checkpoint、幂等写或正式状态机替换；这些仍属于 M10。M7 继续为
+`BLOCKED / NOT_STARTED`，其十二项决策、保护基线和批准字段保持未闭合。离线 M6b 检索测试固定 BM25，
+不依赖本机向量模型；请求 timeout/cancellation 后不再继续 Agent 工作，已开始的非协作同步函数仍占用实际工作槽至自然结束。
 
 ## 三、执行矩阵
 
@@ -451,7 +470,7 @@ allowlist、写工具拒绝、独立 preview 入口、预算/终止和“不创�
 | M5e 可复现交付 | `tests/M5e/` | `tests/regression/` + `platform/tests/` | `tests/M0_M2/` | smoke + 独立 slow 90 题门禁 |
 | M6 crawler 前置 | `pytest tests/M6_crawler -m "m6_crawler and not online"` | `tests/regression/` | `tests/M0_M2/` | 默认 90 题发现 + smoke |
 | M6a-1/M6a-2/M6a-3 契约、适配与拓扑门禁 | `tests/M6a/`（`m6a`） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | `tools/run_evaluation.py` |
-| M6b 只读预览 | `tests/M6b/`（获准后规划） | `tests/regression/` | `tests/M0_M2/` | 默认 90 题；可选 provider smoke |
+| M6b 只读预览 | `tests/M6b/`（`m6b`）+ blocking offline benchmark | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 默认 90 题；真实 provider smoke 仅手工可选 |
 | 外部资料只读盘点 | `tests/source_inventory/`（`source_inventory`） | 不要求 | 使用 tmp_path 迷你树 | 不建索引、不计入 RAG 门禁 |
 | M7–M10 准入准备 | 不创建阶段测试目录；当前仅治理一致性门禁 | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
 
@@ -481,6 +500,15 @@ pytest tests/M5e/ -v -m m5e
 
 # 运行 crawler P0 离线测试（需 tools/crawler/requirements.txt）
 pytest tests/M6_crawler -v -m "m6_crawler and not online"
+
+# 运行 M6b fake-provider 普通套件（默认离线，不需要 Anthropic key；显式排除 blocking benchmark）
+PYTHONPATH=platform SA_USE_VECTOR=false pytest tests/M6b -m "not m6b_benchmark" -q --tb=short
+
+# 单独运行阻断性 M6b benchmark。必须同时给出证据 ID；报告路径文件名必须包含该 ID。
+# 报告以 exclusive-create 写入，已存在则失败，禁止覆盖历史 artifact。
+M6B_BENCHMARK_EVIDENCE_ID=stabilization-20260829-03 \
+M6B_BENCHMARK_REPORT=reports/m6b-offline-preview-benchmark-stabilization-20260829-03.json \
+  PYTHONPATH=platform SA_USE_VECTOR=false pytest tests/M6b -m m6b_benchmark -q --tb=short
 
 # 运行外部资料只读盘点测试（使用 tmp_path 迷你树，不扫描真实 D:\111_Others_Subjects）
 pytest tests/source_inventory -v -m source_inventory
@@ -533,6 +561,8 @@ pytest tests/ -v -n auto
 ---
 
 *维护：每阶段开发完成后更新本计划。当前根级/回归总数以 `pytest --collect-only` 为准，collect-only 不等于
-测试通过。2026-08-27 根级实际结果为 417 collected、416 passed、1 skipped；平台原始测试固定保留 40 项并在
-offline CI 独立运行。crawler P0 使用独立 marker `m6_crawler` 和 job `crawler-offline`；只读盘点使用
-`source_inventory`；默认 OS/DS/CO 90 题质量门禁独立运行 slow 回归。*
+测试通过。2026-08-28 M6b closeout 首轮中，根级实际结果为 528 collected、527 passed、1 skipped；2026-08-29
+stabilization 合并套件复测为 586 collected、585 passed、1 skipped。平台原始测试固定保留 40 项并在 offline CI 独立运行。
+M6b 2026-08-28 首轮 111 项；当前普通套件 126 passed、3 deselected，专用 benchmark 3 passed（共收集 129 项）；blocking fake-provider benchmark 已通过；crawler P0
+使用独立 marker `m6_crawler` 和 job `crawler-offline`；只读盘点使用 `source_inventory`；默认 OS/DS/CO 90 题
+质量门禁独立运行 slow 回归。*

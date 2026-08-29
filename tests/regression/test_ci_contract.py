@@ -34,19 +34,48 @@ class TestOfflineCiContract:
         assert any(
             command.startswith("python -m pytest tests/M0_M2")
             and "tests/M6a" in command
+            and "tests/M6b" in command
             and "tests/regression" in command
-            and '-m "not slow"' in command
+            and '-m "not slow and not m6b_benchmark"' in command
             for command in commands
         )
         assert (
             "python -m pytest tests/regression/test_rag_quality.py "
             "-q --tb=short -m slow"
         ) in commands
+        assert (
+            "python -m pytest tests/M6b -q --tb=short -m m6b_benchmark"
+        ) in commands
+        benchmark_step = next(
+            step
+            for step in offline["steps"]
+            if step.get("name") == "Run blocking M6b offline preview benchmark"
+        )
+        evidence_id = "${{ github.run_id }}-${{ github.run_attempt }}"
+        assert benchmark_step["env"] == {
+            "M6B_BENCHMARK_EVIDENCE_ID": evidence_id,
+            "M6B_BENCHMARK_REPORT": (
+                f"reports/m6b-offline-preview-benchmark-{evidence_id}.json"
+            ),
+        }
+        upload_step = next(
+            step
+            for step in offline["steps"]
+            if step.get("name") == "Upload sanitized M6b benchmark report"
+        )
+        assert upload_step["uses"] == "actions/upload-artifact@v4"
+        assert upload_step["with"] == {
+            "name": f"m6b-offline-preview-benchmark-{evidence_id}",
+            "path": f"reports/m6b-offline-preview-benchmark-{evidence_id}.json",
+            "if-no-files-found": "error",
+        }
         assert "python tools/run_evaluation.py --smoke" in commands
 
         serialized = yaml.safe_dump(workflow)
         assert "huggingface-cli" not in serialized.lower()
         assert "SA_LLM_API_KEY" not in serialized
+        assert "ANTHROPIC_API_KEY" not in serialized
+        assert "SA_AGENT_PREVIEW_TOKEN" not in serialized
 
     def test_crawler_jobs_remain_isolated_and_online_is_explicit(self, repo_root):
         workflow = self._load_workflow(repo_root)

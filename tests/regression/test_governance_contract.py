@@ -86,20 +86,34 @@ class TestBlockedStageProductionTree:
             for stage in _load_registry(repo_root)["stages"]
         }
         m6a = stages["M6a"]
+        m6b = stages["M6b"]
         m6a_paths = {
             "platform/app/protocols.py",
             "platform/app/tools",
             "platform/app/runners",
             "tests/M6a",
         }
+        m6b_paths = {
+            "platform/app/tool_registry.py",
+            "platform/app/llm_client.py",
+            "platform/app/preview_agent.py",
+            "platform/app/preview_service.py",
+            "tests/M6b",
+        }
         m6a_implementation_started = (
             m6a["admission_status"] == "ADMITTED"
             and m6a["delivery_status"] in {"IN_PROGRESS", "COMPLETE"}
         )
+        m6b_is_admitted = m6b["admission_status"] == "ADMITTED"
+        allowed_paths = set()
+        if m6a_implementation_started:
+            allowed_paths.update(m6a_paths)
+        if m6b_is_admitted:
+            allowed_paths.update(m6b_paths)
         blocked_paths = [
             relative_path
             for relative_path in FUTURE_STAGE_PATHS
-            if relative_path not in m6a_paths or not m6a_implementation_started
+            if relative_path not in allowed_paths
         ]
         unexpected_paths = [
             relative_path
@@ -118,16 +132,35 @@ class TestBlockedStageProductionTree:
             for path in production_files
             if path.suffix in {".py", ".js", ".html"}
         )
-        allowed_m6a_identifiers = {"SourceRegistry"} if m6a_implementation_started else set()
+        allowed_identifiers = set()
+        if m6a_implementation_started:
+            allowed_identifiers.add("SourceRegistry")
+        if m6b_is_admitted:
+            allowed_identifiers.update(
+                {
+                    "SA_AGENT_PREVIEW_ENABLED",
+                    "SA_PREVIEW_MAX_TURNS",
+                    "SA_PREVIEW_DEADLINE_SECONDS",
+                    "SA_PREVIEW_TOOL_RESULT_LIMIT",
+                }
+            )
         for identifier in FUTURE_RUNTIME_IDENTIFIERS:
-            if identifier not in allowed_m6a_identifiers:
+            if identifier not in allowed_identifiers:
                 assert identifier not in production_text
+
+        allowed_api_paths = {"/api/v1/agent-preview"} if m6b_is_admitted else set()
         for api_path in FUTURE_API_PATHS:
-            assert api_path not in production_text
+            if api_path not in allowed_api_paths:
+                assert api_path not in production_text
 
         requirements = "\n".join(
             path.read_text(encoding="utf-8").lower()
             for path in (repo_root / "platform").glob("requirements*.txt")
         )
+        allowed_requirements = {"anthropic"} if m6b_is_admitted else set()
         for package in FUTURE_REQUIREMENTS:
-            assert not re.search(rf"(?m)^\s*{re.escape(package)}(?:\[|\s|[=<>!~])", requirements)
+            if package not in allowed_requirements:
+                assert not re.search(
+                    rf"(?m)^\s*{re.escape(package)}(?:\[|\s|[=<>!~])",
+                    requirements,
+                )

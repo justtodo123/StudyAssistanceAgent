@@ -38,6 +38,10 @@ platform/
 │   ├── knowledge_index.py # 知识库索引兼容视图（Markdown 快照 + JSON 缓存）
 │   ├── markdown_parser.py # 共享 Markdown frontmatter/H2 解析原语
 │   ├── protocols.py       # M6a provider-neutral harness 契约
+│   ├── llm_client.py      # M6b provider-neutral Anthropic Messages adapter
+│   ├── tool_registry.py   # M6b 只读工具 allowlist、schema 与结果投影
+│   ├── preview_agent.py   # M6b 有限 native tool-use loop 与预算/终止语义
+│   ├── preview_service.py # M6b 独立认证、容量与 HTTP preview surface
 │   ├── retrieval_index.py # M6a 默认包快照到旧 RetrievalChunk 的兼容适配器
 │   ├── sources/           # 默认知识包与静态额外源适配器（见子目录 README）
 │   ├── combined_snapshot.py # 默认包 + 启动期额外源的不可变组合快照
@@ -296,6 +300,65 @@ Content-Type: application/json
 - 非法状态转换返回 409，未知会话返回 404；`detail` 为 `{code, message, retryable}`。
 - 会话、答题记录和复习历史默认写入 `platform/.cache/learning_state.sqlite3`；服务重启后可按 `session_id` 恢复未完成会话。现有 `review_history.json` 仍可兼容读取。
 
+### Agent Preview（M6b，默认关闭）
+
+M6b 提供独立的只读 native tool-call preview，不替代正式学习会话，也不调用
+`StateMachineRunner` 或写入学习状态。只有进程启动前显式设置
+`SA_AGENT_PREVIEW_ENABLED=true` 且 `SA_AGENT_PREVIEW_TOKEN` 至少包含 32 个 UTF-8 字节时，才注册：
+
+```
+POST /api/v1/agent-preview
+Authorization: Bearer <preview-token>
+Content-Type: application/json
+
+{
+  "prompt": "解释进程调度",
+  "learner_id": "demo"
+}
+```
+
+Preview 使用服务端 `ANTHROPIC_API_KEY` 调用固定官方 Anthropic endpoint 和
+`claude-opus-5`，采用 adaptive thinking、low effort 与原生 `tool_use/tool_result`。
+请求可使用 `retrieve`、`quiz_preview`、`review_due` 三个显式 allowlist 只读工具；检索范围为
+`DEFAULT_PLUS_EXTRAS`，而正式学习会话仍固定为 `DEFAULT_ONLY`。
+
+响应为不含原始 provider 数据的 bounded envelope：
+
+```json
+{
+  "status": "completed",
+  "termination_reason": "completed",
+  "answer": "……",
+  "sources": [],
+  "agent_trace": [],
+  "usage": {
+    "input_tokens": 12,
+    "output_tokens": 8,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "estimated_cost_usd": 0.00042
+  },
+  "model_turn_count": 1,
+  "tool_call_count": 0
+}
+```
+
+总 deadline、模型轮次、工具调用、token、费用、结果和答案均有硬上限；每进程最多 2 个活动
+preview，过载返回 `429 PREVIEW_OVERLOADED`（`Retry-After: 1`）。未认证返回 `401`，请求校验失败
+返回不回显输入的 `422 PREVIEW_REQUEST_INVALID`，已认证但缺少 Anthropic key 返回结构化 `503`
+`PREVIEW_PROVIDER_NOT_CONFIGURED`。loop 内的 provider、工具、预算和取消失败以稳定
+`termination_reason` 返回，不暴露 provider 原始异常。
+
+同步只读工具运行在默认线程池中；Python 无法安全强杀已经开始执行的非协作同步函数。因此请求超时或取消会立即停止
+Preview 的 model/tool/retry continuation，不追加晚到的 tool result，也不写回领域状态，但实际工具工作槽会一直占用到该
+函数自然返回或抛错后才释放。请求容量槽与实际工具工作槽是两层独立限制。
+
+Preview trace 只在当前认证响应中短暂存在，标识使用进程内 HMAC；日志、trace、错误和持久化不包含
+prompt、thinking、原始参数、知识正文、凭据、宿主绝对路径或 provider 原始响应。为完成 preview，
+prompt 与受限工具结果会发送给 Anthropic；上述“不泄漏”约束针对本地日志、响应中的 trace/错误边界、OpenAPI、
+持久化和未授权边界。授权响应的 `answer` 可能包含模型生成内容。所有成功及失败路径都不创建 session、不提交答案、
+不写 review/mastery/source 状态。
+
 ## 配置
 
 复制 `.env.example` → `.env`，按需修改：
@@ -325,12 +388,33 @@ Content-Type: application/json
 | `SA_EXTRA_SOURCES` | `[]` | 启动期静态额外 Markdown 源，最多 3 个；只进 Search/QA |
 | `SA_EXTRA_SOURCES_STRICT` | `true` | 额外源失败时拒绝整次发布 |
 | `SA_EXPECTED_DEFAULT_PACK_REVISION` | 空 | 默认包大幅缩减时的精确 revision 确认 |
+| `SA_AGENT_PREVIEW_ENABLED` | `false` | 启动期注册只读 Agent Preview；默认路由与 OpenAPI 均不存在 |
+| `SA_AGENT_PREVIEW_TOKEN` | 空 | Preview Bearer secret；启用时至少 32 个 UTF-8 字节 |
+| `ANTHROPIC_API_KEY` | 空 | Preview 专用服务端 Anthropic 凭据；不复用 `SA_LLM_API_KEY` |
+| `SA_AGENT_PREVIEW_DEADLINE_SECONDS` | `45` | 请求总 deadline；只能收紧 |
+| `SA_AGENT_PREVIEW_MODEL_TIMEOUT_SECONDS` | `20` | 单次模型 timeout；只能收紧 |
+| `SA_AGENT_PREVIEW_TOKEN_COUNT_TIMEOUT_SECONDS` | `3` | 单次 token count timeout；只能收紧 |
+| `SA_AGENT_PREVIEW_TOOL_TIMEOUT_SECONDS` | `2` | 单次只读工具 timeout；只能收紧 |
+| `SA_AGENT_PREVIEW_MAX_MODEL_TURNS` | `4` | 最大模型轮次；只能收紧 |
+| `SA_AGENT_PREVIEW_MAX_TOOL_CALLS` | `3` | 最大工具调用数；只能收紧 |
+| `SA_AGENT_PREVIEW_MAX_INPUT_TOKENS` | `12000` | 累计 provider input token 上限；只能收紧 |
+| `SA_AGENT_PREVIEW_MAX_OUTPUT_TOKENS` | `4096` | 累计 provider output token 上限；只能收紧 |
+| `SA_AGENT_PREVIEW_MAX_TURN_OUTPUT_TOKENS` | `1024` | 单轮 output token 上限；只能收紧 |
+| `SA_AGENT_PREVIEW_MAX_COST_USD` | `0.20` | 冻结价格表估算费用上限；只能收紧 |
+| `SA_AGENT_PREVIEW_MAX_PROMPT_BYTES` | `8192` | UTF-8 prompt 字节上限；只能收紧 |
+| `SA_AGENT_PREVIEW_MAX_TOOL_RESULT_BYTES` | `12288` | 单项模型可见工具结果字节上限；只能收紧 |
+| `SA_AGENT_PREVIEW_MAX_TOTAL_TOOL_RESULT_BYTES` | `24576` | 累计模型可见工具结果字节上限；只能收紧 |
+| `SA_AGENT_PREVIEW_MAX_ANSWER_BYTES` | `8192` | 最终答案 UTF-8 字节上限；只能收紧 |
+
+Preview 的 model、官方 endpoint、TLS 校验、tool allowlist、capacity=2、应用级最大一次 retry、thinking、
+价格表和 trace retention 均不可由环境变量覆盖。配置布尔值、数字或“只能收紧”约束无效时启动即 fail closed。
 
 ## M6 边界
 
 M6a 已完成 Source/存储职责/Tool/Runner 薄适配、启动期静态额外源、default/combined generation 分离、单进程拓扑门禁和文档收口。
-M6b 仍未实现：只增加独立、只读的原生工具调用 preview，不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。
-完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。当前 API 清单不包含这些规划能力。
+M6b 已实现独立、默认关闭、只读的原生工具调用 preview，并完成 closeout 收口，当前为 `ADMITTED / COMPLETE`。
+它不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。离线 preview 测试固定 BM25，
+不依赖本机向量模型。完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。当前 API 清单不包含这些规划能力。
 
 默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
@@ -341,6 +425,11 @@ M6b 仍未实现：只增加独立、只读的原生工具调用 preview，不�
 | `sentence-transformers` 未安装 | 向量路自动跳过，回退纯关键词（BM25）检索 |
 | LLM API 未配置 | 问答返回笔记摘要，而非 AI 生成 |
 | LLM API 调用失败 | 同上，并附带失败提示 |
+| Agent Preview 未启用 | 路由不注册，默认 OpenAPI 不出现该端点 |
+| Preview 未认证 / 请求无效 | 返回净化后的 401 / 422，不回显 token、prompt 或被拒输入 |
+| Preview provider key 缺失 | 认证后返回结构化 503；Search/QA/session 不受影响 |
+| Preview 过载 | 最多等待 250 ms，随后返回 429 与 `Retry-After: 1` |
+| Preview loop 失败或预算耗尽 | 返回稳定 `terminated` envelope，不降级为正式状态机或写操作 |
 
 **核心原则：保证总是有输出。**
 
@@ -409,4 +498,4 @@ Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知�
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-26（M6a-3 单进程锁、generation 分离与静态额外源）· 维护：随 API 变更同步更新*
+*创建：2026-08-11 · 更新：2026-08-28（M6b 默认关闭只读 Agent Preview 与 closeout 文档）· 维护：随 API 变更同步更新*

@@ -273,4 +273,210 @@ M6a-1 协议契约与 M6a-2 默认包适配的自动化门禁通过，默认 RAG
   `5db638a9cdb59081c2dc6ecea09a873fb31ad07e369364d6bcaa6a3ecbba00ca`。
 - 路径隐私回归同时覆盖 `/health`、Search、QA、QA SSE、OpenAPI、日志及 LLM 异常 fallback；宿主路径未出现在响应或日志中。
 
-*创建：2026-08-12 · 更新：2026-08-26（区分 M6a 历史检查点与 M6a-4 当前收口证据）· 维护：知识库、评测集或检索策略变化后复测并追加记录*
+## M6b 准入保护基线 — 2026-08-27（证据同步前候选 payload）
+
+本记录只满足 `M6B-PROTECTED-BASELINE` 前置，不批准 M6b，不授权添加 provider 依赖、preview 路由、
+运行时开关、生产模块、`tests/M6b/` 或 CI job。M6b 在独立人工批准前继续为
+`BLOCKED / NOT_STARTED`；M7 继续为 `BLOCKED / NOT_STARTED`。
+
+### 候选标识与环境
+
+受测 payload 是在追加本证据记录**之前**冻结的纯文档候选内容。由于把 digest 写入自身会形成不可解的自引用，
+以 parent `HEAD`、tracked binary diff 和唯一未跟踪 runbook 的 digest 组成可复核证据元组：
+
+- 分支：`docs/m6b-admission-prep`；parent `HEAD`：
+  `65fa55af051ba4751464752edba9255f076496f1`；
+- `git diff --binary` SHA-256：
+  `c6cd2a1e2cddab913e4072ec84a69693d45c904bb299dfdbd39aa47004b48410`；
+- `docs/plans/data-expansion-runbook.md` SHA-256：
+  `86d68d8395f159cb322d33e97ae2a0a77531ea7e280cfa707965b1ae7b964662`；
+- 以上三个带标签字段按记录顺序组成的 candidate evidence digest：
+  `a8e33b5345b12c5e10da5294b49e699cf838fcb4cb17550d0879186fe3fe0d2c`；
+- 评测报告 `reports/m6b-admission-baseline.json` SHA-256：
+  `a45f733cc633dedbb836c89d00de4808116f62d7e32d7335e17f572120480f33`。
+
+环境：Windows 11 Home `10.0.26200`，CPU `AMD64 Family 25 Model 116 Stepping 1, AuthenticAMD`，
+Python 3.13.3，pytest 9.1.1；使用现有 `platform/.venv`。离线变量固定为
+`SA_USE_VECTOR=false`、`HF_HUB_OFFLINE=1`、`TRANSFORMERS_OFFLINE=1`。
+
+### 实测矩阵
+
+| 门禁 | 实测结果 |
+| --- | --- |
+| crawler offline | 53 collected；52 passed，1 deselected；0.51 s |
+| M6a contracts/closeout | 124 collected；124 passed；14.86 s |
+| M5c recovery/idempotency/concurrency | 7 collected；7 passed；10.69 s |
+| M0_M2 | 18 collected；18 passed；9.34 s |
+| regression（非 slow） | 52 collected；49 passed，3 deselected；8.98 s |
+| RAG quality（slow） | 3 collected；3 passed；16.76 s |
+| platform 原始套件 | 40 collected；40 passed；10.88 s |
+| 根级完整套件 | 417 collected；416 passed，1 skipped；26.58 s |
+| M3d 文档完整性 | 6 collected；6 passed；0.03 s |
+
+根级唯一 skip 为 `tests/M6_crawler/test_online_smoke.py` 的显式在线 crawler smoke，符合默认离线门禁。
+M5c 聚焦套件确认旧 SQLite session 恢复、幂等与并发兼容；M6a、regression 和 platform 套件共同覆盖
+既有 API/OpenAPI、QA SSE、路径隐私、治理状态、运行时契约和原始 40 项平台行为。
+
+### 默认 90 题质量
+
+命令：
+
+```bash
+SA_USE_VECTOR=false HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 \
+  ./platform/.venv/Scripts/python tools/run_evaluation.py -k 1,3,5 \
+  --report reports/m6b-admission-baseline.json
+```
+
+- 模式：`keyword-only`；默认发现 OS 38 + DS 28 + CO 24 = 90，90 题均有标注；
+- Network 30 题未自动进入默认集合；
+- 加权结果：Recall@1 0.628、Recall@3 0.972、Recall@5 0.989、平均延迟 112.8 ms；
+- 延迟只描述本次本机快照，不是 M6b preview 的 p95 验收结果。
+
+| 课程 | 题数 | Recall@1 | Recall@3 | Recall@5 | AvgLatency(ms) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| OS | 38 | 0.645 | **0.987** | 1.000 | 112.8 |
+| DS | 28 | 0.607 | **0.929** | 0.964 | 116.1 |
+| CO | 24 | 0.625 | **1.000** | 1.000 | 109.0 |
+| 汇总 | 90 | 0.628 | **0.972** | 0.989 | 112.8 |
+
+三门课程均满足 `Recall@3 >= 0.8`。
+
+### 边界审查与结论
+
+- 默认应用和 OpenAPI 中没有 `/api/v1/agent-preview`；既有 API、QA SSE 与工作台契约未增加 preview 表面；
+- `platform/requirements.txt` 中没有 `anthropic`，且 `platform/app/llm_client.py`、
+  `tool_registry.py`、`preview_agent.py`、`preview_service.py`、`tests/M6b/` 均不存在；
+- 没有 preview runtime flag、`m6b` pytest marker 或 M6b CI job；
+- 路径隐私与治理回归通过，未发现宿主绝对路径或未授权 M6b/M7 生产表面；
+- 本次只读文档候选未修改正式状态机、SQLite schema、默认 Source scope 或评测发现规则。
+
+因此 `M6B-PROTECTED-BASELINE=SATISFIED`。证据同步后的文档/JSON 变更另跑治理与文档一致性检查，
+但不会回写或伪造上述受测 payload digest。批准字段仍为空，所以本结论不改变 M6b 的准入/交付状态，也不影响 M7。
+
+## M6b 首轮 closeout 基线 — 2026-08-28（最终文档复核前 payload）
+
+本节是追加式交付证据，不改写上方 M6b 准入保护基线。它记录获批实现完成后的首轮 closeout payload；由于证据
+写入自身以及后续 `COMPLETE` 状态切换都会改变工作树，以下 identity 明确绑定**追加本节之前**的未提交 payload，不能冒充
+最终提交对象。M6b 在文档后复核通过前仍为 `ADMITTED / IN_PROGRESS`；M7 仍为 `BLOCKED / NOT_STARTED`。
+
+### 实现身份与环境
+
+- 分支：`feature/m6b-readonly-preview`；`HEAD=65fa55af051ba4751464752edba9255f076496f1`；
+- 追加本节前 `git diff --binary` SHA-256：
+  `3dd1c6b4df6158b41cce1308437b7c6c144ea38007718f2318aeab50f71074c6`；
+- 15 个未跟踪文件按路径排序，以 `path + NUL + file_sha256 + LF` 组成 manifest，其 SHA-256：
+  `0cc5bcdc5135050a76dd1ba5c1e36b98458948f5618f9b20a727afcf04070a5b`；
+- 上述 `HEAD`、tracked diff digest、untracked manifest digest 按带标签三行组成的 payload identity SHA-256：
+  `35e5f0cd42f7862edfc4542fbbe14c0dbf9f3b1501164cf14490617728685459`；
+- 环境：Windows 11 `10.0.26200`，CPU `AMD64 Family 25 Model 116 Stepping 1, AuthenticAMD`，Python 3.13.3，
+  pytest 9.1.1，官方 `anthropic` SDK 1.2.0；
+- 离线变量：`SA_USE_VECTOR=false`、`HF_HUB_OFFLINE=1`、`TRANSFORMERS_OFFLINE=1`；没有配置 provider key 或
+  preview secret，没有发起真实 Anthropic API 请求。
+
+### 首轮实测矩阵
+
+| 门禁 | 实测结果 |
+| --- | --- |
+| M6b 阶段套件 | 111 collected；111 passed；13.95 s |
+| M6a contracts/closeout | 124 passed；9.27 s |
+| M5c recovery/idempotency/concurrency | 7 passed；7.72 s |
+| M0_M2 | 18 passed；15.70 s |
+| regression（非 slow） | 52 collected；49 passed，3 deselected；15.68 s |
+| RAG quality（slow） | 3 passed；18.04 s |
+| platform 原始套件 | 40 passed；11.96 s |
+| M3d 文档完整性 | 6 passed；0.05 s |
+| privacy + SQLite zero-write 聚焦复验 | 11 passed；8.78 s |
+| 根级完整套件 | 528 collected；527 passed，1 skipped；30.35 s |
+| crawler offline | 53 collected；52 passed，1 deselected；0.36 s |
+
+根级唯一 skip 仍是显式 online crawler smoke。M6b 测试使用本地 scripted fake provider，覆盖 adapter 原生 block/replay、
+registry 双重授权、预算/retry/timeout/cancel/duplicate/stop reason、默认路由缺席、认证与容量、scope 隔离、隐私和真实
+隔离 SQLite 的零领域写入。`platform/tests/` 历史 40 项未修改。
+
+### 阻断性离线 preview benchmark
+
+命令通过 `M6B_BENCHMARK_REPORT=reports/m6b-offline-preview-benchmark.json` 运行真实 `PreviewService`、`PreviewAgent`、
+`ToolRegistry` 与三个只读工具，provider 为本地 fake，检索为已发布 warm BM25 combined snapshot。
+
+- workload：final-only、retrieve、quiz-preview、review-due；workload digest：
+  `3f6b208e5269c609263102086645ae1e53cba76f533b5e93429eb9551d9ed050`；
+- snapshot generation：`8c4a7a0b01a0b13134c8206c0e301a1622343f537de64166e301f51e796e581c`；
+- 20 次 warm-up，200 次 measured，并发 2；1 passed，11.84 s；
+- p50 0.948 ms，p95 5.179 ms，p99 5.792 ms，max 8.622 ms，满足阻断阈值 p95 `<= 1,000 ms`；
+- termination histogram：`completed=200`；unexpected termination/timeout 为 0；归一化 replay consistency 为 100%；
+- 报告内 canonical digest：`795b05fdf08d89aa2bd6ddfeb37bf268b3243f33b5492a255f7a909f2282d6d1`；
+- 完整 JSON SHA-256：`3c8a1c7f22bfac1de7013c8f6d1b19cd4c923ec7f246be11ecf6c0c9347de084`。
+
+这是离线 fake-provider service benchmark，不是外部网络或真实模型 SLA。真实 Anthropic smoke 保持显式、非阻断且本次未运行；
+不得从上述延迟推导真实 provider 性能。
+
+### 默认 90 题质量与边界结论
+
+`reports/m6b-closeout.json` 为 `keyword-only`、90/90 labeled；OS 38、DS 28、CO 24，Network 未自动进入。Recall@3
+分别为 0.986842、0.928571、1.000000，加权 0.972222，三课均满足 `>= 0.8`；完整报告 SHA-256：
+`279d11a50248dc497f9ac52dd7d85388c0da5b5dc68641d51a705e1aac1904f7`。
+
+默认 app/OpenAPI 无 preview route；启用态需要独立 Bearer auth，且认证先于 provider 配置披露。preview 使用
+`DEFAULT_PLUS_EXTRAS`，正式 `StudySessionService` 保持 `DEFAULT_ONLY`；成功与失败路径均不创建 session、不提交答案，
+不写 review/mastery/source 状态。prompt 与受限工具结果会发送给 Anthropic；本地日志、trace、错误、OpenAPI、持久化和
+未授权边界未发现 prompt/正文/凭据/绝对路径/provider 原始响应 canary 泄漏。
+
+上述为文档同步前首轮 closeout 证据，并保持其状态切换前 payload 身份不变。后续文档一致性、治理、M3d、M6b、
+回归、完整根套件和 `git diff --check` 均已通过，M6b 随后切换为 `ADMITTED / COMPLETE`；该最终状态不回写本节的
+历史 identity，也未改变任何 M7 决策、baseline 或批准字段。
+
+## M6b stabilization 收口补丁 — 2026-08-29（复测证据）
+
+本节是对 2026-08-28 首轮 closeout 的稳定性补丁复测结果，采用追加方式记录，**不是改写首轮 closeout**，
+也不改写其 payload identity 或报告 digest。稳定性补丁包括：
+
+- 离线 M6b 检索 fixture / benchmark 固定 `USE_VECTOR=false` 与 `VECTOR_ENABLED=false`，走 BM25，不加载本机向量模型；
+- preview 同步工具改为真实 deadline（`asyncio.wait_for` + worker thread）；超时或工具异常后不 continuation、不回放 tool_result；
+- Anthropic adapter 对 SDK 初始化失败、token-count 结构异常、message block/usage 解析异常 fail-closed，只暴露稳定 `ProviderError`；
+- `platform/README.md` 过期 “closeout 证据同步阶段” 表述已与 `ADMITTED / COMPLETE` 对齐。
+
+### stabilization 复测矩阵
+
+以下数字由监督方核对 pytest 原始输出，**不在本轮重跑**。2026-08-28 首轮 `tests/M6b/` 的 111 项历史记录保留；
+本次 stabilization 复测收集数为 124（含 benchmark）。
+
+| 测试范围 | 复测结果 |
+| --- | --- |
+| `tests/M6b` | 124 collected；124 passed；10.87 s（含 benchmark） |
+| `tests/M6a -m m6a` | 124 passed；10.82 s |
+| `tests/M5c -m m5c` | 14 passed；6.74 s |
+| `tests/M0_M2` | 18 passed；7.38 s |
+| `tests/regression -m "not slow"` | 49 passed；3 deselected；7.60 s |
+| `tests/regression/test_rag_quality.py -m slow` | 3 passed；17.32 s |
+| `platform/tests` | 40 passed；9.28 s |
+| 根级 `tests` + `platform/tests` | 580 passed；1 skipped（`tests/M6_crawler/test_online_smoke.py`）；27.31 s |
+
+### 默认三课 90 题 BM25 复测
+
+- Recall@1：0.628；Recall@3：0.972；Recall@5：0.989；平均延迟：92.1 ms；
+- Recall@3：OS 0.987、DS 0.929、CO 1.000。
+
+历史 closeout digest 仍以本节之前的记录为准：payload identity
+`35e5f0cd42f7862edfc4542fbbe14c0dbf9f3b1501164cf14490617728685459`，benchmark canonical digest
+`795b05fdf08d89aa2bd6ddfeb37bf268b3243f33b5492a255f7a909f2282d6d1`。M7 仍为 `BLOCKED / NOT_STARTED`。
+
+## M6b stabilization evidence `stabilization-20260829-03` — 2026-08-29
+
+本节只追加 limiter / marker / evidence-identity stabilization 的独立 benchmark 证据，**不改写** 2026-08-28 首轮 closeout，也**不改写**上一节 2026-08-29 复测矩阵。
+
+- Evidence ID：`stabilization-20260829-03`
+- workload：20 次 warm-up、200 次 measured、并发 2
+- p50 `1.149 ms`，p95 `9.252 ms`，p99 `10.066 ms`，max `11.980 ms`
+- termination histogram：`completed=200`；意外终止 / timeout 为 0；规范化重放一致率 100%
+- Report digest：`acd2828eafc7bfda3d474ab5b6949719b4cc7ab7dd65bbfe731d85090f46669a`
+
+普通 M6b 套件与专用 benchmark 用独立 marker `m6b_benchmark` 分离：普通套件 `126 passed, 3 deselected`，benchmark `3 passed`。记录型报告必须把 evidence ID 写入文件名，并以 exclusive-create 落盘；全量回归不得再次生成同名报告。
+
+本轮权威套件实测（未再次写出 `stabilization-20260829-03` 报告）：
+
+- 根级 `tests/`：546 collected；545 passed；1 skipped
+- 合并 `tests platform/tests`：586 collected；585 passed；1 skipped
+
+M6b 保持 `ADMITTED / COMPLETE`；M7 仍为 `BLOCKED / NOT_STARTED`。
+
+*创建：2026-08-12 · 更新：2026-08-29（追加 `stabilization-20260829-03`；不回写历史 closeout/stabilization 证据）· 维护：知识库、评测集或检索策略变化后复测并追加记录*

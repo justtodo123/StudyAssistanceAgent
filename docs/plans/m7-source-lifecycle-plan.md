@@ -1,6 +1,7 @@
 # M7 用户 Source 生命周期与千级检索准备计划
 
-> 当前状态：设计准备；`BLOCKED / NOT_STARTED`，未获准开工
+> 当前状态：设计准备已暂停继续扩写；`BLOCKED / NOT_STARTED`，未获准开工
+> 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不关闭 M7 决策、保护基线或批准记录
 > 前置：`M7-M6A-SOURCE-CONTRACT` 已映射 M6a Source 契约与退出证据（`SATISFIED`）；`M7-PROTECTED-BASELINE` 仍为 `OPEN`
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
@@ -49,110 +50,801 @@ M6a 的 `M6A-SOURCE-LIMITS` 与默认 90 题保护基线**不能**替代 `M7-PRO
 
 | Decision ID | 状态 | 准入前必须选定并留证的内容 |
 | --- | --- | --- |
-| `M7-LIFECYCLE-SCHEMA` | `OPEN` | Source/revision/sync/error/audit 的版本化 schema、状态转换、约束、升级兼容和权威写入者 |
-| `M7-SYNC-SEMANTICS` | `OPEN` | 全量/增量同步、并发、重试、取消、中断恢复、generation 可见性和 last-good snapshot |
-| `M7-DELETE-SEMANTICS` | `OPEN` | delete/tombstone/保留期/硬删除/恢复，以及 BM25/vector/result cache 的删除传播与可证明完成条件 |
-| `M7-ISOLATION` | `OPEN` | learner/source namespace、授权模型、查询 filter、跨源隔离和越权拒绝语义 |
-| `M7-FTS5-TOKENIZER` | `OPEN` | 中文 tokenizer 明确选型、规范化、打包可用性、索引兼容和不可用 fallback |
-| `M7-SCALE-LIMITS` | `OPEN` | source/document/chunk/bytes 上限，同步、增量更新、重建和查询支持目标及超限行为 |
-| `M7-BENCHMARK` | `OPEN` | 可复现 1k/3k chunk fixture、中文查询与标注、Recall@k、p50/p95、索引大小、同步/重建时间、硬件、样本数和阈值 |
-| `M7-OFFLINE-FALLBACK` | `OPEN` | 无可选 tokenizer/vector、索引损坏或用户源不可用时的离线启动、查询、修复和用户可见错误语义 |
-| `M7-SOURCE-MANIFEST` | `OPEN` | 文件级 schema；Source 类型与文件格式分离；fingerprint 与 revision 规则 |
-| `M7-PARSER-MATRIX` | `OPEN` | 每种格式的解析器、parser version，以及失败、超限和不支持时的处理 |
-| `M7-NORMALIZED-DOCUMENT` | `OPEN` | PDF 页 / PPT 幻灯片 / Word 标题等统一表示；解析产物缓存位置；缓存失效和清理 |
-| `M7-PROVENANCE` | `OPEN` | 原始文件 → 解析文档 → Chunk → QA 引用；原文 / 人工精炼 / AI 草稿区分；删除和更新如何传播到出处 |
+| `M7-LIFECYCLE-SCHEMA` | `RESOLVED` | `sa.source.lifecycle.v1`；五类版本化记录、CAS 状态转换、单一权威写入者及 fail-closed 升级政策，见 §3.1 |
+| `M7-SYNC-SEMANTICS` | `RESOLVED` | `sa.source.sync.v1`；完整候选快照、受限增量、单 active run、确定性重试/取消/恢复及原子 generation 发布，见 §3.2 |
+| `M7-DELETE-SEMANTICS` | `RESOLVED` | `sa.source.delete.v1`；不可逆逻辑删除、读时 tombstone、全检索面清除、30 天最小审计保留及可验证 hard-delete receipt，见 §3.3 |
+| `M7-ISOLATION` | `RESOLVED` | `sa.source.isolation.v1`；服务端 principal、owner-only 用户源、强制查询前过滤、授权集缓存隔离及无存在性泄露拒绝，见 §3.4 |
+| `M7-FTS5-TOKENIZER` | `RESOLVED` | `sa.source.fts5-tokenizer.v1`；jieba `0.42.1` search-mode 预分词、NFC/空白规范化、版本化 token stream、不可用时 M7 fail-closed，见 §3.7 |
+| `M7-SCALE-LIMITS` | `RESOLVED` | `sa.source.scale-limits.v1`；单源 100 documents/1,000 chunks/256 MiB、单 principal 与单进程 3,000 chunks 聚合硬上限、预检拒绝与 last-good 保留，见 §3.8 |
+| `M7-BENCHMARK` | `RESOLVED` | 固定 1k/3k chunk fixture、中文查询与标注、Recall@1/3/5、冷/暖 p50/p95、索引大小、同步/重建时间、硬件、样本数和门槛，见 §3.5 |
+| `M7-OFFLINE-FALLBACK` | `RESOLVED` | `sa.source.offline-fallback.v1`；无可选 tokenizer/vector fallback；依赖、索引或用户源不可验证时 M7 用户源 fail-closed，不启动查询、不发布候选，见 §3.12 |
+| `M7-SOURCE-MANIFEST` | `RESOLVED` | `sa.source.manifest.v1`；文件级 canonical manifest、来源类型/格式分离、完整内容 fingerprint、Source revision 聚合与 fail-closed 校验，见 §3.6 |
+| `M7-PARSER-MATRIX` | `RESOLVED` | `sa.source.parser-matrix.v1`；`md`/`txt`/`pdf`/`pptx`/`docx` 唯一解析器与精确版本、格式级上限、整 revision 失败及离线 fail-closed，见 §3.9 |
+| `M7-NORMALIZED-DOCUMENT` | `RESOLVED` | `sa.source.normalized-document.v1`；统一 unit 字段、稳定 `chunk_key`、受管 normalized-document 缓存、fingerprint/parser/chunk-schema 失效与 staging 清理已冻结，删除完成条件遵循 §3.3，见 §3.10 |
+| `M7-PROVENANCE` | `RESOLVED` | `sa.source.provenance.v1`；公开出处、QA 可见字段、内容晋升及更新/删除传播规则，见 §3.11 |
 
 每项只有按统一政策记录明确选定值、默认与覆盖、校验/失败行为、兼容/隐私影响、适用阈值、证据、责任人和
 日期后才能标为 `RESOLVED`。候选项、`TBD`、无 workload 的数字或“实施时决定”都保持 `OPEN`。
-原有八项未选定值，本轮**不改状态、不填选定值**。下列四类只补澄清边界，同样保持 `OPEN`。
+`M7-LIFECYCLE-SCHEMA`、`M7-SYNC-SEMANTICS`、`M7-DELETE-SEMANTICS`、`M7-ISOLATION`、
+`M7-FTS5-TOKENIZER`、`M7-SCALE-LIMITS`、`M7-BENCHMARK`、`M7-OFFLINE-FALLBACK`、`M7-SOURCE-MANIFEST`、
+`M7-PARSER-MATRIX`、`M7-NORMALIZED-DOCUMENT` 与 `M7-PROVENANCE` 已依次闭合；M7 专属保护基线仍为 `OPEN`，
+因此 M7 仍保持 `BLOCKED / NOT_STARTED`。
 
-### 3.1 `M7-SOURCE-MANIFEST`（`OPEN`）
+### 3.1 `M7-LIFECYCLE-SCHEMA`（`RESOLVED`）
 
-文件级 manifest 描述用户源里**每个被接纳文件**的可移植身份，不是 Unity Library 之类工程文件的全盘清单。
+**稳定 ID 与选定政策**
 
-**已继承、不得改写**
+- Decision ID 固定为 `M7-LIFECYCLE-SCHEMA`，schema family 固定为 `sa.source.lifecycle.v1`。
+- 控制面使用五类版本化记录：`SourceRecord`、`SourceRevision`、`SyncRun`、`LifecycleError`、`AuditEvent`；
+  每条记录都含 `schema_version=1`、UTC 时间戳和不可变主键。
+- 新用户源的 `source_id` 固定为 `user-` 加 canonical lowercase UUIDv7；创建后不可修改或复用。M6a 已存在的
+  `knowledge-pack` 与静态 extra source ID 不迁移、不重命名，也不写入 M7 用户源控制面。
+- `SourceRecord` 的生命周期状态固定为 `REGISTERED`、`SYNCING`、`READY`、`DEGRADED`、`DISABLED`、
+  `DELETE_PENDING`、`DELETED`。允许转换固定为：`REGISTERED -> SYNCING|DISABLED|DELETE_PENDING`，
+  `SYNCING -> READY|DEGRADED|DISABLED|DELETE_PENDING`，`READY|DEGRADED -> SYNCING|DISABLED|DELETE_PENDING`，
+  `DISABLED -> SYNCING|DELETE_PENDING`，`DELETE_PENDING -> DELETED`；`DELETED` 为终态。本决策只冻结状态和转换，
+  不提前决定同步重试、取消、删除保留期、硬删除或恢复政策，这些仍分别属于 `M7-SYNC-SEMANTICS` 与
+  `M7-DELETE-SEMANTICS`。
+- `SourceRevision` 为不可变记录，主键为 `source_id + revision_no`；`revision_no` 从 1 严格递增，记录 source
+  fingerprint、manifest digest、parser/chunk schema versions 和构建结果。只有 `READY` 转换可原子更新
+  `published_revision_no` 与 `published_generation`；失败 revision 不覆盖 last-good 指针。
+- `SyncRun` 使用 canonical lowercase UUIDv7 `run_id`，记录 source、起止时间、请求策略、输入 revision、候选
+  generation、稳定结果码和聚合计数；具体 full/incremental 行为仍由 `M7-SYNC-SEMANTICS` 冻结。
+- `LifecycleError` 只保存稳定错误码、所属实体 ID、阶段、首次/末次时间和计数；`AuditEvent` 为 append-only，记录
+  actor type、动作、前后状态、实体 ID、correlation ID 和结果，不保存正文、凭据或宿主路径。
+- 唯一权威写入者固定为 `SourceLifecycleService`。API、同步执行器、parser、索引器和删除执行器不得直接写控制表，
+  只能向该服务提交命令；repository 只在该服务事务边界内执行持久化。正式学习状态仍由
+  `StudySessionService` 独占，M7 不获得学习状态写权限。
 
-- `source_id` 是逻辑命名空间；`logical_uri` 是源内相对 POSIX 路径；`document_id = sha256(source_id + logical_uri)` v1。
-- `fingerprint` 表示规范化内容，`revision` 表示 Source 快照，`generation` 表示已发布检索视图；三者不得混用。
-- `source_type`（来源策略：`human_markdown` / `web_reviewed` / `user_registered` 等）与文件 `format`
-  （`pdf` / `pptx` / `md` 等）必须分离；不得用扩展名冒充 `source_type`。
-- 公开出处不得包含宿主绝对路径。原始 PDF/PPT 留在仓库外，Git 不收原文。
+**默认、覆盖与适用范围**
 
-**准入前仍须选定（当前无选定值）**
+- v1 默认启用乐观并发：所有 Source 状态命令必须携带 `expected_version`，成功后整数 `record_version` 加 1；
+  不提供关闭 CAS、修改状态集合、修改 ID 公式或绕过权威写入者的环境变量/API 覆盖。
+- schema 仅适用于未来获准后的 M7 用户源控制面；不接管默认 pack、M6a static extras、crawler candidate、
+  学习 session、review history 或 M6b preview trace。
+- `requested_sync_strategy` 的 schema 值域可表达 `FULL` / `INCREMENTAL`，但在 `M7-SYNC-SEMANTICS` 解决并获准前，
+  生产入口不得接受或执行任何策略；字段可表达能力不构成同步政策批准。
 
-- 文件级 schema 名称与版本（例如是否新建 `sa.source.manifest.v1`，字段必选/可选表）。
-- 用户源 `fingerprint` 算法：全文摘要、采样摘要还是规范化文本摘要；与 M6a Markdown 内容 fingerprint 的兼容规则。
-- `revision` 如何由文件集合 fingerprint 聚合；单文件变更是否只使该 document 失效。
-- 哪些分类进入用户源 manifest、哪些只记排除计数；不得把 collect-only 盘点字段直接当作生产 schema。
+**校验、拒绝与失败行为**
 
-`tools/source_inventory.py` 的字段（`logical_uri` / `format` / `size` / `fingerprint` / `classification` 等）
-只是调查输入。**不得**因其存在而把本决策标为 `RESOLVED`。
+- 创建时拒绝非 canonical `source_id`、重复 ID、未知字段、缺失必填字段、非 UTC 时间、非法状态或非法枚举；
+  外部请求不得自选 `revision_no`、`record_version`、审计 ID 或已发布 generation。
+- 版本不匹配返回 `SOURCE_VERSION_CONFLICT`，非法转换返回 `SOURCE_INVALID_TRANSITION`，重复 ID 返回
+  `SOURCE_ID_CONFLICT`，未知 schema 返回 `SOURCE_SCHEMA_UNSUPPORTED`；均不得发生部分写入。
+- 一个命令必须在单个 SQLite 事务内原子写入实体变更和对应 `AuditEvent`；任一步失败则完整回滚。
+- 启动读取 `schema_version > 1` 时 M7 用户源能力 fail closed 且不得自动降级写入；M0–M6 路径继续启动。
+  v1 到未来版本只能通过显式、可回滚迁移执行，禁止启动时破坏性自动迁移；迁移失败保留原库和 last-good 数据。
 
-### 3.2 `M7-PARSER-MATRIX`（`OPEN`）
+**兼容、安全、隐私与保留**
 
-Parser matrix 决定每种 `format` 用什么解析器把原文变成可切块文本。解析器名称和版本必须能进入
-M6a 已闭合的 `build_input_digest`（含 parser version）。
+- M0–M5 API/OpenAPI、默认 90 题、Network 显式扩展、旧 SQLite session 恢复和默认离线路径保持不变；
+  `StudySessionService` 的领域写入权威不变。
+- 生命周期记录和审计不得包含 prompt、文档正文、chunk 正文、密钥或 Windows/POSIX/UNC 宿主绝对路径。
+  私有源定位信息若后续确需持久化，必须由 `M7-ISOLATION` / `M7-SOURCE-MANIFEST` 另行冻结，不得借本 schema
+  写入公开响应、日志或审计。
+- `AuditEvent` 在 Source 进入 `DELETED` 后默认保留 30 天，届时可按 source ID 成批清理；仅保留事件元数据。
+  原文、解析缓存、索引和 tombstone 的保留/硬删除时点仍由 `M7-DELETE-SEMANTICS` 决定。
 
-**已继承、不得改写**
+**可量化验收与 workload**
 
-- Markdown 默认 pack 继续使用现有 `sa.chunk.markdown-h2.v1`；M7 不得悄悄改默认 90 题切块。
-- 解析失败不得把原文复制进仓库或写进默认 `knowledge/`。
-- 不支持的格式不得假装已检索；公开错误只含逻辑 URI 与错误码。
+- 获准实施后必须以隔离 SQLite 运行 schema/transition contract workload：覆盖上列全部 16 条允许边及每个状态到
+  所有未允许目标的拒绝矩阵；非法转换接受数必须为 0，合法转换原子提交率必须为 100%。
+- 对同一 `expected_version` 发起 100 组双写竞争，每组必须恰好 1 次成功、1 次
+  `SOURCE_VERSION_CONFLICT`，不得出现丢失更新或重复 revision number。
+- 对 source/revision/run/error/audit 各至少 20 个 golden records 做写入、重启读取和 canonical JSON round-trip；
+  100% 保持 ID、版本、状态、last-good 指针和审计关联。
+- 使用正文、secret、Windows/POSIX/UNC 路径 canary 覆盖成功、拒绝、错误和迁移失败路径；API、日志和审计泄露数为 0。
+- 故障注入覆盖实体写后、审计写前和提交前三个点；每点 20 次，部分提交数必须为 0。未知新版本 fixture 必须使
+  M7 fail closed，同时既有 M0–M6 启动与只读路径保持可用。
 
-**准入前仍须选定（当前无选定值）**
+**可追溯证据、责任人和日期**
 
-- 每种拟支持格式的唯一解析器及精确版本（PDF / PPTX / DOCX / Markdown / 纯文本等）；禁止“实现时再选库”。
-- 失败语义：跳过该文件、拒绝该 Source generation，还是降级为“仅文件名/标题”。
-- 超限语义：与尚未闭合的 `M7-SCALE-LIMITS` 对齐，本决策不提前发明字节上限。
-- 不支持格式：显式 `unsupported`，计入 manifest/审计，不进入 chunk 索引。
-- 离线不可用解析器时的 fallback：与 `M7-OFFLINE-FALLBACK` 对齐，本决策不提前指定替代库。
+- 选定依据：本节；统一完成标准：[`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3；继承身份、
+  last-good、路径隐私与状态权威：本文 §2.1、[`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md)、
+  `tests/M6a/test_protocols.py`、`tests/M6a/test_snapshot_publication.py`、`tests/regression/test_path_privacy.py`。
+- 本轮证据是可执行的冻结政策与既有继承契约，不声称 M7 生产实现或 M7 测试已经存在；上述 workload 是获准后的
+  阻断验收要求。
+- 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
 
-### 3.3 `M7-NORMALIZED-DOCUMENT`（`OPEN`）
+### 3.2 `M7-SYNC-SEMANTICS`（`RESOLVED`）
 
-Normalized document 是解析后、切块前的统一表示，用来把 PDF 页、PPT 幻灯片、Word 标题映射到稳定
-`chunk_key`，而不是直接把二进制当 chunk。
+**稳定 ID 与选定政策**
 
-**已继承、不得改写**
+- Decision ID 固定为 `M7-SYNC-SEMANTICS`，同步协议固定为 `sa.source.sync.v1`，并复用
+  `sa.source.lifecycle.v1` 的 `SourceRecord`、`SourceRevision`、`SyncRun`、CAS 和状态转换。
+- `FULL` 固定为默认策略：枚举当次可接纳文件，生成完整候选 manifest、normalized documents、chunks、BM25/vector
+  索引和结果缓存命名空间；任何一项校验未通过都不发布。首次同步、无 `READY` revision、last-good 元数据不完整、
+  manifest/parser/chunk schema 版本变化或增量前置校验失败时，只允许 `FULL`。
+- `INCREMENTAL` 只允许 Source 已有可验证的 `READY` revision，且 manifest、parser/chunk schema 版本与 last-good
+  一致时使用。它按稳定 `logical_uri` 和 fingerprint 计算 added/modified/removed 集，只重建 added/modified 文档，
+  但必须生成并校验一个**完整候选检索视图**；removed 文档只从候选视图排除，物理清理、tombstone、保留和硬删除
+  仍由 `M7-DELETE-SEMANTICS` 决定，本决策不提前闭合。
+- 每个 Source 同时最多一个 active `SyncRun`；M7 v1 每进程全局最多一个 active run。并发请求不得排队或合并，
+  固定返回 `SOURCE_SYNC_BUSY`。状态写入继续只经 `SourceLifecycleService`，同步执行器不得直接写控制表或发布指针。
+- 每次同步必须携带 canonical lowercase UUIDv7 `request_id`、`source_id`、`expected_version` 和策略。同一
+  `source_id + request_id` 重放返回既有 `SyncRun`，不得创建 revision、重复执行已完成阶段或再次发布 generation；
+  同一 request ID 携带不同参数固定返回 `SOURCE_SYNC_REQUEST_CONFLICT`。
 
-- 默认 Markdown 仍按 `##` 小节切块；最短切片与 embedding 参数见 runtime-contracts，M7 不改默认 pack。
-- 解析产物不是 Git 资产，不得写入 `knowledge/` 或外部资料根。
-- 缓存键必须能随 fingerprint 与 parser version 失效；mtime 不得作为唯一失效输入。
+**重试、取消与中断恢复**
 
-**准入前仍须选定（当前无选定值）**
+- 自动重试仅适用于 staging 区内、尚未发布的瞬时 I/O 错误和 SQLite busy/locked；每个阶段最多重试 2 次，固定等待
+  1 秒、2 秒。校验、格式不支持、权限、超限、schema/parser 错配、数据损坏、CAS 冲突和取消均不重试。
+  重试不得改写 last-good，不得重放已提交的 generation 发布事务。
+- 取消是显式 `request_cancel(request_id, expected_version)`；执行器必须在枚举、单文件解析、切块、各索引构建和发布前
+  检查取消标记。发布事务开始前收到取消，run 终止为 `CANCELLED`，丢弃候选 generation 并保留 last-good；发布事务
+  一旦开始则不可中断，事务结果是唯一事实，成功不得伪报取消。
+- `SyncRun` 每完成一个 staging 阶段，原子记录阶段名、输入 digest、候选 generation 和 checkpoint digest；运行中
+  每 5 秒更新 lease heartbeat，30 秒未更新即视为 stale。进程重启后，只有 input digest、source `record_version`、
+  manifest/parser/chunk schema versions 和 checkpoint digest 全部匹配时，才从最后完整阶段恢复；否则将旧 run 标为
+  `INTERRUPTED_INPUT_CHANGED` 并以新的 request ID 执行 `FULL`。恢复永不从半个文件、半个索引或发布事务中间继续。
 
-- 统一文档模型：页 / 幻灯片 / 标题 / 节的字段表、稳定 `chunk_key` 公式、空页/隐藏幻灯片规则。
-- 解析产物缓存根（逻辑位置，不写宿主绝对路径）、是否按 `source_id` 分目录、与 snapshot generation 的关系。
-- 失效：源文件 fingerprint 变、parser version 变、chunk schema 变时的重建范围。
-- 清理：成功发布后如何删除 staging 解析缓存；extra/用户源移除后是否立即删除该源缓存；是否沿用
-  M6a retain-1。具体删除完成条件仍由 `M7-DELETE-SEMANTICS` 决定，本决策不提前闭合 tombstone。
+**generation 可见性与 last-good**
 
-### 3.4 `M7-PROVENANCE`（`OPEN`）
+- staging revision、candidate generation 和 checkpoint 对 Search/QA/M6b preview 均不可见。发布前必须验证候选 manifest
+  完整性、document/chunk 身份唯一性、BM25/vector 文档集合一致性、source/revision/generation 绑定和路径隐私。
+- 发布固定为单个原子事务：CAS 校验 Source `expected_version`，写不可变 `SourceRevision`，将
+  `published_revision_no` 与 `published_generation` 同时指向候选视图，并把 Source 转为 `READY`。查询在请求开始时
+  固定一个 published generation，单个请求不得混读新旧 generation。
+- 失败、取消、进程中断、重试耗尽或发布 CAS 冲突均不得改变 published 指针；已有 last-good 继续可读，Source 转为
+  `DEGRADED`。首次同步失败且没有 last-good 时 Source 保持不可检索并转为 `DEGRADED`。旧 generation 的物理保留和
+  清理仍由 `M7-DELETE-SEMANTICS` 决定。
 
-Provenance 连接“原始文件 → 解析文档 → Chunk → QA 引用”，并区分原文、人工精炼笔记和 AI 草稿。
+**默认、覆盖、校验与失败行为**
 
-**已继承、不得改写**
+- 默认策略为 `FULL`；调用方只有在上述前置条件满足时可显式请求 `INCREMENTAL`。不提供关闭单-run 互斥、扩大进程
+  并发、放宽重试次数/等待、跳过候选校验、允许 staging 查询或非原子发布的环境变量/API 覆盖。
+- 拒绝未知策略、未知字段、非 canonical request/source ID、缺失 `expected_version`、非法 Source 状态、未来 schema
+  版本和不匹配 checkpoint。稳定错误码包括 `SOURCE_SYNC_BUSY`、`SOURCE_SYNC_REQUEST_CONFLICT`、
+  `SOURCE_SYNC_PRECONDITION_FAILED`、`SOURCE_SYNC_VALIDATION_FAILED`、`SOURCE_SYNC_RETRY_EXHAUSTED`、
+  `SOURCE_SYNC_CANCELLED`、`SOURCE_SYNC_INTERRUPTED` 和继承的 `SOURCE_VERSION_CONFLICT`；失败不得部分发布。
+- 具体 source/document/chunk/bytes 上限由仍为 `OPEN` 的 `M7-SCALE-LIMITS` 冻结；在该决策闭合前，本政策不赋予
+  生产同步入口，也不以未定义限额执行同步。
 
-- 默认可检索出处：默认 pack 为 `knowledge/{logical_uri}`，extra 为 `extra://{source_id}/{logical_uri}`。
-- `source_type` / `ingest_status` 已决定能否进入检索：`ai_draft`、`web_candidate` 永不检索。
-- 引用、日志、trace 不得暴露宿主路径、原文全文或密钥。
+**兼容、安全、隐私与保留**
 
-**准入前仍须选定（当前无选定值）**
+- 本协议仅适用于未来获准的 M7 用户源；不自动同步或迁移默认 pack、M6a static extras、crawler candidates，
+  不修改 M0–M5 API/OpenAPI、默认 90 题、Network 显式扩展、旧 session 恢复或 `StudySessionService` 写入权威。
+- 默认离线路径不依赖外部模型或新服务。同步状态、错误、checkpoint 和审计只保存逻辑 ID、digest、版本、计数和稳定
+  错误码；不得保存文档/chunk 正文、凭据或宿主绝对路径。staging 内容、旧 generation 和解析缓存的保留时点不由
+  本决策设定，继续等待 `M7-DELETE-SEMANTICS` 与 `M7-NORMALIZED-DOCUMENT`。
 
-- 用户源公开出处 URI 方案（是否沿用 `extra://`、另设 `user://`，以及与保留 `user-` source_id 的关系）。
-- provenance 记录字段：原始 logical_uri、parser version、normalized document id、chunk_id、source_type、
-  ingest_status；哪些出现在 QA `sources`，哪些只留内部审计。
-- 原文 / 人工精炼 / AI 草稿的晋升规则：谁写 `ingest_status`，精炼笔记是否生成新 `logical_uri`。
-- 更新传播：文件 fingerprint 变化后，旧 chunk 何时不可召回、QA 缓存何时失效。
-- 删除传播：出处链上的解析缓存、chunk、BM25/vector/result cache 的可见性；硬删除完成条件仍属
-  `M7-DELETE-SEMANTICS`，本决策只要求 provenance 能证明“引用指向的对象已不可检索”。
+**可量化验收与 workload**
+
+- 获准实施后以可生成的 100-document/1,000-chunk 离线 fixture 各运行 20 次首次 `FULL`、无变化 `INCREMENTAL`、
+  10% added/modified/removed `INCREMENTAL`；每次发布后的 manifest、BM25 与 vector document-ID 集合必须 100% 一致，
+  staging 泄露和单请求混读 generation 次数必须为 0。性能阈值仍属于 `M7-BENCHMARK`，本 workload 不预设 p95。
+- 对同一 Source 发起 100 组双并发请求，每组必须恰好 1 个 active run、1 个 `SOURCE_SYNC_BUSY`；对同 request ID
+  重放 100 次，新增 run/revision/generation 数必须均为 0。
+- 对每个可重试错误点注入 20 次“失败两次后成功”和 20 次“连续失败三次”；调用次数必须分别为 3，后者全部返回
+  `SOURCE_SYNC_RETRY_EXHAUSTED`。对每个不可重试错误点注入 20 次，调用次数必须为 1。
+- 在每个 checkpoint、发布前和发布事务内各执行 20 次取消/进程终止。发布前路径必须 100% 保持 last-good；发布事务内
+  只允许完整旧视图或完整新视图。满足恢复前置的 run 必须从最后完整 checkpoint 恢复，不满足者必须 100% 转为新的
+  `FULL`，不得恢复半成品。
+- 使用正文、secret、Windows/POSIX/UNC 路径 canary 覆盖成功、失败、重试、取消和恢复；API、日志、审计及公开错误
+  泄露数必须为 0。既有 M0–M6 默认启动、Search/QA/session 和 preview 隔离契约不得回退。
+
+**可追溯证据、责任人和日期**
+
+- 选定依据：本节与已闭合的 §3.1；统一完成标准：[`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3；
+  继承 snapshot 原子发布、generation 隔离、缓存失效和路径隐私：本文 §2.1、
+  [`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md)、`tests/M6a/test_cache_lifecycle.py`、
+  `tests/M6a/test_snapshot_publication.py`、`tests/regression/test_path_privacy.py`。
+- 本轮证据是冻结的可执行政策和既有 M6a 契约，不声称 M7 同步生产实现、tests/M7 或性能证据已经存在；上述 workload
+  是 M7 获准实施后的阻断验收要求。
+- 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
+
+### 3.3 `M7-DELETE-SEMANTICS`（`RESOLVED`）
+
+**稳定 ID 与选定政策**
+
+- Decision ID 固定为 `M7-DELETE-SEMANTICS`，删除协议固定为 `sa.source.delete.v1`，并复用
+  `sa.source.lifecycle.v1` 的 SourceRecord、CAS、AuditEvent 与已冻结的
+  `DELETE_PENDING -> DELETED` 终态转换；本决策不增加任何反向状态边。
+- 删除分为两步：权威删除命令先以 `expected_version` 将 Source 原子转换为 `DELETE_PENDING` 并写入
+  deletion intent；随后删除执行器按 intent 幂等清理。进入 `DELETE_PENDING` 后，Source 对 Search/QA
+  和所有 preview 均立即不可见，读时以 tombstone 拦截旧 generation、revision、document 和 chunk。
+- tombstone 以 `source_id + logical_uri`（文件）及其派生 document/chunk identity 为粒度，记录 schema version、
+  deletion intent、generation 上界、原因码和创建时间，不保存正文、凭据或宿主路径。它覆盖 full/incremental
+  产生的所有已发布和 staging 对象；同一 identity 的旧缓存命中也必须被拒绝。
+- 删除传播顺序固定为：先发布控制面 tombstone/read barrier，再使 BM25 文档集合、vector 文档集合和
+  result-cache namespace 不可读，最后物理清理解析产物、chunks、BM25/vector entries、result cache、旧
+  generation 与 tombstone 到期数据。任何顺序上的失败都保持 fail-closed，不得重新暴露对象。
+- 最小审计保留期固定为 30 个自然日（UTC）；`AuditEvent`、deletion intent、hard-delete receipt 和
+  必要 tombstone 元数据在此期间只允许审计角色读取，且只保留逻辑 ID、digest、计数、时间、结果码和
+  actor/correlation 元数据。正文、密钥、绝对路径和用户查询不得进入删除记录。
+- 30 天后执行 hard delete：删除原文引用的受管缓存、normalized-document/解析缓存、chunks、BM25/vector
+  entries、result-cache namespace、旧 generation、tombstone 及可删除的删除元数据；不可删除的合规审计
+  仅保留去正文、去路径的最小事件元数据。hard-delete receipt 是不可变记录，包含 source_id、范围摘要、
+  对象计数、各存储确认 digest、开始/结束时间、策略版本和结果码，不包含内容。
+
+**默认、覆盖与适用范围**
+
+- 默认删除策略为逻辑删除立即生效、审计及删除证明保留至少 30 天、到期后 hard delete；删除命令和
+  retention sweep 均只适用于未来获准的 M7 用户源，不接管默认 pack、M6a static extras、crawler candidates、
+  study session 或 review history。
+- 不提供关闭 tombstone、绕过读 barrier、缩短 30 天审计保留、跳过任一检索面清理或手工重用 source_id
+  的 API/环境变量覆盖。实现可增加更长保留期，但不得短于 30 天，并须在策略版本中明确记录。
+- “恢复”仅指删除执行器在进程中断、锁冲突或暂时 I/O 失败后依据未完成 intent 继续完成同一删除并重新生成
+  receipt；不提供 undelete，不把 `DELETE_PENDING` 反向转换为其他状态，也不恢复已 hard-deleted 内容。
+
+**校验、拒绝与失败行为**
+
+- 删除请求必须携带 canonical source_id、request_id、expected_version、actor、reason 和协议版本；拒绝
+  非 canonical ID、未知字段、缺失字段、非 UTC 时间、未来 schema、已 `DELETED` source 或版本冲突，分别返回
+  `SOURCE_DELETE_INVALID_REQUEST`、`SOURCE_SCHEMA_UNSUPPORTED`、`SOURCE_ALREADY_DELETED` 或
+  `SOURCE_VERSION_CONFLICT`，不得部分写入。
+- 同一 source_id + request_id 必须幂等返回原 deletion intent/receipt；相同 request_id 携带不同参数返回
+  `SOURCE_DELETE_REQUEST_CONFLICT`。删除执行器不得直接写 Source 状态，所有状态和审计变更仍经
+  `SourceLifecycleService` 的单一事务边界。
+- tombstone/read barrier 写入失败、任一索引/cache 清理未确认、receipt 校验失败或 hard delete 部分失败时，
+  返回稳定错误码 `SOURCE_DELETE_FAILED` 或 `SOURCE_HARD_DELETE_INCOMPLETE`，保持 `DELETE_PENDING` 和
+  不可检索；不得回滚为 READY/DEGRADED，不得宣称删除完成。可重试的暂时 I/O/SQLite busy 仅按 sync v1
+  的有界重试规则执行，其他错误不重试。
+
+**兼容、安全、隐私与保留**
+
+- M0–M5 API/OpenAPI、旧 SQLite session 恢复、默认 OS/DS/CO 90 题、Network 显式扩展和
+  `StudySessionService` 写入权威保持不变；M6b preview 继续隔离且不能绕过 tombstone。
+- 删除后任何 Search/QA/preview 结果、BM25/vector 召回、result-cache 命中和 provenance 引用必须不可见；
+  对外错误仅返回逻辑 source/document/chunk ID 与稳定错误码，不返回宿主路径、正文、secret 或原始 provider 数据。
+- 删除审计与 receipt 必须支持按 source_id 追溯而不重建内容；hard delete 完成后不可通过应用接口恢复，
+  备份/日志若受独立保留政策约束也不得重新进入检索或公开响应。
+
+**可量化验收与 workload**
+
+- 获准实施后，对可生成的 100-document/1,000-chunk fixture 执行 20 次删除；每次从请求提交到
+  `DELETE_PENDING` 的 CAS/intent/audit 原子成功率为 100%，从 barrier 生效起 Search/QA/preview、BM25、
+  vector 和 result-cache 的删除对象召回率必须为 0。
+- 对 100 组相同 request_id 重放，新增 intent、状态转换、generation 或 receipt 数必须为 0；对 100 组
+  相同 expected_version 并发删除，每组必须恰好 1 次成功、1 次 `SOURCE_VERSION_CONFLICT`。
+- 在 tombstone 写入后、各索引/cache 清理中、receipt 写入前和提交前各注入 20 次进程终止/故障；每次
+  重启后必须保持不可检索，未完成项 100% 可由同一 intent 恢复，且不得出现 READY/DEGRADED 反向转换。
+- 30 天保留边界用 UTC 时钟 fixture 验证 20 次：未满 30 天的正文关联对象和审计元数据不得 hard-delete；
+  到期后 20 次 sweep 必须生成可校验 receipt，声明范围内所有存储确认完成率 100%，receipt 内容泄露数为 0。
+- 使用正文、secret、Windows/POSIX/UNC 路径和已缓存结果 canary 覆盖成功、失败、重试、恢复和 hard-delete
+  路径；API、日志、trace、审计、receipt 与缓存键泄露数必须为 0，默认 M0–M6 路径不得回归。
+
+**可追溯证据、责任人和日期**
+
+- 选定依据：本节与已闭合的 §3.1/§3.2；统一完成标准：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
+  §3；状态终态、CAS、单一写入者、原子发布、generation/cache 边界和路径隐私继承本文 §2.1、§3.1、§3.2，
+  [`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md)、`tests/M6a/test_cache_lifecycle.py`、
+  `tests/M6a/test_snapshot_publication.py`、`tests/regression/test_path_privacy.py`。
+- 本轮证据是冻结的可执行删除政策与既有 M6a 继承契约，不声称 M7 删除生产实现、`tests/M7` 或 hard-delete
+  性能证据已经存在；上述 workload 是获准实施后的阻断验收要求。
+- 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
+
+### 3.4 `M7-ISOLATION`（`RESOLVED`）
+
+**稳定 ID 与选定政策**
+
+- Decision ID 固定为 `M7-ISOLATION`，授权协议固定为 `sa.source.isolation.v1`。每个未来 M7 用户源必须绑定一个
+  不可变 `owner_principal_id`；v1 不支持共享、公开、组、角色继承或跨 learner 授权，授权关系固定为 owner-only。
+- `principal_id` 必须由服务端已认证上下文提供，调用方不得在 body、query、tool 参数或 Source metadata 中自报或覆盖。
+  Source 创建、读取、同步、取消、删除、审计和检索均先由同一授权组件计算该 principal 的授权 source 集合。
+- 默认 pack 与 M6a static extras 继续处于既有受信命名空间，不写入 M7 ownership 表；它们是否进入某请求仍由既有
+  `DEFAULT_ONLY` / `DEFAULT_PLUS_EXTRAS` scope 决定。用户源只进入显式 `AUTHORIZED_USER_SOURCES` 集合，不得借用
+  `knowledge-pack`、extra 或保留的 `user-` 以外 ID，也不得改变默认 pack 的可见性。
+- 查询必须在 BM25、vector 和 result-cache lookup **之前**附加服务端生成的 principal/source allowlist；RRF、QA、
+  M6b preview、出处组装和缓存回放只能消费已经过滤的候选。禁止先跨源召回再在响应层过滤。
+- result cache key 固定包含 principal authorization-set digest、retrieval scope 和 published generation；授权集变化、
+  Source 删除/tombstone 或 generation 切换必须使命中失效。BM25/vector 条目必须携带 source_id，缺失 source_id、
+  未知 namespace 或无法验证 owner 的用户源条目一律 fail closed。
+
+**默认、覆盖与适用范围**
+
+- v1 默认 owner-only、deny-by-default、服务端强制过滤；不提供关闭授权检查、允许匿名用户源、放宽为共享源、从客户端
+  接受 allowlist、跨 principal 合并缓存或查询后过滤的 API/环境变量覆盖。
+- 本决策只冻结 M7 用户源的控制面和检索隔离，不新增认证机制，不定义 principal 如何登录，也不改变 M0–M6 既有
+  endpoint 的认证状态。未来共享或组织模型必须新版本决策、迁移与重新批准，不能复用 v1 隐式开启。
+- `StudySessionService` 继续独占正式学习状态转换与领域写入；M7 授权组件只能决定用户源是否可见，不能读取或修改
+  另一 principal 的 session、mastery、review history，也不能把用户源内容扩散到 Quiz、Review Plan 或默认评测集。
+
+**输入校验、拒绝与失败行为**
+
+- 创建用户源必须有 canonical、非空的服务端 principal；拒绝客户端提供 `owner_principal_id`、非 canonical source ID、
+  保留命名空间冲突、未知字段或未来协议版本，返回 `SOURCE_ISOLATION_INVALID_REQUEST`、`SOURCE_ID_CONFLICT` 或
+  `SOURCE_SCHEMA_UNSUPPORTED`，且不得创建部分 Source/AuditEvent。
+- 对未拥有、未知、已删除或不可见的用户 source_id，所有单源控制面和检索入口统一返回
+  `SOURCE_NOT_FOUND`；响应状态、延迟分层、错误正文、日志和 trace 不区分“不存在”与“无权访问”，不得泄露 owner、
+  Source 状态、标题、文件名、计数、generation 或路径。批量请求只处理授权交集，不回显被剔除 ID。
+- principal 缺失或认证上下文不可验证时，用户源授权集为空并返回 `SOURCE_AUTH_REQUIRED`；授权存储不可用、过滤条件
+  无法下推、条目缺 source_id、cache key 缺授权 digest 或授权快照在请求中途变化时返回
+  `SOURCE_ISOLATION_UNAVAILABLE`，不得降级为全源查询、默认 owner 或响应后过滤。
+- 请求开始时固定 principal、授权集 digest、retrieval scope 与各 Source published generation；请求中途 owner、状态、
+  tombstone 或授权版本变化时，本次用户源结果必须丢弃并按新快照至多重试一次，仍冲突则 fail closed。
+
+**兼容、安全、隐私与数据保留**
+
+- M0–M5 API/OpenAPI、默认 OS/DS/CO 90 题、Network 显式扩展、旧 SQLite session 恢复、默认离线路径及
+  `StudySessionService` 权威保持不变；M6b preview 继续只读，且仅能看到其服务端 principal 被授权的用户源。
+- ownership/authorization 记录只保存 opaque principal ID、source ID、policy version、授权版本、UTC 时间与最小审计元数据；
+  不保存 prompt、正文、chunk、凭据、登录标识或 Windows/POSIX/UNC 宿主绝对路径。日志、trace、metrics 和错误不得用
+  source title、logical_uri 或 owner 标识作 label。
+- 删除沿用 §3.3：`DELETE_PENDING` 后所有 principal 立即不可见，授权记录和授权集缓存同时失效；30 天最小审计期后
+  随 hard delete 清理可删除的 ownership 元数据，只保留去内容、去路径且无法用于重新授权的最小 receipt/audit 证明。
+
+**可量化验收与 workload**
+
+- 获准实施后，用 10 个 principal、每人 10 个 source、每源 10 个 document（共 100 source/1,000 document）的可生成
+  离线 fixture，执行每个 principal 对自有源与全部 90 个非自有源的 Search/QA/preview 访问矩阵；非自有 source、document、
+  chunk、cache hit 和 provenance 泄露数必须为 0，自有授权查询成功率必须为 100%。性能阈值仍属于 `M7-BENCHMARK`。
+- 对 BM25、vector、RRF、result cache、QA sources 和 M6b preview 六个边界各运行至少 100 个混合查询；服务端过滤前
+  进入下游的未授权候选数必须为 0。移除 source_id、伪造 owner、客户端注入 allowlist 或复用另一 principal cache key
+  各 100 次，成功越权数必须为 0。
+- 对不存在与未授权 source 各执行 1,000 次同形请求，HTTP 状态、稳定错误码和响应 schema 必须 100% 相同；错误、日志、
+  trace 与 metrics 的 owner/title/path canary 泄露数必须为 0。延迟不得作为安全承诺，但测试报告必须给出两组 p50/p95
+  供人工检查，不得宣称常数时间。
+- 在授权读取后、BM25/vector 查询前、RRF 前、cache lookup 前和响应组装前各注入 20 次授权变化、删除和存储故障；
+  未授权结果返回数必须为 0，无法确认新快照时必须 100% 返回 `SOURCE_ISOLATION_UNAVAILABLE`。
+- 既有默认 pack 的 Search/QA/session、90 题评测发现、旧 session 恢复和 M6b 阶段隔离契约必须保持通过；本 workload
+  不替代仍为 `OPEN` 的 M7 保护基线或 benchmark。
+
+**可追溯证据、责任人和日期**
+
+- 选定依据：本节及已闭合的 §3.1–§3.3；统一完成标准：
+  [`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3；默认/extra scope、逻辑身份、cache/generation、
+  tombstone、路径隐私和状态权威继承本文 §2.1、[`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md)、
+  `tests/M6a/test_extra_sources_retrieval.py`、`tests/M6a/test_cache_lifecycle.py`、
+  `tests/M6a/test_snapshot_publication.py`、`tests/regression/test_path_privacy.py`。
+- 本轮证据是冻结的可执行隔离政策与既有 M6a 继承契约，不声称认证实现、M7 生产隔离、`tests/M7` 或性能证据存在；
+  上述 workload 是未来获准实施后的阻断验收要求。
+- 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
+
+### 3.5 `M7-BENCHMARK`（`RESOLVED`）
+
+**稳定 workload 与选定门槛**
+
+- Decision ID 固定为 `M7-BENCHMARK`，报告协议固定为 `sa.source.benchmark.v1`；所有 fixture、query、标注、硬件和参数由 digest 标识，报告不得包含原文、secret 或宿主绝对路径。
+- 提供可生成且不入 Git 的两个 workload：`1k-single` 为 100 documents / 1,000 chunks / 256 MiB 以内的单 Source；`3k-aggregate` 为 300 documents / 3,000 chunks / 768 MiB 以内的三 Source 聚合。两者均覆盖中文为主、简繁/全半角/英文/数字混合文本，并固定 query gold labels。
+- 每个 workload 固定执行冷启动 FULL、warm no-op INCREMENTAL、10% added/modified/removed INCREMENTAL、冷重建和重启恢复；每种场景至少 20 次独立测量，前 5 次仅作 warm-up，不混入统计。硬件、Python、SQLite、jieba、embedding/backend、chunk/parser/tokenizer policy 版本必须写入报告。
+- 正确性门槛固定为：Recall@1 ≥ 0.70、Recall@3 ≥ 0.85、Recall@5 ≥ 0.90；同一 fixture 的 manifest、normalized-document、chunk、BM25/FTS5 与 vector identity 集合一致率为 100%；增量与重建不得引入未标注结果或丢失已标注 gold。
+- 性能与资源门槛固定为：`1k-single` 查询 p50 ≤ 150 ms、p95 ≤ 400 ms；`3k-aggregate` 查询 p50 ≤ 250 ms、p95 ≤ 750 ms；FULL 同步 p95 ≤ 30 s、冷重建 p95 ≤ 30 s、重启恢复 p95 ≤ 10 s；峰值 RSS ≤ 512 MiB（1k）/ 1 GiB（3k），索引持久化大小 ≤ 2x accepted normalized text bytes。所有分位数按请求耗时统计，超时按失败计入。
+- 失败/降级门槛固定为：任一 parser、manifest、tokenizer、index 或 generation 校验失败时不得发布候选；last-good 保持可读；离线启动与错误语义由 `M7-OFFLINE-FALLBACK` 另行冻结。本决策不把未运行的性能数字宣称为 M7 保护基线证据。
+
+**默认、覆盖与证据**
+
+- 默认报告同时产出 `1k-single` 与 `3k-aggregate`，不可用硬件或缺失依赖不得静默跳过；只允许在报告中标记 `UNAVAILABLE` 并阻断准入。不得以平均值替代 p50/p95，不得以单次成功替代 20 次样本。
+- 阈值只适用于未来获准的 M7 用户源检索与生命周期 workload，不改变 M0–M6 默认 pack、90 题、M6b preview 或 runtime-contracts 的既有指标。
+- 选定依据为本节冻结的 workload/门槛与 §2.1、§3.2、§3.3、§3.8 的容量和发布约束；决策责任人 `justtodo123`，决策日期 `2026-08-29`。本轮仅关闭“如何测”和“通过标准”，不声称已有 M7 实现、benchmark 报告或保护基线复验结果。
+
+### 3.6 `M7-SOURCE-MANIFEST`（`RESOLVED`）
+
+文件级 manifest 描述用户源里**每个枚举到的文件**及其接纳结果和可移植身份，不是 Unity Library 之类工程文件的全盘清单，
+也不是 parser、normalized-document 或 provenance schema。
+
+**稳定 ID 与选定政策**
+
+- Decision ID 固定为 `M7-SOURCE-MANIFEST`，文件级协议固定为 `sa.source.manifest.v1`。每个 manifest 是一个不可变的
+  Source-revision 输入记录，含 `schema_name`、`schema_version=1`、`source_id`、`manifest_digest`、规范化 UTC
+  `created_at`、`entries` 和聚合计数；entry 必须含 `logical_uri`、`document_id`、`source_type`、`format`、`acceptance`
+  （`accepted` / `rejected` / `unsupported`）、`size_bytes`、`content_fingerprint` 和 `fingerprint_algorithm`。
+  `reject_code` 仅在非 accepted entry 必填；解析器版本、normalized-document ID、chunk 和 provenance 字段不属于本 schema。
+- `logical_uri` 是 NFC 保留大小写的源内 POSIX 相对路径；`document_id` 继续按 M6a 的
+  `sha256(source_id + logical_uri)` v1 派生，另以 `NFC(casefold(logical_uri))` 检测便携式冲突。entry 按该冲突键排序，
+  manifest digest 为 canonical UTF-8 JSON（固定字段顺序、无空白、数值规范化）摘要，算法固定 `SHA-256`。
+- `content_fingerprint` 固定为文件完整内容的 SHA-256：二进制文件摘要原始 bytes；文本文件先以 UTF-8 解码并按既定
+  Unicode NFC、换行 `\\n`、连续空白折叠和首尾空白规则规范化，再摘要规范化 UTF-8 bytes。它是文件内容身份，不能由 mtime、
+  文件名、大小、采样或宿主路径替代；M6a Markdown fingerprint 继续沿用其既有语义，M7 不回写或重解释默认 pack。
+- `source_type` 是来源/治理策略，v1 用户注册源固定为 `user_registered`；`format` 是文件编码/容器格式，固定由受支持
+  的 magic/解析探测结果确定（如 `md`、`txt`、`pdf`、`pptx`、`docx`），二者必须独立校验，扩展名不能冒充任一字段。
+  `source_type`、`format`、`acceptance` 和 `reject_code` 的完整允许值由对应策略/Parser Matrix 交叉校验，但本决策不选择
+  parser 或统一解析产物。
+- Source `revision_no` 从 1 严格递增；本次 revision 的输入是完整 manifest digest，只有 manifest、后续解析/切块和索引
+  全部通过后，按 §3.2 原子发布同时绑定 published revision/generation。任一 entry 的 fingerprint、acceptance、URI、
+  source_type 或 format 改变都会生成新 Source revision；未变化文件可复用其 document identity/构建缓存，但不能复用旧
+  revision 指针或只发布不完整的 manifest。revision 不由单文件号拼接，也不等同于 generation。
+
+**默认、覆盖与适用范围**
+
+- 默认仅枚举 Source 根目录内、可读且符合 M7 接纳策略的文件；`accepted` entry 进入候选检索视图，`rejected` 与
+  `unsupported` entry 只保留逻辑 URI、格式（若可探测）、大小、fingerprint（若可安全计算）和稳定 `reject_code`，
+  不进入 document/chunk/BM25/vector 集合。排除计数进入 manifest aggregate counts，不把调查工具的任意分类字段升级为生产字段。
+- 仅允许启动前收紧允许的 source/format 策略或资源上限；不允许请求级改写 fingerprint、manifest digest、document ID、
+  revision、acceptance、计数或路径根，也不允许把 collect-only JSON 直接注册为 manifest。该 schema 只适用于未来获准的
+  M7 用户源，不接管默认 pack、M6a static extras、crawler candidates、study session 或 review history。
+
+**校验、拒绝与失败行为**
+
+- 拒绝绝对/UNC/盘符/越界/控制字符 URI、非法 UTF-8、重复或 case-fold 冲突 logical URI、无法读取的文件、探测结果与
+  声明 format 不一致、未知 source_type/format/acceptance、未知字段、缺失必填字段、非 canonical JSON、digest 不匹配、
+  非正整数 size 或未来 schema version；不得以排序优先、自动改名、采样摘要或静默跳过消歧。
+- 单文件不可读、fingerprint 不可计算、超出已冻结容量或格式不支持时，生成带稳定拒绝码的完整候选 manifest，但该 entry
+  不得进入检索；若 manifest 本身不完整、聚合计数不可信、任何 accepted entry 无法校验，整次 Source revision 拒绝，
+  不发布 generation，保留 last-good 并按 §3.2 转为 `DEGRADED`。首次同步失败且无 last-good 时 Source 保持不可检索。
+- 稳定错误码至少包括 `SOURCE_MANIFEST_SCHEMA_UNSUPPORTED`、`SOURCE_MANIFEST_INVALID`、`SOURCE_MANIFEST_IDENTITY_CONFLICT`、
+  `SOURCE_MANIFEST_FINGERPRINT_MISMATCH` 和 `SOURCE_MANIFEST_UNREADABLE`；错误、日志和审计只记录 opaque ID、稳定码、
+  版本、计数和 digest，不记录正文、凭据、文件名之外的宿主定位信息或绝对路径。
+
+**兼容、安全、隐私、保留与验收**
+
+- M0–M5 API/OpenAPI、默认 OS/DS/CO 90 题、Network 显式扩展、旧 SQLite session、默认离线路径和
+  `StudySessionService` 写入权威保持不变；M6a/M6b 不读取或改写该未来用户源 manifest。manifest 不保存原文、解析正文、
+  chunk 正文、凭据或宿主绝对路径；删除和保留沿用 §3.3，tombstone 生效后 manifest entry 不可用于检索或出处。
+- 获准实施后，使用可生成的 1,000-entry fixture 运行 20 次冷构建、20 次重启恢复和 20 次 10% added/modified/removed
+  增量；同一输入的 canonical manifest bytes/digest、entry document ID、fingerprint、接受/拒绝计数一致率必须为 100%，
+  任一失败候选的 generation 发布数必须为 0。对 URI 冲突、格式伪造、fingerprint/digest 篡改、非法 UTF-8、绝对路径和
+  超限各注入 100 次，整源越过校验或公开泄露正文/secret/宿主路径的次数必须为 0；这些是获准后的验收要求，不是已有
+  M7 实现证据。
+
+**可追溯证据、责任人和日期**
+
+- 选定依据：本节及已闭合的 §3.1–§3.5、§3.7、§3.8、§3.12；统一完成标准：[`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3；
+  identity、fingerprint/revision/generation 分离、路径隐私和快照发布继承本文 §2.1、[`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md)、
+  [`runtime-contracts.md`](../standards/runtime-contracts.md)、`tests/M6a/test_protocols.py`、`tests/M6a/test_snapshot_publication.py`、
+  `tests/regression/test_path_privacy.py`。`tools/source_inventory.py` 仅作为 collect-only 调查输入，不是生产 schema 或通过证据。
+- 本轮证据是冻结的可执行 manifest 政策与既有 M6a 继承契约，不声称 M7 manifest 生产实现、`tests/M7` 或保护基线运行证据已经存在；
+  parser、normalized-document 和 provenance 仍分别由 §3.9–§3.11 决定。
+- 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
+
+### 3.7 `M7-FTS5-TOKENIZER`（`RESOLVED`）
+
+**稳定 ID 与选定政策**
+
+- Decision ID 固定为 `M7-FTS5-TOKENIZER`，tokenizer 协议固定为 `sa.source.fts5-tokenizer.v1`；中文 FTS5 使用
+  `jieba==0.42.1` 的 search-mode 预分词，将 token 以单个空格连接后写入 FTS5 `unicode61` 默认 tokenizer，
+  不使用 `porter`、`trigram` 或未锁定版本的系统分词器。
+- 输入规范化固定为 Unicode NFC、换行归一为 `\\n`、连续空白折叠为一个空格并去除首尾空白；token stream 使用
+  jieba search-mode 输出，空 token 丢弃，token 原文保留大小写/数字语义但比较时由 unicode61 的默认规则处理。
+  `tokenizer_version`、规范化版本和 FTS schema version 必须进入 build input digest 与索引元数据。
+- 默认 Markdown pack 不改变现有 `sa.chunk.markdown-h2.v1` 切块或其检索边界；该 tokenizer 只适用于未来获准的 M7
+  用户源 FTS5 索引，不能改变默认 pack、M6a static extras 或 M6b preview 的既有索引行为。
+
+**默认、覆盖与适用范围**
+
+- 默认启用上述固定 tokenizer 与规范化；不提供切换分词器、放宽版本、跳过规范化、运行时热替换词典或改用客户端
+  分词结果的 API/环境变量覆盖。词典如需更新必须递增 tokenizer policy version、重建索引并重新完成兼容评估。
+- M7 用户源的 BM25/FTS5 建索引和查询必须使用同一版本化 tokenization pipeline；vector、RRF、QA 与 cache 只消费
+  已按 source/generation/authorization 过滤的结果。该决策不提前闭合 `M7-SCALE-LIMITS`、`M7-BENCHMARK` 或
+  `M7-OFFLINE-FALLBACK` 的总体阈值和系统级降级策略。
+
+**输入校验、拒绝与失败行为**
+
+- 拒绝未知 tokenizer、未知规范化版本、非法 UTF-8、无法规范化的输入、缺失 tokenizer metadata、混用 tokenizer 版本
+  或 FTS schema digest 不匹配，返回稳定错误码 `SOURCE_TOKENIZER_UNSUPPORTED` 或 `SOURCE_TOKENIZER_MISMATCH`；
+  不发布候选 generation，不让部分 token stream 进入检索。
+- 启动或查询发现 `jieba` 不可导入、版本不是 `0.42.1`、字典加载失败、FTS5 tokenizer metadata 缺失或索引由其他
+  tokenizer 构建时，M7 用户源能力 fail closed，返回 `SOURCE_TOKENIZER_UNAVAILABLE`；不得静默退回 unicode61、
+  单字切分、英文 whitespace 或 vector-only。离线 fallback 的完整启动/修复策略留给 `M7-OFFLINE-FALLBACK`。
+- FTS5 查询字符串必须经过相同规范化与 tokenization；查询解析异常、token 为空或包含不允许的控制字符时返回稳定
+  `SOURCE_TOKENIZER_INVALID_QUERY`，不得拼接原始查询形成可注入的 MATCH 表达式。原始查询不得写日志或错误正文。
+
+**兼容、安全、隐私与数据保留**
+
+- M0–M5 API/OpenAPI、默认 OS/DS/CO 90 题、Network 显式扩展、旧 SQLite session 恢复、默认离线路径和
+  `StudySessionService` 写入权威保持不变；M6a/M6b 现有 BM25 行为不迁移、不重建、不因 M7 tokenizer 改变。
+- tokenizer 元数据只保存版本、schema、digest、计数和时间，不保存原文、查询正文、凭据、principal、宿主绝对路径
+  或可识别用户信息；审计、日志、trace 与公开错误不得泄露这些内容。tokenized text 属于派生索引数据，删除传播遵循
+  `M7-DELETE-SEMANTICS`，tombstone 生效后立即不可查询，保留与 hard delete 不由本决策重新定义。
+
+**可量化验收与 workload**
+
+- 获准实施后，使用可生成的中英文混合 fixture（至少 1,000 documents、每文至少 5 条中文术语与 5 条中文自然语言
+  句子）执行 20 次冷构建与 20 次重启恢复；固定同输入的 token stream、tokenizer/normalization metadata 和
+  FTS document set 的 byte-for-byte 一致率必须为 100%。
+- 对 1,000 条包含简繁、全半角、组合音标、emoji、数字、英文和连续空白的 query canary，规范化输出必须 100% 可复现；
+  控制字符、非法 UTF-8、空 query 和恶意 MATCH 语法各 100 次必须全部被稳定拒绝，原始 query 泄露数为 0。
+- 对 tokenizer 版本、规范化版本、FTS schema digest 各注入 100 次不匹配，候选 generation 发布数必须为 0，稳定错误码
+  必须分别为 `SOURCE_TOKENIZER_MISMATCH`；`jieba` 缺失/错误版本/词典失败各注入 100 次，必须全部返回
+  `SOURCE_TOKENIZER_UNAVAILABLE` 且不启动 M7 用户源检索。
+- 对同一 fixture 由两个独立进程各构建 100 次，token stream digest 和 FTS document-ID 集合一致率必须为 100%；对同一
+  query 重放 100 次，结果排序输入必须一致，不把性能阈值或 Recall 阈值提前写入本决策。
+- 使用正文、secret、Windows/POSIX/UNC 路径和原始 query canary 覆盖成功、失败、重建与删除路径；API、日志、trace、
+  审计和索引元数据泄露数必须为 0，既有 M0–M6 默认启动/检索/会话/preview 契约不得回归。
+
+**可追溯证据、责任人和日期**
+
+- 选定依据：本节及已闭合的 §3.1–§3.4；统一完成标准：
+  [`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3；现有 BM25、切块、向量和路径隐私边界继承
+  [`runtime-contracts.md`](../standards/runtime-contracts.md) §1–§2、本文 §2.1、
+  `tests/M6a/test_cache_lifecycle.py`、`tests/M6a/test_snapshot_publication.py`、
+  `tests/regression/test_path_privacy.py`。
+- 本轮证据是冻结的 tokenizer 设计政策与既有兼容契约，不声称 `jieba` 已安装、M7 FTS5 生产实现、`tests/M7`、
+  fallback 或性能/Recall 证据已经存在；上述 workload 是未来获准实施后的阻断验收要求。
+- 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
+
+### 3.8 `M7-SCALE-LIMITS`（`RESOLVED`）
+
+**稳定 ID 与选定政策**
+
+- Decision ID 固定为 `M7-SCALE-LIMITS`，限制协议固定为 `sa.source.scale-limits.v1`。v1 单个用户 Source 的硬上限为
+  100 个 accepted documents、1,000 个 published chunks、256 MiB accepted raw bytes；单文件 raw bytes 上限为
+  32 MiB。计数使用 manifest 中经接纳且将进入候选 generation 的文件，不把 unsupported/rejected 文件算作 document，
+  但它们必须进入拒绝计数和审计。
+- 单 principal 可注册最多 10 个未进入 `DELETED` 的用户 Source，但任一 published/候选可检索集合聚合硬上限为
+  300 documents、3,000 chunks、768 MiB accepted raw bytes；超过聚合上限的 Source 可保持 `REGISTERED` 或
+  `DISABLED`，不得进入同步或查询授权集。单服务进程可加载的 M7 用户源 published view 同样最多 3,000 chunks；
+  默认 pack 与 M6a static extras 不计入此 M7 配额，也不得因用户源配额被驱逐。
+- 限制在枚举后、解析前先按文件数/raw bytes 做预检，在切块后、索引前再按 document/chunk 和 principal/process 聚合量
+  做最终校验。完整同步、增量同步、重建、恢复和发布都使用同一快照计数；不得通过并发 run、staging generation、
+  删除中的 Source、cache 或不同检索后端重复占用来绕过配额。
+- supported workload 固定覆盖 1,000-chunk 单源和 3,000-chunk 聚合视图的完整同步、10% added/modified/removed
+  增量、冷重建、进程重启恢复和查询正确性。具体时间、内存、磁盘、Recall@k 与 p50/p95 阈值仍只由
+  已由 `M7-BENCHMARK` 冻结，本决策不借容量数字提前宣称性能达标。
+
+**默认、允许覆盖与适用范围**
+
+- 上述值均是 hard cap 和默认值；只允许部署配置在启动前**收紧**单文件、单 Source、单 principal 和进程上限，且必须
+  保持层级单调（file <= source <= principal，process chunks <= principal chunks）并写入非敏感 policy digest。
+  不允许 API、请求参数或运行时热更新放宽上限，也不允许把 `0`、负数或缺失值解释为无限制。
+- 本决策只适用于未来获准的 M7 用户源控制面、staging 和 published view，不修改默认 pack、M6a static extras、
+  crawler candidates、学习 session、review history、M6b preview 预算或 M0–M6 既有配置。
+- parser-specific 页数、幻灯片数、解压比例或格式限制仍由 `M7-PARSER-MATRIX` 决定，但不得超过本节 raw bytes、
+  document/chunk 和聚合 hard cap；manifest 的计数字段与 fingerprint 规则仍由 `M7-SOURCE-MANIFEST` 决定。
+
+**输入校验、拒绝与失败行为**
+
+- 配置必须是正整数 MiB/计数，拒绝未知字段、非整数、溢出、层级倒置、放宽冻结上限或未来 policy version，启动时返回
+  `SOURCE_LIMIT_CONFIG_INVALID`，M7 用户源能力 fail closed；M0–M6 路径继续启动。
+- 注册达到 10 个未删除 Source 时返回 `SOURCE_COUNT_LIMIT_EXCEEDED`。枚举预检超过单文件、单 Source 或 principal raw
+  bytes/document 上限时返回 `SOURCE_SIZE_LIMIT_EXCEEDED`；切块后超过 Source/principal/process chunk 上限时返回
+  `SOURCE_CHUNK_LIMIT_EXCEEDED`。公开错误只含 limit kind、配置上限和实际计数，不含文件名、正文或宿主路径。
+- 首次同步超限时不发布候选 generation，Source 转为 `DEGRADED` 且不可检索；已有 last-good 的同步、增量或重建超限时
+  丢弃完整候选、保持 last-good 与原 published generation 可读并转为 `DEGRADED`。不得截断文件、丢弃尾部 chunk、
+  只发布部分索引或降级为 vector-only/BM25-only 来伪装成功。
+- 进程聚合容量不足时固定返回 `SOURCE_PROCESS_CAPACITY_EXCEEDED`，不得驱逐默认 pack、另一 principal 的已发布 Source、
+  绕过 §3.4 隔离或超额排队。删除中的 Source 在 tombstone 生效后不再进入查询集合，但在 hard-delete receipt 完成前，
+  其物理 bytes 不得被错误记作已回收磁盘容量。
+
+**兼容、安全、隐私与数据保留**
+
+- M0–M5 API/OpenAPI、默认 OS/DS/CO 90 题、Network 显式扩展、旧 SQLite session 恢复、默认离线路径及
+  `StudySessionService` 权威保持不变；M6a/M6b 现有 source/cache/preview 上限不被本决策重写。
+- 配额计数、policy digest、拒绝和审计只保存 source/principal 的 opaque ID、计数、字节数、版本、时间和稳定错误码；
+  不保存原文、chunk、query、凭据、文件名或 Windows/POSIX/UNC 宿主绝对路径。metrics 不使用 principal/source ID 作 label。
+- staging 失败与超限候选按 §3.2 丢弃；删除和物理回收按 §3.3 执行。为审计保留的最小计数不进入可检索容量，
+  也不能用于恢复已 hard-deleted 内容。
+
+**可量化验收与 workload**
+
+- 获准实施后，用可生成 fixture 对每个边界运行 20 次 `limit-1`、`limit`、`limit+1`：单文件 32 MiB、单 Source
+  100 documents/1,000 chunks/256 MiB、单 principal 10 registered Sources 与 300 documents/3,000 chunks/768 MiB、
+  单进程 3,000 user chunks；边界内接受率必须为 100%，`limit+1` 拒绝率必须为 100%，部分发布数为 0。
+- 对 1,000-chunk 单源和 3,000-chunk 三源聚合 fixture，各运行 20 次首次 FULL、10% 增量、冷重建和重启恢复；
+  每次 manifest、BM25、vector 的 document/chunk identity 集合必须 100% 一致，超限候选不得改变 last-good。
+- 对 100 组并发注册/同步制造 principal 与 process 配额竞争；每组最终成功集合必须不超过冻结上限，超额请求全部返回
+  对应稳定错误码，不得出现负计数、重复扣减、越权驱逐或超过 3,000 published user chunks 的瞬时可见窗口。
+- 在预检后、解析后、切块后、各索引构建后和发布前各注入 20 次计数变化、进程终止和 SQLite busy；恢复后配额账本、
+  candidate digest 与真实对象计数必须 100% 一致，无法证明一致时必须 fail closed 并保留 last-good。
+- 使用文件名、正文、secret、principal 和 Windows/POSIX/UNC 路径 canary 覆盖接受、拒绝、重试和审计路径；API、日志、
+  trace、metrics 与公开错误泄露数必须为 0。性能与 Recall 只记录原始测量，不作为本决策的通过证据。
+
+**可追溯证据、责任人和日期**
+
+- 选定依据：本节及已闭合的 §3.1–§3.5、§3.7；统一完成标准：
+  [`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3；完整候选、last-good、单 active run、隔离、tokenizer、
+  cache/generation 与路径隐私继承本文 §2.1、§3.2–§3.5、§3.7、
+  [`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md)、`tests/M6a/test_cache_lifecycle.py`、
+  `tests/M6a/test_snapshot_publication.py`、`tests/regression/test_path_privacy.py`。
+- 本轮证据是冻结的容量政策与可执行验收设计，不声称 M7 生产配额、`tests/M7`、parser/manifest 或 benchmark 证据已经
+  存在；上述 workload 不替代已冻结但尚无运行证据的 `M7-BENCHMARK`，也不关闭仍为 `OPEN` 的 `M7-PROTECTED-BASELINE`。
+- 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
+
+### 3.9 `M7-PARSER-MATRIX`（`RESOLVED`）
+
+**稳定 ID 与选定政策**
+
+- Decision ID 固定为 `M7-PARSER-MATRIX`，协议固定为 `sa.source.parser-matrix.v1`。解析器选择、版本和输出协议均是构建输入的一部分，精确 `parser_id@version` 必须进入 M6a `build_input_digest`；同一 format 不允许按环境或文件扩展名选择不同解析器。
+- v1 受支持格式及唯一解析器固定为：`md` → `markdown-it-py==4.0.0`（`commonmark` preset，源码编码 UTF-8）；`txt` → Python 标准库 `textio`（CPython `3.11.9`，UTF-8，`newline=None`）；`pdf` → `pypdf==6.0.0`；`pptx` → `python-pptx==1.0.2`；`docx` → `python-docx==1.2.0`。`parser_id` 分别固定为 `markdown-it-py`、`cpython-textio`、`pypdf`、`python-pptx`、`python-docx`；版本解析必须精确匹配，未知或不匹配即不可用。
+- Markdown 默认 pack 不经过本矩阵改写，继续使用既有 `sa.chunk.markdown-h2.v1` 和默认 `knowledge/` 路径；M7 用户源的 `md` 解析只定义输入解析器，不提前决定 normalized-document 或 provenance。
+- 解析成功必须产生可供后续切块的文本候选；解析器不得写入 Git、默认 `knowledge/` 或对外暴露原文。PDF 页、PPTX 幻灯片和 DOCX 标题的统一字段、稳定 chunk key、缓存与出处字段留给 §3.10–§3.11。
+
+**默认、允许覆盖与适用范围**
+
+- 默认启用上述五种格式；不提供按请求、Source 或单文件替换解析器、放宽版本、绕过 magic/编码探测或切换为另一库的覆盖。部署只能在启动前禁用格式或收紧其资源上限，并写入非敏感 policy digest；禁用格式按 unsupported 处理。
+- 格式由 magic/容器探测与声明交叉校验确定，扩展名不能单独决定 format。`md`/`txt` 需要有效 UTF-8；PDF、PPTX、DOCX 必须是可打开且结构完整的容器。格式探测结果、parser id/version 和接受结果写入 manifest 所允许的字段，不把解析正文写入 manifest。
+- 每文件 raw bytes 必须遵守 `M7-SCALE-LIMITS` 的 32 MiB 单文件硬上限；解析器不得通过解压、展开或临时文件绕过该上限。PDF 最多 500 页、PPTX 最多 500 张幻灯片、DOCX 最多 500 个正文段落；这些格式级限制只收紧并不能放宽 §3.8 的 document/chunk/byte 聚合上限。
+
+**输入校验、拒绝与失败行为**
+
+- 枚举阶段先做路径、大小、magic、编码和容器结构校验；解析前后均检查实际计数与 `M7-SCALE-LIMITS`。声明格式与探测不一致、UTF-8 无法解码、容器损坏、解析器缺失/版本不匹配、页/幻灯片/段落超限或解析结果为空，均生成完整 manifest entry 并以稳定 reject code 拒绝该 entry，不进入 document/chunk/BM25/vector。
+- 单文件解析失败或超限不得静默跳过并发布其余候选：若当前 Source 没有可验证 last-good，则拒绝整个 Source revision 并保持不可检索；已有 last-good 时丢弃完整 candidate、保留 last-good 并将 Source 置为 `DEGRADED`。不得截断、部分发布、降级为文件名/标题或把错误内容送入 QA。
+- 不支持或被部署禁用的格式固定为 `unsupported`，计入 manifest/审计但不计入 accepted document/chunk 容量，也不进入任何检索索引。稳定错误码至少包括 `SOURCE_FORMAT_UNSUPPORTED`、`SOURCE_FORMAT_MISMATCH`、`SOURCE_PARSER_UNAVAILABLE`、`SOURCE_PARSE_FAILED`、`SOURCE_PARSE_LIMIT_EXCEEDED`；公开错误只含逻辑 URI、稳定错误码及可执行修复类别，不含正文、凭据或宿主路径。
+- 离线环境中任一选定解析器不可用、版本不匹配或初始化失败时，严格对齐 `M7-OFFLINE-FALLBACK`：用户源 fail closed，不查询、不发布 candidate、不使用替代库或文件名 fallback；仅在显式本地修复完成全量校验并满足 §3.2 原子发布条件后恢复。
+
+**兼容、安全、隐私与数据保留**
+
+- M0–M5 API/OpenAPI、默认 OS/DS/CO 90 题、Network 显式扩展、旧 session 恢复、默认离线路径、M6a static extras 和 M6b preview 均不改变；默认 Markdown pack 的 parser/chunk 行为保持既有契约。
+- staging 解析产物、临时解压内容和失败候选不进入 Git 或默认知识库；其清理、last-good、tombstone 和 hard-delete receipt 完全遵循已闭合的 §3.2–§3.3，不在本决策新增保留期。日志、trace、metrics、manifest 和错误不得记录正文、secret、query、principal、文件名或 Windows/POSIX/UNC 绝对路径。
+- 解析器版本变化、策略变化或输入 fingerprint 变化必须使构建输入 digest 失效并触发完整候选重建；不得复用未经版本绑定的解析缓存。解析失败不创建学习状态、review-log、QA 引用，也不扩散到 Quiz、Review Plan 或默认评测。
+
+**可量化验收与 workload**
+
+- 获准实施后，对五种 supported format 各生成至少 100 个中文为主、含简繁/全半角/英文/数字/组合音标/emoji/连续空白的 fixture，重复冷构建、重启恢复和 10% added/modified/removed 增量各 20 次；同一输入的 parser digest、接受/拒绝结果和候选 identity 必须 100% 可复现，失败 candidate 发布数为 0。
+- 对每种格式分别注入损坏容器、错误编码、magic/扩展名冲突、解析器缺失/错误版本、空内容与 `limit-1`/`limit`/`limit+1` 页数或结构单元各 20 次；错误码一致率 100%，不支持项索引进入数为 0，超限和解析失败的部分发布数为 0。
+- 在 `1k-single` 与 `3k-aggregate` workload 中覆盖五种格式及混合格式；accepted document/chunk/raw-byte 计数必须与 manifest、BM25、vector 集合 100% 一致，任一超出 `M7-SCALE-LIMITS` 的候选不得改变 last-good。缺失离线依赖各注入 100 次，查询启动和候选发布数必须为 0。
+- 使用文件名、正文、secret、principal 和 Windows/POSIX/UNC 路径 canary 覆盖接受、拒绝、重试、恢复和审计路径；API、日志、trace、metrics 与公开错误泄露数必须为 0。性能与 Recall 仅记录原始测量，不作为本决策的通过证据。
+
+**可追溯证据、责任人和日期**
+
+- 选定依据：本节及已闭合的 §3.1–§3.8、§3.12；统一完成标准：[`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3。identity、build-input digest、原子发布、last-good、容量、离线 fail-closed 和路径隐私继承本文 §2.1、§3.2–§3.8、§3.12 及既有 M6a 契约。
+- 本轮证据是冻结的 parser 选择、版本、失败/超限/unsupported 政策与可执行验收 workload，不声称 M7 生产解析器、依赖安装、`tests/M7`、benchmark 运行证据或保护基线已经存在；§3.10 normalized-document 与 §3.11 provenance 仍为 `OPEN`。
+- 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
+
+### 3.10 `M7-NORMALIZED-DOCUMENT`（`RESOLVED`）
+
+Normalized document 是解析后、切块前的统一表示；它把受支持格式映射为可复现的结构化文本单元，绝不把二进制
+直接当作 chunk，也不决定 provenance（provenance 仍由 §3.11 单独决定）。协议固定为
+`sa.source.normalized-document.v1`。
+
+**稳定 ID 与选定政策**
+
+- 每个 document 记录固定字段：`schema_name`、`schema_version=1`、`source_id`、`document_id`、`logical_uri`、
+  `format`、`content_fingerprint`、`parser_id`、`parser_version`、`units` 和 `normalized_text_digest`。每个
+  unit 固定字段：`unit_kind`（`document`/`section`/`page`/`slide`/`heading`）、`ordinal`（从 0 严格递增）、
+  `heading_path`（NFC 字符串数组）、`title`（NFC 字符串或 null）、`text`（NFC UTF-8 文本）、`visible`（布尔值）。
+  不保存宿主绝对路径、原始二进制、prompt、secret 或 provenance 字段。
+- 统一映射固定为：`md`/`txt` 产生一个 `document` unit，并按既定默认策略继续切块；`pdf` 每页一个 `page` unit；
+  `pptx` 每张可见幻灯片一个 `slide` unit，并把可见标题纳入 `heading_path`；`docx` 按标题边界产生 `section` unit，
+  标题本身进入 `heading_path`，标题前内容进入首个 section。空页、空幻灯片和空 section 不产生 unit；隐藏幻灯片
+  不产生 unit，但其存在只计入解析统计，不得进入检索。
+- `chunk_key` 固定为 `sha256(document_id + "\\x00" + unit_kind + "\\x00" + str(ordinal) +
+  "\\x00" + chunk_schema_version)` 的 lowercase hex，chunk schema 固定为 `sa.chunk.normalized-unit.v1`。
+  同一 document、parser、fingerprint 和 schema 输入必须得到完全相同的 key；不得使用数组位置之外的易变显示文本、mtime
+  或宿主路径作为身份。unit 文本按 NFC、LF 换行、连续空白折叠和首尾空白规则规范化后再计算 digest。
+
+**默认、覆盖与适用范围**
+
+- 默认仅适用于未来获准的 M7 用户源和 §3.9 已选 parser；默认 pack Markdown 继续使用 `sa.chunk.markdown-h2.v1`，
+  不由本决策改写。部署只能在启动前禁用格式或收紧既有资源上限，不得请求级更换模型、字段、chunk 公式或规则。
+- 解析缓存逻辑位置固定为受管 cache root 下的 `normalized-documents/v1/<source_id>/<document_id>/`，对外只暴露
+  逻辑 cache key；每个 artifact 以 `content_fingerprint`、`parser_id@parser_version`、`chunk_schema_version` 和
+  canonical normalized-document digest 命名。artifact 属于 staging revision，成功发布后由 generation 引用，
+  不复制到 Git 或外部资料根。
+
+**输入校验、拒绝与失败行为**
+
+- 校验 schema/version、document identity、logical URI、format/parser 精确版本、fingerprint、单位 ordinal 唯一连续、
+  heading/text 的 NFC 与 UTF-8、digest 和 §3.8 资源上限；拒绝未知字段、非法 unit kind、重复/缺失 ordinal、隐藏内容、
+  未声明空值、digest 不匹配、过大文本和 parser 输出不可确定的结果。mtime 只能作提示，不能作为有效性依据。
+- 任一 document 解析或 normalized-document 校验失败，整次 revision fail-closed：不生成 chunk、不更新 BM25/vector、
+  不发布 generation，保留 last-good。缓存缺失或损坏不得回退到二进制、旧 fingerprint 或另一 parser；只允许按 §3.2
+  显式 FULL 重建。
+
+**失效与清理**
+
+- fingerprint 变化使该 document 的解析 artifact、units、chunks 和下游 BM25/vector/result-cache namespace
+  全部失效并重建；parser version 或 normalized/chunk schema 变化使该 source revision 的全部 normalized documents
+  与 chunks 重建。generation 变化本身不使构建 artifact 失效，但 result cache 必须按 published generation 隔离。
+- staging artifact 在成功原子发布后立即删除；失败、取消或中断的 staging 只能由同一 revision 的幂等清理任务删除，期间
+  绝不查询。extra 移除或用户源进入 `DELETE_PENDING` 时停止新建和读取该源缓存；物理删除、retain-1、审计保留和
+  hard-delete receipt 的完成条件严格遵循已闭合的 `M7-DELETE-SEMANTICS`，本决策不另设 tombstone 或保留期。
+
+**兼容、安全、隐私与验收**
+
+- 保持 M0–M6 API/OpenAPI、默认 pack、旧 session、`StudySessionService` 写入权威和默认离线能力不变；normalized
+  artifact 不进入 QA `sources`，其公开出处字段留给 §3.11。日志、trace、错误和指标只记录 opaque IDs、版本 digest、
+  计数、阶段和时间，不记录正文或路径。
+- 获准实施后，以 `1k-single` 与 `3k-aggregate` fixture 各执行 20 次冷 FULL、warm no-op、10% 变更增量、重建和重启恢复；
+  同输入 canonical bytes/digest、unit 集合和 chunk_key 集合一致率必须 100%，失败候选 generation 发布数为 0。对 fingerprint、
+  parser/schema 变更、损坏 artifact、空/隐藏 unit、越界 URI 和上限各注入 100 次，错误码稳定率 100%、staging 查询和正文/路径
+  泄露数为 0；这些是获准后的验收要求，不是现有 M7 实现证据。
+
+**可追溯证据、责任人和日期**
+
+- 选定依据：本节、§3.1–§3.3、§3.6、§3.8、§3.9、`stage-admission-gates.md` §3、M6a 的 parser-version/cache/staging
+  继承契约及 `tests/M6a/test_cache_lifecycle.py`、`tests/M6a/test_snapshot_publication.py`；这些证据支持设计决策，
+  不声称 M7 生产实现、`tests/M7`、benchmark 或保护基线已经存在。
+- 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
+
+### 3.11 `M7-PROVENANCE`（`RESOLVED`）
+
+**稳定 ID 与选定政策**
+
+- Decision ID 固定为 `M7-PROVENANCE`，出处协议固定为 `sa.source.provenance.v1`。每个已发布可检索 chunk 必须有一条不可变的 `ProvenanceRecord`，把 `source_id + published_revision_no + published_generation + logical_uri + file_fingerprint + parser_id/parser_version + normalized_document_id + unit_id + chunk_id/chunk_schema` 串成完整链；缺一字段、链上 identity 不一致或无法验证当前 published generation 时，该 chunk 不得发布、召回或进入 QA `sources`。
+- 公开出处 URI 固定为：默认 pack 继续使用 `knowledge/{logical_uri}`，M6a static extra 继续使用 `extra://{source_id}/{logical_uri}`，M7 用户源使用 `user://{source_id}/{logical_uri}`。`source_id` 必须是 §3.1 的 canonical `user-` UUIDv7，`logical_uri` 必须是 §2.1 的 NFC POSIX 相对路径；不得接受绝对路径、`..`、反斜杠、authority/query/fragment、百分号编码的路径分隔符或其他 scheme。公开 URI 只表示应用内逻辑出处，不承诺可直接读取宿主文件。
+- 内容谱系固定为 `origin_kind=original | human_refined | ai_draft`。注册文件默认是 `original`；人工基于原文生成可检索精炼笔记时，必须创建新的 `logical_uri`、document/chunk identity 和 `ProvenanceRecord`，并以 `derived_from_document_ids` 指向一个或多个同 owner 的原文 document，`source_type` 固定为 `human_markdown` 或 `web_reviewed`，只有权威人工晋升写入者可将 `ingest_status` 从 `candidate` 改为 `approved`。AI 输出固定为 `ai_draft + candidate`，不得原地改写为 approved；人工采用时必须另建 `human_refined` 文档并记录 `derived_from_document_ids`，AI 草稿本身仍不可检索。`web_candidate` 同样永不检索，只有另建 `web_reviewed + human_refined + approved` 文档后才可进入候选 generation。
+
+**默认、允许覆盖与适用范围**
+
+- QA `sources` 对 M7 用户源只新增并固定暴露 `uri`、`title`、`source_type`、`origin_kind`、`document_id`、`chunk_id`、`revision`、`generation` 和可选 `location`；`location` 只允许 `{kind: page|slide|heading|line, start: 正整数, end: 大于等于 start 的正整数}`。不对外暴露 `logical_uri` 独立字段、file fingerprint、parser/version、normalized document/unit ID、owner/principal、ingest actor、审核备注、派生链、宿主路径、原文全文、chunk 全文、密钥或内部审计 ID。现有默认 pack/extra 的 `file` 字段与响应形态保持不变；M7 获准实施时只能为用户源采用上述字段，不得借本决策破坏 M0–M6 API/OpenAPI。
+- 内部 `ProvenanceRecord` 可保存上述链路字段、`origin_kind`、`source_type`、`ingest_status`、`derived_from_document_ids`、审核 actor 的 opaque ID、审核 UTC 时间和策略版本；不得保存 secret、宿主绝对路径、QA query/prompt、原文全文或 chunk 全文。审计读取继续受 §3.4 owner-only/角色边界约束。
+- v1 不提供改用 `extra://` 表示用户源、隐藏用户源 revision/generation、允许客户端自报 provenance、原地把 AI/web candidate 晋升为可检索内容、让未批准内容参与检索，或放宽公开字段的 API/环境变量覆盖。实现只能通过省略可选 `location` 或禁用整个用户源进一步收紧公开面。
+
+**输入校验、拒绝与失败行为**
+
+- provenance 只能由 `SourceLifecycleService` 在同步 staging 中根据已验证 manifest、parser、normalized document 和 chunk 结果生成；客户端、模型、crawler、文件 frontmatter 或检索结果不得直接写 `ProvenanceRecord`、`origin_kind`、`derived_from_document_ids` 或审核 actor。晋升请求必须携带 canonical source/document IDs、候选 fingerprint、目标新 `logical_uri`、`expected_version`、actor、request_id 和协议版本；缺字段、跨 owner 派生、目标 URI 冲突、候选已变化、非 candidate 输入、AI/web candidate 原地批准或派生环统一拒绝且不得部分写入。
+- 稳定错误码固定为：记录/URI/字段无效 `SOURCE_PROVENANCE_INVALID`，链不完整或不一致 `SOURCE_PROVENANCE_BROKEN`，晋升冲突 `SOURCE_PROMOTION_CONFLICT`，不可晋升 `SOURCE_PROMOTION_DENIED`。公开错误只返回稳定 code 与不可逆向内容的 opaque IDs；未知、未授权或已删除 Source 仍统一按 §3.4 返回 `SOURCE_NOT_FOUND`，不得暴露存在性、文件名、出处 URI、正文或审核状态。
+- 任一可检索 chunk 缺失或无法验证 provenance 时，整个候选 revision fail closed，不发布部分 generation；QA/result cache 命中若无法绑定当前 published provenance，也必须拒绝并按 §3.12 要求显式修复，不得回退到旧 URI、文件名猜测、normalized artifact 或正文片段作为出处。
+
+**更新、删除传播与兼容/隐私**
+
+- 文件 fingerprint 变化必须生成新 immutable revision 的 normalized document、chunks 与 provenance；旧 generation 在新 generation 原子发布前仍作为 last-good 完整可见，发布事务完成后旧 chunk/provenance 立即不可召回，且绑定旧 `revision/generation/chunk_id` 的 QA/result cache 全部失效。不得在一个响应中混用新正文与旧出处，或复用已改变内容的旧 chunk identity。
+- 原文更新不会静默改写人工精炼文档；任何 `human_refined` 记录只要其 `derived_from_document_ids` 指向的原文 fingerprint 已不是当前值，就标记 `STALE_DERIVATION` 并从下一候选 generation 排除，直到人工基于当前原文创建新 revision 并重新批准。AI 草稿和 web candidate 无论新旧都不得进入任何检索 generation、QA `sources`、Quiz、Review Plan、默认评测或 preview 工具结果。
+- Source 或 document 进入删除流程时，tombstone/read barrier 必须同时使其 provenance、派生关系、QA `sources` 组装和所有绑定 cache 不可读；引用该已删原文的 `human_refined` 文档同步变为 `STALE_DERIVATION` 并不可检索，不得借精炼副本绕过删除。解析缓存、normalized documents、chunks、BM25/vector/result cache、provenance 与派生边的物理清理、30 天最小审计保留、重试/幂等和 hard-delete receipt 完成条件完全遵循已闭合的 `M7-DELETE-SEMANTICS`；receipt 未确认全部声明存储前保持 `DELETE_PENDING`、fail closed，且不得声称 hard delete 完成。
+- 保持 `StudySessionService` 写入权威、旧 session 恢复、默认 90 题、Network 显式扩展、M6b 隔离与默认离线路径不变。API、模型/工具结果、日志、trace、metrics、审计和 receipt 均不得暴露宿主路径、原文/chunk 全文或密钥；日志与指标只允许 policy/error code、opaque IDs、digest、计数、阶段和 UTC 时间。
+
+**可量化验收与 workload**
+
+- 获准实施后，在 `1k-single` 与 `3k-aggregate` fixture 上对每种支持格式各生成 original、human_refined、ai_draft、web_candidate 样本，运行 20 次 FULL、10% 更新增量和重启恢复；每个可召回 chunk 到公开 QA source 的链完整率必须为 100%，URI/schema/location 校验通过率 100%，断链/跨 generation/未批准内容发布数为 0，`ai_draft` 与 `web_candidate` 召回及 QA sources 出现数为 0。
+- 对 original → human_refined、ai_draft → 新 human_refined、web_candidate → 新 web_reviewed 各执行 100 次合法晋升及 URI/fingerprint/version/owner/环路故障注入；合法请求必须 100% 创建新 logical URI 和 identity，原候选状态不变，非法请求部分写入数为 0。原文更新或删除后，依赖精炼文档的 `STALE_DERIVATION` 漏标和召回数必须为 0。
+- 对更新发布前/事务内/发布后及删除 barrier、各 cache/index/provenance 清理、receipt 写入前各注入 20 次取消或进程终止；读视图只能是完整旧 generation 或完整新 generation，删除 barrier 后相关 Search/QA/preview/cache 命中数必须为 0，未完成 receipt 的 hard-delete 完成声明数为 0。
+- 使用正文、secret、Windows/POSIX/UNC 路径、`..`、编码分隔符和跨 owner canary 覆盖成功/失败/日志/trace/审计/receipt；公开字段集合偏差、宿主路径/全文/密钥泄露和未授权存在性泄露数必须均为 0。这些是获准后的验收要求，不是现有测量证据。
+
+**可追溯证据、责任人和日期**
+
+- 选定依据：本节、§2.1、已闭合的 §3.1–§3.4、§3.6、§3.9、§3.10、§3.12，以及 [`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3；继承证据包括 [`runtime-contracts.md`](../standards/runtime-contracts.md) §1、[`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md)、`tests/M6a/test_protocols.py`、`tests/M6a/test_cache_lifecycle.py`、`tests/M6a/test_snapshot_publication.py` 与 `tests/regression/test_path_privacy.py`。
+- 本轮证据是冻结的出处、晋升、更新/删除传播政策及可执行验收 workload，不声称 M7 生产 provenance、用户源 QA schema、`tests/M7`、benchmark 测量或保护基线已经存在；`M7-PROTECTED-BASELINE` 继续为 `OPEN`。
+- 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
+
+### 3.12 `M7-OFFLINE-FALLBACK`（`RESOLVED`）
+
+**稳定 ID 与选定政策**
+
+- Decision ID 固定为 `M7-OFFLINE-FALLBACK`，离线失败协议固定为 `sa.source.offline-fallback.v1`。M7 用户源必须在无外部
+  LLM、无网络和无新外部服务的本地环境运行，但“离线可运行”不等于允许不完整检索：已由 §3.7 冻结的 tokenizer、BM25/FTS5、
+  vector、授权、generation 和索引元数据必须全部可用且可验证，才允许启动该用户源的查询。
+- **不存在可选 tokenizer 或 vector fallback**：`jieba==0.42.1`、固定 tokenizer metadata 或 M7 选定的 vector 运行依赖缺失、
+  版本不匹配、初始化失败时，不得退回 `unicode61` 原始分词、whitespace/单字切分、BM25-only、vector-only、线性临时候选、
+  默认 pack 索引代替用户源索引，或跳过任一检索面。不得以“尽力而为”结果标记用户源可查询。
+- FTS5/BM25、vector、result cache、manifest/generation 绑定或必要索引元数据发生损坏、缺失、校验失败或集合不一致时，该 M7
+  用户源固定 fail closed：不得启动或继续查询，不得读取可能过期的 cache，不得发布、部分发布或恢复候选 generation。已有经完整
+  校验的 last-good 只有在其全部依赖、索引面、授权和 tombstone 状态仍可验证时才可继续读取；无法证明即不可读。
+- 用户源根、受管原文引用或所需本地文件因卸载、离线介质移除、权限变化、I/O 错误或内容在同步外变化而不可用时，Source 转为或保持
+  `DEGRADED`，停止该 Source 的新查询和同步发布；不得用旧正文、解析缓存、文件名、邻近目录或其他 Source 猜测替代。该规则不决定
+  文件 manifest、parser、normalized-document 或 provenance 的 schema/格式/身份；这些决策继续保持 `OPEN`。
+
+**默认、允许覆盖与适用范围**
+
+- 默认行为是逐 Source fail-closed。仅故障的 M7 用户源从授权查询集合排除；其他已独立验证的用户源、默认 pack 和 M6a static extras
+  可按原有 scope 继续运行。若请求显式指定、或其语义要求包含故障用户源，则整个请求失败，不得静默返回删去该源后的不完整结果。
+- 不提供放宽依赖版本、跳过启动/查询前校验、允许单索引面查询、忽略损坏、从未验证 cache 响应、发布部分候选或把 `DEGRADED`
+  当 `READY` 的 API、环境变量或运行时覆盖。部署配置只能通过禁用某个用户源进一步收紧可见性，不能使其绕过本政策。
+- 本政策只适用于未来获准的 M7 用户源能力；不迁移、不重建也不改变 M0–M6 默认 pack、M6a static extras、现有 BM25/vector fallback、
+  M6b preview 隔离、默认 90 题、Network 显式扩展或旧 session 恢复。M7 故障不得阻止既有 M0–M6 应用路径启动。
+
+**输入校验、拒绝、修复与失败行为**
+
+- M7 用户源启动与每次查询前必须校验 policy/schema 版本、tokenizer/vector 依赖、授权快照、published revision/generation、tombstone、
+  BM25/FTS5 与 vector identity 集合及索引完整性摘要。未知版本、缺失元数据、摘要不匹配、损坏或不可验证状态统一拒绝，不做部分查询。
+- 稳定错误码固定为：依赖不可用 `SOURCE_OFFLINE_DEPENDENCY_UNAVAILABLE`，索引损坏/不一致
+  `SOURCE_OFFLINE_INDEX_INVALID`，用户源不可用 `SOURCE_OFFLINE_SOURCE_UNAVAILABLE`，修复未完成
+  `SOURCE_OFFLINE_REPAIR_REQUIRED`。公开响应只包含稳定错误码、不可逆向内容的 opaque source ID 和可执行的本地修复动作类别；
+  不返回文件名、logical URI、正文、query、principal、依赖探测细节、堆栈、宿主路径或索引内容。
+- 修复必须由授权主体显式触发本地 `FULL` rebuild；自动动作只允许把 Source 标为不可查询并记录最小错误元数据。修复在隔离 staging
+  中重新校验全部依赖、输入、索引面、授权、tombstone、identity 集合和 generation 绑定，只有完整通过 §3.2 原子发布条件后才恢复
+  `READY`。修复失败、取消、中断或进程重启均保留 fail-closed 与 last-good 指针，不发布候选，不允许查询 staging。
+- 索引损坏不得原地修补已发布 generation；用户源重新可用也不得仅清除错误标记。必须完成显式重建和验证。修复请求的重放、并发、
+  checkpoint 和发布继续遵循 §3.1–§3.3 的 CAS、单 active run、幂等及原子可见性，不新增旁路写入者。
+
+**兼容、安全、隐私与数据保留**
+
+- `StudySessionService` 继续独占正式学习状态转换与领域写入；M7 fail-closed 不创建学习状态、review-log 或候选引用，也不把故障用户源
+  内容扩散到 Quiz、Review Plan、默认评测或 M6b 未授权上下文。
+- 错误、审计、日志、trace 和 metrics 只允许记录 policy/error code、opaque source ID、版本 digest、计数、阶段和 UTC 时间；不得记录
+  prompt、query、原文/chunk、凭据、principal、文件名、logical URI、Windows/POSIX/UNC 绝对路径或可用于推断源是否属于他人的信息。
+  未授权与不存在的 Source 仍遵循 §3.4 的统一 `SOURCE_NOT_FOUND`，不得借 offline 错误泄露存在性或状态。
+- staging、旧 generation、索引与错误元数据的删除继续完全遵循 §3.3；本决策不新增保留期，也不改变 hard-delete receipt。依赖或源恢复
+  不得复活 tombstoned、`DELETE_PENDING` 或 `DELETED` 内容。
+
+**可量化验收与 workload**
+
+- 获准实施后，在 `1k-single` 与 `3k-aggregate` 可生成离线 fixture 上，对 tokenizer 缺失/错误版本/初始化失败、vector 依赖缺失/
+  初始化失败各注入 100 次；M7 用户源查询启动数、单面 fallback 数和候选发布数必须均为 0，稳定错误码一致率必须为 100%。
+- 对 BM25/FTS5、vector、result cache、generation metadata 和 identity 集合逐项执行缺失、bit corruption、摘要不匹配及陈旧 cache 注入，
+  每类各 100 次；故障 Source 返回结果数、staging 查询数和部分发布数必须均为 0。仅当 last-good 的全部面独立校验通过时才允许继续读。
+- 对用户源卸载、权限拒绝、I/O 失败和同步外内容变化各执行 100 次；显式包含该源的请求必须 100% 失败，未包含该源且只使用其他已验证
+  scope 的请求必须 100% 不含故障源结果。公开响应、日志、trace、审计和 metrics 的正文、query、principal、文件名及绝对路径泄露数为 0。
+- 对每种故障各运行 20 次显式 FULL 修复、取消、阶段中断与重启恢复；完整验证前查询/候选发布数必须为 0，成功修复后 BM25/vector/
+  generation identity 集合一致率为 100%，失败路径不得改变可用 last-good 或复活 tombstone。M0–M6 默认启动和既有只读路径必须保持可用。
+
+**可追溯证据、责任人和日期**
+
+- 选定依据：本节及已闭合的 §3.1–§3.5、§3.7、§3.8；统一完成标准：
+  [`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3；固定 tokenizer、原子发布、last-good、删除、隔离、容量、benchmark
+  和路径隐私继承本文 §2.1、§3.2–§3.5、§3.7、§3.8，
+  [`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md) 与 `tests/regression/test_path_privacy.py`。
+- 本轮证据是冻结的离线 fail-closed 政策与可执行故障注入 workload，不声称 M7 生产 fallback、修复入口、`tests/M7`、benchmark 或保护
+  基线运行证据已经存在；`M7-PROTECTED-BASELINE` 继续为 `OPEN`。
+- 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
 
 ## 4. 准入检查与批准记录
 
 - [x] M6a Source 契约退出证据已映射到 `M7-M6A-SOURCE-CONTRACT`（见 §2.1）；**不构成 M7 批准**
 - [ ] `M7-PROTECTED-BASELINE` 仍为 `OPEN`，专属 workload / p50/p95 / 成本 / 质量阈值未闭合
-- [ ] 十二项强制决策全部为 `RESOLVED`，阶段计划与登记表证据一致
+- [x] 十二项强制决策均为 `RESOLVED`，阶段计划与登记表证据一致；这不构成 M7 准入
 - [ ] 生命周期状态机、删除传播、隔离和离线 fallback 可通过契约/故障注入方案验证
-- [ ] benchmark fixture、workload、硬件和阈值在写性能代码前冻结
+- [x] `M7-BENCHMARK` 已冻结 1k/3k fixture、中文标注、Recall@1/3/5、p50/p95、资源与同步/重建阈值；尚无运行证据
 - [ ] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表状态一致
 - [ ] 用户或项目负责人完成批准
 

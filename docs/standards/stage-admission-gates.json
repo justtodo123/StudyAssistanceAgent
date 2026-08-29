@@ -102,23 +102,40 @@
     {
       "stage": "M6b",
       "plan": "docs/plans/m6b-agent-core-plan.md",
-      "admission_status": "BLOCKED",
-      "delivery_status": "NOT_STARTED",
+      "admission_status": "ADMITTED",
+      "delivery_status": "COMPLETE",
       "prerequisites": [
-        {"id": "M6B-M6A-EXIT", "status": "OPEN", "evidence": []},
-        {"id": "M6B-PROTECTED-BASELINE", "status": "OPEN", "evidence": []}
+        {"id": "M6B-M6A-EXIT", "status": "SATISFIED", "evidence": [
+          "docs/plans/m6a-harness-skeleton-plan.md",
+          "docs/baselines.md",
+          "platform/app/protocols.py",
+          "platform/app/tools/common.py",
+          "platform/app/combined_snapshot.py",
+          "platform/app/study_session.py",
+          "platform/app/worker_topology.py",
+          "tests/M6a/test_protocols.py",
+          "tests/M6a/test_tool_adapters.py",
+          "tests/M6a/test_extra_sources_retrieval.py",
+          "tests/M6a/test_closeout_contracts.py",
+          "tests/regression/test_path_privacy.py"
+        ]},
+        {"id": "M6B-PROTECTED-BASELINE", "status": "SATISFIED", "evidence": [
+          "docs/baselines.md",
+          "candidate-evidence-digest:a8e33b5345b12c5e10da5294b49e699cf838fcb4cb17550d0879186fe3fe0d2c",
+          "evaluation-report-sha256:a45f733cc633dedbb836c89d00de4808116f62d7e32d7335e17f572120480f33"
+        ]}
       ],
       "mandatory_decisions": [
-        {"id": "M6B-PROVIDER", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6B-ENDPOINT-AUTH", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6B-TIMEOUT-BUDGETS", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6B-RETRY", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6B-CONCURRENCY", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6B-TRACE", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6B-P95", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M6B-FAILURE-SEMANTICS", "status": "OPEN", "value": null, "evidence": []}
+        {"id": "M6B-PROVIDER", "status": "RESOLVED", "value": "official-anthropic-python-sdk;messages-api;claude-opus-5;strict-native-tool-use;bounded-manual-loop", "evidence": ["docs/plans/m6b-agent-core-plan.md"]},
+        {"id": "M6B-ENDPOINT-AUTH", "status": "RESOLVED", "value": "startup-gated-agent-preview;bearer-token;server-side-anthropic-key;fixed-official-https", "evidence": ["docs/plans/m6b-agent-core-plan.md"]},
+        {"id": "M6B-TIMEOUT-BUDGETS", "status": "RESOLVED", "value": "45s-deadline;4-turns;3-calls;hard-token-cost-result-answer-budgets;only-tightening-overrides", "evidence": ["docs/plans/m6b-agent-core-plan.md"]},
+        {"id": "M6B-RETRY", "status": "RESOLVED", "value": "sdk-zero-retries;at-most-one-transient-retry;no-completed-tool-replay", "evidence": ["docs/plans/m6b-agent-core-plan.md"]},
+        {"id": "M6B-CONCURRENCY", "status": "RESOLVED", "value": "2-active-previews;250ms-semaphore-wait;429-overload;one-tool-per-turn", "evidence": ["docs/plans/m6b-agent-core-plan.md"]},
+        {"id": "M6B-TRACE", "status": "RESOLVED", "value": "in-memory-hmac-allowlist-metadata-trace;discard-after-response;no-content-secrets-paths", "evidence": ["docs/plans/m6b-agent-core-plan.md"]},
+        {"id": "M6B-P95", "status": "RESOLVED", "value": "offline-fake-provider-bm25;20-warmup-plus-200-samples;concurrency-2;p95<=1000ms", "evidence": ["docs/plans/m6b-agent-core-plan.md"]},
+        {"id": "M6B-FAILURE-SEMANTICS", "status": "RESOLVED", "value": "disabled-route-absent;stable-preloop-http-errors;loop-termination-envelope;zero-domain-writes", "evidence": ["docs/plans/m6b-agent-core-plan.md"]}
       ],
-      "approval": {"approved_by": null, "approved_at": null, "approval_reference": null, "plan_revision": null, "decision_set_version": null}
+      "approval": {"approved_by": "justtodo123", "approved_at": "2026-08-27", "approval_reference": "docs/plans/m6b-agent-core-plan.md#03-全量准入检查与批准", "plan_revision": "v2.1", "decision_set_version": "m6b-decision-set-v1"}
     },
     {
       "stage": "M7",
@@ -140,18 +157,91 @@
         {"id": "M7-PROTECTED-BASELINE", "status": "OPEN", "evidence": []}
       ],
       "mandatory_decisions": [
-        {"id": "M7-LIFECYCLE-SCHEMA", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-SYNC-SEMANTICS", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-DELETE-SEMANTICS", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-ISOLATION", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-FTS5-TOKENIZER", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-SCALE-LIMITS", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-BENCHMARK", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-OFFLINE-FALLBACK", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-SOURCE-MANIFEST", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-PARSER-MATRIX", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-NORMALIZED-DOCUMENT", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M7-PROVENANCE", "status": "OPEN", "value": null, "evidence": []}
+        {
+          "id": "M7-LIFECYCLE-SCHEMA",
+          "status": "RESOLVED",
+          "value": "sa.source.lifecycle.v1;five-versioned-records;uuidv7-user-source-ids;cas-transition-matrix;single-authoritative-writer;fail-closed-upgrades",
+          "evidence": [
+            "docs/plans/m7-source-lifecycle-plan.md#31-m7-lifecycle-schemaresolved",
+            "docs/standards/stage-admission-gates.md#3-决策完成标准",
+            "docs/plans/m6a-harness-skeleton-plan.md",
+            "tests/M6a/test_protocols.py",
+            "tests/M6a/test_snapshot_publication.py",
+            "tests/regression/test_path_privacy.py"
+          ]
+        },
+        {
+          "id": "M7-SYNC-SEMANTICS",
+          "status": "RESOLVED",
+          "value": "sa.source.sync.v1;full-default;validated-incremental-complete-view;one-active-run;bounded-retry;checkpoint-resume;atomic-generation-publish;last-good-on-failure",
+          "evidence": [
+            "docs/plans/m7-source-lifecycle-plan.md#32-m7-sync-semanticsresolved",
+            "docs/standards/stage-admission-gates.md#3-决策完成标准",
+            "docs/plans/m6a-harness-skeleton-plan.md",
+            "tests/M6a/test_cache_lifecycle.py",
+            "tests/M6a/test_snapshot_publication.py",
+            "tests/regression/test_path_privacy.py"
+          ]
+        },
+        {
+          "id": "M7-DELETE-SEMANTICS",
+          "status": "RESOLVED",
+          "value": "sa.source.delete.v1;irreversible-delete-pending-to-deleted;read-time-tombstones;bm25-vector-result-cache-purge;30-day-minimum-audit-retention;verifiable-hard-delete-receipt;resume-delete-not-undelete",
+          "evidence": [
+            "docs/plans/m7-source-lifecycle-plan.md#33-m7-delete-semanticsresolved",
+            "docs/standards/stage-admission-gates.md#3-决策完成标准",
+            "docs/plans/m6a-harness-skeleton-plan.md",
+            "tests/M6a/test_cache_lifecycle.py",
+            "tests/M6a/test_snapshot_publication.py",
+            "tests/regression/test_path_privacy.py"
+          ]
+        },
+        {
+          "id": "M7-ISOLATION",
+          "status": "RESOLVED",
+          "value": "sa.source.isolation.v1;server-authenticated-principal;owner-only-user-sources;deny-by-default;pre-retrieval-bm25-vector-cache-filtering;authorization-set-cache-digest;non-disclosing-not-found",
+          "evidence": [
+            "docs/plans/m7-source-lifecycle-plan.md#34-m7-isolationresolved",
+            "docs/standards/stage-admission-gates.md#3-决策完成标准",
+            "docs/plans/m6a-harness-skeleton-plan.md",
+            "tests/M6a/test_extra_sources_retrieval.py",
+            "tests/M6a/test_cache_lifecycle.py",
+            "tests/M6a/test_snapshot_publication.py",
+            "tests/regression/test_path_privacy.py"
+          ]
+        },
+        {
+          "id": "M7-FTS5-TOKENIZER",
+          "status": "RESOLVED",
+          "value": "sa.source.fts5-tokenizer.v1;jieba-0.42.1-search-mode-pretokenization;nfc-whitespace-normalization;unicode61-storage;versioned-token-stream;fail-closed-unavailable-no-silent-fallback",
+          "evidence": [
+            "docs/plans/m7-source-lifecycle-plan.md#37-m7-fts5-tokenizerresolved",
+            "docs/standards/stage-admission-gates.md#3-决策完成标准",
+            "docs/standards/runtime-contracts.md#2-embedding--索引参数表",
+            "tests/M6a/test_cache_lifecycle.py",
+            "tests/M6a/test_snapshot_publication.py",
+            "tests/regression/test_path_privacy.py"
+          ]
+        },
+        {
+          "id": "M7-SCALE-LIMITS",
+          "status": "RESOLVED",
+          "value": "sa.source.scale-limits.v1;source-100-documents-1000-chunks-256-mib;file-32-mib;principal-10-sources-300-documents-3000-chunks-768-mib;process-3000-user-chunks;tighten-only;preflight-and-final-validation;last-good-on-failure",
+          "evidence": [
+            "docs/plans/m7-source-lifecycle-plan.md#38-m7-scale-limitsresolved",
+            "docs/standards/stage-admission-gates.md#3-决策完成标准",
+            "docs/plans/m6a-harness-skeleton-plan.md",
+            "tests/M6a/test_cache_lifecycle.py",
+            "tests/M6a/test_snapshot_publication.py",
+            "tests/regression/test_path_privacy.py"
+          ]
+        },
+        {"id": "M7-BENCHMARK", "status": "RESOLVED", "value": "sa.source.benchmark.v1;generated-1k-single-and-3k-aggregate;recall-at-1-3-5;query-p50-p95;full-rebuild-recovery;rss-and-index-size;20-measured-runs;fixed-thresholds", "evidence": ["docs/plans/m7-source-lifecycle-plan.md#35-m7-benchmarkresolved", "docs/standards/stage-admission-gates.md#3-决策完成标准"]},
+        {"id": "M7-OFFLINE-FALLBACK", "status": "RESOLVED", "value": "sa.source.offline-fallback.v1;no-optional-tokenizer-or-vector-fallback;dependency-index-source-validation-required;fail-closed-no-query-no-candidate-publication;explicit-offline-repair;no-user-visible-leakage", "evidence": ["docs/plans/m7-source-lifecycle-plan.md#312-m7-offline-fallbackresolved", "docs/standards/stage-admission-gates.md#3-决策完成标准", "docs/plans/m6a-harness-skeleton-plan.md", "tests/regression/test_path_privacy.py"]},
+        {"id": "M7-SOURCE-MANIFEST", "status": "RESOLVED", "value": "sa.source.manifest.v1;canonical-file-manifest;source-type-format-separated;sha256-full-content-fingerprint;manifest-digest-revision-bound;fail-closed-validation", "evidence": ["docs/plans/m7-source-lifecycle-plan.md#36-m7-source-manifestresolved", "docs/standards/stage-admission-gates.md#3-决策完成标准", "docs/plans/m6a-harness-skeleton-plan.md", "docs/standards/runtime-contracts.md", "tests/regression/test_path_privacy.py"]},
+        {"id": "M7-PARSER-MATRIX", "status": "RESOLVED", "value": "sa.source.parser-matrix.v1;md-markdown-it-py-4.0.0;txt-cpython-textio-3.11.9;pdf-pypdf-6.0.0;pptx-python-pptx-1.0.2;docx-python-docx-1.2.0;whole-revision-fail-on-parse-or-limit;unsupported-not-indexed;offline-fail-closed", "evidence": ["docs/plans/m7-source-lifecycle-plan.md#39-m7-parser-matrixresolved", "docs/standards/stage-admission-gates.md#3-决策完成标准", "docs/plans/m6a-harness-skeleton-plan.md", "tests/regression/test_path_privacy.py"]},
+        {"id": "M7-NORMALIZED-DOCUMENT", "status": "RESOLVED", "value": "sa.source.normalized-document.v1;unit-fields;stable-chunk-key;managed-cache;fingerprint-parser-schema-invalidation;staging-cleanup-follows-delete-semantics", "evidence": ["docs/plans/m7-source-lifecycle-plan.md#310-m7-normalized-documentresolved"]},
+        {"id": "M7-PROVENANCE", "status": "RESOLVED", "value": "sa.source.provenance.v1;user-uri;bounded-qa-source-fields;new-identity-human-promotion;ai-draft-web-candidate-never-retrievable;atomic-update-and-delete-propagation", "evidence": ["docs/plans/m7-source-lifecycle-plan.md#311-m7-provenanceresolved", "docs/standards/stage-admission-gates.md#3-决策完成标准", "docs/standards/runtime-contracts.md#1-数据源类型与入库门禁", "docs/plans/m6a-harness-skeleton-plan.md", "tests/M6a/test_protocols.py", "tests/M6a/test_cache_lifecycle.py", "tests/M6a/test_snapshot_publication.py", "tests/regression/test_path_privacy.py"]}
       ],
       "approval": {"approved_by": null, "approved_at": null, "approval_reference": null, "plan_revision": null, "decision_set_version": null}
     },
