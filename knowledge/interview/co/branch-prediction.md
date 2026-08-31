@@ -4,6 +4,22 @@ course: interview
 tags: [分支预测, 推测执行, CPU]
 difficulty: 进阶
 updated: 2026-08-18
+source_id: knowledge-pack
+logical_uri: interview/co/branch-prediction.md
+document_id: 10e7d8934c4afeb79a3f6af223ef48e2
+provenance: project_authored_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: repository_commit
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: true
+publisher: StudyAssistanceAgent project
+author: repository contributor
+review_status: approved
+ingest_status: approved
+license_id: MIT
+license_status: approved
+license_verified_at: 2026-08-31
 ---
 
 ## 面试问题

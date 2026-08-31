@@ -41,12 +41,31 @@ title: 条目标题
 course: 课程简称（如 os, ds, co, interview, db, network, ai, se）
 tags: [topic1, topic2]
 difficulty: 入门 | 中等 | 进阶
-updated: 2026-08-10
-source: 参考的外部资料路径或书目（可省略，指向 docs/reference 索引）
-source_type: human_markdown  # 可选；网页候选为 web_candidate，审核后为 web_reviewed
-ingest_status: approved      # 可选；candidate 不会进入检索
+updated: 2026-08-31
+source_id: knowledge-pack
+logical_uri: os/example.md
+document_id: 由 source_id + logical_uri 按协议计算的 32 位十六进制 ID
+provenance: project_authored_ai_assisted | external_source_derived | web_derived_ai_assisted
+project_authored: true | false
+canonical_url: https://example.org/original  # 非项目原创时必须填写可核验原始 URL
+publisher: 发布机构（适用时）
+author: 作者或 repository contributor
+source_type: human_markdown
+format: markdown
+review_status: review | approved | rejected
+ingest_status: candidate | approved | rejected
+registration_method: repository_commit | manual_document_mapping | legacy_course_index
+license_id: MIT 或经核验的许可证标识；未知时写 unknown
+license_status: unresolved | approved | rejected | revoked
+license_verified_at: 2026-08-31  # approved 时必填
+provenance_evidence: docs/reference/document-mapping.json
 ---
 ```
+
+文档级来源与许可决定以 [`docs/reference/document-mapping.json`](../docs/reference/document-mapping.json) 为
+P0 治理登记。`canonical_url` 与 `project_authored: true` 必须二选一；字段缺失、来源无法核验、许可证未批准或审核未通过时，
+统一保持 `candidate`，不得依赖旧默认值自动提升为可检索文档。该登记不是未来 M7 runtime `ProvenanceRecord`，也不构成
+M7 准入。
 
 ## 写作规范
 

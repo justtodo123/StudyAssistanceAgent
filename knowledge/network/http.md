@@ -4,6 +4,19 @@ course: network
 tags: [HTTP, HTTPS, 请求响应, 持久连接, SSL]
 difficulty: 中等
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/http.md
+document_id: 75c30b538b4426727e9166fc95853af4
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

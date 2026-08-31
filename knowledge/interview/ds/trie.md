@@ -4,6 +4,22 @@ course: interview
 tags: [Trie, 字符串, 前缀匹配]
 difficulty: 中等
 updated: 2026-08-18
+source_id: knowledge-pack
+logical_uri: interview/ds/trie.md
+document_id: bb9f710695b4d29d29fe6c6a6fc31631
+provenance: project_authored_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: repository_commit
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: true
+publisher: StudyAssistanceAgent project
+author: repository contributor
+review_status: approved
+ingest_status: approved
+license_id: MIT
+license_status: approved
+license_verified_at: 2026-08-31
 ---
 
 ## 面试问题

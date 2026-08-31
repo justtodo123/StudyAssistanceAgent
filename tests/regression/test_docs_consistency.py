@@ -21,16 +21,17 @@ class TestProjectStatusConsistency:
         plan = _read(repo_root, "docs/PLAN.md")
 
         assert "M6a-P0 crawler 已收口" in root
-        assert "M6a 为 `ADMITTED / COMPLETE`" in plan
-        assert "M6b 默认关闭的只读 Agent Preview 已完成全部 closeout 门禁" in root
+        assert "M6a、M6b 均为 `ADMITTED / COMPLETE`" in plan
+        assert "M6b 默认关闭的只读 preview 已完成 closeout" in root
         assert "M6b `ADMITTED / COMPLETE`" in root
-        assert "M7–M10" in root
+        assert "M8–M10" in root
         assert "M6–M10" in plan
         for text in (root, plan):
             assert "BLOCKED / NOT_STARTED" in text
         assert "ADMITTED / COMPLETE" in root
         assert "M6a 契约与兼容骨架" in root
-        assert "M7–M10 `BLOCKED / NOT_STARTED`" in root
+        assert "M7 `ADMITTED / NOT_STARTED`" in root
+        assert "M8–M10 阻断" in root
         assert "M10" in root and "自主 Runner" in root
         assert "课程笔记创建" not in root
         assert "错题集管理" not in root
@@ -82,8 +83,10 @@ class TestStorageAndBaselineConsistency:
         assert "当前 checkout 复测" in baselines
         assert "0.987" in baselines
         assert "0.972" in baselines
-        assert "OS 0.987" in root
-        assert "加权 0.972" in root
+        assert "治理冻结复测 — 2026-08-31" in baselines
+        assert "OS `1.000`、DS `0.929`、CO `1.000`" in baselines
+        assert "OS 1.000" in root
+        assert "加权 0.978" in root
 
     def test_default_evaluation_excludes_network(self, repo_root):
         tools = _read(repo_root, "tools/README.md")
@@ -118,11 +121,25 @@ class TestStageAdmissionConsistency:
         "plan_revision",
         "decision_set_version",
     )
+    APPROVAL_SCOPE_FIELDS = ("scope_id", "included", "excluded")
+    IMPLEMENTATION_START_FIELDS = (
+        "status",
+        "authorized_by",
+        "authorized_at",
+        "authorization_reference",
+    )
 
     def test_registry_schema_status_and_plan_files(self, repo_root):
         registry = _load_admission_registry(repo_root)
 
-        assert registry["schema_version"] == 1
+        assert registry["schema_version"] == 2
+        implementation_start_statuses = set(
+            registry["implementation_start_statuses"]
+        )
+        assert implementation_start_statuses == {
+            "NOT_AUTHORIZED",
+            "AUTHORIZED",
+        }
         assert registry["authority"] == "docs/PLAN.md"
         assert registry["policy"] == "docs/standards/stage-admission-gates.md"
         assert (repo_root / registry["authority"]).is_file()
@@ -162,7 +179,11 @@ class TestStageAdmissionConsistency:
     def test_decision_ids_and_admission_invariants(self, repo_root):
         registry = _load_admission_registry(repo_root)
         decision_statuses = set(registry["decision_statuses"])
+        implementation_start_statuses = set(
+            registry["implementation_start_statuses"]
+        )
         seen_ids: set[str] = set()
+        seen_scope_ids: set[str] = set()
 
         for stage in registry["stages"]:
             plan = _read(repo_root, stage["plan"])
@@ -189,6 +210,44 @@ class TestStageAdmissionConsistency:
             prerequisites = stage["prerequisites"]
             approval = stage["approval"]
             assert set(approval) == set(self.APPROVAL_FIELDS)
+
+            approval_scope = stage.get("approval_scope")
+            if approval_scope is not None:
+                assert set(approval_scope) == set(self.APPROVAL_SCOPE_FIELDS)
+                scope_id = approval_scope["scope_id"]
+                included = approval_scope["included"]
+                excluded = approval_scope["excluded"]
+                assert isinstance(scope_id, str) and scope_id.strip()
+                assert scope_id not in seen_scope_ids
+                seen_scope_ids.add(scope_id)
+                assert isinstance(included, list) and included
+                assert isinstance(excluded, list) and excluded
+                assert all(isinstance(item, str) and item.strip() for item in included)
+                assert all(isinstance(item, str) and item.strip() for item in excluded)
+                assert len(included) == len(set(included))
+                assert len(excluded) == len(set(excluded))
+                assert set(included).isdisjoint(excluded)
+
+            implementation_start = stage.get("implementation_start")
+            if implementation_start is not None:
+                assert set(implementation_start) == set(
+                    self.IMPLEMENTATION_START_FIELDS
+                )
+                start_status = implementation_start["status"]
+                assert start_status in implementation_start_statuses
+                authorization_fields = self.IMPLEMENTATION_START_FIELDS[1:]
+                if start_status == "AUTHORIZED":
+                    assert admission == "ADMITTED"
+                    assert all(
+                        implementation_start[field]
+                        for field in authorization_fields
+                    )
+                else:
+                    assert delivery == "NOT_STARTED"
+                    assert all(
+                        implementation_start[field] is None
+                        for field in authorization_fields
+                    )
 
             if delivery == "IN_PROGRESS":
                 assert admission == "ADMITTED"
@@ -244,8 +303,40 @@ class TestStageAdmissionConsistency:
             "decision_set_version": "m6b-decision-set-v1",
         }
 
-        assert m7["admission_status"] == "BLOCKED"
+        assert m7["admission_status"] == "ADMITTED"
         assert m7["delivery_status"] == "NOT_STARTED"
+        assert m7["approval_scope"] == {
+            "scope_id": "m7-infrastructure-only-v1",
+            "included": [
+                "m7.source-lifecycle-infrastructure",
+                "m7.provenance-manifest-parser-infrastructure",
+                "m7.sync-delete-isolation-infrastructure",
+                "m7.fts5-offline-fallback-infrastructure",
+                "m7.1k-3k-benchmark-implementation",
+            ],
+            "excluded": [
+                "network.document-promotion",
+                "network.corpus-governance-closure",
+                "corpus.automatic-approval",
+                "m8.specialized-storage",
+                "milvus.backend-selection",
+            ],
+        }
+        assert m7["implementation_start"] == {
+            "status": "NOT_AUTHORIZED",
+            "authorized_by": None,
+            "authorized_at": None,
+            "authorization_reference": None,
+        }
+        assert m7["approval"] == {
+            "approved_by": "justtodo123",
+            "approved_at": "2026-08-31",
+            "approval_reference": (
+                "User instruction: M7 基础设施可以获批；Network 数据仍不获批；M8/Milvus 继续阻断"
+            ),
+            "plan_revision": "v2.11",
+            "decision_set_version": "m7-decision-set-v1",
+        }
         assert len(m7["mandatory_decisions"]) == 12
         m7_decisions = {
             decision["id"]: decision["status"]
@@ -272,10 +363,29 @@ class TestStageAdmissionConsistency:
         )
         assert m7_baseline == {
             "id": "M7-PROTECTED-BASELINE",
-            "status": "OPEN",
-            "evidence": [],
+            "status": "SATISFIED",
+            "evidence": [
+                "docs/baselines.md",
+                "docs/plans/m7-source-lifecycle-plan.md",
+                "tests/TEST_PLAN.md",
+                "tests/regression/test_path_privacy.py",
+            ],
         }
-        assert all(value is None for value in m7["approval"].values())
+        m8 = stages["M8"]
+        assert m8["admission_status"] == "BLOCKED"
+        assert m8["delivery_status"] == "NOT_STARTED"
+        m8_exit = next(
+            prerequisite
+            for prerequisite in m8["prerequisites"]
+            if prerequisite["id"] == "M8-M7-EXIT"
+        )
+        assert m8_exit["status"] == "OPEN"
+        assert m8_exit["evidence"] == []
+        assert all(
+            decision["status"] == "OPEN"
+            for decision in m8["mandatory_decisions"]
+        )
+        assert all(value is None for value in m8["approval"].values())
 
     def test_authority_and_navigation_match_registry_state(self, repo_root):
         registry = _load_admission_registry(repo_root)

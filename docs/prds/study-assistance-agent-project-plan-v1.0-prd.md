@@ -53,13 +53,16 @@
 - M6a-P0 已收口，只构成 M6a 前置证据，不批准 M6a。
 - M6b 以 M6a 退出证据为共同必要前置，并须独立满足 `M6B-PROTECTED-BASELINE`、专属决策和批准；不依赖 M7。
 - M7 以 `M7-M6A-SOURCE-CONTRACT` 为共同必要前置，并须独立满足 `M7-PROTECTED-BASELINE`、专属决策和批准；不依赖 M6b。
-- M6b 与 M7 彼此不互为前置；M6b 当前为 `ADMITTED / COMPLETE`，M7 仍为 `BLOCKED / NOT_STARTED`；M7 获准前不得开工。
+- M6b 与 M7 彼此不互为前置；M6b 当前为 `ADMITTED / COMPLETE`，M7 仅基础设施范围为
+  `ADMITTED / NOT_STARTED`，生产开工仍 `NOT_AUTHORIZED`；Network 不在 M7 scope 内，M8/Milvus 继续阻断。
 - M8 依赖 M7；M9 依赖 M7 与 M8；M10 依赖 M7–M9，不以 M6b 为写路径或 Source 生命周期前置。
 
 ### 风险评估
 - **技术风险**：Runner 误写学习状态。缓解：状态机独占正式写入；M6b 只读；M10 完成授权/checkpoint/幂等后才写。
 - **依赖风险**：外部 LLM 或模型下载失败。缓解：摘要降级与 `SA_USE_VECTOR=false` 离线路径。
-- **进度风险**：把准备计划当成开工许可。缓解：各阶段仅因独立门禁与负责人批准成为 `ADMITTED`；M6b 当前为 `ADMITTED / COMPLETE`，M7–M10 仍为 `BLOCKED / NOT_STARTED`，以 `docs/PLAN.md` 为准。
+- **进度风险**：把准入或准备计划当成生产开工许可。缓解：M7 虽已取得基础设施 scope 的
+  `ADMITTED`，仍须独立 `implementation_start=AUTHORIZED` 才能实施；Network、M8、Milvus 不在批准范围内，
+  以 `docs/PLAN.md` 为准。
 
 ## 验收标准
 
@@ -84,6 +87,7 @@
 
 ### 未来验收（仅在对应阶段 `ADMITTED` 后实施）
 - [ ] **未来验收** 自主 Runner 若启用，必须作为正交可选路径，失败不得回退创建正式 session（M10，`BLOCKED`）
+- [ ] **未来验收** M7 只有在生产开工授权后才能实施；Network 晋升另行逐文档批准，M7 admission 不等于 M7 exit
 - [ ] **未来验收** 本阶段测试、`tests/regression/` 与对应性能/评测门禁通过后，才可合并或宣称该阶段交付
 
 ## 执行阶段
@@ -91,21 +95,24 @@
 ### 阶段1：准备
 **目标**：保持 M0–M5 可交付，不提前实现被阻断阶段
 - [x] 以 `docs/PLAN.md` 为最终状态权威
-- [x] M6a 准入前仅做设定澄清与准备计划；M6b 已按独立批准实现默认关闭的只读 preview；M7–M10 在获准前不写入生产模块
+- [x] M6a 准入前仅做设定澄清与准备计划；M6b 已按独立批准实现默认关闭的只读 preview；M7 基础设施虽已准入，
+  仍在独立开工授权前不写生产模块；M8–M10 保持阻断
 - **交付物**：现行 MVP + 准备计划
 - **时间**：已完成 / 持续维护
 
 ### 阶段2：核心开发
 **目标**：按准入顺序推进，不改现有里程碑切分；本阶段仅适用于已获 `ADMITTED` 的阶段。M6a 已完成；M6b
-默认关闭的隔离只读 preview 已完成全部 closeout 门禁与证据同步；M7–M10 尚未进入核心开发。
+默认关闭的隔离只读 preview 已完成全部 closeout 门禁与证据同步；M7 基础设施已准入但因生产开工未授权而尚未进入
+核心开发，M8–M10 继续阻断。
 - [x] **现行保护** M6a：契约与兼容骨架，不改正式 API（`ADMITTED / COMPLETE`）
 - [x] **收口验收** M6b：阶段隔离、隐私/零写入、离线 benchmark、回归和文档门禁均已通过，
   已切换为 `ADMITTED / COMPLETE`；该收口不依赖或批准 M7
-- [ ] **未来验收** M7：用户源生命周期；以 M6a Source 契约为共同必要前置，另须 `M7-PROTECTED-BASELINE`，不依赖 M6b（`BLOCKED / NOT_STARTED`）
+- [ ] **未来验收** M7：用户源生命周期；基础设施 scope 已 `ADMITTED / NOT_STARTED`，仍须独立生产开工授权；
+  以 M6a Source 契约和 `M7-PROTECTED-BASELINE` 为前置，不依赖 M6b
 - [ ] **未来验收** M8–M9：专业化存储与目标计划（分别依赖 M7 / M7+M8）
 - [ ] **未来验收** M10：可选自主 Runner，状态机仍为默认；依赖 M7–M9，不以 M6b 为写前置
 - **交付物**：各阶段计划中的退出条件
-- **时间**：仅在准入 `ADMITTED` 后开工
+- **时间**：阶段准入且适用的独立生产开工门禁为 `AUTHORIZED` 后才能开工
 
 ### 阶段3：集成与测试
 **目标**：用现有测试体系验收，不另起并行测试框架

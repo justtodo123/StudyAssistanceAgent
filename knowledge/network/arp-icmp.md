@@ -4,6 +4,19 @@ course: network
 tags: [ARP, ICMP, MAC地址, ping]
 difficulty: 中等
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/arp-icmp.md
+document_id: e53a1678deb6db28c5c913e883f6d95b
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

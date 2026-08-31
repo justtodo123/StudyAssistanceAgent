@@ -4,6 +4,19 @@ course: network
 tags: [UDP, 无连接, 校验和, 应用场景]
 difficulty: 入门
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/udp.md
+document_id: 47e12b685a16b5644906d93ea73dbc2a
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

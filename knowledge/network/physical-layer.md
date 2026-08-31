@@ -4,6 +4,19 @@ course: network
 tags: [物理层, 传输介质, 接口特性]
 difficulty: 入门
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/physical-layer.md
+document_id: b534d0f9fff319c519e86bd7c74d2c4d
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

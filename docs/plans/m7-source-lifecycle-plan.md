@@ -1,11 +1,11 @@
 # M7 用户 Source 生命周期与千级检索准备计划
 
-> 当前状态：设计准备已暂停继续扩写；`BLOCKED / NOT_STARTED`，未获准开工
-> 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不关闭 M7 决策、保护基线或批准记录
-> 前置：`M7-M6A-SOURCE-CONTRACT` 已映射 M6a Source 契约与退出证据（`SATISFIED`）；`M7-PROTECTED-BASELINE` 仍为 `OPEN`
+> 当前状态：仅基础设施范围 `ADMITTED / NOT_STARTED`；独立生产开工门禁为 `NOT_AUTHORIZED`
+> 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不构成生产开工、语料批准或退出证据
+> 前置：`M7-M6A-SOURCE-CONTRACT` 与 `M7-PROTECTED-BASELINE` 均为 `SATISFIED`；批准记录见 §4
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
-> 本文件补全强制决策清单，不批准开工。Agent 不得自行批准 M7。
+> 本文件冻结强制决策与批准范围；在生产开工门禁授权前不得实施。Agent 不得自行批准准入或开工。
 
 ## 1. 范围与非目标
 
@@ -13,22 +13,23 @@ M7 在 M6a 稳定 Source identity 和静态快照边界后，规划用户源持�
 1k–3k chunk 可复现检索。它不迁移到 LanceDB/Qdrant，不实现目标规划或自主 Runner，也不把外部原始
 PDF/PPT 复制进仓库。
 
-本计划存在只表示准备工作。所有设定、证据和批准闭合前，不得创建生产 Source Registry、同步 worker、
-schema migration、依赖、API 或运行时开关。只读盘点 `tools/source_inventory.py` 是 collect-only 调查，
-不能替代下列强制决策，也不构成 M7 开工。
+本计划已取得仅限基础设施的阶段准入，但交付仍未开始。独立生产开工门禁授权前，不得创建生产 Source Registry、
+同步 worker、schema migration、依赖、API、运行时开关或 `tests/M7/`。只读盘点 `tools/source_inventory.py` 是
+collect-only 调查，不能替代下列强制决策，不构成语料批准或 M7 生产开工。
 
 ## 2. 前置证据与继承不变量
 
 | Prerequisite ID | 当前状态 | 准入所需证据 |
 | --- | --- | --- |
 | `M7-M6A-SOURCE-CONTRACT` | `SATISFIED` | M6a identity、额外源校验、generation 切换、缓存失效和路径隐私的退出证据；映射见 §2.1 |
-| `M7-PROTECTED-BASELINE` | `OPEN` | M7 专属 workload、p50/p95、资源、成本、质量阈值及现有保护基线复验方案的证据 |
+| `M7-PROTECTED-BASELINE` | `SATISFIED` | `m7-admission-20260829-02` disposable reference、继承保护回归和默认 90 题复验；详见 §3.5.1 与 [`docs/baselines.md`](../baselines.md) |
 
 M7 完整继承统一准入政策中的 M0–M5 不变量：正式状态转换继续由 `StudySessionService` 掌握；旧 SQLite
 session 可恢复；默认 OS/DS/CO 90 题和 Network 显式扩展边界不变；默认离线路径不依赖外部模型或新服务；
 对外结果、日志和 trace 不泄露宿主机绝对路径。
 
-`M7-M6A-SOURCE-CONTRACT=SATISFIED` 只表示 M6a 退出证据已登记，不能单独把本阶段改为 `ADMITTED`。
+`M7-M6A-SOURCE-CONTRACT=SATISFIED` 只表示 M6a 退出证据已登记；本阶段的 `ADMITTED` 另由 §4 的人工批准产生，
+且不等于生产开工或 M7 退出。
 
 ### 2.1 M6a Source 契约映射
 
@@ -67,8 +68,8 @@ M6a 的 `M6A-SOURCE-LIMITS` 与默认 90 题保护基线**不能**替代 `M7-PRO
 日期后才能标为 `RESOLVED`。候选项、`TBD`、无 workload 的数字或“实施时决定”都保持 `OPEN`。
 `M7-LIFECYCLE-SCHEMA`、`M7-SYNC-SEMANTICS`、`M7-DELETE-SEMANTICS`、`M7-ISOLATION`、
 `M7-FTS5-TOKENIZER`、`M7-SCALE-LIMITS`、`M7-BENCHMARK`、`M7-OFFLINE-FALLBACK`、`M7-SOURCE-MANIFEST`、
-`M7-PARSER-MATRIX`、`M7-NORMALIZED-DOCUMENT` 与 `M7-PROVENANCE` 已依次闭合；M7 专属保护基线仍为 `OPEN`，
-因此 M7 仍保持 `BLOCKED / NOT_STARTED`。
+`M7-PARSER-MATRIX`、`M7-NORMALIZED-DOCUMENT` 与 `M7-PROVENANCE` 已依次闭合；M7 专属保护基线也已登记为
+`SATISFIED`。§4 的人工批准只覆盖基础设施，阶段当前为 `ADMITTED / NOT_STARTED`，生产开工仍未授权。
 
 ### 3.1 `M7-LIFECYCLE-SCHEMA`（`RESOLVED`）
 
@@ -197,16 +198,16 @@ M6a 的 `M6A-SOURCE-LIMITS` 与默认 90 题保护基线**不能**替代 `M7-PRO
   版本和不匹配 checkpoint。稳定错误码包括 `SOURCE_SYNC_BUSY`、`SOURCE_SYNC_REQUEST_CONFLICT`、
   `SOURCE_SYNC_PRECONDITION_FAILED`、`SOURCE_SYNC_VALIDATION_FAILED`、`SOURCE_SYNC_RETRY_EXHAUSTED`、
   `SOURCE_SYNC_CANCELLED`、`SOURCE_SYNC_INTERRUPTED` 和继承的 `SOURCE_VERSION_CONFLICT`；失败不得部分发布。
-- 具体 source/document/chunk/bytes 上限由仍为 `OPEN` 的 `M7-SCALE-LIMITS` 冻结；在该决策闭合前，本政策不赋予
-  生产同步入口，也不以未定义限额执行同步。
+- 具体 source/document/chunk/bytes 上限遵循已闭合的 §3.8 `M7-SCALE-LIMITS`；本同步政策自身不另行定义或放宽限额，
+  也不赋予生产同步入口。
 
 **兼容、安全、隐私与保留**
 
 - 本协议仅适用于未来获准的 M7 用户源；不自动同步或迁移默认 pack、M6a static extras、crawler candidates，
   不修改 M0–M5 API/OpenAPI、默认 90 题、Network 显式扩展、旧 session 恢复或 `StudySessionService` 写入权威。
-- 默认离线路径不依赖外部模型或新服务。同步状态、错误、checkpoint 和审计只保存逻辑 ID、digest、版本、计数和稳定
-  错误码；不得保存文档/chunk 正文、凭据或宿主绝对路径。staging 内容、旧 generation 和解析缓存的保留时点不由
-  本决策设定，继续等待 `M7-DELETE-SEMANTICS` 与 `M7-NORMALIZED-DOCUMENT`。
+- 同步状态、错误、checkpoint 和审计只保存逻辑 ID、digest、版本、计数和稳定错误码；不得保存文档/chunk 正文、
+  凭据或宿主绝对路径。staging 内容、旧 generation 和解析缓存的保留与清理遵循已闭合的 §3.3
+  `M7-DELETE-SEMANTICS` 和 §3.10 `M7-NORMALIZED-DOCUMENT`；本同步决策不另行改写这些政策。
 
 **可量化验收与 workload**
 
@@ -378,7 +379,7 @@ M6a 的 `M6A-SOURCE-LIMITS` 与默认 90 题保护基线**不能**替代 `M7-PRO
 - 在授权读取后、BM25/vector 查询前、RRF 前、cache lookup 前和响应组装前各注入 20 次授权变化、删除和存储故障；
   未授权结果返回数必须为 0，无法确认新快照时必须 100% 返回 `SOURCE_ISOLATION_UNAVAILABLE`。
 - 既有默认 pack 的 Search/QA/session、90 题评测发现、旧 session 恢复和 M6b 阶段隔离契约必须保持通过；本 workload
-  不替代仍为 `OPEN` 的 M7 保护基线或 benchmark。
+  不替代独立的 M7 准入前保护基线或获准后的真实 benchmark。
 
 **可追溯证据、责任人和日期**
 
@@ -407,6 +408,51 @@ M6a 的 `M6A-SOURCE-LIMITS` 与默认 90 题保护基线**不能**替代 `M7-PRO
 - 默认报告同时产出 `1k-single` 与 `3k-aggregate`，不可用硬件或缺失依赖不得静默跳过；只允许在报告中标记 `UNAVAILABLE` 并阻断准入。不得以平均值替代 p50/p95，不得以单次成功替代 20 次样本。
 - 阈值只适用于未来获准的 M7 用户源检索与生命周期 workload，不改变 M0–M6 默认 pack、90 题、M6b preview 或 runtime-contracts 的既有指标。
 - 选定依据为本节冻结的 workload/门槛与 §2.1、§3.2、§3.3、§3.8 的容量和发布约束；决策责任人 `justtodo123`，决策日期 `2026-08-29`。本轮仅关闭“如何测”和“通过标准”，不声称已有 M7 实现、benchmark 报告或保护基线复验结果。
+
+### 3.5.1 准入前保护基线 `sa.source.admission-baseline.v1`
+
+本节定义准入前的当前态保护与容量参考，独立于 §3.5 的真实 M7 退出 benchmark。它只允许调用已经交付的 M6a
+静态 extra、combined snapshot、snapshot publication 与 retrieval 接口，不实现或冒充 M7 lifecycle、manifest、parser、
+normalized document、provenance、增量同步、删除或恢复能力。报告分类固定为 `disposable-reference`，不能用于宣称 M7 已实现、
+已达到 3k 容量或已经满足退出条件。
+
+**准入前 workload 与容量判定**
+
+- `1k-single`：1 个 M6a 静态 extra，100 个纯合成 Markdown documents，严格生成 1,000 个 extra chunks；中文为主并覆盖
+  简繁、全/半角、英文与数字，使用固定 query/gold labels。当前 M6a 配置的单 extra hard max 为 1,000 chunks、combined
+  hard max 为 2,000 chunks；连同当前默认包后仍可在公开配置边界内运行，因此该 workload 必须真实执行。
+- `3k-aggregate`：目标仍为 3 个 extra、300 documents、3,000 extra chunks。现行 M6a combined hard max 为 2,000 chunks，
+  且 combined 计数包含默认包，因此该 workload 在不修改生产限制的前提下不可构造。准入报告必须把它标为
+  `UNAVAILABLE_PRE_ADMISSION_CAPACITY_LIMIT`，并记录冻结 limit manifest/digest；不得提高 hard max、绕过
+  `CombinedSnapshotBuilder`、拆成三个互不聚合的伪 workload，或写成 `PASS`。
+- 该 3k 状态是 M7 要解决的已知容量差距，不是缺依赖、缺硬件或 reference harness 故障。它本身不阻断
+  `M7-PROTECTED-BASELINE` 成为人工准入候选，但获准后的真实 `sa.source.benchmark.v1` 仍必须同时通过 1k/3k；在此之前
+  不得关闭 M7、开始 M8 或宣称 3k 能力可用。
+
+**测量、阈值与不适用场景**
+
+- `1k-single` 前 5 次 warm-up 不计入统计，随后至少 20 次独立 measured。记录 Recall@1/3/5、查询 p50/p95、当前快照
+  冷构建与从持久化 generation 重启加载的 p50/p95、峰值 RSS、持久化 snapshot bytes、accepted combined chunk-content
+  bytes（默认包与 synthetic extra 的已接纳 chunk 正文之和）、accepted synthetic chunk-content bytes、CPU/墙钟成本和
+  external service cost。
+- 质量门槛为 Recall@1 ≥ 0.70、Recall@3 ≥ 0.85、Recall@5 ≥ 0.90；查询 p50 ≤ 150 ms、p95 ≤ 400 ms；峰值 RSS
+  ≤ 512 MiB；持久化 snapshot bytes ≤ 2x accepted combined chunk-content bytes。分子是 persisted combined generation 与
+  pointers，故分母必须覆盖同一 combined view；synthetic-only bytes 单独报告，不得拿范围较窄的分母制造不可比比率。构建/重启数据仅刻画 M6a 当前态，不套用未来 M7
+  FULL/recovery SLA，也不得替代 §3.5 的同步、冷重建和重启恢复门槛。
+- M6a 没有 M7 lifecycle，所以 warm no-op incremental、10% added/modified/removed incremental、delete propagation 和
+  checkpoint/recovery 必须标为 `NOT_APPLICABLE_PRE_ADMISSION`，不得伪造为 `PASS`。
+- 任何可执行 1k workload、继承保护回归、默认 90 题质量、隐私或兼容门禁失败，或者 harness/测量依赖不可用，都保持
+  `M7-PROTECTED-BASELINE=OPEN`。只有这些项目通过，且 3k 不可用被精确绑定到现行冻结容量而非实验缺陷时，才可把保护
+  基线登记为 `SATISFIED` 候选；该证据本身不产生准入、生产开工或退出结论。
+
+**证据与实验边界**
+
+- fixture/query/gold、harness、环境、limit manifest、原始报告和 canonical result 均使用 SHA-256 digest；报告使用唯一
+  evidence ID 和 exclusive-create，不包含合成正文、secret、prompt 或宿主绝对路径。
+- 一次性 harness 和 fixture 仅位于仓库外系统临时目录，使用固定离线 BM25，不扫描 `D:\\111_Others_Subjects`，不访问
+  网络或 LLM，不修改生产模块、依赖、schema、API、runtime flag、CI 或 `tests/M7/`；证据固化后删除临时目录。
+- 当时的计划执行批准只授权上述可丢弃 reference experiment，不是 M7 阶段准入批准。后续 §4 的人工批准才使
+  M7 基础设施范围变为 `ADMITTED`；它仍未授权生产实现。
 
 ### 3.6 `M7-SOURCE-MANIFEST`（`RESOLVED`）
 
@@ -473,8 +519,8 @@ M6a 的 `M6A-SOURCE-LIMITS` 与默认 90 题保护基线**不能**替代 `M7-PRO
   identity、fingerprint/revision/generation 分离、路径隐私和快照发布继承本文 §2.1、[`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md)、
   [`runtime-contracts.md`](../standards/runtime-contracts.md)、`tests/M6a/test_protocols.py`、`tests/M6a/test_snapshot_publication.py`、
   `tests/regression/test_path_privacy.py`。`tools/source_inventory.py` 仅作为 collect-only 调查输入，不是生产 schema 或通过证据。
-- 本轮证据是冻结的可执行 manifest 政策与既有 M6a 继承契约，不声称 M7 manifest 生产实现、`tests/M7` 或保护基线运行证据已经存在；
-  parser、normalized-document 和 provenance 仍分别由 §3.9–§3.11 决定。
+- 本轮证据是冻结的可执行 manifest 政策与既有 M6a 继承契约，不声称 M7 manifest 生产实现或 `tests/M7` 已经存在；
+  它也不替代已独立登记的准入前保护基线，parser、normalized-document 和 provenance 仍分别由 §3.9–§3.11 决定。
 - 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
 
 ### 3.7 `M7-FTS5-TOKENIZER`（`RESOLVED`）
@@ -617,7 +663,7 @@ M6a 的 `M6A-SOURCE-LIMITS` 与默认 90 题保护基线**不能**替代 `M7-PRO
   [`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md)、`tests/M6a/test_cache_lifecycle.py`、
   `tests/M6a/test_snapshot_publication.py`、`tests/regression/test_path_privacy.py`。
 - 本轮证据是冻结的容量政策与可执行验收设计，不声称 M7 生产配额、`tests/M7`、parser/manifest 或 benchmark 证据已经
-  存在；上述 workload 不替代已冻结但尚无运行证据的 `M7-BENCHMARK`，也不关闭仍为 `OPEN` 的 `M7-PROTECTED-BASELINE`。
+  存在；上述 workload 不替代获准后仍须运行的 `M7-BENCHMARK`，也不替代已独立登记为 `SATISFIED` 的准入前保护基线。
 - 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
 
 ### 3.9 `M7-PARSER-MATRIX`（`RESOLVED`）
@@ -658,7 +704,9 @@ M6a 的 `M6A-SOURCE-LIMITS` 与默认 90 题保护基线**不能**替代 `M7-PRO
 **可追溯证据、责任人和日期**
 
 - 选定依据：本节及已闭合的 §3.1–§3.8、§3.12；统一完成标准：[`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3。identity、build-input digest、原子发布、last-good、容量、离线 fail-closed 和路径隐私继承本文 §2.1、§3.2–§3.8、§3.12 及既有 M6a 契约。
-- 本轮证据是冻结的 parser 选择、版本、失败/超限/unsupported 政策与可执行验收 workload，不声称 M7 生产解析器、依赖安装、`tests/M7`、benchmark 运行证据或保护基线已经存在；§3.10 normalized-document 与 §3.11 provenance 仍为 `OPEN`。
+- 本轮证据是冻结的 parser 选择、版本、失败/超限/unsupported 政策与可执行验收 workload，不声称 M7 生产解析器、依赖安装、
+  `tests/M7` 或真实 benchmark 已经存在；它不替代已独立登记的准入前保护基线。§3.10 normalized-document 与
+  §3.11 provenance 已在后续决策中分别闭合，本 parser 决策不替代或改写其协议。
 - 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
 
 ### 3.10 `M7-NORMALIZED-DOCUMENT`（`RESOLVED`）
@@ -724,7 +772,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 
 - 选定依据：本节、§3.1–§3.3、§3.6、§3.8、§3.9、`stage-admission-gates.md` §3、M6a 的 parser-version/cache/staging
   继承契约及 `tests/M6a/test_cache_lifecycle.py`、`tests/M6a/test_snapshot_publication.py`；这些证据支持设计决策，
-  不声称 M7 生产实现、`tests/M7`、benchmark 或保护基线已经存在。
+  不声称 M7 生产实现、`tests/M7` 或真实 benchmark 已经存在，也不替代已独立登记的准入前保护基线。
 - 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
 
 ### 3.11 `M7-PROVENANCE`（`RESOLVED`）
@@ -764,7 +812,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 **可追溯证据、责任人和日期**
 
 - 选定依据：本节、§2.1、已闭合的 §3.1–§3.4、§3.6、§3.9、§3.10、§3.12，以及 [`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3；继承证据包括 [`runtime-contracts.md`](../standards/runtime-contracts.md) §1、[`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md)、`tests/M6a/test_protocols.py`、`tests/M6a/test_cache_lifecycle.py`、`tests/M6a/test_snapshot_publication.py` 与 `tests/regression/test_path_privacy.py`。
-- 本轮证据是冻结的出处、晋升、更新/删除传播政策及可执行验收 workload，不声称 M7 生产 provenance、用户源 QA schema、`tests/M7`、benchmark 测量或保护基线已经存在；`M7-PROTECTED-BASELINE` 继续为 `OPEN`。
+- 本轮证据是冻结的出处、晋升、更新/删除传播政策及可执行验收 workload，不声称 M7 生产 provenance、用户源 QA schema、`tests/M7` 或 benchmark 测量已经存在；这些设计证据不替代已登记的准入前保护基线 `SATISFIED`。
 - 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
 
 ### 3.12 `M7-OFFLINE-FALLBACK`（`RESOLVED`）
@@ -781,8 +829,8 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
   用户源固定 fail closed：不得启动或继续查询，不得读取可能过期的 cache，不得发布、部分发布或恢复候选 generation。已有经完整
   校验的 last-good 只有在其全部依赖、索引面、授权和 tombstone 状态仍可验证时才可继续读取；无法证明即不可读。
 - 用户源根、受管原文引用或所需本地文件因卸载、离线介质移除、权限变化、I/O 错误或内容在同步外变化而不可用时，Source 转为或保持
-  `DEGRADED`，停止该 Source 的新查询和同步发布；不得用旧正文、解析缓存、文件名、邻近目录或其他 Source 猜测替代。该规则不决定
-  文件 manifest、parser、normalized-document 或 provenance 的 schema/格式/身份；这些决策继续保持 `OPEN`。
+  `DEGRADED`，停止该 Source 的新查询和同步发布；不得用旧正文、解析缓存、文件名、邻近目录或其他 Source 猜测替代。本离线决策
+  不改写已由 §3.6、§3.9、§3.10 与 §3.11 分别闭合的 manifest、parser、normalized-document 和 provenance 协议。
 
 **默认、允许覆盖与适用范围**
 
@@ -834,29 +882,37 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
   [`stage-admission-gates.md`](../standards/stage-admission-gates.md) §3；固定 tokenizer、原子发布、last-good、删除、隔离、容量、benchmark
   和路径隐私继承本文 §2.1、§3.2–§3.5、§3.7、§3.8，
   [`m6a-harness-skeleton-plan.md`](m6a-harness-skeleton-plan.md) 与 `tests/regression/test_path_privacy.py`。
-- 本轮证据是冻结的离线 fail-closed 政策与可执行故障注入 workload，不声称 M7 生产 fallback、修复入口、`tests/M7`、benchmark 或保护
-  基线运行证据已经存在；`M7-PROTECTED-BASELINE` 继续为 `OPEN`。
+- 本轮证据是冻结的离线 fail-closed 政策与可执行故障注入 workload，不声称 M7 生产 fallback、修复入口、`tests/M7` 或真实
+  benchmark 已经存在；这些设计证据不替代已登记的准入前保护基线 `SATISFIED`。
 - 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
 
 ## 4. 准入检查与批准记录
 
-- [x] M6a Source 契约退出证据已映射到 `M7-M6A-SOURCE-CONTRACT`（见 §2.1）；**不构成 M7 批准**
-- [ ] `M7-PROTECTED-BASELINE` 仍为 `OPEN`，专属 workload / p50/p95 / 成本 / 质量阈值未闭合
-- [x] 十二项强制决策均为 `RESOLVED`，阶段计划与登记表证据一致；这不构成 M7 准入
-- [ ] 生命周期状态机、删除传播、隔离和离线 fallback 可通过契约/故障注入方案验证
-- [x] `M7-BENCHMARK` 已冻结 1k/3k fixture、中文标注、Recall@1/3/5、p50/p95、资源与同步/重建阈值；尚无运行证据
-- [ ] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表状态一致
-- [ ] 用户或项目负责人完成批准
+- [x] M6a Source 契约退出证据已映射到 `M7-M6A-SOURCE-CONTRACT`（见 §2.1）；该前置本身不构成 M7 批准
+- [x] `M7-PROTECTED-BASELINE=SATISFIED`：`m7-admission-20260829-02` 的可执行 1k reference、继承保护回归与默认 90 题均通过；3k 精确登记为现行 M6a 容量差距
+- [x] 十二项强制决策均为 `RESOLVED`，阶段计划与登记表证据一致
+- [ ] 获得独立生产开工授权后，由真实 M7 实现验证生命周期状态机、删除传播、隔离和离线 fallback
+- [x] `M7-BENCHMARK` 已冻结 1k/3k fixture、中文标注、Recall@1/3/5、p50/p95、资源与同步/重建阈值；尚无真实 M7 运行证据
+- [x] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表状态一致
+- [x] 用户或项目负责人完成仅限基础设施范围的阶段批准
+- [ ] 用户或项目负责人完成独立生产开工授权
 
 | 批准字段 | 当前值 |
 | --- | --- |
-| approved_by | — |
-| approved_at | — |
-| approval_reference | — |
-| plan_revision | — |
-| decision_set_version | — |
+| approved_by | `justtodo123` |
+| approved_at | `2026-08-31` |
+| approval_reference | `User instruction: M7 基础设施可以获批；Network 数据仍不获批；M8/Milvus 继续阻断` |
+| plan_revision | `v2.11` |
+| decision_set_version | `m7-decision-set-v1` |
 
-批准为空，M7 保持 `BLOCKED / NOT_STARTED`。Agent 不得自行批准。
+批准范围 `m7-infrastructure-only-v1`：
+
+- **included**：Source lifecycle、provenance/manifest/parser、sync/delete/isolation、FTS5/offline fallback，以及真实
+  1k/3k benchmark 的 M7 基础设施实现；
+- **excluded**：Network 文档晋升、Network P0 语料治理闭环、任何 corpus 自动批准、M8 专业存储、Milvus 后端选择。
+
+生产开工门禁为 `NOT_AUTHORIZED`，`authorized_by`、`authorized_at`、`authorization_reference` 均为空。
+因此 M7 当前为 `ADMITTED / NOT_STARTED`；该批准不关闭 P0、不批准 Network，也不形成 M7 exit。
 
 ## 5. 获准后的拟实施顺序
 
@@ -866,12 +922,13 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 4. 在离线 fallback 可用后接入明确选定的 FTS5 tokenizer；
 5. 运行冻结的 1k/3k workload，根据证据决定是否进入 M8，而不是预先引入专业后端。
 
-上述顺序在批准前不得执行。拟新增测试仅作为获准后方案：`tests/M7/` 覆盖 lifecycle、sync、delete、isolation、
-fallback；benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
+上述顺序在独立生产开工门禁授权前不得执行。拟新增测试仅作为获准开工后的方案：`tests/M7/` 覆盖 lifecycle、
+sync、delete、isolation、fallback；benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
 默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 benchmark 达标。
 
 ## 6. 撤销与后续边界
 
 任何 identity、删除、隔离、tokenizer、benchmark、文件级 manifest、parser matrix、normalized document
 或 provenance 前提实质变化，都将已准入状态改为 `REVOKED` 并停止实施。
-M8 只能使用 M7 的真实退出证据，不能把本计划、collect-only 盘点或 M6a 映射当作专业存储开工依据。
+M8 只能使用 M7 的真实退出证据，不能把本计划、M7 admission、collect-only 盘点或 M6a 映射当作专业存储开工依据；
+Milvus 也未因本批准成为候选选择、依赖或实施范围。

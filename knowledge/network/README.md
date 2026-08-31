@@ -91,4 +91,9 @@
 
 ## 外部资料指针
 
-参考原始资料索引：`docs/reference/network.md`
+课程级原始资料索引：`docs/reference/network.md`
+
+31 篇条目的文档级来源、身份、审核与许可状态登记于
+[`docs/reference/document-mapping.json`](../../docs/reference/document-mapping.json)。现有记录只能证明这些条目来自
+“网络爬取 + LLM 精炼”，不能逐篇核验原始 URL，也不能据此改称项目原创；因此 31 篇全部保持
+`review / candidate / unresolved`，在补齐可核验 URL 和许可证前不得视为生产批准。

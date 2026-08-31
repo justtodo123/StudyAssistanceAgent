@@ -4,6 +4,19 @@ course: network
 tags: [DNS, 域名解析, 递归查询, 迭代查询]
 difficulty: 中等
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/dns.md
+document_id: 8adcda5dea5f18f9a45d8a8046c86ec4
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

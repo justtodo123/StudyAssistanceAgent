@@ -4,6 +4,19 @@ course: network
 tags: [防火墙, VPN, IPSec, 包过滤, NAT]
 difficulty: 中等
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/firewall-vpn.md
+document_id: 724a0269484eda48661f53fc1d0c8b7d
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

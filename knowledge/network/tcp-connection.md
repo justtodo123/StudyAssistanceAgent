@@ -4,6 +4,19 @@ course: network
 tags: [TCP, 三次握手, 四次挥手, SYN洪泛]
 difficulty: 中等
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/tcp-connection.md
+document_id: ac24f361a96bf7e9e5ccb72603cabe72
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

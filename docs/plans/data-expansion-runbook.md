@@ -2,7 +2,8 @@
 
 > 状态：DRAFT / FUTURE REFERENCE / NON-AUTHORITATIVE  
 > 仅保留为 M7 获准后的候选数据扩展运行手册；不构成 M7 准入、生产实施授权、验收通过或负责人批准。  
-> 当前 M7 仍为 `BLOCKED / NOT_STARTED`，十二项强制决策、`M7-PROTECTED-BASELINE` 与批准记录均不因本文而闭合；
+> 当前 M7 基础设施范围为 `ADMITTED / NOT_STARTED`，但 `implementation_start=NOT_AUTHORIZED`；十二项强制决策与
+> `M7-PROTECTED-BASELINE` 的登记不因本文产生生产实现，Network 语料也不在批准范围内；
 > 最终状态以 [`docs/PLAN.md`](../PLAN.md) 和阶段准入门禁为准。  
 > 仅在 M7 获 `ADMITTED` 后，进入数据扩展阶段前仍须完成文末 Gate 0。Gate 0 只核验单个 Source 的合规与发布条件，
 > 不能替代 M7 阶段准入或人工批准。  
@@ -837,7 +838,8 @@ get_fingerprints(source_id)
 - 增加 Linux 文档主题；
 - 完成署名和许可链后评估 Stack Exchange 子集；
 - 增加数据库、编译原理、分布式系统；
-- benchmark SQLite、Milvus Lite（Linux/WSL）、专业服务后端。
+- benchmark 当前 SQLite；未来专业服务后端仅在 M8 独立决策与批准后讨论。Milvus Lite 仅为历史调查中的非权威提及，
+  未选定、未批准、未接入，也不构成实现方向。
 
 10k 阶段不得通过抓取博客或题库快速补量。
 

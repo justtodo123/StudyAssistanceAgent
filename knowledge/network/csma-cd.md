@@ -4,6 +4,19 @@ course: network
 tags: [CSMA/CD, 以太网, 碰撞检测, 二进制退避]
 difficulty: 中等
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/csma-cd.md
+document_id: 7e8b45e639bd1467e7f77ee23aa5fb5b
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

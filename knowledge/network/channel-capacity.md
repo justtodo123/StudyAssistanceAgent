@@ -4,6 +4,19 @@ course: network
 tags: [奈奎斯特, 香农, 信道复用, WDM, CDMA]
 difficulty: 中等
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/channel-capacity.md
+document_id: 53bfbff4e0cb6277ce239355583b0876
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

@@ -51,7 +51,10 @@ FUTURE_API_PATHS = (
 FUTURE_REQUIREMENTS = (
     "anthropic",
     "lancedb",
+    "milvus",
+    "milvus-lite",
     "openai",
+    "pymilvus",
     "qdrant-client",
 )
 
@@ -80,7 +83,7 @@ class TestGovernanceNavigation:
 
 
 class TestBlockedStageProductionTree:
-    def test_unadmitted_stages_do_not_add_future_production_surfaces(self, repo_root):
+    def test_unstarted_stages_do_not_add_future_production_surfaces(self, repo_root):
         stages = {
             stage["stage"]: stage
             for stage in _load_registry(repo_root)["stages"]
@@ -100,15 +103,23 @@ class TestBlockedStageProductionTree:
             "platform/app/preview_service.py",
             "tests/M6b",
         }
-        m6a_implementation_started = (
-            m6a["admission_status"] == "ADMITTED"
-            and m6a["delivery_status"] in {"IN_PROGRESS", "COMPLETE"}
-        )
-        m6b_is_admitted = m6b["admission_status"] == "ADMITTED"
+        def production_started(stage: dict) -> bool:
+            start_gate = stage.get("implementation_start")
+            return (
+                stage["admission_status"] == "ADMITTED"
+                and stage["delivery_status"] in {"IN_PROGRESS", "COMPLETE"}
+                and (
+                    start_gate is None
+                    or start_gate["status"] == "AUTHORIZED"
+                )
+            )
+
+        m6a_implementation_started = production_started(m6a)
+        m6b_implementation_started = production_started(m6b)
         allowed_paths = set()
         if m6a_implementation_started:
             allowed_paths.update(m6a_paths)
-        if m6b_is_admitted:
+        if m6b_implementation_started:
             allowed_paths.update(m6b_paths)
         blocked_paths = [
             relative_path
@@ -135,7 +146,7 @@ class TestBlockedStageProductionTree:
         allowed_identifiers = set()
         if m6a_implementation_started:
             allowed_identifiers.add("SourceRegistry")
-        if m6b_is_admitted:
+        if m6b_implementation_started:
             allowed_identifiers.update(
                 {
                     "SA_AGENT_PREVIEW_ENABLED",
@@ -148,7 +159,7 @@ class TestBlockedStageProductionTree:
             if identifier not in allowed_identifiers:
                 assert identifier not in production_text
 
-        allowed_api_paths = {"/api/v1/agent-preview"} if m6b_is_admitted else set()
+        allowed_api_paths = {"/api/v1/agent-preview"} if m6b_implementation_started else set()
         for api_path in FUTURE_API_PATHS:
             if api_path not in allowed_api_paths:
                 assert api_path not in production_text
@@ -157,7 +168,7 @@ class TestBlockedStageProductionTree:
             path.read_text(encoding="utf-8").lower()
             for path in (repo_root / "platform").glob("requirements*.txt")
         )
-        allowed_requirements = {"anthropic"} if m6b_is_admitted else set()
+        allowed_requirements = {"anthropic"} if m6b_implementation_started else set()
         for package in FUTURE_REQUIREMENTS:
             if package not in allowed_requirements:
                 assert not re.search(

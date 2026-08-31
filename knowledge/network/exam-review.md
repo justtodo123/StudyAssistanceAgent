@@ -4,6 +4,19 @@ course: network
 tags: [408, 真题, 高频题型, 解题技巧]
 difficulty: 进阶
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/exam-review.md
+document_id: f86a2bfc05c40ca021b6824c976d7aa3
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

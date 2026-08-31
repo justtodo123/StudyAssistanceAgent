@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-08-29（M6b stabilization 复测与历史/当前测试库存同步）
+> 起始日期：2026-08-17 · 更新：2026-08-31（P0 语料治理冻结与当前测试库存同步）
 
 ## 一、测试策略总览
 
@@ -132,6 +132,7 @@ tests/
 │   ├── test_sse_contract.py      # SSE 帧序、结束标记与路径隐私
 │   ├── test_ci_contract.py       # 结构化解析 offline/platform/RAG/crawler CI 门禁
 │   ├── test_docs_consistency.py  # 跨文档耐久事实与可演进的 M6a–M10 准入状态机一致性
+│   ├── test_document_governance.py # Network/Interview 文档身份、来源、许可与 fail-closed 入库
 │   └── test_governance_contract.py # docs 导航链接与阻断期未来生产树一致性
 │
 └── utils/                # 测试工具（非测试文件）
@@ -158,14 +159,14 @@ tests/
 
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
-| 根级 `tests/`（含 M6_crawler、M6a、M6b、source_inventory，不含 `platform/tests/`） | 546 项 | 2026-08-29 实测：545 passed、1 skipped；2026-08-28 首轮：527 passed、1 skipped | 阶段测试 + 回归套件；M6b 当前 129 项（普通 126 + 专用 benchmark 3；首轮 111 项） |
+| 根级 `tests/`（含 M6_crawler、M6a、M6b、source_inventory，不含 `platform/tests/`） | 554 项 | 2026-08-31 实测：553 passed、1 skipped；2026-08-29 历史：545 passed、1 skipped；2026-08-28 首轮：527 passed、1 skipped | 阶段测试 + 回归套件；M6b 当前 129 项（普通 126 + 专用 benchmark 3；首轮 111 项） |
 | `tests/M6b/` | 129 项 | 2026-08-29 当前：普通套件 126 passed、3 deselected；benchmark 3 passed；2026-08-28 首轮：111 passed | fake provider；native tool loop、API/auth、隐私、零写入与独立 blocking benchmark |
 | `tests/M6a/` | 124 项 | 2026-08-28：124 passed | 含 worker topology、generation 分离、缓存生命周期与 API/OpenAPI/链接收口 |
 | `tests/source_inventory/` | 21 项 | 2026-08-27：21 passed | 外部资料只读盘点；tmp_path 迷你树，不扫描真实外部目录，不构成 M7 开工 |
-| `tests/regression/` 非 slow | 49 selected | 2026-08-28：49 passed、3 deselected | 含 SSE、结构化 CI、准入治理、导航与生产树契约 |
+| `tests/regression/` 非 slow | 57 selected | 2026-08-31：57 passed、3 deselected | 含 SSE、结构化 CI、准入治理、导航与生产树契约；含 8 项 P0 文档治理测试 |
 | `tests/regression/test_rag_quality.py` slow | 3 项 | 2026-08-28：3 passed | 默认 OS/DS/CO 90 题 Recall@3 门禁 |
-| `platform/tests/` | 40 项 | 2026-08-28：40 passed | 受保护的原始平台冒烟/功能测试，不由根级测试取代 |
-| 合并 `tests platform/tests` | 586 项 | 2026-08-29 实测：585 passed、1 skipped | 根级 `tests/` 546 项 + `platform/tests/` 40 项；skip 为显式 online crawler smoke |
+| `platform/tests/` | 40 项 | 2026-08-31：40 passed | 受保护的原始平台冒烟/功能测试，不由根级测试取代 |
+| 合并 `tests platform/tests` | 594 项 | 2026-08-31 实测：593 passed、1 skipped；2026-08-29 历史：585 passed、1 skipped | 根级 `tests/` 554 项 + `platform/tests/` 40 项；skip 为显式 online crawler smoke |
 | `tests/M6_crawler/` 离线 | 52 项 + 1 deselected | 2026-08-28：52 passed | `m6_crawler and not online` |
 | `tests/M0_M2/` | 18 项 | 2026-08-28：18 passed | 基线回归 |
 | 根级 `tests/M0_M2/` | 18 项 | 历史基线 | 从平台原始测试提炼的关键断言，与 `platform/tests/` 同时保留 |
@@ -173,8 +174,10 @@ tests/
 
 M3c 的 10 项测试和 M3d 的 6 项文档测试已启用并全部通过。2026-08-28 M6b 首轮 closeout 复验中，根级测试为
 527 passed、1 skipped，平台原始测试为 40 passed；2026-08-29 stabilization 复测中，合并 `tests platform/tests`
-套件为 585 passed、1 skipped。当前 limiter/evidence stabilization 使用显式 marker 分离：M6b 普通套件 126 passed，
-benchmark 3 passed。默认 OS/DS/CO 90 题 keyword-only Recall@3 为 0.972。当前 blocking benchmark 使用 20 次 warm-up、
+套件为 585 passed、1 skipped。2026-08-31 P0 语料治理冻结复测中，根级为 553 passed、1 skipped，平台原始测试
+40 passed，合并口径为 593 passed、1 skipped；默认 OS/DS/CO 90 题 keyword-only Recall@3 为 0.978，Network
+30 题显式评测 Recall@1/3/5 均为 0.000，符合 candidate 不进入索引的预期。当前 limiter/evidence stabilization 使用
+显式 marker 分离：M6b 普通套件 126 passed，benchmark 3 passed。当前 blocking benchmark 使用 20 次 warm-up、
 200 次 measured、并发 2，evidence `stabilization-20260829-03` 的 p95 为 9.252 ms，200 次均以 `completed` 结束且
 规范化重放一致率 100%。受限 Windows 环境若默认临时目录不可写，可使用工作区内的
 `pytest --basetemp=.tmp-test\...`。
@@ -561,8 +564,9 @@ pytest tests/ -v -n auto
 ---
 
 *维护：每阶段开发完成后更新本计划。当前根级/回归总数以 `pytest --collect-only` 为准，collect-only 不等于
-测试通过。2026-08-28 M6b closeout 首轮中，根级实际结果为 528 collected、527 passed、1 skipped；2026-08-29
-stabilization 合并套件复测为 586 collected、585 passed、1 skipped。平台原始测试固定保留 40 项并在 offline CI 独立运行。
-M6b 2026-08-28 首轮 111 项；当前普通套件 126 passed、3 deselected，专用 benchmark 3 passed（共收集 129 项）；blocking fake-provider benchmark 已通过；crawler P0
+测试通过。2026-08-31 P0 语料治理冻结复测中，根级为 554 collected、553 passed、1 skipped；根级与平台原始测试合并为
+594 collected、593 passed、1 skipped。2026-08-28 M6b closeout 首轮中，根级实际结果为 528 collected、527 passed、1 skipped；
+2026-08-29 stabilization 合并套件复测为 586 collected、585 passed、1 skipped。平台原始测试固定保留 40 项并在 offline CI 独立运行。
+M6b 2026-08-28 首轮 111 项；当前普通套件 126 passed、3 deselected，专用 benchmark 3 passed（共收集 129 项）；blocking fake-provider benchmark 已通过；2026-08-31 默认评测仍固定为 OS/DS/CO 90 题，Network candidate 显式评测 Recall@1/3/5 均为 0.000；crawler P0
 使用独立 marker `m6_crawler` 和 job `crawler-offline`；只读盘点使用 `source_inventory`；默认 OS/DS/CO 90 题
 质量门禁独立运行 slow 回归。*

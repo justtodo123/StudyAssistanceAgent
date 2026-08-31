@@ -4,6 +4,19 @@ course: network
 tags: [TCP, 可靠传输, 滑动窗口, 超时重传]
 difficulty: 中等
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/tcp-reliable.md
+document_id: 42062649e7c6591d98b86ae4c1ac1d04
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）
