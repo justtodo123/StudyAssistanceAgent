@@ -54,6 +54,12 @@ LEARNING_STORE_PATH = Path(
         str(REPO_ROOT / "platform" / ".cache" / "learning_state.sqlite3"),
     )
 )
+SOURCE_REGISTRY_PATH = Path(
+    os.getenv(
+        "SA_SOURCE_REGISTRY_PATH",
+        str(REPO_ROOT / "platform" / ".cache" / "source_registry.sqlite3"),
+    )
+)
 INDEX_CACHE_PATH = Path(
     os.getenv(
         "SA_INDEX_CACHE_PATH",

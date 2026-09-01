@@ -5,7 +5,7 @@
 > M6 起按计划扩展：可插拔数据源、专业化存储、目标驱动学习计划与执行监控。
 
 **当前状态**：M6a-P0 crawler 已收口；M6a、M6b 均为 `ADMITTED / COMPLETE`；
-M7 仅基础设施范围为 `ADMITTED / NOT_STARTED`，生产开工门禁仍为 `NOT_AUTHORIZED`；M8–M10 仍为
+M7 仅基础设施范围为 `ADMITTED / IN_PROGRESS`，生产开工门禁已为 `AUTHORIZED`；M8–M10 仍为
 `BLOCKED / NOT_STARTED`；M0–M5 MVP 可用。
 2026-08-31 P0 语料治理复测已冻结：默认 OS/DS/CO 仍为可信 90 题包，Network candidate 不进入默认索引；
 M7 基础设施准入不批准 Network，也不改变其 `review / candidate / unresolved` 状态。
@@ -33,10 +33,10 @@ M7 基础设施准入不批准 Network，也不改变其 `review / candidate / u
 | 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（默认 `SqliteVectorStore`，线性余弦；可显式切换内存 `LocalVectorStore`） |
 | RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 2026-08-31 复测 Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 将改为目标/掌握度驱动 |
-| 用户数据源 | 自定义知识目录，规模百→千→万 | ⬜ M7（基础设施已准入，尚未开工） |
+| 用户数据源 | 自定义知识目录，规模百→千→万 | 🔄 M7-1 Source Registry 已实施；同步/检索接入仍待完成 |
 | 专业化存储 | 当前 SQLite；M8 规划 LanceDB，万级可选 Qdrant；Milvus 未选定 | ⬜ M8（阻断） |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ⬜ M9 |
-| Harness 框架 | M6a 已收口；M6b 默认关闭的只读 preview 已完成 closeout；完整 Runner 未实现 | ✅ M6a/M6b `ADMITTED / COMPLETE`；M7 `ADMITTED / NOT_STARTED`（未授权开工）；M8–M10 阻断 |
+| Harness 框架 | M6a 已收口；M6b 默认关闭的只读 preview 已完成 closeout；完整 Runner 未实现 | ✅ M6a/M6b `ADMITTED / COMPLETE`；M7 `ADMITTED / IN_PROGRESS`；M8–M10 阻断 |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
@@ -86,6 +86,7 @@ StudyAssistanceAgent/
 │   │   ├── tool_registry.py # M6b 只读工具 allowlist 与结果投影
 │   │   ├── preview_agent.py # M6b bounded native tool-use loop
 │   │   ├── preview_service.py # M6b 默认关闭的独立认证 API surface
+│   │   ├── source_registry.py # M7-1 独立 Source Registry 生命周期控制面
 │   │   └── static/           # 最小学习工作台静态页
 │   ├── tests/             # 冒烟测试
 │   ├── requirements.txt   # Python 依赖
@@ -110,6 +111,7 @@ StudyAssistanceAgent/
 │   ├── M6_crawler/        # crawler P0 离线测试（独立 marker / CI 已收口）
 │   ├── M6a/               # M6a harness 契约与兼容骨架测试
 │   ├── M6b/               # M6b 只读 Agent Preview 隔离测试与离线 benchmark
+│   ├── M7/                # M7-1 Source Registry 生命周期阶段测试
 │   ├── regression/        # 跨阶段回归套件
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
@@ -198,8 +200,8 @@ cd ..
 | [docs/plans/m4-knowledge-base-scale-plan.md](docs/plans/m4-knowledge-base-scale-plan.md) | M4 课程知识库规模补齐计划（范围、验收、分支） |
 | [docs/plans/m6a-harness-skeleton-plan.md](docs/plans/m6a-harness-skeleton-plan.md) | M6a 契约与兼容骨架（含 crawler 前置收口） |
 | [docs/plans/m6b-agent-core-plan.md](docs/plans/m6b-agent-core-plan.md) | M6b 独立只读工具调用预览执行计划（已完成 closeout） |
-| [docs/plans/m7-source-lifecycle-plan.md](docs/plans/m7-source-lifecycle-plan.md) | M7 用户 Source 生命周期计划（基础设施范围已准入；生产开工未授权） |
-| [docs/plans/data-expansion-runbook.md](docs/plans/data-expansion-runbook.md) | M7 未来参考手册；非权威，开工门禁未授权且不批准 Network |
+| [docs/plans/m7-source-lifecycle-plan.md](docs/plans/m7-source-lifecycle-plan.md) | M7 用户 Source 生命周期计划（基础设施范围已授权开工；M7-1 实施中） |
+| [docs/plans/data-expansion-runbook.md](docs/plans/data-expansion-runbook.md) | M7 数据扩展未来参考手册；非权威且不批准 Network |
 | [docs/plans/m8-specialized-storage-plan.md](docs/plans/m8-specialized-storage-plan.md) | M8 专业化检索存储准入准备（被阻断） |
 | [docs/plans/m9-goal-driven-planning-plan.md](docs/plans/m9-goal-driven-planning-plan.md) | M9 目标驱动学习计划准入准备（被阻断） |
 | [docs/plans/m10-autonomous-runner-plan.md](docs/plans/m10-autonomous-runner-plan.md) | M10 自主 Runner 与 Harness 对外准入准备（被阻断） |

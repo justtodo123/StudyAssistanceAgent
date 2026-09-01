@@ -592,11 +592,10 @@ Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明�
 `justtodo123` 的明确用户指令“`M7 基础设施可以获批；Network 数据仍不获批；M8/Milvus 继续阻断`”，不是由 benchmark、
 测试或 P0 mapping 自动推导。
 
-- M7 当前为 `ADMITTED / NOT_STARTED`，批准 scope 为 `m7-infrastructure-only-v1`；
+- M7 当前为 `ADMITTED / IN_PROGRESS`，批准 scope 为 `m7-infrastructure-only-v1`；
 - scope 只包含 Source lifecycle、provenance/manifest/parser、sync/delete/isolation、FTS5/offline fallback 和真实 1k/3k
   benchmark 基础设施；
-- `implementation_start=NOT_AUTHORIZED`，因此未新增或启动 M7 生产模块、依赖、schema、API、worker、runtime flag 或
-  `tests/M7/`；
+- `implementation_start=AUTHORIZED`；M7-1 Source Registry 已实施并有 `tests/M7/` 阶段证据，后续 M7 增量仍待完成；
 - Network 31 篇继续为 `review / candidate / unresolved`，不可发布、不可索引；
 - M8 继续 `BLOCKED / NOT_STARTED`，`M8-M7-EXIT` 仍 `OPEN`；Milvus 未选择、未批准、未接入。
 

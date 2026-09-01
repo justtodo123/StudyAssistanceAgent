@@ -30,7 +30,8 @@ class TestProjectStatusConsistency:
             assert "BLOCKED / NOT_STARTED" in text
         assert "ADMITTED / COMPLETE" in root
         assert "M6a 契约与兼容骨架" in root
-        assert "M7 `ADMITTED / NOT_STARTED`" in root
+        assert "M7 `ADMITTED / IN_PROGRESS`" in root
+        assert "生产开工门禁已为 `AUTHORIZED`" in root
         assert "M8–M10 阻断" in root
         assert "M10" in root and "自主 Runner" in root
         assert "课程笔记创建" not in root
@@ -304,7 +305,7 @@ class TestStageAdmissionConsistency:
         }
 
         assert m7["admission_status"] == "ADMITTED"
-        assert m7["delivery_status"] == "NOT_STARTED"
+        assert m7["delivery_status"] == "IN_PROGRESS"
         assert m7["approval_scope"] == {
             "scope_id": "m7-infrastructure-only-v1",
             "included": [
@@ -323,10 +324,12 @@ class TestStageAdmissionConsistency:
             ],
         }
         assert m7["implementation_start"] == {
-            "status": "NOT_AUTHORIZED",
-            "authorized_by": None,
-            "authorized_at": None,
-            "authorization_reference": None,
+            "status": "AUTHORIZED",
+            "authorized_by": "justtodo123",
+            "authorized_at": "2026-08-31",
+            "authorization_reference": (
+                "User instruction: 批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论。"
+            ),
         }
         assert m7["approval"] == {
             "approved_by": "justtodo123",

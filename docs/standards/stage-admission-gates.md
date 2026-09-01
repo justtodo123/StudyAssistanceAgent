@@ -36,7 +36,7 @@ M6a 的强制决策、前置证据与负责人批准已闭合，当前为 `ADMIT
 M6a-1 协议契约与 M6a-2 默认 `knowledge-pack` 兼容适配的自动化门禁已通过，M6a-3 与 M6a-4 已完成。
 M6b 的前置证据、八项决策、保护基线与独立批准也已闭合；获批的默认关闭只读 preview 已完成全部 closeout 门禁，
 当前为 `ADMITTED / COMPLETE`。M7 的十二项强制决策、专属保护基线和人工批准已闭合，当前为
-`ADMITTED / NOT_STARTED`；批准范围只包含 M7 基础设施，`implementation_start=NOT_AUTHORIZED`，因此尚未开始生产实施。
+`ADMITTED / IN_PROGRESS`；批准范围只包含 M7 基础设施，`implementation_start=AUTHORIZED`，当前从 M7-1 Source Registry 开始实施。
 Network 文档晋升/语料治理闭环、M8 专业存储和 Milvus 后端选择均明确排除。M8–M10 仍为
 `BLOCKED / NOT_STARTED`。M6a-P0 crawler 本身只构成前置证据，不单独批准阶段。
 
@@ -82,7 +82,7 @@ Agent 不得自行批准准入或生产开工。任何强制决策、前置证�
 
 ## 5. 阻断或未获生产开工授权期间允许与禁止的工作
 
-`BLOCKED`、`REVOKED`，或已登记 `implementation_start=NOT_AUTHORIZED` 时仅允许：
+`BLOCKED`、`REVOKED`，或已登记 `implementation_start=NOT_AUTHORIZED` 时仅允许（本条不限制已登记为 `AUTHORIZED` 的 M7-1 范围）：
 
 - 设定澄清、契约和计划文档；
 - 只读代码调查；

@@ -142,7 +142,7 @@
       "stage": "M7",
       "plan": "docs/plans/m7-source-lifecycle-plan.md",
       "admission_status": "ADMITTED",
-      "delivery_status": "NOT_STARTED",
+      "delivery_status": "IN_PROGRESS",
       "prerequisites": [
         {"id": "M7-M6A-SOURCE-CONTRACT", "status": "SATISFIED", "evidence": [
           "docs/plans/m6a-harness-skeleton-plan.md",
@@ -274,10 +274,10 @@
         ]
       },
       "implementation_start": {
-        "status": "NOT_AUTHORIZED",
-        "authorized_by": null,
-        "authorized_at": null,
-        "authorization_reference": null
+        "status": "AUTHORIZED",
+        "authorized_by": "justtodo123",
+        "authorized_at": "2026-08-31",
+        "authorization_reference": "User instruction: 批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论。"
       }
     },
     {

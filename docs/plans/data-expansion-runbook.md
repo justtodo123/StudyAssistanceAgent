@@ -1,14 +1,14 @@
 # 数据扩展运行手册
 
-> 状态：DRAFT / FUTURE REFERENCE / NON-AUTHORITATIVE  
-> 仅保留为 M7 获准后的候选数据扩展运行手册；不构成 M7 准入、生产实施授权、验收通过或负责人批准。  
-> 当前 M7 基础设施范围为 `ADMITTED / NOT_STARTED`，但 `implementation_start=NOT_AUTHORIZED`；十二项强制决策与
-> `M7-PROTECTED-BASELINE` 的登记不因本文产生生产实现，Network 语料也不在批准范围内；
-> 最终状态以 [`docs/PLAN.md`](../PLAN.md) 和阶段准入门禁为准。  
-> 仅在 M7 获 `ADMITTED` 后，进入数据扩展阶段前仍须完成文末 Gate 0。Gate 0 只核验单个 Source 的合规与发布条件，
-> 不能替代 M7 阶段准入或人工批准。  
-> 适用项目：StudyAssistanceAgent  
-> 候选目标规模：首批 3,000 chunks，第二阶段 10,000 chunks  
+> 状态：DRAFT / FUTURE REFERENCE / NON-AUTHORITATIVE
+> 仅保留为 M7 候选数据扩展运行手册；不构成 M7 准入、生产实施授权、验收通过或负责人批准。
+> 当前 M7 基础设施范围为 `ADMITTED / IN_PROGRESS`，`implementation_start=AUTHORIZED`，但本手册仍未获数据扩展执行授权；十二项强制决策与
+> `M7-PROTECTED-BASELINE` 的登记不因本文产生语料批准，Network 语料也不在批准范围内；
+> 最终状态以 [`docs/PLAN.md`](../PLAN.md) 和阶段准入门禁为准。
+> 进入任何数据扩展阶段前仍须取得明确范围授权并完成文末 Gate 0。Gate 0 只核验单个 Source 的合规与发布条件，
+> 不能替代 M7 阶段准入或人工批准。
+> 适用项目：StudyAssistanceAgent
+> 候选目标规模：首批 3,000 chunks，第二阶段 10,000 chunks
 > 最后核验日期：2026-08-27
 
 ## 1. 目的与边界
