@@ -74,7 +74,7 @@ M7 权威登记现为：
 - `admission_status: ADMITTED`；
 - `delivery_status: IN_PROGRESS`；
 - 批准 scope 仅包含基础设施，并明确排除 Network 文档晋升与 P0 语料治理闭环；
-- `implementation_start: AUTHORIZED`；M7-1 Source Registry 已开始实施，但不影响本报告的 P0 停止状态。
+- `implementation_start: AUTHORIZED`；M7 已形成并冻结 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation 局部合同，但不影响本报告的 P0 停止状态。
 
 该批准不关闭本报告的 `INCOMPLETE / STOP FOR HUMAN REVIEW`，不批准任何 Network 文档，也不改变以下人工停止条件：
 
@@ -82,5 +82,5 @@ M7 权威登记现为：
    不能按目录批量推断。
 2. 复核 51 篇 Interview 的 repository-authored / AI-assisted / MIT 声明是否符合项目负责人对历史内容的认定。
 3. 完成 Network 来源与许可审核后，重新生成 mapping digest 并重跑治理、检索、回归和默认 90 题门禁。
-4. P0 闭合后另行决定 Network 文档是否逐篇晋升；M7 基础设施批准不能替代该决定。M7-1 不修改
-   `SourceChunk`、`RetrievalChunk`、API、manifest、同步、删除或 benchmark 生产路径；后续增量仍需按授权范围实施。
+4. P0 闭合后另行决定 Network 文档是否逐篇晋升；M7 基础设施批准不能替代该决定。当前 M7 局部合同不修改
+   `SourceChunk`、`RetrievalChunk`、API、正式检索、同步、删除或 benchmark 生产路径；后续增量仍需按授权范围实施。

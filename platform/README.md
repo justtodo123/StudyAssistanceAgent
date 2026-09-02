@@ -43,6 +43,13 @@ platform/
 │   ├── preview_agent.py   # M6b 有限 native tool-use loop 与预算/终止语义
 │   ├── preview_service.py # M6b 独立认证、容量与 HTTP preview surface
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）
+│   ├── source_manifest.py # M7 用户源文件 manifest、格式接纳与 canonical digest
+│   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析
+│   ├── normalized_document.py # M7 跨格式 normalized units、chunks 与缓存
+│   ├── user_source_snapshot.py # M7 source-local FULL candidate 与原子发布
+│   ├── user_source_sync.py # M7 source-local FULL/INCREMENTAL sync worker
+│   ├── source_delete.py   # M7 source-local tombstone/hard-delete 合同
+│   ├── source_isolation.py # M7 查询前 owner-only 隔离门
 │   ├── retrieval_index.py # M6a 默认包快照到旧 RetrievalChunk 的兼容适配器
 │   ├── sources/           # 默认知识包与静态额外源适配器（见子目录 README）
 │   ├── combined_snapshot.py # 默认包 + 启动期额外源的不可变组合快照
@@ -360,16 +367,22 @@ prompt 与受限工具结果会发送给 Anthropic；上述“不泄漏”约束
 持久化和未授权边界。授权响应的 `answer` 可能包含模型生成内容。所有成功及失败路径都不创建 session、不提交答案、
 不写 review/mastery/source 状态。
 
-### Source Registry（M7-1，独立控制面）
+### Source Registry 与 source-local FULL/INCREMENTAL/delete/isolation（M7，独立控制面）
 
 M7-1 新增 `app/source_registry.py`，实现 `sa.source.lifecycle.v1` 的版本化 Source 控制面：canonical
 `user-{UUIDv7}` 身份、16 条合法生命周期边、expected-version CAS、不可变 `SourceRevision`、append-only
 `AuditEvent`、owner-only 隔离和完整 schema manifest fail-closed。五类 lifecycle record 均已具备持久化与重启读取，
-所有生命周期写入与审计在独立 SQLite 事务中完成；`SyncRun` 与 `LifecycleError` 当前仅为持久化骨架。
+所有生命周期写入与审计在独立 SQLite 事务中完成；`SyncRun` 现承载 request/run、checkpoint、heartbeat 与 cancel 标记。
 
-该 lifecycle repository 是新的 M7 控制面边界，不是 M6a 已冻结的 published descriptor repository。模块当前不在
-`app.main` 的正常启动路径构造，也没有新增 Source API 或改变 OpenAPI；尚未实现文件接入、parser、sync worker、
-索引发布、删除传播或用户源检索。M6a 静态额外源、默认 pack、学习状态 SQLite 与 M6b preview 均保持原契约。
+同一 M7 局部切片还提供 `source_manifest.py`、`parser_matrix.py`、`normalized_document.py`、
+`user_source_snapshot.py`、`user_source_sync.py`、`source_delete.py` 与 `source_isolation.py`：支持用户源的文件级 canonical manifest、Markdown/纯文本/PDF/PPTX/DOCX 五格式
+冻结 parser contract、统一 normalized document/chunk identity，已注册单源的离线 FULL candidate、校验和、
+last-good 与 `CURRENT`/`PREVIOUS` convenience pointers，以及受限 INCREMENTAL、request/run 幂等、单 active run、
+cancel/retry/checkpoint/recovery，以及 tombstone/read barrier、索引/cache 不可读传播、30 天 hard-delete receipt 与查询前隔离过滤。FULL/INCREMENTAL/delete/isolation 只生成 source-local 内部工件；lifecycle 的
+immutable revision 才是 published generation 的权威，且重复请求与无变化 INCREMENTAL 对同一 generation 幂等。
+
+这些模块不在 `app.main` 的正常启动路径构造，没有新增 Source API 或改变 OpenAPI，也不接入 Search、QA、preview、
+默认/extra scope 或正式检索。尚未实现 FTS5/jieba、正式检索接入、完整 provenance 晋升链或真实 1k/3k benchmark。M6a 静态额外源、默认 pack、学习状态 SQLite 与 M6b preview 均保持原契约。
 
 ## 配置
 
@@ -422,16 +435,16 @@ M7-1 新增 `app/source_registry.py`，实现 `sa.source.lifecycle.v1` 的版本
 Preview 的 model、官方 endpoint、TLS 校验、tool allowlist、capacity=2、应用级最大一次 retry、thinking、
 价格表和 trace retention 均不可由环境变量覆盖。配置布尔值、数字或“只能收紧”约束无效时启动即 fail closed。
 
-## M6/M7-1 边界
+## M6/M7 边界
 
 M6a 已完成 Source/存储职责/Tool/Runner 薄适配、启动期静态额外源、default/combined generation 分离、单进程拓扑门禁和文档收口。
 M6b 已实现独立、默认关闭、只读的原生工具调用 preview，并完成 closeout 收口，当前为 `ADMITTED / COMPLETE`。
-它不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。离线 preview 测试固定 BM25，
-不依赖本机向量模型。完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。当前 API 清单不包含这些规划能力。
+它不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。
 
-M7 当前为 `ADMITTED / IN_PROGRESS`，但已实施范围仅为独立 Source Registry 控制面；定量 workload 已覆盖
-100 组双写 CAS、五类记录各 20 条重启 round-trip、三个故障点各 20 次零部分提交和 privacy canary。未增加 Source API、
-同步、parser、检索接入或 M8 存储。默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
+M7 当前为 `ADMITTED / IN_PROGRESS`。已实施的是独立 Source Registry 加上 source-local manifest、冻结 parser matrix、normalized document、
+离线单源 FULL candidate/发布合同、受限 incremental sync worker，以及已冻结的 source-local delete/isolation 合同；阶段测试 `tests/M7/` 当前为 143 项。上述模块仍未接入 `app.main`、Source API/OpenAPI、Search、QA、preview、
+默认/extra scope 或正式用户源检索。FTS5/fallback、正式检索接入与真实 1k/3k benchmark 仍待实施。
+默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
 ## 降级路径
 
@@ -513,4 +526,4 @@ Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知�
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-31（M7-1 独立 Source Registry 与配置边界）· 维护：随 API/配置变更同步更新*
+*创建：2026-08-11 · 更新：2026-09-02（M7 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation 合同已冻结）· 维护：随 API/配置变更同步更新*

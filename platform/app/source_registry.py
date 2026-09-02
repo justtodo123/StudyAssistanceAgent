@@ -14,7 +14,7 @@ import threading
 import time
 import uuid
 from contextlib import AbstractContextManager, contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from enum import StrEnum
 from pathlib import Path
@@ -26,6 +26,14 @@ ISOLATION_POLICY_VERSION = "sa.source.isolation.v1"
 MAX_SOURCES_PER_PRINCIPAL = 10
 SUCCESSFUL_BUILD_RESULT = "SUCCESS"
 _BUILD_RESULTS = frozenset({SUCCESSFUL_BUILD_RESULT, "FAILED"})
+SYNC_LEASE_STALE_SECONDS = 30
+SYNC_RUN_RUNNING = "RUNNING"
+SYNC_RUN_SUCCESS = "SUCCESS"
+SYNC_RUN_FAILED = "FAILED"
+SYNC_RUN_CANCELLED = "CANCELLED"
+SYNC_RUN_INTERRUPTED = "INTERRUPTED"
+SYNC_RUN_INTERRUPTED_INPUT_CHANGED = "INTERRUPTED_INPUT_CHANGED"
+_ACTIVE_SYNC_STATUSES = frozenset({SYNC_RUN_RUNNING})
 
 _USER_SOURCE_RE = re.compile(
     r"^user-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
@@ -60,6 +68,9 @@ class SourceLifecycleErrorCode(StrEnum):
     SOURCE_ISOLATION_UNAVAILABLE = "SOURCE_ISOLATION_UNAVAILABLE"
     SOURCE_NOT_FOUND = "SOURCE_NOT_FOUND"
     SOURCE_SCHEMA_UNSUPPORTED = "SOURCE_SCHEMA_UNSUPPORTED"
+    SOURCE_SYNC_BUSY = "SOURCE_SYNC_BUSY"
+    SOURCE_SYNC_PRECONDITION_FAILED = "SOURCE_SYNC_PRECONDITION_FAILED"
+    SOURCE_SYNC_REQUEST_CONFLICT = "SOURCE_SYNC_REQUEST_CONFLICT"
     SOURCE_VERSION_CONFLICT = "SOURCE_VERSION_CONFLICT"
 
 
@@ -318,6 +329,11 @@ class SyncRun:
     chunk_count: int = 0
     raw_bytes: int = 0
     schema_version: int = LIFECYCLE_SCHEMA_VERSION
+    checkpoint_stage: str | None = None
+    input_digest: str | None = None
+    checkpoint_digest: str | None = None
+    cancel_requested: bool = False
+    heartbeat_at: datetime | None = None
 
     def __post_init__(self) -> None:
         validate_uuid7(self.run_id, field_name="run_id")
@@ -332,6 +348,8 @@ class SyncRun:
         _validate_utc(self.updated_at, field_name="updated_at")
         if self.finished_at is not None:
             _validate_utc(self.finished_at, field_name="finished_at")
+        if self.heartbeat_at is not None:
+            _validate_utc(self.heartbeat_at, field_name="heartbeat_at")
         if self.input_revision_no is not None and (
             not isinstance(self.input_revision_no, int)
             or isinstance(self.input_revision_no, bool)
@@ -342,6 +360,14 @@ class SyncRun:
             _validate_opaque_id(self.candidate_generation, field_name="candidate_generation")
         if self.result_code is not None:
             _validate_opaque_id(self.result_code, field_name="result_code")
+        if self.checkpoint_stage is not None:
+            _validate_opaque_id(self.checkpoint_stage, field_name="checkpoint_stage")
+        if self.input_digest is not None:
+            _validate_digest(self.input_digest, field_name="input_digest")
+        if self.checkpoint_digest is not None:
+            _validate_digest(self.checkpoint_digest, field_name="checkpoint_digest")
+        if not isinstance(self.cancel_requested, bool):
+            raise ValueError("cancel_requested must be a boolean")
         for name in ("document_count", "chunk_count", "raw_bytes"):
             value = getattr(self, name)
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
@@ -466,6 +492,11 @@ CREATE TABLE sync_runs (
     started_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     finished_at TEXT,
+    checkpoint_stage TEXT,
+    input_digest TEXT,
+    checkpoint_digest TEXT,
+    cancel_requested INTEGER NOT NULL DEFAULT 0 CHECK(cancel_requested IN (0, 1)),
+    heartbeat_at TEXT,
     UNIQUE(source_id, request_id)
 );
 
@@ -558,7 +589,15 @@ class SourceLifecycleTransaction(Protocol):
 
     def insert_revision(self, revision: SourceRevision) -> None: ...
 
+    def latest_revision(self, source_id: str) -> SourceRevision | None: ...
+
     def insert_sync_run(self, run: SyncRun) -> None: ...
+
+    def get_sync_run(self, source_id: str, request_id: str) -> SyncRun | None: ...
+
+    def list_active_sync_runs(self) -> tuple[SyncRun, ...]: ...
+
+    def update_sync_run(self, run: SyncRun) -> None: ...
 
     def insert_lifecycle_error(self, error: LifecycleError) -> None: ...
 
@@ -580,6 +619,8 @@ class SourceLifecycleRepository(Protocol):
     def list_revisions(self, source_id: str) -> tuple[SourceRevision, ...]: ...
 
     def list_sync_runs(self, source_id: str) -> tuple[SyncRun, ...]: ...
+
+    def get_sync_run(self, source_id: str, request_id: str) -> SyncRun | None: ...
 
     def list_lifecycle_errors(self, source_id: str) -> tuple[LifecycleError, ...]: ...
 
@@ -694,6 +735,18 @@ class SourceRegistryTransaction:
             ),
         )
 
+    def latest_revision(self, source_id: str) -> SourceRevision | None:
+        row = self._connection.execute(
+            """
+            SELECT * FROM source_revisions
+            WHERE source_id = ?
+            ORDER BY revision_no DESC
+            LIMIT 1
+            """,
+            (source_id,),
+        ).fetchone()
+        return _revision_from_row(row) if row is not None else None
+
     def insert_sync_run(self, run: SyncRun) -> None:
         self._connection.execute(
             """
@@ -701,8 +754,9 @@ class SourceRegistryTransaction:
                 run_id, schema_version, request_id, source_id, requested_strategy,
                 status, input_revision_no, candidate_generation, result_code,
                 document_count, chunk_count, raw_bytes, started_at, updated_at,
-                finished_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                finished_at, checkpoint_stage, input_digest, checkpoint_digest,
+                cancel_requested, heartbeat_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 run.run_id,
@@ -720,6 +774,70 @@ class SourceRegistryTransaction:
                 _timestamp(run.started_at),
                 _timestamp(run.updated_at),
                 None if run.finished_at is None else _timestamp(run.finished_at),
+                run.checkpoint_stage,
+                run.input_digest,
+                run.checkpoint_digest,
+                1 if run.cancel_requested else 0,
+                None if run.heartbeat_at is None else _timestamp(run.heartbeat_at),
+            ),
+        )
+
+    def get_sync_run(self, source_id: str, request_id: str) -> SyncRun | None:
+        row = self._connection.execute(
+            """
+            SELECT * FROM sync_runs
+            WHERE source_id = ? AND request_id = ?
+            """,
+            (source_id, request_id),
+        ).fetchone()
+        return _sync_run_from_row(row) if row is not None else None
+
+    def list_active_sync_runs(self) -> tuple[SyncRun, ...]:
+        rows = self._connection.execute(
+            """
+            SELECT * FROM sync_runs
+            WHERE finished_at IS NULL
+            ORDER BY started_at, run_id
+            """
+        ).fetchall()
+        return tuple(_sync_run_from_row(row) for row in rows)
+
+    def update_sync_run(self, run: SyncRun) -> None:
+        self._connection.execute(
+            """
+            UPDATE sync_runs SET
+                status = ?,
+                input_revision_no = ?,
+                candidate_generation = ?,
+                result_code = ?,
+                document_count = ?,
+                chunk_count = ?,
+                raw_bytes = ?,
+                updated_at = ?,
+                finished_at = ?,
+                checkpoint_stage = ?,
+                input_digest = ?,
+                checkpoint_digest = ?,
+                cancel_requested = ?,
+                heartbeat_at = ?
+            WHERE run_id = ?
+            """,
+            (
+                run.status,
+                run.input_revision_no,
+                run.candidate_generation,
+                run.result_code,
+                run.document_count,
+                run.chunk_count,
+                run.raw_bytes,
+                _timestamp(run.updated_at),
+                None if run.finished_at is None else _timestamp(run.finished_at),
+                run.checkpoint_stage,
+                run.input_digest,
+                run.checkpoint_digest,
+                1 if run.cancel_requested else 0,
+                None if run.heartbeat_at is None else _timestamp(run.heartbeat_at),
+                run.run_id,
             ),
         )
 
@@ -840,6 +958,16 @@ class SqliteSourceRegistry:
                 (source_id,),
             ).fetchall()
         return tuple(_sync_run_from_row(row) for row in rows)
+
+    def get_sync_run(self, source_id: str, request_id: str) -> SyncRun | None:
+        validate_user_source_id(source_id)
+        validate_uuid7(request_id, field_name="request_id")
+        with self._read_connection() as connection:
+            row = connection.execute(
+                "SELECT * FROM sync_runs WHERE source_id = ? AND request_id = ?",
+                (source_id, request_id),
+            ).fetchone()
+        return _sync_run_from_row(row) if row is not None else None
 
     def list_lifecycle_errors(self, source_id: str) -> tuple[LifecycleError, ...]:
         validate_user_source_id(source_id)
@@ -1115,7 +1243,7 @@ class SourceLifecycleService:
             )
         if (
             not isinstance(actor_type, SourceActorType)
-            or (target_state is SourceLifecycleState.READY) != (revision is not None)
+            or (revision is not None and target_state is not SourceLifecycleState.READY)
             or (
                 revision is not None
                 and revision.build_result != SUCCESSFUL_BUILD_RESULT
@@ -1139,6 +1267,15 @@ class SourceLifecycleService:
                     "The Source version does not match.",
                 )
             if target_state not in _ALLOWED_TRANSITIONS[current.state]:
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_INVALID_TRANSITION,
+                    "The Source lifecycle transition is invalid.",
+                )
+            if (
+                target_state is SourceLifecycleState.READY
+                and revision is None
+                and current.published_generation is None
+            ):
                 raise SourceLifecycleException(
                     SourceLifecycleErrorCode.SOURCE_INVALID_TRANSITION,
                     "The Source lifecycle transition is invalid.",
@@ -1242,6 +1379,307 @@ class SourceLifecycleService:
             ) from exc
         return self._repository.list_sources(principal)
 
+    def get_sync_run(
+        self, *, principal_id: str, source_id: str, request_id: str
+    ) -> SyncRun:
+        record = self.get_source(principal_id=principal_id, source_id=source_id)
+        try:
+            validate_uuid7(request_id, field_name="request_id")
+        except ValueError as exc:
+            raise SourceLifecycleException(
+                SourceLifecycleErrorCode.SOURCE_ISOLATION_INVALID_REQUEST,
+                "The Source sync request is invalid.",
+            ) from exc
+        run = self._repository.get_sync_run(record.source_id, request_id)
+        if run is None:
+            raise SourceLifecycleException(
+                SourceLifecycleErrorCode.SOURCE_NOT_FOUND,
+                "The Source was not found.",
+            )
+        return run
+
+    def list_sync_runs(self, *, principal_id: str, source_id: str) -> tuple[SyncRun, ...]:
+        record = self.get_source(principal_id=principal_id, source_id=source_id)
+        return self._repository.list_sync_runs(record.source_id)
+
+    def begin_sync_run(
+        self,
+        *,
+        principal_id: str,
+        source_id: str,
+        request_id: str,
+        expected_version: int,
+        strategy: str,
+        actor_type: SourceActorType,
+        correlation_id: str,
+        parser_schema_version: str,
+        chunk_schema_version: str,
+    ) -> SyncRun:
+        try:
+            principal = _validate_opaque_id(principal_id, field_name="principal_id")
+            validate_user_source_id(source_id)
+            validate_uuid7(request_id, field_name="request_id")
+            correlation = _validate_opaque_id(correlation_id, field_name="correlation_id")
+            parser_schema = _validate_opaque_id(
+                parser_schema_version, field_name="parser_schema_version"
+            )
+            chunk_schema = _validate_opaque_id(
+                chunk_schema_version, field_name="chunk_schema_version"
+            )
+        except ValueError as exc:
+            raise SourceLifecycleException(
+                SourceLifecycleErrorCode.SOURCE_ISOLATION_INVALID_REQUEST,
+                "The Source sync request is invalid.",
+            ) from exc
+        if not principal_id:
+            raise SourceLifecycleException(
+                SourceLifecycleErrorCode.SOURCE_AUTH_REQUIRED,
+                "Source authentication is required.",
+            )
+        if strategy not in {"FULL", "INCREMENTAL"}:
+            raise SourceLifecycleException(
+                SourceLifecycleErrorCode.SOURCE_ISOLATION_INVALID_REQUEST,
+                "The Source sync request is invalid.",
+            )
+        if (
+            not isinstance(expected_version, int)
+            or isinstance(expected_version, bool)
+            or expected_version < 1
+        ):
+            raise SourceLifecycleException(
+                SourceLifecycleErrorCode.SOURCE_VERSION_CONFLICT,
+                "The Source version does not match.",
+            )
+        if not isinstance(actor_type, SourceActorType):
+            raise SourceLifecycleException(
+                SourceLifecycleErrorCode.SOURCE_ISOLATION_INVALID_REQUEST,
+                "The Source sync request is invalid.",
+            )
+        now = _validate_utc(self._clock(), field_name="clock")
+        with self._repository.transaction() as transaction:
+            current = transaction.get_source(source_id)
+            if current is None or current.owner_principal_id != principal:
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_NOT_FOUND,
+                    "The Source was not found.",
+                )
+            existing = transaction.get_sync_run(source_id, request_id)
+            if existing is not None:
+                if existing.requested_strategy != strategy:
+                    raise SourceLifecycleException(
+                        SourceLifecycleErrorCode.SOURCE_SYNC_REQUEST_CONFLICT,
+                        "The Source sync request conflicts.",
+                    )
+                return existing
+            for active in transaction.list_active_sync_runs():
+                heartbeat = active.heartbeat_at or active.updated_at
+                stale = (now - heartbeat).total_seconds() >= SYNC_LEASE_STALE_SECONDS
+                if not stale:
+                    raise SourceLifecycleException(
+                        SourceLifecycleErrorCode.SOURCE_SYNC_BUSY,
+                        "The Source sync is busy.",
+                    )
+                transaction.update_sync_run(
+                    replace(
+                        active,
+                        status=SYNC_RUN_INTERRUPTED,
+                        result_code="SOURCE_SYNC_INTERRUPTED",
+                        finished_at=now,
+                        updated_at=now,
+                    )
+                )
+                owner = transaction.get_source(active.source_id)
+                if owner is not None and owner.state is SourceLifecycleState.SYNCING:
+                    degraded = SourceRecord(
+                        source_id=owner.source_id,
+                        owner_principal_id=owner.owner_principal_id,
+                        state=SourceLifecycleState.DEGRADED,
+                        record_version=owner.record_version + 1,
+                        created_at=owner.created_at,
+                        updated_at=now,
+                        published_revision_no=owner.published_revision_no,
+                        published_generation=owner.published_generation,
+                    )
+                    if not transaction.update_source(
+                        degraded, expected_version=owner.record_version
+                    ):
+                        raise SourceLifecycleException(
+                            SourceLifecycleErrorCode.SOURCE_VERSION_CONFLICT,
+                            "The Source version does not match.",
+                        )
+                    if active.source_id == source_id:
+                        current = degraded
+            if current.record_version != expected_version:
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_VERSION_CONFLICT,
+                    "The Source version does not match.",
+                )
+            if current.state not in {
+                SourceLifecycleState.REGISTERED,
+                SourceLifecycleState.READY,
+                SourceLifecycleState.DEGRADED,
+            }:
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_SYNC_PRECONDITION_FAILED,
+                    "The Source sync precondition failed.",
+                )
+            if strategy == "INCREMENTAL":
+                revision = transaction.latest_revision(source_id)
+                if (
+                    current.state is not SourceLifecycleState.READY
+                    or revision is None
+                    or revision.parser_schema_version != parser_schema
+                    or revision.chunk_schema_version != chunk_schema
+                ):
+                    raise SourceLifecycleException(
+                        SourceLifecycleErrorCode.SOURCE_SYNC_PRECONDITION_FAILED,
+                        "The Source sync precondition failed.",
+                    )
+            if SourceLifecycleState.SYNCING not in _ALLOWED_TRANSITIONS[current.state]:
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_INVALID_TRANSITION,
+                    "The Source lifecycle transition is invalid.",
+                )
+            updated = SourceRecord(
+                source_id=current.source_id,
+                owner_principal_id=current.owner_principal_id,
+                state=SourceLifecycleState.SYNCING,
+                record_version=current.record_version + 1,
+                created_at=current.created_at,
+                updated_at=now,
+                published_revision_no=current.published_revision_no,
+                published_generation=current.published_generation,
+            )
+            run = SyncRun(
+                run_id=self._id_factory(),
+                request_id=request_id,
+                source_id=source_id,
+                requested_strategy=strategy,
+                status=SYNC_RUN_RUNNING,
+                started_at=now,
+                updated_at=now,
+                input_revision_no=current.published_revision_no,
+                heartbeat_at=now,
+            )
+            if not transaction.update_source(updated, expected_version=expected_version):
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_VERSION_CONFLICT,
+                    "The Source version does not match.",
+                )
+            transaction._inject_fault("after_entity_write")
+            transaction.insert_sync_run(run)
+            transaction._inject_fault("before_audit_write")
+            transaction.insert_audit(
+                self._audit_event(
+                    source_id=source_id,
+                    actor_type=actor_type,
+                    action="SOURCE_SYNCING",
+                    before_state=current.state,
+                    after_state=SourceLifecycleState.SYNCING,
+                    correlation_id=correlation,
+                    created_at=now,
+                )
+            )
+        return run
+
+    def update_sync_run(
+        self, *, principal_id: str, source_id: str, run: SyncRun
+    ) -> SyncRun:
+        record = self.get_source(principal_id=principal_id, source_id=source_id)
+        if run.source_id != record.source_id:
+            raise SourceLifecycleException(
+                SourceLifecycleErrorCode.SOURCE_ISOLATION_INVALID_REQUEST,
+                "The Source sync request is invalid.",
+            )
+        now = _validate_utc(self._clock(), field_name="clock")
+        updated = replace(run, updated_at=now, heartbeat_at=now)
+        with self._repository.transaction() as transaction:
+            current = transaction.get_sync_run(source_id, run.request_id)
+            if current is None or current.run_id != run.run_id:
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_NOT_FOUND,
+                    "The Source was not found.",
+                )
+            transaction.update_sync_run(updated)
+        return updated
+
+    def request_cancel(
+        self,
+        *,
+        principal_id: str,
+        source_id: str,
+        request_id: str,
+        expected_version: int,
+    ) -> SyncRun:
+        record = self.get_source(principal_id=principal_id, source_id=source_id)
+        try:
+            validate_uuid7(request_id, field_name="request_id")
+        except ValueError as exc:
+            raise SourceLifecycleException(
+                SourceLifecycleErrorCode.SOURCE_ISOLATION_INVALID_REQUEST,
+                "The Source sync request is invalid.",
+            ) from exc
+        if (
+            not isinstance(expected_version, int)
+            or isinstance(expected_version, bool)
+            or expected_version < 1
+        ):
+            raise SourceLifecycleException(
+                SourceLifecycleErrorCode.SOURCE_VERSION_CONFLICT,
+                "The Source version does not match.",
+            )
+        now = _validate_utc(self._clock(), field_name="clock")
+        with self._repository.transaction() as transaction:
+            current = transaction.get_source(source_id)
+            if current is None or current.owner_principal_id != record.owner_principal_id:
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_NOT_FOUND,
+                    "The Source was not found.",
+                )
+            if current.record_version != expected_version:
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_VERSION_CONFLICT,
+                    "The Source version does not match.",
+                )
+            run = transaction.get_sync_run(source_id, request_id)
+            if run is None:
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_NOT_FOUND,
+                    "The Source was not found.",
+                )
+            if run.finished_at is not None:
+                return run
+            updated = replace(run, cancel_requested=True, updated_at=now, heartbeat_at=now)
+            transaction.update_sync_run(updated)
+        return updated
+
+    def complete_sync_run(
+        self,
+        *,
+        principal_id: str,
+        source_id: str,
+        expected_version: int,
+        actor_type: SourceActorType,
+        correlation_id: str,
+        run: SyncRun,
+        target_state: SourceLifecycleState,
+        revision: SourceRevisionDraft | None = None,
+    ) -> tuple[SourceRecord, SyncRun]:
+        now = _validate_utc(self._clock(), field_name="clock")
+        finished = replace(run, updated_at=now, heartbeat_at=now, finished_at=now)
+        record = self.transition_source(
+            principal_id=principal_id,
+            source_id=source_id,
+            expected_version=expected_version,
+            target_state=target_state,
+            actor_type=actor_type,
+            correlation_id=correlation_id,
+            revision=revision,
+        )
+        with self._repository.transaction() as transaction:
+            transaction.update_sync_run(finished)
+        return record, finished
+
     def create_source(self, **kwargs: object) -> SourceRecord:
         """Compatibility spelling for the registration command."""
         return self.register_source(**kwargs)  # type: ignore[arg-type]
@@ -1281,6 +1719,13 @@ __all__ = [
     "LIFECYCLE_SCHEMA_FAMILY",
     "LIFECYCLE_SCHEMA_VERSION",
     "SUCCESSFUL_BUILD_RESULT",
+    "SYNC_LEASE_STALE_SECONDS",
+    "SYNC_RUN_CANCELLED",
+    "SYNC_RUN_FAILED",
+    "SYNC_RUN_INTERRUPTED",
+    "SYNC_RUN_INTERRUPTED_INPUT_CHANGED",
+    "SYNC_RUN_RUNNING",
+    "SYNC_RUN_SUCCESS",
     "SourceActorType",
     "SourceLifecycleErrorCode",
     "SourceLifecycleException",
@@ -1379,6 +1824,11 @@ def _sync_run_from_row(row: sqlite3.Row) -> SyncRun:
             updated_at=_parse_timestamp(row["updated_at"]),
             finished_at=None if finished_at is None else _parse_timestamp(finished_at),
             schema_version=row["schema_version"],
+            checkpoint_stage=row["checkpoint_stage"],
+            input_digest=row["input_digest"],
+            checkpoint_digest=row["checkpoint_digest"],
+            cancel_requested=bool(row["cancel_requested"]),
+            heartbeat_at=None if row["heartbeat_at"] is None else _parse_timestamp(row["heartbeat_at"]),
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise SourceSchemaUnsupportedError() from exc

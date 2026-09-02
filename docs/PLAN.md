@@ -130,7 +130,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 - **完整退出条件**：✅ 会话可跨重启恢复；工作台可完成学习闭环；离线 CI 与一键启动已落地；阶段测试、回归和平台测试保持通过。
 - **收口结论**：M5 作为 MVP 关闭。默认学习闭环与离线交付不再回退；通用运行时与可插拔数据源改由 M6 起按路线图建设。
 
-### M6–M10：通用学习 Agent Harness（M6a/M6b 已完成，M7-1 实施中）
+### M6–M10：通用学习 Agent Harness（M6a/M6b 已完成，M7 局部实现持续进行）
 > **最终依据**：本节（M6–M10）。辅助分析见 `docs/plans/references/`，冲突时以本文为准。
 > **统一门禁**：[`stage-admission-gates.md`](standards/stage-admission-gates.md) 定义决策、准入、撤销与禁止事项；
 > [`stage-admission-gates.json`](standards/stage-admission-gates.json) 只用于机器检查，不能单独批准阶段。
@@ -142,7 +142,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | --- | --- | --- | --- | --- |
 | M6a | `ADMITTED` | `COMPLETE` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制决策与保护基线已闭合；justtodo123 于 2026-08-25 批准开工，M6a-1 与 M6a-2 自动化门禁已通过，M6a-4 已完成收口 |
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
-| M7 | `ADMITTED` | `IN_PROGRESS` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策与保护基线已闭合；justtodo123 于 2026-08-31 授权基础设施开工，M7-1 Source Registry 已落地；Network 晋升不在批准范围内，3k 仍是后续必须解决并实测的容量差距 |
+| M7 | `ADMITTED` | `IN_PROGRESS` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策与保护基线已闭合；justtodo123 于 2026-08-31 授权基础设施开工，Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL sync 与 source-local delete/isolation 局部合同已形成；未接入 app.main、Search、QA、preview 或公开 API，Network 晋升不在批准范围内，3k 仍是后续必须解决并实测的容量差距 |
 | M8 | `BLOCKED` | `NOT_STARTED` | [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md) | 等待真实 M7 退出证据；M7 admission 不满足 `M8-M7-EXIT`，Milvus/LanceDB/Qdrant 均未选定或获批 |
 | M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | 等待 M7/M8；计划/mastery 权威设定仍 `OPEN` |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | 等待 M7–M9；写授权、恢复与 rollout 设定仍 `OPEN` |
@@ -153,7 +153,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 改为 `REVOKED` 并停止生产实施。
 
 **依赖顺序**：M6b 与 M7 都只依赖 M6a 退出证据，彼此不互为前置。M7 已取得独立生产开工授权并从
-M7-1 Source Registry 起步。M8 依赖真实 M7 退出证据而非 M7 admission 或局部实现；M9 依赖 M7 与 M8；M10 依赖 M7–M9，
+M7-1 Source Registry 起步并已扩展为 source-local FULL/INCREMENTAL sync 与 delete/isolation 局部合同。M8 依赖真实 M7 退出证据而非 M7 admission 或局部实现；M9 依赖 M7 与 M8；M10 依赖 M7–M9，
 不以 M6b 为写路径或 Source 生命周期前置。
 
 - ✅ **M6a-P0 crawler 前置收口**：`tests/M6_crawler` 使用独立 marker `m6_crawler`；离线测试 mock HTTP；
@@ -197,14 +197,15 @@ M7-1 Source Registry 起步。M8 依赖真实 M7 退出证据而非 M7 admission
     任务评测仍属于 M10。
   - 执行计划：`docs/plans/m6b-agent-core-plan.md`。
 - 🔄 **M7 用户数据源与千级检索**：基础设施范围已于 2026-08-31 获批并获得独立开工授权，当前为
-  `ADMITTED / IN_PROGRESS`。M7-1 已落地独立 Source Registry：`sa.source.lifecycle.v1`、UUIDv7 用户源身份、
-  expected-version CAS、16 条合法状态边、不可变 revision、append-only audit、owner-only 隔离、完整 schema manifest
-  fail-closed 与 SQLite 重启/回滚；五类 lifecycle record 均可持久化重启读取，其中 `SyncRun`/`LifecycleError` 仅为骨架。
-  `tests/M7/` 阶段套件当前 77 项通过。注册表尚未接入正常应用启动，未新增 API/OpenAPI。
-  后续 manifest/parser、sync、delete 传播、检索隔离、FTS5/fallback 与真实 1k/3k benchmark 仍待实施。批准范围明确排除
-  Network 文档晋升、Network P0 治理闭环、任何 corpus 自动批准、M8 专业存储和 Milvus 后端选择。
-  `m7-admission-20260829-02` 仍只证明现有 M6a 1k current-state reference；3k 因 combined hard max 仍不可用。
-  只读盘点 `tools/source_inventory.py` 是 collect-only，不构成语料批准或 M7 退出。
+  `ADMITTED / IN_PROGRESS`。M7 已落地独立 Source Registry；当前局部实现还包括文件级 canonical manifest、五格式冻结 parser
+  contract、normalized document/chunk identity、不接入正式检索的 source-local FULL candidate/发布链，以及
+  request/run 幂等、单 active run、受限 INCREMENTAL、cancel/retry/checkpoint/recovery 的 source-local sync worker，以及 tombstone/read barrier、索引/cache 不可读传播、provenance 失效与检索隔离过滤的 source-local 合同（已冻结）。`tests/M7/` 当前
+  143 项通过。注册表、FULL artifact、sync worker 与 delete/isolation gate 尚未接入正常应用启动、Search、QA、preview、默认/extra scope 或公开 API/OpenAPI。
+  FTS5/jieba、正式检索接入、完整 provenance 晋升链
+  与真实 1k/3k benchmark 仍待实施；不得据此声称 M7 exit 或真实五格式生产 parser success。批准范围明确排除 Network 文档晋升、
+  Network P0 治理闭环、任何 corpus 自动批准、M8 专业存储和 Milvus 后端选择。`m7-admission-20260829-02` 仍只证明现有
+  M6a 1k current-state reference；3k 因 combined hard max 仍不可用。只读盘点 `tools/source_inventory.py` 是 collect-only，
+  不构成语料批准或 M7 退出。
 - ⬜ **M8 专业化存储**：准备计划见
   [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md)；只有真实 M7 exit 才能满足 `M8-M7-EXIT`。
   Milvus、LanceDB、Qdrant 均未选定或获批，不能在依赖、迁移、parity、fallback 和选择阈值闭合前成为默认。
@@ -242,5 +243,5 @@ M7-1 Source Registry 起步。M8 依赖真实 M7 退出证据而非 M7 admission
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.12（不是产品发布版本）· 更新：2026-08-31（M7 基础设施范围
-`ADMITTED / IN_PROGRESS`；M7-1 Source Registry 已启动，Network/M8/Milvus/M9/M10 未获批）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · PLAN 文档修订：v2.12（不是产品发布版本）· 更新：2026-09-02（M7 基础设施范围
+`ADMITTED / IN_PROGRESS`；source-local delete/isolation 局部合同已冻结，下一步为 FTS5/正式检索接入，Network/M8/Milvus/M9/M10 未获批）· 维护：每次会话开工查看本文档*

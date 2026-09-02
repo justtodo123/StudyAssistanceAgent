@@ -79,7 +79,8 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
   [standards/stage-admission-gates.md](standards/stage-admission-gates.md)，
   机器登记见 [standards/stage-admission-gates.json](standards/stage-admission-gates.json)。M6b/M7 以 M6a 退出证据为
   共同必要前置，彼此不互为前置。M7 的决策、保护基线与基础设施范围批准已闭合，当前为
-  `ADMITTED / IN_PROGRESS`；生产开工已授权，M7-1 Source Registry 已落地，Network/M8/Milvus/M9/M10 未获批。
+  `ADMITTED / IN_PROGRESS`；生产开工已授权，Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation
+局部合同已冻结；Network/M8/Milvus/M9/M10 未获批。
 - M7–M10 准入准备计划：
   [plans/m7-source-lifecycle-plan.md](plans/m7-source-lifecycle-plan.md)、
   [plans/m8-specialized-storage-plan.md](plans/m8-specialized-storage-plan.md)、
@@ -134,5 +135,5 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-31（M7 基础设施范围已授权开工，M7-1 实施中；Network/M8/Milvus/M9/M10 未获批）·
-维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-09-02（M7 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation
+局部合同已冻结；Network/M8/Milvus/M9/M10 未获批）·维护：随项目演进同步更新*
