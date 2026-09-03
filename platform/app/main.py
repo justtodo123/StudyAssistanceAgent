@@ -36,6 +36,7 @@ from .qa import QaService
 from .quiz import QuizService
 from .retrieval import MultiRecallService, RetrievalScope
 from .snapshot_publisher import CombinedSnapshotPublisher
+from .user_source_search import LazyUserSourceSearch
 from .worker_topology import (
     ServiceLock,
     enforce_single_worker_topology,
@@ -61,7 +62,14 @@ _snapshot_publisher = CombinedSnapshotPublisher(
 _service_lock = ServiceLock(service_lock_path())
 
 
-_recall = MultiRecallService(snapshot_provider=_snapshot_publisher.view)
+_user_source_search = LazyUserSourceSearch(
+    config.SOURCE_REGISTRY_PATH,
+    config.USER_SOURCE_CACHE_PATH,
+)
+_recall = MultiRecallService(
+    snapshot_provider=_snapshot_publisher.view,
+    user_source_search=_user_source_search,
+)
 _qa = QaService(_recall, scope=RetrievalScope.DEFAULT_PLUS_EXTRAS)
 _review_plan = ReviewPlanService()
 _quiz = QuizService()
@@ -162,6 +170,7 @@ def search(req: SearchRequest) -> SearchResponse:
         req.top_k,
         course=req.course,
         scope=RetrievalScope.DEFAULT_PLUS_EXTRAS,
+        principal_id=req.principal_id,
     )
     if not req.use_vector and results:
         # 模拟「关闭向量」仅观察关键词路：BM25 单路重算

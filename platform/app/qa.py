@@ -38,7 +38,11 @@ class QaService:
                 req.top_k,
                 course=req.course,
                 scope=self._scope,
+                principal_id=req.principal_id,
             )
+            from .user_source_search import ensure_user_provenance
+
+            ensure_user_provenance(results)
 
             if req.use_llm and config.LLM_API_KEY:
                 try:

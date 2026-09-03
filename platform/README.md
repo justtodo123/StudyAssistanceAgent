@@ -53,6 +53,7 @@ platform/
 │   ├── fts5_tokenizer.py  # M7 jieba==0.42.1 FTS5 tokenizer 合同
 │   ├── user_source_fts5.py # M7 generation-bound SQLite FTS5 索引
 │   ├── source_offline.py  # M7 离线 fail-closed 校验与显式 FULL repair
+│   ├── user_source_search.py # M7 用户源 Search/cache/RRF/provenance overlay
 │   ├── retrieval_index.py # M6a 默认包快照到旧 RetrievalChunk 的兼容适配器
 │   ├── sources/           # 默认知识包与静态额外源适配器（见子目录 README）
 │   ├── combined_snapshot.py # 默认包 + 启动期额外源的不可变组合快照
@@ -384,8 +385,7 @@ last-good 与 `CURRENT`/`PREVIOUS` convenience pointers，以及受限 INCREMENT
 cancel/retry/checkpoint/recovery，以及 tombstone/read barrier、索引/cache 不可读传播、30 天 hard-delete receipt 与查询前隔离过滤。FULL/INCREMENTAL/delete/isolation 只生成 source-local 内部工件；lifecycle 的
 immutable revision 才是 published generation 的权威，且重复请求与无变化 INCREMENTAL 对同一 generation 幂等。
 
-这些模块不在 `app.main` 的正常启动路径构造，没有新增 Source API 或改变 OpenAPI，也不接入 Search、QA、preview、
-默认/extra scope 或正式检索。source-local FTS5/jieba 与离线 fail-closed 校验/显式 FULL repair 已落地，但尚未接入正式检索、完整 provenance 晋升链或真实 1k/3k benchmark；不构成 M7 exit。M6a 静态额外源、默认 pack、学习状态 SQLite 与 M6b preview 均保持原契约。
+默认启动仍不创建 Source Registry。Search/QA 在请求携带可选 `principal_id` 且 registry 已存在时，才会懒加载用户源 FTS5 overlay 并与默认/extra 结果 RRF 融合；公开出处为 `user://{source_id}/{logical_uri}`。M6b preview、Quiz、Review Plan 与 study-sessions 不接收该 overlay。vector 仍 `not_attached`。不构成 M7 exit。M6a 静态额外源、默认 pack、学习状态 SQLite 与 M6b preview 均保持原契约。
 
 ## 配置
 
@@ -413,6 +413,7 @@ immutable revision 才是 published generation 的权威，且重复请求与无
 | `SA_LLM_TIMEOUT_S` | `60` | 单次生成超时（秒） |
 | `SA_LEARNING_STORE_PATH` | `platform/.cache/learning_state.sqlite3` | 学习会话与复习历史 SQLite |
 | `SA_SOURCE_REGISTRY_PATH` | `platform/.cache/source_registry.sqlite3` | M7-1 独立 Source Registry；默认启动路径暂不创建 |
+| `SA_USER_SOURCE_CACHE_PATH` | `platform/.cache/user-sources` | M7 用户源 snapshot/FTS5 缓存；仅在 Search/QA 提供 principal 且 registry 已存在时懒加载 |
 | `SA_INDEX_CACHE_PATH` | `platform/.cache/index` | 组合快照与 `service.lock` |
 | `SA_EXTRA_SOURCES` | `[]` | 启动期静态额外 Markdown 源，最多 3 个；只进 Search/QA |
 | `SA_EXTRA_SOURCES_STRICT` | `true` | 额外源失败时拒绝整次发布 |
@@ -445,8 +446,7 @@ M6b 已实现独立、默认关闭、只读的原生工具调用 preview，并�
 它不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。
 
 M7 当前为 `ADMITTED / IN_PROGRESS`。已实施的是独立 Source Registry 加上 source-local manifest、冻结 parser matrix、normalized document、
-离线单源 FULL candidate/发布合同、受限 incremental sync worker，以及已冻结的 source-local delete/isolation 合同；阶段测试 `tests/M7/` 当前为 162 项。上述模块仍未接入 `app.main`、Source API/OpenAPI、Search、QA、preview、
-默认/extra scope 或正式用户源检索。正式 Search/QA/preview 接入与真实 1k/3k benchmark 仍待实施；当前 162 项局部合同不构成 M7 exit。
+离线单源 FULL candidate/发布合同、受限 incremental sync worker、已冻结的 source-local delete/isolation/FTS5/offline 合同，以及 Search/QA 可选 principal overlay；阶段测试 `tests/M7/` 当前为 177 项。M6b preview 仍不含用户源。当前测试与 disposable 1k/3k FTS5 证据不构成 M7 exit。
 默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
 ## 降级路径

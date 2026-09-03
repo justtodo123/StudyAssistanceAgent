@@ -66,6 +66,12 @@ INDEX_CACHE_PATH = Path(
         str(REPO_ROOT / "platform" / ".cache" / "index"),
     )
 )
+USER_SOURCE_CACHE_PATH = Path(
+    os.getenv(
+        "SA_USER_SOURCE_CACHE_PATH",
+        str(REPO_ROOT / "platform" / ".cache" / "user-sources"),
+    )
+)
 EXPECTED_DEFAULT_PACK_REVISION = os.getenv("SA_EXPECTED_DEFAULT_PACK_REVISION") or None
 
 # ===== LLM（OpenAI 兼容）=====

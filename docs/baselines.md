@@ -595,7 +595,7 @@ Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明�
 - M7 当前为 `ADMITTED / IN_PROGRESS`，批准 scope 为 `m7-infrastructure-only-v1`；
 - scope 只包含 Source lifecycle、provenance/manifest/parser、sync/delete/isolation、FTS5/offline fallback 和真实 1k/3k
   benchmark 基础设施；
-- `implementation_start=AUTHORIZED`；Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 局部合同已实施并冻结，`tests/M7/` 当前 162 项通过；正式检索接入与 1k/3k benchmark 仍待完成，不构成 M7 exit；
+- `implementation_start=AUTHORIZED`；lifecycle/FTS5/offline 与 Search/QA overlay 已实施，`tests/M7/` 当前 177 项通过；disposable 1k/3k FTS5 证据 vector 未挂接，不构成 M7 exit；
 - Network 31 篇继续为 `review / candidate / unresolved`，不可发布、不可索引；
 - M8 继续 `BLOCKED / NOT_STARTED`，`M8-M7-EXIT` 仍 `OPEN`；Milvus 未选择、未批准、未接入。
 
@@ -606,6 +606,12 @@ Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明�
 ## M7 source-local FTS5/offline checkout — 2026-09-03
 
 本节追加记录 source-local FTS5/jieba 与离线 fail-closed 校验/显式 FULL repair 的局部落地，不回写 2026-09-02 delete/isolation 冻结原文，也不改变 M7 `ADMITTED / IN_PROGRESS`。2026-09-03 复验：`tests/M7/` 162 passed（新增 FTS5/offline 19 passed），`tests/regression/` 61 passed。未接入 `app.main`、Search、QA、preview 或公开 API；未跑冻结 1k/3k benchmark；不得把 162 项局部合同视为 M7 exit 证据。M8/Milvus/Network 仍不在本范围。
+
+
+
+## M7 Search overlay + disposable 1k/3k FTS5 — 2026-09-03
+
+本节追加记录 Search/QA 可选 principal overlay，不回写 FTS5/offline 162 项原文，也不改变 M7 `ADMITTED / IN_PROGRESS` 或 M8 `BLOCKED / NOT_STARTED`。2026-09-03 复验：`tests/M7/` 177 passed。`tools/run_m7_benchmark.py` 的 disposable FTS5 跑数为：1k-single Recall@1/3/5=1.000，查询 p50 135 ms / p95 149 ms；3k-aggregate Recall@1/3/5=1.000，查询 p50 392 ms / p95 458 ms。vector 仍 `not_attached`；FULL 样本为 1 而非冻结 20 次；3k p50 超过 250 ms 门槛。该报告不是 M7 exit 证据，也不批准 Network 或 M8/Milvus。
 
 *创建：2026-08-12 · 更新：2026-09-02（追加 delete/isolation 冻结复验；不回写历史证据）·
 维护：知识库、评测集或检索策略变化后复测并追加记录*

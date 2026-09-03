@@ -26,14 +26,15 @@
 - `sa.source.isolation.v1` 的服务端 principal 授权快照、查询前过滤、统一 `SOURCE_NOT_FOUND`、
   缺 source_id/授权 digest 时 `SOURCE_ISOLATION_UNAVAILABLE`、默认 pack 直通与零越权；
 - `sa.source.fts5-tokenizer.v1` 的 `jieba==0.42.1` search-mode 预分词、NFC/空白规范化、generation-bound SQLite FTS5 unicode61 索引与 identity-set；
-- `sa.source.offline-fallback.v1` 的依赖/metadata/索引完整性 fail-closed、不自动修复与显式 FULL repair。
+- `sa.source.offline-fallback.v1` 的依赖/metadata/索引完整性 fail-closed、不自动修复与显式 FULL repair；
+- Search/QA 可选 `principal_id` overlay：隔离后 FTS5、auth/generation 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源。
 
 测试 fixture 仅在运行时以 `tmp_path` 生成；不会读取或复制 `D:\111_Others_Subjects`，也不会提交 PDF、PPTX、DOCX
 等二进制文件。sync 套件使用合成 Markdown parser fixture，不构成真实五格式 parser 成功。
 
-FULL/INCREMENTAL、delete/isolation 与 FTS5/offline 链路仅产生内部 source-local 工件，未接入 `app.main`、Search、QA、preview、默认/extra scope、
-公开 API 或 OpenAPI。`CURRENT` 仅为本地便利指针，权威 published generation 仍由 lifecycle 的 immutable revision
-决定。缺失或版本不精确的 parser/jieba 依赖会 fail closed；本套件不构成正式检索接入、1k/3k benchmark 或 M7 exit 证据。
+FULL/INCREMENTAL、delete/isolation 与 FTS5/offline 仍是 source-local 工件；Search/QA 可通过可选 `principal_id` 叠加授权用户源。
+M6b preview、Quiz、Review Plan 与 study-sessions 不包含用户源。`CURRENT` 仅为本地便利指针，权威 published generation 仍由 lifecycle 的 immutable revision
+决定。本套件与 disposable 1k/3k FTS5 证据不构成 M7 exit。
 
 M8/Milvus、M9、M10 与 Network 晋升仍不在本阶段范围内。
 

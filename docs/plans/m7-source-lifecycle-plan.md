@@ -1,6 +1,6 @@
 # M7 用户 Source 生命周期与千级检索准备计划
 
-> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 局部合同已落地
+> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 已落地，冻结 1k/3k 未通过，不构成 M7 exit
 > 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不构成生产开工、语料批准或退出证据
 > 前置：`M7-M6A-SOURCE-CONTRACT` 与 `M7-PROTECTED-BASELINE` 均为 `SATISFIED`；批准记录见 §4
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
@@ -17,7 +17,7 @@ PDF/PPT 复制进仓库。
 SQLite 控制面、版本化 lifecycle schema、用户源身份、CAS 状态机、五类 lifecycle record 持久化、owner-only 读取、
 schema fail-closed 与定量并发/回滚/重启/privacy workload；并已形成文件级 manifest、五格式冻结 parser matrix、normalized document
 和 source-local FULL candidate/原子发布的局部合同。该 lifecycle repository 是新的控制面边界，不是 M6a 已冻结的 published
- descriptor `SourceRegistryRepository`。FULL/INCREMENTAL sync、delete/isolation 与 FTS5/offline fail-closed 仍不接入正式 Search/QA/preview 或应用启动；完整 provenance 晋升链或 Source API 尚未创建。只读盘点
+ descriptor `SourceRegistryRepository`。FULL/INCREMENTAL/delete/isolation/FTS5/offline 已接入 Search/QA 可选 principal overlay；M6b preview 与正式学习会话仍不含用户源。完整 provenance 晋升链或独立 Source API 尚未创建。只读盘点
 `tools/source_inventory.py` 仍是 collect-only 调查，不能替代下列强制决策、语料批准或 M7 退出。
 
 ## 2. 前置证据与继承不变量
@@ -920,14 +920,14 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 ## 5. 获准后的实施顺序（FTS5/offline 局部合同已落地，后续仅正式检索/benchmark）
 
 1. ✅ 已落地版本化 lifecycle schema、Source Registry repository contract 和事务/回滚测试；已补齐文件级 manifest、parser matrix、normalized document 与 source-local FULL candidate/原子发布局部合同；
-2. ✅ 已落地受限增量同步、request/run 幂等、单 active run、cancel/retry/checkpoint/recovery 的 source-local 局部合同；尚未接入正式检索或公开 API，也未跑冻结 100-document/1k/3k workload；
-3. ✅ 已落地并冻结 source-local tombstone/read barrier、索引/cache 不可读传播、provenance 失效和检索隔离过滤局部合同；尚未接入正式 Search/QA/preview 或公开 API；
-4. ✅ 已落地 `jieba==0.42.1` / `sa.source.fts5-tokenizer.v1` generation-bound SQLite FTS5 与离线 fail-closed 校验/显式 FULL repair；尚未接入正式 Search/QA/preview；
-5. ⬜ 运行冻结的 1k/3k workload，根据证据决定是否进入 M8，而不是预先引入专业后端。
+2. ✅ 已落地受限增量同步、request/run 幂等、单 active run、cancel/retry/checkpoint/recovery 的 source-local 局部合同；
+3. ✅ 已落地并冻结 source-local tombstone/read barrier、索引/cache 不可读传播、provenance 失效和检索隔离过滤局部合同；
+4. ✅ 已落地 `jieba==0.42.1` / `sa.source.fts5-tokenizer.v1` generation-bound SQLite FTS5 与离线 fail-closed 校验/显式 FULL repair；
+5. ✅ 已落地 Search/QA 可选 principal overlay：隔离后 FTS5、generation/auth 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源；
+6. ⬜ 冻结 `sa.source.benchmark.v1` 仍未满足：vector 未挂接、FULL 样本不是 20 次、3k 查询 p50 未达标。不得进入 M8。
 
-上述顺序按独立生产开工授权执行；当前 FULL/INCREMENTAL/delete/isolation/FTS5/offline 只生成内部 source-local artifact，不接入 `app.main`、Search、QA、preview、正式用户源检索或公开 API。后续新增测试继续覆盖正式检索接入与 1k/3k benchmark。
-`tests/M7/` 当前 162 项覆盖 lifecycle、manifest、parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline 局部合同；benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
-默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 benchmark 达标。
+上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 177 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
+默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 1k/3k benchmark（含 vector identity 与 20 次样本）达标。当前证据不满足退出。
 
 ## 6. 撤销与后续边界
 

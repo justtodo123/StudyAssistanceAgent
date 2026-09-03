@@ -10,6 +10,7 @@ tools/
 ├── run_evaluation.py      # ★ 统一 RAG 评测入口
 ├── start_local.py         # 一键启动工作台并做 /health 检查
 ├── source_inventory.py    # 外部资料只读盘点（不复制、不解析全文、不建索引）
+├── run_m7_benchmark.py    # M7 1k/3k disposable FTS5 benchmark（不构成 exit）
 ├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   ├── requirements.txt   # crawler 独立依赖
 │   └── fetcher/cleaner/converter/dedup/pipeline
@@ -160,3 +161,14 @@ python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 
 *创建：2026-08-11 · 更新：2026-08-27（新增外部资料只读盘点）· 维护：随新增工具脚本与评测集同步更新*
 
+
+## run_m7_benchmark.py — M7 用户源 1k/3k FTS5 评测
+
+运行时可生成 fixture，不入库。vector 当前 `not_attached`，报告 `m7_exit=false`，不能当作 M7 退出证据，也不批准 M8/Milvus 或 Network。
+
+```bash
+./platform/.venv/Scripts/python tools/run_m7_benchmark.py --report artifacts/m7-benchmark.json
+./platform/.venv/Scripts/python tools/run_m7_benchmark.py --quick
+```
+
+2026-09-03 disposable 一次样本：1k-single Recall@5=1.000、查询 p95 149 ms；3k-aggregate Recall@5=1.000、查询 p50 392 ms（超过冻结 250 ms）。FULL 样本数为 1，不是冻结的 20 次。

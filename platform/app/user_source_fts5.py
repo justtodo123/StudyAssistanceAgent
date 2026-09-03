@@ -429,6 +429,7 @@ class UserSourceFts5Index:
         generation: str,
         rows: list[tuple[str, str, str]],
     ) -> dict[str, object]:
+        rows = sorted(rows, key=lambda item: (item[0], item[1]))
         identity = sorted([[document_id, chunk_id] for chunk_id, document_id, _content in rows])
         token_payload = canonical_json(
             [{"chunk_id": chunk_id, "document_id": document_id, "content": content} for chunk_id, document_id, content in rows]
