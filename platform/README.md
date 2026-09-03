@@ -52,6 +52,7 @@ platform/
 │   ├── source_isolation.py # M7 查询前 owner-only 隔离门
 │   ├── fts5_tokenizer.py  # M7 jieba==0.42.1 FTS5 tokenizer 合同
 │   ├── user_source_fts5.py # M7 generation-bound SQLite FTS5 索引
+│   ├── user_source_vector.py # M7 generation-bound source-local vector 索引
 │   ├── source_offline.py  # M7 离线 fail-closed 校验与显式 FULL repair
 │   ├── user_source_search.py # M7 用户源 Search/cache/RRF/provenance overlay
 │   ├── retrieval_index.py # M6a 默认包快照到旧 RetrievalChunk 的兼容适配器
@@ -379,13 +380,13 @@ M7-1 新增 `app/source_registry.py`，实现 `sa.source.lifecycle.v1` 的版本
 所有生命周期写入与审计在独立 SQLite 事务中完成；`SyncRun` 现承载 request/run、checkpoint、heartbeat 与 cancel 标记。
 
 同一 M7 局部切片还提供 `source_manifest.py`、`parser_matrix.py`、`normalized_document.py`、
-`user_source_snapshot.py`、`user_source_sync.py`、`source_delete.py`、`source_isolation.py`、`fts5_tokenizer.py`、`user_source_fts5.py` 与 `source_offline.py`：支持用户源的文件级 canonical manifest、Markdown/纯文本/PDF/PPTX/DOCX 五格式
+`user_source_snapshot.py`、`user_source_sync.py`、`source_delete.py`、`source_isolation.py`、`fts5_tokenizer.py`、`user_source_fts5.py`、`user_source_vector.py` 与 `source_offline.py`：支持用户源的文件级 canonical manifest、Markdown/纯文本/PDF/PPTX/DOCX 五格式
 冻结 parser contract、统一 normalized document/chunk identity，已注册单源的离线 FULL candidate、校验和、
 last-good 与 `CURRENT`/`PREVIOUS` convenience pointers，以及受限 INCREMENTAL、request/run 幂等、单 active run、
 cancel/retry/checkpoint/recovery，以及 tombstone/read barrier、索引/cache 不可读传播、30 天 hard-delete receipt 与查询前隔离过滤。FULL/INCREMENTAL/delete/isolation 只生成 source-local 内部工件；lifecycle 的
 immutable revision 才是 published generation 的权威，且重复请求与无变化 INCREMENTAL 对同一 generation 幂等。
 
-默认启动仍不创建 Source Registry。Search/QA 在请求携带可选 `principal_id` 且 registry 已存在时，才会懒加载用户源 FTS5 overlay 并与默认/extra 结果 RRF 融合；公开出处为 `user://{source_id}/{logical_uri}`。M6b preview、Quiz、Review Plan 与 study-sessions 不接收该 overlay。vector 仍 `not_attached`。不构成 M7 exit。M6a 静态额外源、默认 pack、学习状态 SQLite 与 M6b preview 均保持原契约。
+默认启动仍不创建 Source Registry。Search/QA 在请求携带可选 `principal_id` 且 registry 已存在时，才会懒加载用户源 FTS5+vector overlay 并与默认/extra 结果 RRF 融合；公开出处为 `user://{source_id}/{logical_uri}`。M6b preview、Quiz、Review Plan 与 study-sessions 不接收该 overlay。用户源 vector 与 FTS5 绑定同一 published generation 和 identity-set；缺依赖或元数据不一致时用户源 fail closed，不降级到默认包 keyword-only。不构成 M7 exit。M6a 静态额外源、默认 pack、学习状态 SQLite 与 M6b preview 均保持原契约。
 
 ## 配置
 
@@ -413,7 +414,7 @@ immutable revision 才是 published generation 的权威，且重复请求与无
 | `SA_LLM_TIMEOUT_S` | `60` | 单次生成超时（秒） |
 | `SA_LEARNING_STORE_PATH` | `platform/.cache/learning_state.sqlite3` | 学习会话与复习历史 SQLite |
 | `SA_SOURCE_REGISTRY_PATH` | `platform/.cache/source_registry.sqlite3` | M7-1 独立 Source Registry；默认启动路径暂不创建 |
-| `SA_USER_SOURCE_CACHE_PATH` | `platform/.cache/user-sources` | M7 用户源 snapshot/FTS5 缓存；仅在 Search/QA 提供 principal 且 registry 已存在时懒加载 |
+| `SA_USER_SOURCE_CACHE_PATH` | `platform/.cache/user-sources` | M7 用户源 snapshot/FTS5/vector 缓存；仅在 Search/QA 提供 principal 且 registry 已存在时懒加载 |
 | `SA_INDEX_CACHE_PATH` | `platform/.cache/index` | 组合快照与 `service.lock` |
 | `SA_EXTRA_SOURCES` | `[]` | 启动期静态额外 Markdown 源，最多 3 个；只进 Search/QA |
 | `SA_EXTRA_SOURCES_STRICT` | `true` | 额外源失败时拒绝整次发布 |
@@ -446,14 +447,14 @@ M6b 已实现独立、默认关闭、只读的原生工具调用 preview，并�
 它不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。
 
 M7 当前为 `ADMITTED / IN_PROGRESS`。已实施的是独立 Source Registry 加上 source-local manifest、冻结 parser matrix、normalized document、
-离线单源 FULL candidate/发布合同、受限 incremental sync worker、已冻结的 source-local delete/isolation/FTS5/offline 合同，以及 Search/QA 可选 principal overlay；阶段测试 `tests/M7/` 当前为 177 项。M6b preview 仍不含用户源。当前测试与 disposable 1k/3k FTS5 证据不构成 M7 exit。
+离线单源 FULL candidate/发布合同、受限 incremental sync worker、已冻结的 source-local delete/isolation/FTS5/vector/offline 合同，以及 Search/QA 可选 principal overlay；阶段测试 `tests/M7/` 当前为 189 项。M6b preview 仍不含用户源。当前测试与 disposable 1k/3k 证据不构成 M7 exit。
 默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
 ## 降级路径
 
 | 场景 | 行为 |
 | --- | --- |
-| `sentence-transformers` 未安装 | 向量路自动跳过，回退纯关键词（BM25）检索 |
+| `sentence-transformers` 未安装 | 默认 pack/extras 向量路自动跳过，回退纯关键词（BM25）；M7 用户源查询 fail closed，不降级 |
 | LLM API 未配置 | 问答返回笔记摘要，而非 AI 生成 |
 | LLM API 调用失败 | 同上，并附带失败提示 |
 | Agent Preview 未启用 | 路由不注册，默认 OpenAPI 不出现该端点 |
@@ -529,4 +530,4 @@ Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知�
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-03（M7 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 合同已冻结）· 维护：随 API/配置变更同步更新*
+*创建：2026-08-11 · 更新：2026-09-03（M7 generation-bound vector 与协议内 3k p50 复用优化已落地；冻结 20 次 1k/3k BGE 仍未通过）· 维护：随 API/配置变更同步更新*

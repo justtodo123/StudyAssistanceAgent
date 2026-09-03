@@ -202,7 +202,7 @@ class MultiRecallService:
                     principal_id=principal,
                 )
                 if results:
-                    mode = "fts5"
+                    mode = "hybrid"
             else:
                 mode = "hybrid" if len(routes) > 1 and all(routes) else "keyword-only"
                 # Keep a wider candidate set before applying content-type and course
@@ -257,7 +257,11 @@ class MultiRecallService:
                 query=question,
                 top_k=max(top_k, 20),
             )
-        except Exception:
+        except Exception as exc:
+            from .user_source_search import Fts5TokenizerError, SourceIsolationError, SourceOfflineError
+
+            if isinstance(exc, (SourceOfflineError, SourceIsolationError, Fts5TokenizerError)):
+                raise
             return results
         user_chunks = list(getattr(user_result, "chunks", ()))
         if not user_chunks:

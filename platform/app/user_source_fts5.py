@@ -33,6 +33,7 @@ from .user_source_snapshot import FullSnapshot
 
 INDEX_SCHEMA_VERSION = FTS_SCHEMA_VERSION
 VECTOR_STATUS_NOT_ATTACHED = "not_attached"
+VECTOR_STATUS_ATTACHED = "attached"
 RESULT_CACHE_STATUS_NOT_ATTACHED = "not_attached"
 _EMPTY_SET_DIGEST = hashlib.sha256(canonical_json([])).hexdigest()
 
@@ -167,12 +168,38 @@ def identity_set_digest(snapshot: FullSnapshot) -> str:
     return hashlib.sha256(canonical_json(identity_set(snapshot))).hexdigest()
 
 
+@dataclass(slots=True)
+class _Fts5Runtime:
+    source_id: str
+    generation: str
+    metadata: Fts5IndexMetadata
+    metadata_digest: str
+    sqlite_path: Path
+    sqlite_size: int
+    sqlite_mtime_ns: int
+    identity_pairs: tuple[tuple[str, str], ...]
+
+
+def _file_fingerprint(path: Path) -> tuple[int, int]:
+    stat = path.stat()
+    mtime_ns = getattr(stat, "st_mtime_ns", int(stat.st_mtime * 1_000_000_000))
+    return int(stat.st_size), int(mtime_ns)
+
+
+def _read_fts5_identity(connection: sqlite3.Connection) -> tuple[tuple[str, str], ...]:
+    rows = connection.execute(
+        "SELECT chunk_id, document_id FROM chunks ORDER BY chunk_id, document_id"
+    ).fetchall()
+    return tuple((str(row["chunk_id"]), str(row["document_id"])) for row in rows)
+
+
 class UserSourceFts5Index:
     """Build and read one generation-bound FTS5 index per user source."""
 
     def __init__(self, cache_root: str | Path) -> None:
         self._root = Path(cache_root) / "user-source-fts5" / "v1"
         self._lock = threading.RLock()
+        self._runtimes: dict[tuple[str, str], "_Fts5Runtime"] = {}
 
     def published_path(self, source_id: str, generation: str | None = None) -> Path | None:
         root = self._root / source_id
@@ -191,42 +218,52 @@ class UserSourceFts5Index:
             return None
         return self._load_metadata(path)
 
-    def build(self, snapshot: FullSnapshot, *, activate: bool = True) -> Fts5IndexMetadata:
+    def build(
+        self,
+        snapshot: FullSnapshot,
+        *,
+        activate: bool = True,
+        vector_status: str = VECTOR_STATUS_NOT_ATTACHED,
+        vector_identity_set_digest: str | None = None,
+    ) -> Fts5IndexMetadata:
         with self._lock:
-            metadata = self._materialize(snapshot)
+            self._drop_runtimes(snapshot.source_id)
+            metadata = self._materialize(
+                snapshot,
+                vector_status=vector_status,
+                vector_identity_set_digest=vector_identity_set_digest,
+            )
             if activate:
                 self._activate(snapshot.source_id, snapshot.generation)
             return metadata
 
     def search(self, source_id: str, generation: str, query: str, *, top_k: int = 5) -> tuple[Fts5Hit, ...]:
-        metadata = self.validate(source_id, generation)
+        runtime = self._runtimes.get((source_id, generation)) or self._ensure_runtime(source_id, generation)
         try:
             match = fts5_match_query(query)
         except Fts5TokenizerError:
             raise
-        path = self.published_path(source_id, generation)
-        if path is None:
-            raise Fts5IndexError(Fts5IndexErrorCode.REPAIR_REQUIRED)
+        connection: sqlite3.Connection | None = None
         try:
-            connection = sqlite3.connect(path / "index.sqlite3")
-            try:
-                connection.row_factory = sqlite3.Row
-                rows = connection.execute(
-                    """
-                    SELECT chunk_id, document_id, bm25(chunks) AS score
-                    FROM chunks
-                    WHERE chunks MATCH ?
-                    ORDER BY score
-                    LIMIT ?
-                    """,
-                    (match, max(int(top_k), 0)),
-                ).fetchall()
-            finally:
-                connection.close()
+            connection = sqlite3.connect(str(runtime.sqlite_path))
+            connection.row_factory = sqlite3.Row
+            rows = connection.execute(
+                """
+                SELECT chunk_id, document_id, bm25(chunks) AS score
+                FROM chunks
+                WHERE chunks MATCH ?
+                ORDER BY score
+                LIMIT ?
+                """,
+                (match, max(int(top_k), 0)),
+            ).fetchall()
         except Fts5TokenizerError:
             raise
         except sqlite3.Error as exc:
             raise Fts5TokenizerError(Fts5TokenizerErrorCode.INVALID_QUERY) from exc
+        finally:
+            if connection is not None:
+                connection.close()
         hits = []
         for rank, row in enumerate(rows, start=1):
             hits.append(
@@ -234,42 +271,52 @@ class UserSourceFts5Index:
                     source_id=source_id,
                     document_id=str(row["document_id"]),
                     chunk_id=str(row["chunk_id"]),
-                    generation=metadata.generation,
+                    generation=runtime.metadata.generation,
                     rank=rank,
                 )
             )
         return tuple(hits)
 
     def validate(self, source_id: str, generation: str, snapshot: FullSnapshot | None = None) -> Fts5IndexMetadata:
-        path = self.published_path(source_id, generation)
-        if path is None:
-            raise Fts5IndexError(Fts5IndexErrorCode.REPAIR_REQUIRED)
-        metadata = self._load_metadata(path)
-        try:
-            validate_tokenizer_metadata(metadata.to_dict())
-        except Fts5TokenizerError:
-            raise
-        if metadata.source_id != source_id or metadata.generation != generation:
-            raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
-        if metadata.vector_status != VECTOR_STATUS_NOT_ATTACHED:
-            raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
-        if metadata.result_cache_status != RESULT_CACHE_STATUS_NOT_ATTACHED:
-            raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
-        if metadata.vector_identity_set_digest != _EMPTY_SET_DIGEST:
-            raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
-        if metadata.result_cache_digest != _EMPTY_SET_DIGEST:
-            raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
-        rows = self._read_rows(path / "index.sqlite3")
-        recomputed = self._digests_from_rows(source_id, generation, rows)
-        if (
-            recomputed["identity_set_digest"] != metadata.identity_set_digest
-            or recomputed["token_stream_digest"] != metadata.token_stream_digest
-            or recomputed["content_digest"] != metadata.content_digest
-            or recomputed["chunk_count"] != metadata.chunk_count
-        ):
-            raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
-        if snapshot is not None:
-            if (
+        return self._ensure_runtime(source_id, generation, snapshot).metadata
+
+    def _drop_runtimes(self, source_id: str | None = None) -> None:
+        if source_id is None:
+            self._runtimes.clear()
+            return
+        for key in [item for item in self._runtimes if item[0] == source_id]:
+            del self._runtimes[key]
+
+    def _ensure_runtime(
+        self,
+        source_id: str,
+        generation: str,
+        snapshot: FullSnapshot | None = None,
+    ) -> "_Fts5Runtime":
+        with self._lock:
+            path = self.published_path(source_id, generation)
+            if path is None:
+                raise Fts5IndexError(Fts5IndexErrorCode.REPAIR_REQUIRED)
+            metadata = self._load_metadata(path)
+            try:
+                validate_tokenizer_metadata(metadata.to_dict())
+            except Fts5TokenizerError:
+                raise
+            if metadata.source_id != source_id or metadata.generation != generation:
+                raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
+            if metadata.vector_status == VECTOR_STATUS_ATTACHED:
+                if metadata.vector_identity_set_digest != metadata.identity_set_digest:
+                    raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
+            elif metadata.vector_status == VECTOR_STATUS_NOT_ATTACHED:
+                if metadata.vector_identity_set_digest != _EMPTY_SET_DIGEST:
+                    raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
+            else:
+                raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
+            if metadata.result_cache_status != RESULT_CACHE_STATUS_NOT_ATTACHED:
+                raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
+            if metadata.result_cache_digest != _EMPTY_SET_DIGEST:
+                raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
+            if snapshot is not None and (
                 snapshot.source_id != source_id
                 or snapshot.generation != generation
                 or snapshot.source_fingerprint != metadata.snapshot_fingerprint
@@ -277,16 +324,98 @@ class UserSourceFts5Index:
                 or snapshot.chunk_count != metadata.chunk_count
             ):
                 raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
-        return metadata
+            sqlite_path = path / "index.sqlite3"
+            try:
+                sqlite_size, sqlite_mtime_ns = _file_fingerprint(sqlite_path)
+                metadata_digest = (path / "SHA256").read_text(encoding="ascii").strip()
+            except OSError as exc:
+                raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID) from exc
+            key = (source_id, generation)
+            cached = self._runtimes.get(key)
+            if (
+                cached is not None
+                and cached.metadata_digest == metadata_digest
+                and cached.sqlite_size == sqlite_size
+                and cached.sqlite_mtime_ns == sqlite_mtime_ns
+            ):
+                cached.metadata = metadata
+                return cached
+            connection: sqlite3.Connection | None = None
+            try:
+                connection = sqlite3.connect(str(sqlite_path))
+                connection.row_factory = sqlite3.Row
+                connection.execute("PRAGMA temp_store=MEMORY")
+                identity_pairs = _read_fts5_identity(connection)
+                digest = hashlib.sha256(
+                    canonical_json(sorted([[document_id, chunk_id] for chunk_id, document_id in identity_pairs]))
+                ).hexdigest()
+                if digest != metadata.identity_set_digest or len(identity_pairs) != metadata.chunk_count:
+                    raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
+                if (
+                    cached is not None
+                    and cached.metadata_digest == metadata_digest
+                    and cached.sqlite_size == sqlite_size
+                    and cached.sqlite_mtime_ns == sqlite_mtime_ns
+                    and cached.identity_pairs == identity_pairs
+                ):
+                    cached.metadata = metadata
+                    return cached
+                integrity = connection.execute("PRAGMA integrity_check").fetchone()
+                if integrity is None or str(integrity[0]) != "ok":
+                    raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
+                rows = connection.execute(
+                    "SELECT chunk_id, document_id, content FROM chunks ORDER BY chunk_id, document_id"
+                ).fetchall()
+                parsed_rows = [(str(row["chunk_id"]), str(row["document_id"]), str(row["content"])) for row in rows]
+                recomputed = self._digests_from_rows(source_id, generation, parsed_rows)
+                if (
+                    recomputed["identity_set_digest"] != metadata.identity_set_digest
+                    or recomputed["token_stream_digest"] != metadata.token_stream_digest
+                    or recomputed["content_digest"] != metadata.content_digest
+                    or recomputed["chunk_count"] != metadata.chunk_count
+                ):
+                    raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID)
+                runtime = _Fts5Runtime(
+                    source_id=source_id,
+                    generation=generation,
+                    metadata=metadata,
+                    metadata_digest=metadata_digest,
+                    sqlite_path=sqlite_path,
+                    sqlite_size=sqlite_size,
+                    sqlite_mtime_ns=sqlite_mtime_ns,
+                    identity_pairs=identity_pairs,
+                )
+                self._runtimes[key] = runtime
+                return runtime
+            except Fts5TokenizerError:
+                self._runtimes.pop(key, None)
+                raise
+            except sqlite3.Error as exc:
+                self._runtimes.pop(key, None)
+                raise Fts5IndexError(Fts5IndexErrorCode.INDEX_INVALID) from exc
+            finally:
+                if connection is not None:
+                    connection.close()
 
-    def _materialize(self, snapshot: FullSnapshot) -> Fts5IndexMetadata:
+    def _materialize(
+        self,
+        snapshot: FullSnapshot,
+        *,
+        vector_status: str = VECTOR_STATUS_NOT_ATTACHED,
+        vector_identity_set_digest: str | None = None,
+    ) -> Fts5IndexMetadata:
         root = self._root / snapshot.source_id
         root.mkdir(parents=True, exist_ok=True)
         staging = root / f".staging-{uuid4().hex}"
         generation = root / f"gen-{snapshot.generation}"
         try:
             staging.mkdir()
-            metadata = self._write_index(staging, snapshot)
+            metadata = self._write_index(
+                staging,
+                snapshot,
+                vector_status=vector_status,
+                vector_identity_set_digest=vector_identity_set_digest,
+            )
             payload = metadata.canonical_bytes()
             self._write_fsynced(staging / "metadata.json", payload)
             self._write_fsynced(
@@ -310,6 +439,7 @@ class UserSourceFts5Index:
             raise
 
     def _activate(self, source_id: str, generation: str) -> None:
+        self._drop_runtimes(source_id)
         root = self._root / source_id
         generation_name = f"gen-{generation}"
         path = root / generation_name
@@ -320,7 +450,14 @@ class UserSourceFts5Index:
             self._switch_pointer(root / "PREVIOUS", previous)
         self._switch_pointer(root / "CURRENT", generation_name)
 
-    def _write_index(self, staging: Path, snapshot: FullSnapshot) -> Fts5IndexMetadata:
+    def _write_index(
+        self,
+        staging: Path,
+        snapshot: FullSnapshot,
+        *,
+        vector_status: str = VECTOR_STATUS_NOT_ATTACHED,
+        vector_identity_set_digest: str | None = None,
+    ) -> Fts5IndexMetadata:
         versions = tokenizer_metadata()
         rows: list[tuple[str, str, str]] = []
         for document in snapshot.documents:
@@ -369,6 +506,16 @@ class UserSourceFts5Index:
                 "token_stream_digest": digests["token_stream_digest"],
             }
         )
+        if vector_status == VECTOR_STATUS_ATTACHED:
+            bound_digest = vector_identity_set_digest or identity_digest
+            if bound_digest != identity_digest:
+                raise Fts5IndexError(Fts5IndexErrorCode.BUILD_FAILED)
+        elif vector_status == VECTOR_STATUS_NOT_ATTACHED:
+            bound_digest = _EMPTY_SET_DIGEST
+            if vector_identity_set_digest not in {None, _EMPTY_SET_DIGEST}:
+                raise Fts5IndexError(Fts5IndexErrorCode.BUILD_FAILED)
+        else:
+            raise Fts5IndexError(Fts5IndexErrorCode.BUILD_FAILED)
         return Fts5IndexMetadata(
             source_id=snapshot.source_id,
             generation=snapshot.generation,
@@ -383,6 +530,8 @@ class UserSourceFts5Index:
             normalization_version=versions["normalization_version"],
             fts_schema_version=versions["fts_schema_version"],
             jieba_version=versions["jieba_version"],
+            vector_status=vector_status,
+            vector_identity_set_digest=bound_digest,
         )
 
     def _load_metadata(self, path: Path) -> Fts5IndexMetadata:
@@ -485,6 +634,7 @@ class UserSourceFts5Index:
 __all__ = [
     "INDEX_SCHEMA_VERSION",
     "VECTOR_STATUS_NOT_ATTACHED",
+    "VECTOR_STATUS_ATTACHED",
     "RESULT_CACHE_STATUS_NOT_ATTACHED",
     "Fts5IndexErrorCode",
     "Fts5IndexError",

@@ -23,7 +23,9 @@ def test_m7_benchmark_quick_smoke_is_not_exit_evidence(tmp_path: Path) -> None:
     (tmp_path / "m7-benchmark.json").write_text(dumped, encoding="utf-8")
     assert payload["schema"] == "sa.source.benchmark.v1"
     assert payload["m7_exit"] is False
-    assert payload["vector_backend"] == "not_attached"
+    assert payload["vector_backend"] == "source_local_hash"
+    assert payload["workloads"][0]["vector_status"] == "attached"
+    assert payload["workloads"][0]["identity_vector"] is True
     assert payload["network_promoted"] is False
     assert payload["m8_started"] is False
     assert payload["workloads"][0]["exit_eligible"] is False

@@ -203,6 +203,7 @@ class SourceLocalRetrievalSurfaces:
 
     def __init__(self, cache_root: str | Path) -> None:
         self._root = Path(cache_root) / "retrieval-surfaces" / "v1"
+        self._payload_cache: dict[str, tuple[int, dict[str, object] | None]] = {}
 
     def path(self, source_id: str) -> Path:
         return self._root / source_id
@@ -298,6 +299,7 @@ class SourceLocalRetrievalSurfaces:
         return None
 
     def physical_clear(self, source_id: str) -> None:
+        self._payload_cache.pop(source_id, None)
         root = self.path(source_id)
         if root.exists():
             for child in root.iterdir():
@@ -313,13 +315,22 @@ class SourceLocalRetrievalSurfaces:
     def _load(self, source_id: str) -> dict[str, object] | None:
         path = self.path(source_id) / "surfaces.json"
         if not path.is_file():
+            self._payload_cache[source_id] = (-1, None)
             return None
+        mtime_ns = getattr(path.stat(), "st_mtime_ns", int(path.stat().st_mtime * 1_000_000_000))
+        cached = self._payload_cache.get(source_id)
+        if cached is not None and cached[0] == mtime_ns:
+            return cached[1]
         payload = json.loads(path.read_text(encoding="utf-8"))
-        return payload if isinstance(payload, dict) else None
+        parsed = payload if isinstance(payload, dict) else None
+        self._payload_cache[source_id] = (int(mtime_ns), parsed)
+        return parsed
 
     def _write(self, path: Path, payload: Mapping[str, object]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(_canonical_json(payload), encoding="utf-8")
+        source_id = path.parent.name
+        self._payload_cache.pop(source_id, None)
 
 
 _DELETE_SCHEMA = """
@@ -903,6 +914,7 @@ class UserSourceDeleteService:
     def _initialize(self) -> None:
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as connection:
+            connection.execute("PRAGMA journal_mode=WAL")
             exists = connection.execute(
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'delete_meta'"
             ).fetchone()
@@ -929,7 +941,6 @@ class UserSourceDeleteService:
         with self._lock:
             connection = sqlite3.connect(str(self._db_path), timeout=30, check_same_thread=False)
             connection.row_factory = sqlite3.Row
-            connection.execute("PRAGMA journal_mode=WAL")
             connection.execute("PRAGMA busy_timeout=30000")
             try:
                 yield connection

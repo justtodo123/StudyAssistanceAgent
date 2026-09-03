@@ -147,6 +147,7 @@ class NormalizedDocument:
     parser_version: str
     units: tuple[NormalizedUnit, ...]
     normalized_text_digest: str = field(init=False)
+    _cached_chunks: tuple["NormalizedChunk", ...] | None = field(default=None, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         try:
@@ -217,12 +218,14 @@ class NormalizedDocument:
 
     def chunks(self) -> tuple["NormalizedChunk", ...]:
         """Return cross-format M7 chunks without applying M6a Markdown rules."""
+        if self._cached_chunks is not None:
+            return self._cached_chunks
         expected_document_id = hashlib.sha256(
             f"{self.source_id}\0{normalize_logical_uri(self.logical_uri)}".encode("utf-8")
         ).hexdigest()[:32]
         if expected_document_id != self.document_id:
             raise NormalizedDocumentError("normalized document identity does not match logical identity")
-        return tuple(
+        cached = tuple(
             NormalizedChunk(
                 source_id=self.source_id,
                 document_id=self.document_id,
@@ -235,6 +238,8 @@ class NormalizedDocument:
             )
             for unit in self.units
         )
+        object.__setattr__(self, "_cached_chunks", cached)
+        return cached
 
 
 def chunk_key(document_id: str, unit_kind: str, ordinal: int, *, chunk_schema_version: str = CHUNK_SCHEMA_VERSION) -> str:

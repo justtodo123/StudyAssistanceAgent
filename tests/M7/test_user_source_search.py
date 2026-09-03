@@ -24,6 +24,7 @@ from app.user_source_search import (
     ensure_user_provenance,
     public_uri,
 )
+from app.user_source_vector import HashVectorEmbedder
 
 pytestmark = pytest.mark.m7
 
@@ -57,7 +58,11 @@ def _write_docs(root: Path, texts: dict[str, str]) -> None:
 
 def _service(tmp_path: Path) -> tuple[SourceLifecycleService, UserSourceSearchService]:
     lifecycle = SourceLifecycleService(SqliteSourceRegistry(tmp_path / "registry.sqlite3"))
-    return lifecycle, UserSourceSearchService(tmp_path / "cache", lifecycle)
+    return lifecycle, UserSourceSearchService(
+        tmp_path / "cache",
+        lifecycle,
+        vector_embedder=HashVectorEmbedder(),
+    )
 
 
 def _register(lifecycle: SourceLifecycleService, source_id: str, owner: str = PRINCIPAL) -> None:
@@ -92,7 +97,7 @@ def test_owner_search_returns_user_provenance_and_original_content(tmp_path: Pat
     _publish(service, source_id=SOURCE_A, source_root=root)
 
     result = service.search(principal_id=PRINCIPAL, query="进程调度", top_k=5)
-    assert result.mode == "fts5"
+    assert result.mode == "hybrid"
     assert result.cache_hit is False
     assert result.auth_digest
     assert len(result.chunks) == 1
@@ -184,7 +189,7 @@ def test_deleted_source_is_not_recalled(tmp_path: Path) -> None:
     assert result.chunks == ()
 
 
-def test_missing_fts5_is_skipped_in_aggregate_and_fails_when_explicit(tmp_path: Path) -> None:
+def test_missing_index_fails_closed_in_aggregate_and_explicit(tmp_path: Path) -> None:
     lifecycle, service = _service(tmp_path)
     _register(lifecycle, SOURCE_A)
     from app.user_source_snapshot import UserSourceSnapshotPublisher
@@ -198,8 +203,9 @@ def test_missing_fts5_is_skipped_in_aggregate_and_fails_when_explicit(tmp_path: 
         source_root=root,
         correlation_id=CORRELATION,
     )
-    aggregate = service.search(principal_id=PRINCIPAL, query="进程调度")
-    assert aggregate.chunks == ()
+    with pytest.raises(SourceOfflineError) as aggregate:
+        service.search(principal_id=PRINCIPAL, query="进程调度")
+    assert aggregate.value.code is SourceOfflineErrorCode.REPAIR_REQUIRED
     with pytest.raises(SourceOfflineError) as caught:
         service.search(principal_id=PRINCIPAL, query="进程调度", source_id=SOURCE_A)
     assert caught.value.code is SourceOfflineErrorCode.REPAIR_REQUIRED
@@ -313,6 +319,7 @@ def test_preview_quiz_and_sessions_do_not_import_user_source_search() -> None:
                 imported.extend(alias.name for alias in node.names)
         assert "user_source_search" not in imported
         assert "user_source_fts5" not in imported
+        assert "user_source_vector" not in imported
         text = Path(relative).read_text(encoding="utf-8")
         assert "principal_id" not in text
 

@@ -132,19 +132,31 @@ class UserSourceSnapshotPublisher:
         self._root = Path(cache_root) / "user-source-snapshots" / "v1"
         self._lifecycle = lifecycle
         self._lock = threading.RLock()
+        self._snapshot_cache: dict[tuple[str, str], tuple[str, FullSnapshot]] = {}
 
     def load_snapshot(self, source_id: str, generation: str | None = None) -> FullSnapshot | None:
         path = self.published_path(source_id, generation)
         if path is None:
             return None
+        resolved = generation or path.name.removeprefix("gen-")
+        try:
+            digest = (path / "SHA256").read_text(encoding="ascii").strip()
+        except OSError as exc:
+            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
+        cache_key = (source_id, resolved)
+        with self._lock:
+            cached = self._snapshot_cache.get(cache_key)
+            if cached is not None and cached[0] == digest:
+                return cached[1]
         try:
             payload = json.loads((path / "snapshot.json").read_text(encoding="utf-8"))
-            digest = (path / "SHA256").read_text(encoding="ascii").strip()
         except (OSError, json.JSONDecodeError) as exc:
             raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
         snapshot = FullSnapshot.from_dict(payload)
         if hashlib.sha256(snapshot.canonical_bytes()).hexdigest() != digest:
             raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
+        with self._lock:
+            self._snapshot_cache[cache_key] = (digest, snapshot)
         return snapshot
 
     def published_path(self, source_id: str, generation: str | None = None) -> Path | None:

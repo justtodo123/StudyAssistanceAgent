@@ -1,11 +1,11 @@
 # M7 用户 Source 生命周期与千级检索准备计划
 
-> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 已落地，冻结 1k/3k 未通过，不构成 M7 exit
+> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；协议内 3k p50 复用优化已落地（hash 剖析非正式）。冻结 20 次 1k/3k BGE 未通过，不构成 M7 exit
 > 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不构成生产开工、语料批准或退出证据
 > 前置：`M7-M6A-SOURCE-CONTRACT` 与 `M7-PROTECTED-BASELINE` 均为 `SATISFIED`；批准记录见 §4
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
-> 本文件冻结强制决策与批准范围；当前已实现并冻结 M7-1 Source Registry、文件级 manifest、五格式 parser matrix、normalized document、source-local FULL/INCREMENTAL/delete/isolation 局部合同，并已落地 source-local FTS5/offline fail-closed。后续正式检索接入不得静默修改已冻结合同，仍须遵循本计划和验收门禁。Agent 不得自行批准准入或开工。
+> 本文件冻结强制决策与批准范围；当前已实现并冻结 M7-1 Source Registry、文件级 manifest、五格式 parser matrix、normalized document、source-local FULL/INCREMENTAL/delete/isolation 局部合同，并已落地 source-local FTS5/vector/offline fail-closed 与 Search/QA overlay。冻结 20 次 1k/3k benchmark 仍未通过。后续正式检索接入不得静默修改已冻结合同，仍须遵循本计划和验收门禁。Agent 不得自行批准准入或开工。
 
 ## 1. 范围与非目标
 
@@ -917,16 +917,17 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 
 生产开工门禁为 `AUTHORIZED`，`authorized_by=justtodo123`，`authorized_at=2026-08-31`；授权参考为用户指令“批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论”。因此 M7 当前为 `ADMITTED / IN_PROGRESS`；本轮已形成 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 的局部实现，不关闭 P0、不批准 Network，也不形成 M7 exit。
 
-## 5. 获准后的实施顺序（FTS5/offline 局部合同已落地，后续仅正式检索/benchmark）
+## 5. 获准后的实施顺序（FTS5/vector/offline 局部合同已落地，后续仅冻结 benchmark）
 
 1. ✅ 已落地版本化 lifecycle schema、Source Registry repository contract 和事务/回滚测试；已补齐文件级 manifest、parser matrix、normalized document 与 source-local FULL candidate/原子发布局部合同；
 2. ✅ 已落地受限增量同步、request/run 幂等、单 active run、cancel/retry/checkpoint/recovery 的 source-local 局部合同；
 3. ✅ 已落地并冻结 source-local tombstone/read barrier、索引/cache 不可读传播、provenance 失效和检索隔离过滤局部合同；
 4. ✅ 已落地 `jieba==0.42.1` / `sa.source.fts5-tokenizer.v1` generation-bound SQLite FTS5 与离线 fail-closed 校验/显式 FULL repair；
-5. ✅ 已落地 Search/QA 可选 principal overlay：隔离后 FTS5、generation/auth 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源；
-6. ⬜ 冻结 `sa.source.benchmark.v1` 仍未满足：vector 未挂接、FULL 样本不是 20 次、3k 查询 p50 未达标。不得进入 M8。
+5. ✅ 已落地 Search/QA 可选 principal overlay：隔离后 FTS5+vector、generation/auth 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源；
+6. ✅ 已落地 generation-bound source-local vector：与同一 published generation 的 FTS5 identity-set 100% 对齐，缺 metadata/模型/generation 时用户源 fail closed；
+7. ⬜ 冻结 `sa.source.benchmark.v1` 仍未满足：vector 已挂接但不是冻结 20 次 BGE 协议，3k 查询 p50 未复测达标。不得进入 M8。
 
-上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 177 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
+上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 189 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
 默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 1k/3k benchmark（含 vector identity 与 20 次样本）达标。当前证据不满足退出。
 
 ## 6. 撤销与后续边界

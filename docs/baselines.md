@@ -613,5 +613,15 @@ Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明�
 
 本节追加记录 Search/QA 可选 principal overlay，不回写 FTS5/offline 162 项原文，也不改变 M7 `ADMITTED / IN_PROGRESS` 或 M8 `BLOCKED / NOT_STARTED`。2026-09-03 复验：`tests/M7/` 177 passed。`tools/run_m7_benchmark.py` 的 disposable FTS5 跑数为：1k-single Recall@1/3/5=1.000，查询 p50 135 ms / p95 149 ms；3k-aggregate Recall@1/3/5=1.000，查询 p50 392 ms / p95 458 ms。vector 仍 `not_attached`；FULL 样本为 1 而非冻结 20 次；3k p50 超过 250 ms 门槛。该报告不是 M7 exit 证据，也不批准 Network 或 M8/Milvus。
 
-*创建：2026-08-12 · 更新：2026-09-02（追加 delete/isolation 冻结复验；不回写历史证据）·
+## M7 generation-bound vector checkout — 2026-09-03
+
+本节追加记录 source-local generation-bound vector 与 FTS5 identity-set 合同，不回写 Search overlay 177 项原文，也不改变 M7 `ADMITTED / IN_PROGRESS` 或 M8 `BLOCKED / NOT_STARTED`。2026-09-03 复验：`tests/M7/` 189 passed。用户源 vector 绑定 source_id、immutable revision、published generation、embedding model/version、chunk policy 与 identity-set digest；与同一 normalized published generation 的 FTS5 chunk_id 集合 100% 一致。vector metadata 缺失、generation/模型/identity 不一致时 M7 用户源 fail closed，不降级默认包 keyword-only。M0–M6 默认 pack/extras 的既有 vector fallback 保持不变。Preview/Quiz/Review/study-sessions 仍不含用户源。冻结 20 次 1k/3k BGE 协议与 3k p50 仍未达标，本记录不是 M7 exit 证据，也不批准 Network 或 M8/Milvus。
+
+
+
+## M7 协议内 3k p50 复用优化 — 2026-09-03
+
+本条追记 source-local generation-bound 检索热路径的协议内优化，不改写 generation-bound vector 189 项原记录，也不改变 M7 `ADMITTED / IN_PROGRESS` 与 M8 `BLOCKED / NOT_STARTED`。2026-09-03 复验：`tests/M7/` 190 passed。优化保持 fail-closed：identity-set、generation 绑定、删除屏障与 owner allowlist 仍在查询前生效；vector 未附着或 metadata 损坏不降级到 keyword-only。`tools/profile_m7_search.py` 对 3k-aggregate 的 source-local hash 剖析为 query p50 约 105 ms / p95 约 109 ms，vector 已附着，但不是冻结 20 次 BGE 协议，不能当作 M7 exit 证据，也不批准 Network 或 M8/Milvus。
+
+*创建：2026-08-12 · 更新：2026-09-03（追加 generation-bound vector 合同复验；不回写历史证据）·
 维护：知识库、评测集或检索策略变化后复测并追加记录*

@@ -1,6 +1,6 @@
 """Owner-filtered M7 user-source search path.
 
-Isolation runs before FTS5. Results are generation-bound, provenance-checked,
+Isolation runs before FTS5 and vector. Results are generation-bound, provenance-checked,
 and cached by auth digest. This module does not mutate default-pack BM25,
 Quiz, Review Plan, study-sessions, or M6b preview retrieve.
 """
@@ -19,7 +19,7 @@ from . import config
 from .fts5_tokenizer import Fts5TokenizerError
 from .models import RetrievalChunk
 from .source_delete import UserSourceDeleteService
-from .source_isolation import IsolationSnapshot, RetrievalHit, SourceIsolationGate
+from .source_isolation import IsolationSnapshot, RetrievalHit, SourceIsolationError, SourceIsolationGate
 from .source_offline import SourceOfflineError, SourceOfflineErrorCode, UserSourceOfflineGuard
 from .source_registry import SourceLifecycleService, SqliteSourceRegistry
 from .user_source_fts5 import Fts5Hit
@@ -99,7 +99,7 @@ class UserSourceSearchResult:
 
 
 class UserSourceSearchService:
-    """FTS5 search over authorized published user sources."""
+    """Hybrid FTS5+vector search over authorized published user sources."""
 
     def __init__(
         self,
@@ -110,6 +110,7 @@ class UserSourceSearchService:
         offline: UserSourceOfflineGuard | None = None,
         delete_service: UserSourceDeleteService | None = None,
         isolation: SourceIsolationGate | None = None,
+        vector_embedder: object | None = None,
         cache_capacity: int = 128,
     ) -> None:
         self._root = Path(cache_root)
@@ -123,6 +124,7 @@ class UserSourceSearchService:
             snapshot_publisher=self._snapshots,
             delete_service=self._delete,
             isolation=self._isolation,
+            vector_embedder=vector_embedder,
         )
         self._cache: OrderedDict[tuple[str, str, str, int, str | None], UserSourceSearchResult] = OrderedDict()
         self._cache_capacity = cache_capacity
@@ -173,16 +175,14 @@ class UserSourceSearchService:
                     source_id=current_source,
                     query=query,
                     top_k=max(int(top_k), 20),
+                    isolation_snapshot=snapshot,
                 )
-            except Fts5TokenizerError:
+            except (Fts5TokenizerError, SourceOfflineError, SourceIsolationError):
                 raise
-            except SourceOfflineError:
-                if source_id is not None:
-                    raise
-                continue
             filtered = self._isolation.filter_hits(
                 principal_id,
                 _hits_to_retrieval(hits, snapshot.auth_digest),
+                snapshot=snapshot,
             )
             chunks, provenances = self._hydrate(current_source, published, filtered)
             if chunks:
@@ -198,7 +198,7 @@ class UserSourceSearchService:
         stored = UserSourceSearchResult(
             chunks=tuple(chunk.model_copy(deep=True) for chunk in fused),
             provenance=provenance,
-            mode="fts5",
+            mode="hybrid",
             auth_digest=snapshot.auth_digest,
             generation_digest=generation_digest,
             cache_hit=False,
@@ -380,4 +380,8 @@ __all__ = [
     "UserSourceSearchService",
     "LazyUserSourceSearch",
     "ensure_user_provenance",
+    "SourceOfflineError",
+    "SourceOfflineErrorCode",
+    "SourceIsolationError",
+    "Fts5TokenizerError",
 ]

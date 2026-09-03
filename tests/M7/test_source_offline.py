@@ -22,8 +22,9 @@ from app.source_registry import (
     SqliteSourceRegistry,
     generate_uuid7,
 )
-from app.user_source_fts5 import UserSourceFts5Index
+from app.user_source_fts5 import VECTOR_STATUS_ATTACHED, UserSourceFts5Index
 from app.user_source_snapshot import UserSourceSnapshotPublisher
+from app.user_source_vector import HashVectorEmbedder, UserSourceVectorIndex
 
 pytestmark = pytest.mark.m7
 
@@ -67,7 +68,7 @@ def _guard(tmp_path: Path) -> tuple[SourceLifecycleService, UserSourceOfflineGua
         source_id=SOURCE_ID,
     )
     cache = tmp_path / "cache"
-    guard = UserSourceOfflineGuard(cache, lifecycle)
+    guard = UserSourceOfflineGuard(cache, lifecycle, vector_embedder=HashVectorEmbedder())
     source_root = tmp_path / "source"
     return lifecycle, guard, source_root
 
@@ -234,6 +235,12 @@ def test_explicit_full_repair_makes_source_queryable_and_keeps_identity(tmp_path
     from app.user_source_fts5 import identity_set_digest
 
     assert validated.metadata.identity_set_digest == identity_set_digest(snapshot)
+    assert validated.metadata.vector_status == VECTOR_STATUS_ATTACHED
+    assert validated.vector_metadata.identity_set_digest == validated.metadata.identity_set_digest
+    vector = UserSourceVectorIndex(tmp_path / "cache", embedder=HashVectorEmbedder())
+    assert vector.chunk_ids(SOURCE_ID, record.published_generation) == {
+        chunk.chunk_id for document in snapshot.documents for chunk in document.chunks()
+    }
 
 
 def test_failed_repair_keeps_last_good_fts5(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -319,3 +326,4 @@ def test_fts5_modules_are_not_wired_into_app_main() -> None:
         assert "user_source_fts5" not in text
         assert "source_offline" not in text
         assert "fts5_tokenizer" not in text
+        assert "user_source_vector" not in text

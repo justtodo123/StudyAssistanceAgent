@@ -1,7 +1,7 @@
 # M7 阶段测试
 
 本目录覆盖已授权、但仍处于 `ADMITTED / IN_PROGRESS` 的 M7 基础设施局部实现：M7-1 Source Registry，
-不接入应用运行时的单源 FULL 构建链，source-local FULL/INCREMENTAL sync worker、已冻结的 source-local delete/isolation 合同，以及 source-local FTS5/offline fail-closed 校验与显式 FULL repair。
+不接入应用运行时的单源 FULL 构建链，source-local FULL/INCREMENTAL sync worker、已冻结的 source-local delete/isolation 合同，source-local FTS5/offline fail-closed 校验与显式 FULL repair，以及 generation-bound source-local vector 与 FTS5 identity-set 合同。
 
 - `sa.source.lifecycle.v1` 显式 schema 与未来版本 fail-closed；
 - `user-{UUIDv7}` 稳定身份和 owner-only 控制面读取；
@@ -27,14 +27,16 @@
   缺 source_id/授权 digest 时 `SOURCE_ISOLATION_UNAVAILABLE`、默认 pack 直通与零越权；
 - `sa.source.fts5-tokenizer.v1` 的 `jieba==0.42.1` search-mode 预分词、NFC/空白规范化、generation-bound SQLite FTS5 unicode61 索引与 identity-set；
 - `sa.source.offline-fallback.v1` 的依赖/metadata/索引完整性 fail-closed、不自动修复与显式 FULL repair；
-- Search/QA 可选 `principal_id` overlay：隔离后 FTS5、auth/generation 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源。
+- Search/QA 可选 `principal_id` overlay：隔离后 FTS5+vector、auth/generation 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源。
+- `sa.source.vector.v1` 的 generation-bound source-local vector：绑定 source_id/revision/generation/embedding/chunk policy 与 identity-set；与 FTS5 chunk_id 集合 100% 一致；缺 metadata、generation/模型/identity 不一致或 vector 未附着时用户源 fail closed，不回退默认包 keyword-only。
+- 协议内热路径复用：已校验 generation 的 FTS5/vector runtime、snapshot chunk 缓存与隔离批处理；热缓存后 identity 被篡改仍 fail closed。`tests/M7/` 当前 190 项。冻结 20 次 1k/3k BGE 仍不是本目录的通过条件。
 
 测试 fixture 仅在运行时以 `tmp_path` 生成；不会读取或复制 `D:\111_Others_Subjects`，也不会提交 PDF、PPTX、DOCX
 等二进制文件。sync 套件使用合成 Markdown parser fixture，不构成真实五格式 parser 成功。
 
-FULL/INCREMENTAL、delete/isolation 与 FTS5/offline 仍是 source-local 工件；Search/QA 可通过可选 `principal_id` 叠加授权用户源。
+FULL/INCREMENTAL、delete/isolation、FTS5/offline 与 generation-bound vector 仍是 source-local 工件；Search/QA 可通过可选 `principal_id` 叠加授权用户源。
 M6b preview、Quiz、Review Plan 与 study-sessions 不包含用户源。`CURRENT` 仅为本地便利指针，权威 published generation 仍由 lifecycle 的 immutable revision
-决定。本套件与 disposable 1k/3k FTS5 证据不构成 M7 exit。
+决定。本套件与 disposable 1k/3k 证据不构成 M7 exit；冻结 20 次 BGE 协议仍未跑完。
 
 M8/Milvus、M9、M10 与 Network 晋升仍不在本阶段范围内。
 

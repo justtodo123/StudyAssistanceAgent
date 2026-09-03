@@ -72,6 +72,25 @@ def is_user_source_id(source_id: str) -> bool:
     return isinstance(source_id, str) and _USER_SOURCE_RE.fullmatch(source_id) is not None
 
 
+def _tombstones_block(
+    tombstones: tuple,
+    *,
+    logical_uri: str | None,
+    document_id: str | None,
+    generation: str | None,
+) -> bool:
+    for tombstone in tombstones:
+        if tombstone.logical_uri == "*":
+            return True
+        if logical_uri is not None and tombstone.logical_uri == logical_uri:
+            return True
+        if document_id is not None and tombstone.document_id == document_id:
+            return True
+        if generation is not None and tombstone.generation_upper_bound == generation:
+            return True
+    return False
+
+
 class SourceIsolationGate:
     """Forced pre-query filter for M7 user sources."""
 
@@ -134,9 +153,17 @@ class SourceIsolationGate:
         if self._delete.is_blocked(source_id):
             raise SourceIsolationError(SourceIsolationErrorCode.SOURCE_NOT_FOUND, "The Source was not found.")
 
-    def filter_hits(self, principal_id: str, hits: Iterable[RetrievalHit]) -> tuple[RetrievalHit, ...]:
-        snapshot = self._stable_snapshot(principal_id)
+    def filter_hits(
+        self,
+        principal_id: str,
+        hits: Iterable[RetrievalHit],
+        *,
+        snapshot: IsolationSnapshot | None = None,
+    ) -> tuple[RetrievalHit, ...]:
+        resolved = snapshot if snapshot is not None else self._stable_snapshot(principal_id)
         allowed: list[RetrievalHit] = []
+        hidden: dict[str, bool] = {}
+        tombstones: dict[str, tuple] = {}
         for hit in hits:
             if hit.source_id is None:
                 raise SourceIsolationError(
@@ -146,21 +173,26 @@ class SourceIsolationGate:
             if not is_user_source_id(hit.source_id):
                 allowed.append(hit)
                 continue
-            if hit.cache_key is not None and snapshot.auth_digest not in hit.cache_key:
+            if hit.cache_key is not None and resolved.auth_digest not in hit.cache_key:
                 raise SourceIsolationError(
                     SourceIsolationErrorCode.SOURCE_ISOLATION_UNAVAILABLE,
                     "Source isolation is unavailable.",
                 )
-            if hit.source_id not in snapshot.authorized_source_ids:
+            if hit.source_id not in resolved.authorized_source_ids:
                 continue
-            if self._delete.is_blocked(
-                hit.source_id,
+            if hit.source_id not in hidden:
+                hidden[hit.source_id] = self._delete.is_blocked(hit.source_id)
+                tombstones[hit.source_id] = self._delete.list_tombstones(hit.source_id)
+            if hidden[hit.source_id]:
+                continue
+            if _tombstones_block(
+                tombstones[hit.source_id],
                 logical_uri=hit.logical_uri,
                 document_id=hit.document_id,
                 generation=hit.generation,
             ):
                 continue
-            published = snapshot.published_generations.get(hit.source_id)
+            published = resolved.published_generations.get(hit.source_id)
             if hit.generation is not None and published is not None and hit.generation != published:
                 continue
             if hit.origin_kind in _BLOCKED_ORIGINS:

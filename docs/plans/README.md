@@ -23,7 +23,7 @@
   M6b：前置、八项决策、保护基线与独立批准均已闭合，获批的独立只读原生工具调用预览已实现；
   完整自主 Runner 属于 M10
 - M6b 与 M7 都以 M6a 退出证据为共同必要前置，彼此不互为前置；M7 已取得基础设施 scope admission 与
-  独立生产开工授权，当前已形成 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 局部合同；M8 依赖真实 M7 exit，M9 依赖 M7/M8，M10 依赖 M7–M9
+  独立生产开工授权，当前已形成 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline fail-closed 与 Search/QA overlay 局部合同；M8 依赖真实 M7 exit，M9 依赖 M7/M8，M10 依赖 M7–M9
 - 不把 `references/` 中的分析当作执行计划或验收真源
 - 跨阶段运行时契约见 [`docs/standards/runtime-contracts.md`](../standards/runtime-contracts.md)
 - M6a–M10 准入政策见 [`docs/standards/stage-admission-gates.md`](../standards/stage-admission-gates.md)，机器登记见

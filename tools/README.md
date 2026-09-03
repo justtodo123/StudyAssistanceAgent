@@ -10,7 +10,8 @@ tools/
 ├── run_evaluation.py      # ★ 统一 RAG 评测入口
 ├── start_local.py         # 一键启动工作台并做 /health 检查
 ├── source_inventory.py    # 外部资料只读盘点（不复制、不解析全文、不建索引）
-├── run_m7_benchmark.py    # M7 1k/3k disposable FTS5 benchmark（不构成 exit）
+├── run_m7_benchmark.py    # M7 1k/3k disposable source-local benchmark（不构成 exit）
+├── profile_m7_search.py   # M7 3k search stage profile（非正式 exit 证据）
 ├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   ├── requirements.txt   # crawler 独立依赖
 │   └── fetcher/cleaner/converter/dedup/pipeline
@@ -162,13 +163,16 @@ python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 *创建：2026-08-11 · 更新：2026-08-27（新增外部资料只读盘点）· 维护：随新增工具脚本与评测集同步更新*
 
 
-## run_m7_benchmark.py — M7 用户源 1k/3k FTS5 评测
+## run_m7_benchmark.py — M7 用户源 1k/3k 评测
 
-运行时可生成 fixture，不入库。vector 当前 `not_attached`，报告 `m7_exit=false`，不能当作 M7 退出证据，也不批准 M8/Milvus 或 Network。
+运行时可生成 fixture，不入库。当前 smoke 使用 source-local hash vector（已附着且 identity 对齐），报告仍 `m7_exit=false`，不是冻结 20 次 BGE 协议，不能当作 M7 退出证据，也不批准 M8/Milvus 或 Network。
 
 ```bash
 ./platform/.venv/Scripts/python tools/run_m7_benchmark.py --report artifacts/m7-benchmark.json
 ./platform/.venv/Scripts/python tools/run_m7_benchmark.py --quick
+./platform/.venv/Scripts/python tools/profile_m7_search.py --report artifacts/m7-search-profile.json
 ```
+
+`profile_m7_search.py` 只剖析 Search 热路径阶段延迟，默认 5 次 warmup + 20 次独立 3k 查询。2026-09-03 source-local hash 剖析 p50 约 105 ms，仍 `m7_exit=false`，不能覆盖冻结 20 次 BGE 协议。
 
 2026-09-03 disposable 一次样本：1k-single Recall@5=1.000、查询 p95 149 ms；3k-aggregate Recall@5=1.000、查询 p50 392 ms（超过冻结 250 ms）。FULL 样本数为 1，不是冻结的 20 次。

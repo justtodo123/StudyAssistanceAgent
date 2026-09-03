@@ -1,7 +1,7 @@
 """Generate and run the frozen M7 1k/3k user-source search benchmark.
 
-Fixtures are created at runtime and never committed. Vector is currently
-not_attached, so this report cannot be used as M7 exit evidence.
+Fixtures are created at runtime and never committed. Vector is source-local
+and generation-bound; this smoke report is still not M7 exit evidence.
 """
 from __future__ import annotations
 
@@ -29,6 +29,7 @@ from app.source_registry import (  # noqa: E402
     SqliteSourceRegistry,
 )
 from app.user_source_search import UserSourceSearchService  # noqa: E402
+from app.user_source_vector import HashVectorEmbedder  # noqa: E402
 
 
 REPORT_SCHEMA = "sa.source.benchmark.v1"
@@ -162,7 +163,11 @@ def run_workload(name: str, *, sources: int, documents: int, units: int, measure
         root = Path(raw)
         gold = build_corpus(root / "corpus", sources=sources, documents=documents, units=units)
         lifecycle = SourceLifecycleService(SqliteSourceRegistry(root / "registry.sqlite3"))
-        service = UserSourceSearchService(root / "cache", lifecycle)
+        service = UserSourceSearchService(
+            root / "cache",
+            lifecycle,
+            vector_embedder=HashVectorEmbedder(),
+        )
         sync_times: list[float] = []
         for index in range(max(warmup + measured, 1)):
             started = time.perf_counter()
@@ -178,11 +183,11 @@ def run_workload(name: str, *, sources: int, documents: int, units: int, measure
             "documents": documents * sources,
             "chunks_per_document": units,
             "target_chunks": documents * units * sources,
-            "vector_status": "not_attached",
+            "vector_status": "attached",
             "full_sync_p95_ms": percentile(sync_times, 0.95),
             "full_sync_samples": len(sync_times),
             "identity_fts5": True,
-            "identity_vector": False,
+            "identity_vector": True,
             "exit_eligible": False,
             "auth_digest_present": bool(sample.auth_digest),
             **query_metrics,
@@ -192,10 +197,10 @@ def run_workload(name: str, *, sources: int, documents: int, units: int, measure
 def build_report(workloads: list[dict[str, object]]) -> dict[str, object]:
     return {
         "schema": REPORT_SCHEMA,
-        "vector_backend": "not_attached",
+        "vector_backend": "source_local_hash",
         "tokenizer": "jieba-0.42.1-search",
         "m7_exit": False,
-        "reason": "vector identity is not_attached; report is disposable and not M7 exit evidence",
+        "reason": "source-local hash vector is attached but this is not the frozen 20-run BGE protocol",
         "network_promoted": False,
         "m8_started": False,
         "workloads": workloads,

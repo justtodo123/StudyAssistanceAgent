@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from importlib import import_module, metadata
+from threading import Lock
 from types import MappingProxyType, ModuleType
 from typing import Iterable, Mapping
 import unicodedata
@@ -20,6 +21,8 @@ NORMALIZATION_VERSION = "sa.source.text-norm.nfc-ws.v1"
 FTS_SCHEMA_VERSION = "sa.source.fts5-index.v1"
 JIEBA_REQUIRED_VERSION = "0.42.1"
 JIEBA_HMM = True
+_JIEBA_LOCK = Lock()
+_JIEBA_MODULE: ModuleType | None = None
 
 
 class Fts5TokenizerErrorCode(StrEnum):
@@ -64,21 +67,32 @@ def _installed_jieba_version() -> str:
 
 def require_jieba() -> ModuleType:
     """Fail closed unless jieba==0.42.1 can import and initialize."""
+    global _JIEBA_MODULE
     if _installed_jieba_version() != JIEBA_REQUIRED_VERSION:
+        _JIEBA_MODULE = None
         raise Fts5TokenizerError(Fts5TokenizerErrorCode.UNAVAILABLE)
-    try:
-        jieba = import_module("jieba")
-        initialize = getattr(jieba, "initialize", None)
-        if initialize is not None:
-            initialize()
-        cut_for_search = getattr(jieba, "cut_for_search", None)
-        if not callable(cut_for_search):
-            raise Fts5TokenizerError(Fts5TokenizerErrorCode.UNAVAILABLE)
-    except Fts5TokenizerError:
-        raise
-    except Exception as exc:
-        raise Fts5TokenizerError(Fts5TokenizerErrorCode.UNAVAILABLE) from exc
-    return jieba
+    cached = _JIEBA_MODULE
+    if cached is not None and callable(getattr(cached, "cut_for_search", None)):
+        return cached
+    with _JIEBA_LOCK:
+        if _JIEBA_MODULE is not None and callable(getattr(_JIEBA_MODULE, "cut_for_search", None)):
+            return _JIEBA_MODULE
+        try:
+            jieba = import_module("jieba")
+            initialize = getattr(jieba, "initialize", None)
+            if initialize is not None:
+                initialize()
+            cut_for_search = getattr(jieba, "cut_for_search", None)
+            if not callable(cut_for_search):
+                raise Fts5TokenizerError(Fts5TokenizerErrorCode.UNAVAILABLE)
+        except Fts5TokenizerError:
+            _JIEBA_MODULE = None
+            raise
+        except Exception as exc:
+            _JIEBA_MODULE = None
+            raise Fts5TokenizerError(Fts5TokenizerErrorCode.UNAVAILABLE) from exc
+        _JIEBA_MODULE = jieba
+        return jieba
 
 
 def _has_disallowed_characters(text: str) -> bool:
