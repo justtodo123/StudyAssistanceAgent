@@ -33,7 +33,7 @@ M7 基础设施准入不批准 Network，也不改变其 `review / candidate / u
 | 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（默认 `SqliteVectorStore`，线性余弦；可显式切换内存 `LocalVectorStore`） |
 | RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 2026-08-31 复测 Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 将改为目标/掌握度驱动 |
-| 用户数据源 | 自定义知识目录，规模百→千→万 | 🔄 M7 Source Registry、manifest、parser、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation 局部合同已冻结；正式检索接入、FTS5 与 1k/3k benchmark 仍待完成 |
+| 用户数据源 | 自定义知识目录，规模百→千→万 | 🔄 M7 Source Registry、manifest、parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 局部合同已落地；正式检索接入与 1k/3k benchmark 仍待完成，不构成 M7 exit |
 | 专业化存储 | 当前 SQLite；M8 规划 LanceDB，万级可选 Qdrant；Milvus 未选定 | ⬜ M8（阻断） |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ⬜ M9 |
 | Harness 框架 | M6a 已收口；M6b 默认关闭的只读 preview 已完成 closeout；完整 Runner 未实现 | ✅ M6a/M6b `ADMITTED / COMPLETE`；M7 `ADMITTED / IN_PROGRESS`；M8–M10 阻断 |
@@ -94,6 +94,9 @@ StudyAssistanceAgent/
 │   │   ├── user_source_sync.py # M7 source-local FULL/INCREMENTAL sync worker
 │   │   ├── source_delete.py # M7 source-local tombstone/hard-delete 合同
 │   │   ├── source_isolation.py # M7 查询前 owner-only 隔离门
+│   │   ├── fts5_tokenizer.py # M7 jieba FTS5 tokenizer 合同
+│   │   ├── user_source_fts5.py # M7 generation-bound SQLite FTS5 索引
+│   │   ├── source_offline.py # M7 离线 fail-closed 校验与显式 FULL repair
 │   │   └── static/           # 最小学习工作台静态页
 │   ├── tests/             # 冒烟测试
 │   ├── requirements.txt   # Python 依赖
@@ -118,7 +121,7 @@ StudyAssistanceAgent/
 │   ├── M6_crawler/        # crawler P0 离线测试（独立 marker / CI 已收口）
 │   ├── M6a/               # M6a harness 契约与兼容骨架测试
 │   ├── M6b/               # M6b 只读 Agent Preview 隔离测试与离线 benchmark
-│   ├── M7/                # M7 registry + source-local FULL/INCREMENTAL/delete/isolation contract（143 项）
+│   ├── M7/                # M7 registry + source-local FULL/INCREMENTAL/delete/isolation/FTS5/offline contract（162 项）
 │   ├── regression/        # 跨阶段回归套件
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）

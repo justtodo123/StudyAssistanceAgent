@@ -1,11 +1,11 @@
 # M7 用户 Source 生命周期与千级检索准备计划
 
-> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；source-local FULL/INCREMENTAL sync 与 delete/isolation 局部合同已冻结
+> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 局部合同已落地
 > 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不构成生产开工、语料批准或退出证据
 > 前置：`M7-M6A-SOURCE-CONTRACT` 与 `M7-PROTECTED-BASELINE` 均为 `SATISFIED`；批准记录见 §4
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
-> 本文件冻结强制决策与批准范围；当前已实现并冻结 M7-1 Source Registry、文件级 manifest、五格式 parser matrix、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation 局部合同。后续 FTS5/正式检索接入不得静默修改已冻结合同，仍须遵循本计划和验收门禁。Agent 不得自行批准准入或开工。
+> 本文件冻结强制决策与批准范围；当前已实现并冻结 M7-1 Source Registry、文件级 manifest、五格式 parser matrix、normalized document、source-local FULL/INCREMENTAL/delete/isolation 局部合同，并已落地 source-local FTS5/offline fail-closed。后续正式检索接入不得静默修改已冻结合同，仍须遵循本计划和验收门禁。Agent 不得自行批准准入或开工。
 
 ## 1. 范围与非目标
 
@@ -17,7 +17,7 @@ PDF/PPT 复制进仓库。
 SQLite 控制面、版本化 lifecycle schema、用户源身份、CAS 状态机、五类 lifecycle record 持久化、owner-only 读取、
 schema fail-closed 与定量并发/回滚/重启/privacy workload；并已形成文件级 manifest、五格式冻结 parser matrix、normalized document
 和 source-local FULL candidate/原子发布的局部合同。该 lifecycle repository 是新的控制面边界，不是 M6a 已冻结的 published
- descriptor `SourceRegistryRepository`。FULL/INCREMENTAL sync 与 delete/isolation 仍不接入正式检索或应用启动；FTS5、完整 provenance 晋升链或 Source API 尚未创建。只读盘点
+ descriptor `SourceRegistryRepository`。FULL/INCREMENTAL sync、delete/isolation 与 FTS5/offline fail-closed 仍不接入正式 Search/QA/preview 或应用启动；完整 provenance 晋升链或 Source API 尚未创建。只读盘点
 `tools/source_inventory.py` 仍是 collect-only 调查，不能替代下列强制决策、语料批准或 M7 退出。
 
 ## 2. 前置证据与继承不变量
@@ -72,7 +72,7 @@ M6a 的 `M6A-SOURCE-LIMITS` 与默认 90 题保护基线**不能**替代 `M7-PRO
 `M7-LIFECYCLE-SCHEMA`、`M7-SYNC-SEMANTICS`、`M7-DELETE-SEMANTICS`、`M7-ISOLATION`、
 `M7-FTS5-TOKENIZER`、`M7-SCALE-LIMITS`、`M7-BENCHMARK`、`M7-OFFLINE-FALLBACK`、`M7-SOURCE-MANIFEST`、
 `M7-PARSER-MATRIX`、`M7-NORMALIZED-DOCUMENT` 与 `M7-PROVENANCE` 已依次闭合；M7 专属保护基线也已登记为
-`SATISFIED`。§4 的人工批准只覆盖基础设施，阶段当前为 `ADMITTED / IN_PROGRESS`，独立生产开工门禁为 `AUTHORIZED`；当前局部实现为 Source Registry、manifest/parser、normalized document 与 source-local FULL 合同。
+`SATISFIED`。§4 的人工批准只覆盖基础设施，阶段当前为 `ADMITTED / IN_PROGRESS`，独立生产开工门禁为 `AUTHORIZED`；当前局部实现为 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 合同。
 
 ### 3.1 `M7-LIFECYCLE-SCHEMA`（`RESOLVED`）
 
@@ -915,18 +915,18 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
   1k/3k benchmark 的 M7 基础设施实现；
 - **excluded**：Network 文档晋升、Network P0 语料治理闭环、任何 corpus 自动批准、M8 专业存储、Milvus 后端选择。
 
-生产开工门禁为 `AUTHORIZED`，`authorized_by=justtodo123`，`authorized_at=2026-08-31`；授权参考为用户指令“批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论”。因此 M7 当前为 `ADMITTED / IN_PROGRESS`；本轮已形成 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation 的局部实现，不关闭 P0、不批准 Network，也不形成 M7 exit。
+生产开工门禁为 `AUTHORIZED`，`authorized_by=justtodo123`，`authorized_at=2026-08-31`；授权参考为用户指令“批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论”。因此 M7 当前为 `ADMITTED / IN_PROGRESS`；本轮已形成 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 的局部实现，不关闭 P0、不批准 Network，也不形成 M7 exit。
 
-## 5. 获准后的实施顺序（delete/isolation 已冻结，后续仅 FTS5/benchmark）
+## 5. 获准后的实施顺序（FTS5/offline 局部合同已落地，后续仅正式检索/benchmark）
 
 1. ✅ 已落地版本化 lifecycle schema、Source Registry repository contract 和事务/回滚测试；已补齐文件级 manifest、parser matrix、normalized document 与 source-local FULL candidate/原子发布局部合同；
 2. ✅ 已落地受限增量同步、request/run 幂等、单 active run、cancel/retry/checkpoint/recovery 的 source-local 局部合同；尚未接入正式检索或公开 API，也未跑冻结 100-document/1k/3k workload；
 3. ✅ 已落地并冻结 source-local tombstone/read barrier、索引/cache 不可读传播、provenance 失效和检索隔离过滤局部合同；尚未接入正式 Search/QA/preview 或公开 API；
-4. ⬜ 在离线 fallback 可用后接入明确选定的 FTS5 tokenizer；
+4. ✅ 已落地 `jieba==0.42.1` / `sa.source.fts5-tokenizer.v1` generation-bound SQLite FTS5 与离线 fail-closed 校验/显式 FULL repair；尚未接入正式 Search/QA/preview；
 5. ⬜ 运行冻结的 1k/3k workload，根据证据决定是否进入 M8，而不是预先引入专业后端。
 
-上述顺序按独立生产开工授权执行；当前 FULL/INCREMENTAL/delete/isolation 只生成内部 source-local artifact，不接入 `app.main`、Search、QA、preview、正式用户源检索或公开 API。后续新增测试继续覆盖 fallback、FTS5 与正式检索接入。
-`tests/M7/` 当前 143 项覆盖 lifecycle、manifest、parser、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation 局部合同；benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
+上述顺序按独立生产开工授权执行；当前 FULL/INCREMENTAL/delete/isolation/FTS5/offline 只生成内部 source-local artifact，不接入 `app.main`、Search、QA、preview、正式用户源检索或公开 API。后续新增测试继续覆盖正式检索接入与 1k/3k benchmark。
+`tests/M7/` 当前 162 项覆盖 lifecycle、manifest、parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline 局部合同；benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
 默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 benchmark 达标。
 
 ## 6. 撤销与后续边界

@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-09-02（M7 source-local delete/isolation 合同已冻结；完整套件历史基线保留）
+> 起始日期：2026-08-17 · 更新：2026-09-03（M7 source-local FTS5/offline fail-closed 局部合同已落地；delete/isolation 仍冻结；完整套件历史基线保留）
 
 ## 一、测试策略总览
 
@@ -116,7 +116,7 @@ tests/
 │   ├── test_preview_privacy.py        # prompt/body/secret/path 日志边界
 │   └── test_preview_benchmark.py      # 20 warm-up、200 measured、并发 2、p95
 │
-├── M7/                     # M7 registry + source-local FULL/INCREMENTAL/delete/isolation contract（143 项）
+├── M7/                     # M7 registry + source-local FULL/INCREMENTAL/delete/isolation/FTS5/offline contract（162 项）
 │   ├── README.md                      # 范围、排除项与运行命令
 │   ├── test_source_registry.py        # schema、身份、CAS、状态机、事务与隔离
 │   ├── test_source_manifest.py        # 文件 manifest、canonical digest 与路径隐私
@@ -125,7 +125,9 @@ tests/
 │   ├── test_full_snapshot.py          # source-local FULL、last-good 与指针原子性
 │   ├── test_source_sync.py            # request/run 幂等、增量、cancel/retry/recovery
 │   ├── test_source_delete.py          # tombstone、删除传播、hard-delete receipt 与 provenance 失效
-│   └── test_source_isolation.py       # 查询前 owner-only 过滤与统一 NOT_FOUND
+│   ├── test_source_isolation.py       # 查询前 owner-only 过滤与统一 NOT_FOUND
+│   ├── test_fts5_tokenizer.py         # jieba FTS5 tokenizer 与 generation-bound 索引
+│   └── test_source_offline.py         # 离线 fail-closed 校验与显式 FULL repair
 │
 ├── source_inventory/       # 外部资料只读盘点（不构成 M7 开工）
 │   ├── conftest.py         # source_inventory marker + 迷你资料树
@@ -173,7 +175,7 @@ tests/
 | 根级 `tests/`（含 M6_crawler、M6a、M6b、M7、source_inventory，不含 `platform/tests/`） | 历史 657 项（含当时 M7 102） | 2026-09-02 历史：656 passed、1 skipped | 本切片复验未重跑完整根级套件；M7 isolated 复验为 143 collected / 143 passed；M6b 当前 129 项（普通 126 + 专用 benchmark 3；首轮 111 项） |
 | `tests/M6b/` | 129 项 | 2026-08-29 当前：普通套件 126 passed、3 deselected；benchmark 3 passed；2026-08-28 首轮：111 passed | fake provider；native tool loop、API/auth、隐私、零写入与独立 blocking benchmark |
 | `tests/M6a/` | 124 项 | 2026-08-28：124 passed | 含 worker topology、generation 分离、缓存生命周期与 API/OpenAPI/链接收口 |
-| `tests/M7/` | 143 项 | 2026-09-02 复验：143 passed（delete/isolation 24 passed）；历史 sync 合同 119 passed；历史 FULL 合同 102 passed；历史 M7-1 基线：77 passed | 已冻结的 lifecycle/manifest/parser/normalized-document/FULL/INCREMENTAL/delete/isolation 局部合同；不证明生产检索接入、FTS5、真实五格式部署或 1k/3k benchmark |
+| `tests/M7/` | 162 项 | 2026-09-03 复验：162 passed（FTS5/offline 19 passed）；历史 2026-09-02：143 passed（delete/isolation 24 passed）；历史 sync 合同 119 passed；历史 FULL 合同 102 passed；历史 M7-1 基线：77 passed | source-local lifecycle/manifest/parser/normalized-document/FULL/INCREMENTAL/delete/isolation/FTS5/offline 局部合同；不证明正式检索接入、真实五格式部署、1k/3k benchmark 或 M7 exit |
 | `tests/source_inventory/` | 21 项 | 2026-08-27：21 passed | 外部资料只读盘点；tmp_path 迷你树，不扫描真实外部目录，不构成 M7 开工 |
 | `tests/regression/`（含 slow） | 61 项 | 2026-09-02 复验：61 passed | 含 SSE、结构化 CI、准入治理、导航与生产树契约；含显式 active-delivery 开工授权门禁 |
 | `tests/regression/test_rag_quality.py` slow | 3 项 | 2026-09-01 复测：3 passed；2026-08-28：3 passed | 默认 OS/DS/CO 90 题 Recall@3 门禁 |
@@ -466,7 +468,7 @@ SQLite 零领域写入、隐私 canary、真实同步工具容量与确定性重
 不联网；真实 Anthropic smoke 仅手工显式 opt-in，本次未运行，也不作为默认 CI 或性能声明。
 
 M6b 不实现 ReAct Runner、写工具、checkpoint、幂等写或正式状态机替换；这些仍属于 M10。M7 当前为
-`ADMITTED / IN_PROGRESS`，M7 Source Registry、source-local FULL/INCREMENTAL sync 与 delete/isolation 合同的 `tests/M7/` 已独立落地，不改变 M6b 行为。离线 M6b 检索测试固定 BM25，
+`ADMITTED / IN_PROGRESS`，M7 Source Registry、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 合同的 `tests/M7/` 已独立落地，不改变 M6b 行为。离线 M6b 检索测试固定 BM25，
 不依赖本机向量模型；请求 timeout/cancellation 后不再继续 Agent 工作，已开始的非协作同步函数仍占用实际工作槽至自然结束。
 
 ## 三、执行矩阵
@@ -488,7 +490,7 @@ M6b 不实现 ReAct Runner、写工具、checkpoint、幂等写或正式状态�
 | M6a-1/M6a-2/M6a-3 契约、适配与拓扑门禁 | `tests/M6a/`（`m6a`） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | `tools/run_evaluation.py` |
 | M6b 只读预览 | `tests/M6b/`（`m6b`）+ blocking offline benchmark | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 默认 90 题；真实 provider smoke 仅手工可选 |
 | 外部资料只读盘点 | `tests/source_inventory/`（`source_inventory`） | 不要求 | 使用 tmp_path 迷你树 | 不建索引、不计入 RAG 门禁 |
-| M7 lifecycle + source-local FULL/INCREMENTAL/delete/isolation contract | `tests/M7/`（`m7`，143 项） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 仅证明独立 lifecycle、source-local FULL/INCREMENTAL sync 与 delete/isolation 局部合同；不证明正式检索接入、FTS5、公开 API、真实 parser 部署、1k/3k benchmark 或 M7 exit |
+| M7 lifecycle + source-local FULL/INCREMENTAL/delete/isolation/FTS5/offline contract | `tests/M7/`（`m7`，162 项） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 仅证明独立 lifecycle、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 局部合同；不证明正式检索接入、公开 API、真实 parser 部署、1k/3k benchmark 或 M7 exit |
 | M8–M10 准入准备 | 不创建阶段测试目录；当前仅治理一致性门禁 | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
 
 ## 四、pytest 配置
@@ -527,7 +529,7 @@ M6B_BENCHMARK_EVIDENCE_ID=stabilization-20260829-03 \
 M6B_BENCHMARK_REPORT=reports/m6b-offline-preview-benchmark-stabilization-20260829-03.json \
   PYTHONPATH=platform SA_USE_VECTOR=false pytest tests/M6b -m m6b_benchmark -q --tb=short
 
-# 运行 M7 lifecycle + source-local FULL/INCREMENTAL/delete/isolation contract 阶段测试
+# 运行 M7 lifecycle + source-local FULL/INCREMENTAL/delete/isolation/FTS5/offline contract 阶段测试
 PYTHONPATH=platform pytest tests/M7/ -v -m m7
 
 # 运行外部资料只读盘点测试（使用 tmp_path 迷你树，不扫描真实 D:\111_Others_Subjects）
@@ -586,7 +588,7 @@ pytest tests/ -v -n auto
 口径为 697 collected、696 passed、1 skipped。2026-09-02 完整 `tests/regression/` 为 61 passed，`platform/tests/` 为
 40 passed。此前的根级/合并统计均为历史证据：2026-09-01 M7 workload 扩展后为根级 632 collected、631 passed、1 skipped
 与合并 672 collected、671 passed、1 skipped；扩展前为根级 619 collected、618 passed、1 skipped，合并 659 collected、
-658 passed、1 skipped。M7 当前 isolated 基线为 2026-09-02 的 143 collected / 143 passed；历史 sync 合同为 119 collected / 119 passed；历史 M7-1 基线为
+658 passed、1 skipped。M7 当前 isolated 基线为 2026-09-03 的 162 collected / 162 passed；历史 2026-09-02 为 143 collected / 143 passed；历史 sync 合同为 119 collected / 119 passed；历史 M7-1 基线为
 77 collected / 77 passed。M7 加入前的 2026-08-31 P0 语料治理冻结复测仍保留为历史证据：根级 554 collected、553 passed、
 1 skipped；根级与平台原始测试合并为 594 collected、593 passed、1 skipped。2026-08-28 M6b closeout 首轮中，根级实际
 结果为 528 collected、527 passed、1 skipped；2026-08-29 stabilization 合并套件复测为 586 collected、585 passed、

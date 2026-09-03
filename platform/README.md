@@ -50,6 +50,9 @@ platform/
 │   ├── user_source_sync.py # M7 source-local FULL/INCREMENTAL sync worker
 │   ├── source_delete.py   # M7 source-local tombstone/hard-delete 合同
 │   ├── source_isolation.py # M7 查询前 owner-only 隔离门
+│   ├── fts5_tokenizer.py  # M7 jieba==0.42.1 FTS5 tokenizer 合同
+│   ├── user_source_fts5.py # M7 generation-bound SQLite FTS5 索引
+│   ├── source_offline.py  # M7 离线 fail-closed 校验与显式 FULL repair
 │   ├── retrieval_index.py # M6a 默认包快照到旧 RetrievalChunk 的兼容适配器
 │   ├── sources/           # 默认知识包与静态额外源适配器（见子目录 README）
 │   ├── combined_snapshot.py # 默认包 + 启动期额外源的不可变组合快照
@@ -375,14 +378,14 @@ M7-1 新增 `app/source_registry.py`，实现 `sa.source.lifecycle.v1` 的版本
 所有生命周期写入与审计在独立 SQLite 事务中完成；`SyncRun` 现承载 request/run、checkpoint、heartbeat 与 cancel 标记。
 
 同一 M7 局部切片还提供 `source_manifest.py`、`parser_matrix.py`、`normalized_document.py`、
-`user_source_snapshot.py`、`user_source_sync.py`、`source_delete.py` 与 `source_isolation.py`：支持用户源的文件级 canonical manifest、Markdown/纯文本/PDF/PPTX/DOCX 五格式
+`user_source_snapshot.py`、`user_source_sync.py`、`source_delete.py`、`source_isolation.py`、`fts5_tokenizer.py`、`user_source_fts5.py` 与 `source_offline.py`：支持用户源的文件级 canonical manifest、Markdown/纯文本/PDF/PPTX/DOCX 五格式
 冻结 parser contract、统一 normalized document/chunk identity，已注册单源的离线 FULL candidate、校验和、
 last-good 与 `CURRENT`/`PREVIOUS` convenience pointers，以及受限 INCREMENTAL、request/run 幂等、单 active run、
 cancel/retry/checkpoint/recovery，以及 tombstone/read barrier、索引/cache 不可读传播、30 天 hard-delete receipt 与查询前隔离过滤。FULL/INCREMENTAL/delete/isolation 只生成 source-local 内部工件；lifecycle 的
 immutable revision 才是 published generation 的权威，且重复请求与无变化 INCREMENTAL 对同一 generation 幂等。
 
 这些模块不在 `app.main` 的正常启动路径构造，没有新增 Source API 或改变 OpenAPI，也不接入 Search、QA、preview、
-默认/extra scope 或正式检索。尚未实现 FTS5/jieba、正式检索接入、完整 provenance 晋升链或真实 1k/3k benchmark。M6a 静态额外源、默认 pack、学习状态 SQLite 与 M6b preview 均保持原契约。
+默认/extra scope 或正式检索。source-local FTS5/jieba 与离线 fail-closed 校验/显式 FULL repair 已落地，但尚未接入正式检索、完整 provenance 晋升链或真实 1k/3k benchmark；不构成 M7 exit。M6a 静态额外源、默认 pack、学习状态 SQLite 与 M6b preview 均保持原契约。
 
 ## 配置
 
@@ -442,8 +445,8 @@ M6b 已实现独立、默认关闭、只读的原生工具调用 preview，并�
 它不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。
 
 M7 当前为 `ADMITTED / IN_PROGRESS`。已实施的是独立 Source Registry 加上 source-local manifest、冻结 parser matrix、normalized document、
-离线单源 FULL candidate/发布合同、受限 incremental sync worker，以及已冻结的 source-local delete/isolation 合同；阶段测试 `tests/M7/` 当前为 143 项。上述模块仍未接入 `app.main`、Source API/OpenAPI、Search、QA、preview、
-默认/extra scope 或正式用户源检索。FTS5/fallback、正式检索接入与真实 1k/3k benchmark 仍待实施。
+离线单源 FULL candidate/发布合同、受限 incremental sync worker，以及已冻结的 source-local delete/isolation 合同；阶段测试 `tests/M7/` 当前为 162 项。上述模块仍未接入 `app.main`、Source API/OpenAPI、Search、QA、preview、
+默认/extra scope 或正式用户源检索。正式 Search/QA/preview 接入与真实 1k/3k benchmark 仍待实施；当前 162 项局部合同不构成 M7 exit。
 默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
 ## 降级路径
@@ -526,4 +529,4 @@ Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知�
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-02（M7 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation 合同已冻结）· 维护：随 API/配置变更同步更新*
+*创建：2026-08-11 · 更新：2026-09-03（M7 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 合同已冻结）· 维护：随 API/配置变更同步更新*

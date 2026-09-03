@@ -142,7 +142,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | --- | --- | --- | --- | --- |
 | M6a | `ADMITTED` | `COMPLETE` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制决策与保护基线已闭合；justtodo123 于 2026-08-25 批准开工，M6a-1 与 M6a-2 自动化门禁已通过，M6a-4 已完成收口 |
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
-| M7 | `ADMITTED` | `IN_PROGRESS` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策与保护基线已闭合；justtodo123 于 2026-08-31 授权基础设施开工，Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL sync 与 source-local delete/isolation 局部合同已形成；未接入 app.main、Search、QA、preview 或公开 API，Network 晋升不在批准范围内，3k 仍是后续必须解决并实测的容量差距 |
+| M7 | `ADMITTED` | `IN_PROGRESS` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策与保护基线已闭合；justtodo123 于 2026-08-31 授权基础设施开工，Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 source-local FTS5/offline fail-closed 局部合同已形成；未接入 app.main、Search、QA、preview 或公开 API，Network 晋升不在批准范围内，3k 仍是后续必须解决并实测的容量差距。当前局部测试不构成 M7 exit |
 | M8 | `BLOCKED` | `NOT_STARTED` | [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md) | 等待真实 M7 退出证据；M7 admission 不满足 `M8-M7-EXIT`，Milvus/LanceDB/Qdrant 均未选定或获批 |
 | M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | 等待 M7/M8；计划/mastery 权威设定仍 `OPEN` |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | 等待 M7–M9；写授权、恢复与 rollout 设定仍 `OPEN` |
@@ -153,7 +153,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 改为 `REVOKED` 并停止生产实施。
 
 **依赖顺序**：M6b 与 M7 都只依赖 M6a 退出证据，彼此不互为前置。M7 已取得独立生产开工授权并从
-M7-1 Source Registry 起步并已扩展为 source-local FULL/INCREMENTAL sync 与 delete/isolation 局部合同。M8 依赖真实 M7 退出证据而非 M7 admission 或局部实现；M9 依赖 M7 与 M8；M10 依赖 M7–M9，
+M7-1 Source Registry 起步并已扩展为 source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 局部合同。M8 依赖真实 M7 退出证据而非 M7 admission 或局部实现；M9 依赖 M7 与 M8；M10 依赖 M7–M9，
 不以 M6b 为写路径或 Source 生命周期前置。
 
 - ✅ **M6a-P0 crawler 前置收口**：`tests/M6_crawler` 使用独立 marker `m6_crawler`；离线测试 mock HTTP；
@@ -200,8 +200,8 @@ M7-1 Source Registry 起步并已扩展为 source-local FULL/INCREMENTAL sync �
   `ADMITTED / IN_PROGRESS`。M7 已落地独立 Source Registry；当前局部实现还包括文件级 canonical manifest、五格式冻结 parser
   contract、normalized document/chunk identity、不接入正式检索的 source-local FULL candidate/发布链，以及
   request/run 幂等、单 active run、受限 INCREMENTAL、cancel/retry/checkpoint/recovery 的 source-local sync worker，以及 tombstone/read barrier、索引/cache 不可读传播、provenance 失效与检索隔离过滤的 source-local 合同（已冻结）。`tests/M7/` 当前
-  143 项通过。注册表、FULL artifact、sync worker 与 delete/isolation gate 尚未接入正常应用启动、Search、QA、preview、默认/extra scope 或公开 API/OpenAPI。
-  FTS5/jieba、正式检索接入、完整 provenance 晋升链
+  162 项通过（其中既有 lifecycle/manifest/parser/normalized-document/FULL/INCREMENTAL/delete/isolation 143 项，另增 FTS5/offline 19 项）。注册表、FULL artifact、sync worker、delete/isolation gate 与 FTS5/offline guard 尚未接入正常应用启动、Search、QA、preview、默认/extra scope 或公开 API/OpenAPI。
+  正式检索接入、完整 provenance 晋升链
   与真实 1k/3k benchmark 仍待实施；不得据此声称 M7 exit 或真实五格式生产 parser success。批准范围明确排除 Network 文档晋升、
   Network P0 治理闭环、任何 corpus 自动批准、M8 专业存储和 Milvus 后端选择。`m7-admission-20260829-02` 仍只证明现有
   M6a 1k current-state reference；3k 因 combined hard max 仍不可用。只读盘点 `tools/source_inventory.py` 是 collect-only，
@@ -243,5 +243,5 @@ M7-1 Source Registry 起步并已扩展为 source-local FULL/INCREMENTAL sync �
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.12（不是产品发布版本）· 更新：2026-09-02（M7 基础设施范围
-`ADMITTED / IN_PROGRESS`；source-local delete/isolation 局部合同已冻结，下一步为 FTS5/正式检索接入，Network/M8/Milvus/M9/M10 未获批）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · PLAN 文档修订：v2.13（不是产品发布版本）· 更新：2026-09-03（M7 基础设施范围
+`ADMITTED / IN_PROGRESS`；source-local FTS5/offline fail-closed 局部合同已落地，下一步为正式检索接入与 1k/3k benchmark，Network/M8/Milvus/M9/M10 未获批）· 维护：每次会话开工查看本文档*

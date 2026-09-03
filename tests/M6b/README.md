@@ -34,4 +34,4 @@ PYTHONPATH=platform SA_USE_VECTOR=false HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 
 方式写入，已存在的目标不会被覆盖。CI 使用 `${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}` 作为 ID、报告文件名和
 artifact 名。报告只包含脱敏统计、workload/snapshot digest、termination/replay 结果和 evidence identity。
 `collect-only` 只能确认收集结果，不能代替测试通过。M6b 已在全部 closeout 门禁与本轮稳定化验证通过后保持
-`ADMITTED / COMPLETE`。后续 M7 当前为 `ADMITTED / IN_PROGRESS`，其 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation 局部合同已冻结且独立实施；该状态变化不修改本目录的 M6b 行为、测试或 closeout 证据。
+`ADMITTED / COMPLETE`。后续 M7 当前为 `ADMITTED / IN_PROGRESS`，其 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 局部合同已冻结且独立实施；该状态变化不修改本目录的 M6b 行为、测试或 closeout 证据。

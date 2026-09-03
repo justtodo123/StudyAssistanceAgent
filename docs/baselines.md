@@ -595,13 +595,17 @@ Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明�
 - M7 当前为 `ADMITTED / IN_PROGRESS`，批准 scope 为 `m7-infrastructure-only-v1`；
 - scope 只包含 Source lifecycle、provenance/manifest/parser、sync/delete/isolation、FTS5/offline fallback 和真实 1k/3k
   benchmark 基础设施；
-- `implementation_start=AUTHORIZED`；Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation 局部合同已实施并冻结，`tests/M7/` 当前 143 项通过；正式检索接入、FTS5 与 1k/3k benchmark 仍待完成；
+- `implementation_start=AUTHORIZED`；Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 局部合同已实施并冻结，`tests/M7/` 当前 162 项通过；正式检索接入与 1k/3k benchmark 仍待完成，不构成 M7 exit；
 - Network 31 篇继续为 `review / candidate / unresolved`，不可发布、不可索引；
 - M8 继续 `BLOCKED / NOT_STARTED`，`M8-M7-EXIT` 仍 `OPEN`；Milvus 未选择、未批准、未接入。
 
 ## M7 source-local delete/isolation 冻结 — 2026-09-02
 
 本节是追加式当前 checkout 证据，不回写 2026-08-31 准入登记原文。2026-09-02 复验：`tests/M7/` 143 passed（其中 delete/isolation 24 passed），`tests/regression/` 61 passed。`sa.source.delete.v1` 与 `sa.source.isolation.v1` 的 source-local 合同自此冻结：不接入 `app.main`、Search、QA、preview 或公开 API。后续 FTS5、正式检索接入与 1k/3k benchmark 不得静默修改已冻结的删除/隔离 schema、错误码或不可读语义。
+
+## M7 source-local FTS5/offline checkout — 2026-09-03
+
+本节追加记录 source-local FTS5/jieba 与离线 fail-closed 校验/显式 FULL repair 的局部落地，不回写 2026-09-02 delete/isolation 冻结原文，也不改变 M7 `ADMITTED / IN_PROGRESS`。2026-09-03 复验：`tests/M7/` 162 passed（新增 FTS5/offline 19 passed），`tests/regression/` 61 passed。未接入 `app.main`、Search、QA、preview 或公开 API；未跑冻结 1k/3k benchmark；不得把 162 项局部合同视为 M7 exit 证据。M8/Milvus/Network 仍不在本范围。
 
 *创建：2026-08-12 · 更新：2026-09-02（追加 delete/isolation 冻结复验；不回写历史证据）·
 维护：知识库、评测集或检索策略变化后复测并追加记录*

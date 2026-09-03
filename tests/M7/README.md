@@ -1,7 +1,7 @@
 # M7 阶段测试
 
 本目录覆盖已授权、但仍处于 `ADMITTED / IN_PROGRESS` 的 M7 基础设施局部实现：M7-1 Source Registry，
-不接入应用运行时的单源 FULL 构建链，source-local FULL/INCREMENTAL sync worker，以及已冻结的 source-local delete/isolation 合同。
+不接入应用运行时的单源 FULL 构建链，source-local FULL/INCREMENTAL sync worker、已冻结的 source-local delete/isolation 合同，以及 source-local FTS5/offline fail-closed 校验与显式 FULL repair。
 
 - `sa.source.lifecycle.v1` 显式 schema 与未来版本 fail-closed；
 - `user-{UUIDv7}` 稳定身份和 owner-only 控制面读取；
@@ -24,14 +24,16 @@
   BM25/vector/result-cache/provenance 不可读传播、幂等 request_id、并发 VERSION_CONFLICT、
   故障恢复、30 天保留后 hard-delete receipt，以及派生 provenance 的 `STALE_DERIVATION`；
 - `sa.source.isolation.v1` 的服务端 principal 授权快照、查询前过滤、统一 `SOURCE_NOT_FOUND`、
-  缺 source_id/授权 digest 时 `SOURCE_ISOLATION_UNAVAILABLE`、默认 pack 直通与零越权。
+  缺 source_id/授权 digest 时 `SOURCE_ISOLATION_UNAVAILABLE`、默认 pack 直通与零越权；
+- `sa.source.fts5-tokenizer.v1` 的 `jieba==0.42.1` search-mode 预分词、NFC/空白规范化、generation-bound SQLite FTS5 unicode61 索引与 identity-set；
+- `sa.source.offline-fallback.v1` 的依赖/metadata/索引完整性 fail-closed、不自动修复与显式 FULL repair。
 
 测试 fixture 仅在运行时以 `tmp_path` 生成；不会读取或复制 `D:\111_Others_Subjects`，也不会提交 PDF、PPTX、DOCX
 等二进制文件。sync 套件使用合成 Markdown parser fixture，不构成真实五格式 parser 成功。
 
-FULL/INCREMENTAL 与 delete/isolation 链路仅产生内部 source-local 工件，合同已冻结，未接入 `app.main`、Search、QA、preview、默认/extra scope、
+FULL/INCREMENTAL、delete/isolation 与 FTS5/offline 链路仅产生内部 source-local 工件，未接入 `app.main`、Search、QA、preview、默认/extra scope、
 公开 API 或 OpenAPI。`CURRENT` 仅为本地便利指针，权威 published generation 仍由 lifecycle 的 immutable revision
-决定。缺失或版本不精确的 parser 依赖会 fail closed；本套件不构成 FTS5、正式检索接入或 1k/3k benchmark 证据。
+决定。缺失或版本不精确的 parser/jieba 依赖会 fail closed；本套件不构成正式检索接入、1k/3k benchmark 或 M7 exit 证据。
 
 M8/Milvus、M9、M10 与 Network 晋升仍不在本阶段范围内。
 

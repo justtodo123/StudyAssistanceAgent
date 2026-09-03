@@ -1,1 +1,1 @@
-"""M7 Source Registry stage tests."""
+"""M7 Source Registry, FTS5 and offline fallback stage tests."""
