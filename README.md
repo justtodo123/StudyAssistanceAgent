@@ -20,7 +20,7 @@ M7 基础设施准入不批准 Network，也不改变其 `review / candidate / u
 > 任意 corpus 自动批准、M8 专业化存储或 Milvus。M7 admission 不等于生产开工或 M7 exit。
 
 - 🎯 **目标**：通用学习 Agent harness，而不是单一课程聊天机器人
-- 📚 **默认知识包**：操作系统、数据结构、计算机组成原理、计算机网络；用户源的离线基础设施局部实现已在 M7 形成
+- 📚 **默认知识包**：操作系统、数据结构、计算机组成原理（OS/DS/CO）；计算机网络 31 篇仍为 `review / candidate / unresolved`，不进入默认索引；用户源的离线基础设施局部实现已在 M7 形成
 - 🧭 **使用方式**：工作台与 REST API 跑学习闭环；后续按用户画像与目标执行计划
 - 📦 **资料联动**：仓库内只放精炼 pack；用户自定义源在仓库外，不把 PDF/PPT 入库
 
@@ -29,7 +29,7 @@ M7 基础设施准入不批准 Network，也不改变其 `review / candidate / u
 | 能力 | 说明 | 状态 |
 | --- | --- | --- |
 | 知识问答 | 基于已索引 Markdown 知识库回答问题，支持 LLM 生成或降级笔记摘要；crawler 候选默认不检索 | ✅ 已实现 |
-| 课程知识维护 | 通过 Markdown + frontmatter 文件维护、索引和检索精炼笔记与例题 | ✅ 已实现（OS 20 篇 + DS 20 篇 + CO 20 篇 + Network 31 篇） |
+| 课程知识维护 | 通过 Markdown + frontmatter 文件维护、索引和检索精炼笔记与例题 | ✅ 已实现默认包 OS 20 篇 + DS 20 篇 + CO 20 篇；Network 31 篇仍为 candidate，不进入默认索引 |
 | 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（默认 `SqliteVectorStore`，线性余弦；可显式切换内存 `LocalVectorStore`） |
 | RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 2026-08-31 复测 Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 将改为目标/掌握度驱动 |
@@ -56,7 +56,7 @@ StudyAssistanceAgent/
 │   ├── os/                # 操作系统（20 篇）
 │   ├── ds/                # 数据结构（20 篇）
 │   ├── co/                # 计算机组成原理（20 篇）
-│   ├── network/           # 计算机网络（31 篇）
+│   ├── network/           # 计算机网络（31 篇，candidate，不进入默认索引）
 │   └── interview/         # 面经知识库（51 条）
 ├── docs/                  # 项目文档
 │   ├── README.md          # 文档目录导航
