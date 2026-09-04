@@ -30,6 +30,7 @@
 - Search/QA 可选 `principal_id` overlay：隔离后 FTS5+vector、auth/generation 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源。
 - `sa.source.vector.v1` 的 generation-bound source-local vector：绑定 source_id/revision/generation/embedding/chunk policy 与 identity-set；与 FTS5 chunk_id 集合 100% 一致；缺 metadata、generation/模型/identity 不一致或 vector 未附着时用户源 fail closed，不回退默认包 keyword-only。
 - 协议内热路径复用：已校验 generation 的 FTS5/vector runtime、snapshot chunk 缓存与隔离批处理；热缓存后 identity 被篡改仍 fail closed。`tests/M7/` 当前 195 项。冻结 20 次 1k/3k BGE 仍不是本目录的通过条件。
+- M7-3（进行中）：冻结 1k/3k BGE，查询 20+200，FULL 独立进程 5+20，RSS/p50/p95。hash smoke 不是冻结证据。
 - M7-2：manifest-bound snapshot cache。已发布 FULL snapshot 绑定 `source_id/generation/source_fingerprint/manifest_digest`；无变化重复 FULL 不得因 `created_at` 改写 digest 或新增 revision；进程内 LRU 上限 16；磁盘 identity 损坏 fail-closed。不覆盖冻结 BGE、Network 或 preview 用户源。
 
 测试 fixture 仅在运行时以 `tmp_path` 生成；不会读取或复制 `D:\111_Others_Subjects`，也不会提交 PDF、PPTX、DOCX

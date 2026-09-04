@@ -142,7 +142,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | --- | --- | --- | --- | --- |
 | M6a | `ADMITTED` | `COMPLETE` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制决策与保护基线已闭合；justtodo123 于 2026-08-25 批准开工，M6a-1 与 M6a-2 自动化门禁已通过，M6a-4 已完成收口 |
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
-| M7 | `ADMITTED` | `IN_PROGRESS` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策与保护基线已闭合；justtodo123 于 2026-08-31 授权基础设施开工。Source-local lifecycle/FTS5/vector/offline 与 Search/QA 可选 principal overlay 已落地；M6b preview、Quiz、Review Plan 与 study-sessions 仍不含用户源。Network 晋升不在批准范围内。generation-bound vector 已挂接且与 FTS5 identity-set 对齐；已做协议内 3k p50 剖析与复用优化（source-local hash 剖析 p50 约 105 ms，非正式 BGE 证据）。M7-2 manifest-bound snapshot cache 已落地（有界 LRU 16、无变化 FULL 保持 digest、identity fail-closed）；`tests/M7/` 195 项。冻结 20 次 1k/3k BGE 仍未跑通，不构成 M7 exit |
+| M7 | `ADMITTED` | `IN_PROGRESS` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策与保护基线已闭合；justtodo123 于 2026-08-31 授权基础设施开工。Source-local lifecycle/FTS5/vector/offline 与 Search/QA 可选 principal overlay 已落地；M6b preview、Quiz、Review Plan 与 study-sessions 仍不含用户源。Network 晋升不在批准范围内。generation-bound vector 已挂接且与 FTS5 identity-set 对齐；已做协议内 3k p50 剖析与复用优化（source-local hash 剖析 p50 约 105 ms，非正式 BGE 证据）。M7-2 已合并。当前增量 M7-3 冻结 1k/3k BGE 已实跑（查询 20+200、FULL 独立进程 5+20）。2026-09-04 报告 `m7_exit=false`：1k RSS 约 573 MiB 超 512 MiB；3k Recall@1=0.40、query p50 约 460 ms。详见 `docs/baselines.md`。不构成 M7 exit，不得启动 M8 |
 | M8 | `BLOCKED` | `NOT_STARTED` | [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md) | 等待真实 M7 退出证据；M7 admission 不满足 `M8-M7-EXIT`，Milvus/LanceDB/Qdrant 均未选定或获批 |
 | M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | 等待 M7/M8；计划/mastery 权威设定仍 `OPEN` |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | 等待 M7–M9；写授权、恢复与 rollout 设定仍 `OPEN` |
@@ -153,7 +153,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 改为 `REVOKED` 并停止生产实施。
 
 **依赖顺序**：M6b 与 M7 都只依赖 M6a 退出证据，彼此不互为前置。M7 已取得独立生产开工授权并从
-M7-1 Source Registry 起步并已扩展为 source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline fail-closed 与 Search/QA overlay；下一增量是 `feature/m7-2-manifest-snapshot`。M8 依赖真实 M7 退出证据而非 M7 admission 或局部实现；M9 依赖 M7 与 M8；M10 依赖 M7–M9，
+M7-1 Source Registry 起步并已扩展为 source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline fail-closed 与 Search/QA overlay；下一增量是 `feature/m7-3-frozen-benchmark`。M8 依赖真实 M7 退出证据而非 M7 admission 或局部实现；M9 依赖 M7 与 M8；M10 依赖 M7–M9，
 不以 M6b 为写路径或 Source 生命周期前置。
 
 - ✅ **M6a-P0 crawler 前置收口**：`tests/M6_crawler` 使用独立 marker `m6_crawler`；离线测试 mock HTTP；
@@ -200,7 +200,7 @@ M7-1 Source Registry 起步并已扩展为 source-local FULL/INCREMENTAL/delete/
   `ADMITTED / IN_PROGRESS`。M7 已落地独立 Source Registry；当前局部实现还包括文件级 canonical manifest、五格式冻结 parser
   contract、normalized document/chunk identity、不接入正式检索的 source-local FULL candidate/发布链，以及
   request/run 幂等、单 active run、受限 INCREMENTAL、cancel/retry/checkpoint/recovery 的 source-local sync worker，以及 tombstone/read barrier、索引/cache 不可读传播、provenance 失效与检索隔离过滤的 source-local 合同（已冻结）。`tests/M7/` 当前
-  195 项通过（M7-2 snapshot identity/LRU 3 项 + generation-bound vector/identity 合同 12 项 + Search overlay 15 项 + 既有 163 项）。Search/QA 可通过可选 `principal_id` 叠加授权用户源 FTS5+vector/RRF/provenance；缺 vector 依赖或 identity 不一致时用户源 fail closed，不降级默认包 keyword-only。M6b preview、Quiz、Review Plan 与 study-sessions 仍固定默认/extra scope。冻结 20 次 1k/3k BGE 协议与 3k 查询 p50 仍未达标，不得据此声称 M7 exit 或真实五格式生产 parser success。批准范围明确排除 Network 文档晋升、
+  195 项通过（M7-2 snapshot identity/LRU 3 项 + generation-bound vector/identity 合同 12 项 + Search overlay 15 项 + 既有 163 项）。Search/QA 可通过可选 `principal_id` 叠加授权用户源 FTS5+vector/RRF/provenance；缺 vector 依赖或 identity 不一致时用户源 fail closed，不降级默认包 keyword-only。M6b preview、Quiz、Review Plan 与 study-sessions 仍固定默认/extra scope。2026-09-04 冻结 BGE 协议已按 20+200 / FULL 5+20 跑完，`m7_exit=false`（1k RSS 超 512 MiB；3k Recall@1 与 query p50 未达标），不得据此声称 M7 exit 或真实五格式生产 parser success。批准范围明确排除 Network 文档晋升、
   Network P0 治理闭环、任何 corpus 自动批准、M8 专业存储和 Milvus 后端选择。`m7-admission-20260829-02` 仍只证明现有
   M6a 1k current-state reference；3k 因 combined hard max 仍不可用。只读盘点 `tools/source_inventory.py` 是 collect-only，
   不构成语料批准或 M7 退出。
@@ -241,5 +241,5 @@ M7-1 Source Registry 起步并已扩展为 source-local FULL/INCREMENTAL/delete/
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.13（不是产品发布版本）· 更新：2026-09-03（M7 基础设施范围
-`ADMITTED / IN_PROGRESS`；source-local FTS5/offline fail-closed 局部合同已落地，下一步为正式检索接入与 1k/3k benchmark，Network/M8/Milvus/M9/M10 未获批）· 维护：每次会话开工查看本文档*
+*创建：2026-08-10 · PLAN 文档修订：v2.13（不是产品发布版本）· 更新：2026-09-04（M7-3 冻结 BGE 1k/3k 已实跑且未达标，`m7_exit=false`；M7 仍为
+`ADMITTED / IN_PROGRESS`，Network/M8/Milvus/M9/M10 未获批）· 维护：每次会话开工查看本文档*

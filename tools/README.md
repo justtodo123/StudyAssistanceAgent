@@ -10,7 +10,8 @@ tools/
 ├── run_evaluation.py      # ★ 统一 RAG 评测入口
 ├── start_local.py         # 一键启动工作台并做 /health 检查
 ├── source_inventory.py    # 外部资料只读盘点（不复制、不解析全文、不建索引）
-├── run_m7_benchmark.py    # M7 1k/3k disposable source-local benchmark（不构成 exit）
+├── run_m7_benchmark.py    # M7 1k/3k disposable source-local hash smoke（不构成 exit）
+├── run_m7_frozen_benchmark.py # M7-3 冻结 1k/3k BGE 协议（20+200 查询，FULL 独立进程 5+20）
 ├── profile_m7_search.py   # M7 3k search stage profile（非正式 exit 证据）
 ├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   ├── requirements.txt   # crawler 独立依赖
@@ -174,5 +175,18 @@ python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 ```
 
 `profile_m7_search.py` 只剖析 Search 热路径阶段延迟，默认 5 次 warmup + 20 次独立 3k 查询。2026-09-03 source-local hash 剖析 p50 约 105 ms，仍 `m7_exit=false`，不能覆盖冻结 20 次 BGE 协议。
+
+## run_m7_frozen_benchmark.py — M7-3 冻结 BGE 证据
+
+冻结协议，不是 disposable hash smoke：
+
+```bash
+./platform/.venv/Scripts/python tools/run_m7_frozen_benchmark.py --workload 1k-single --report artifacts/m7-frozen-1k.json
+./platform/.venv/Scripts/python tools/run_m7_frozen_benchmark.py --report artifacts/m7-frozen-benchmark.json
+./platform/.venv/Scripts/python tools/run_m7_frozen_benchmark.py --quick
+```
+
+默认查询 20 warm-up + 200 measured；FULL 每个样本独立 OS 进程 5 warm-up + 20 measured；backend 为 BGE `BAAI/bge-small-zh-v1.5`。报告按冻结门槛判定，任一失败则 `m7_exit=false`。不得把 `--quick`/hash 冒充冻结证据，也不得据此启动 M8。
+
 
 2026-09-03 disposable 一次样本：1k-single Recall@5=1.000、查询 p95 149 ms；3k-aggregate Recall@5=1.000、查询 p50 392 ms（超过冻结 250 ms）。FULL 样本数为 1，不是冻结的 20 次。
