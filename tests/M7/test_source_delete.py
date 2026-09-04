@@ -6,6 +6,7 @@ import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -47,6 +48,18 @@ class _Clock:
         return self.now
 
 
+class _GenerationPublisher:
+    def __init__(self, *, current: str | None, snapshots: dict[str, object]) -> None:
+        self.current = current
+        self.snapshots = snapshots
+        self.loads: list[tuple[str, str | None]] = []
+
+    def load_snapshot(self, source_id: str, generation: str | None = None):
+        self.loads.append((source_id, generation))
+        resolved = generation or self.current
+        return None if resolved is None else self.snapshots.get(resolved)
+
+
 def _document_id(uri: str, source_id: str = SOURCE_ID) -> str:
     return hashlib.sha256(f"{source_id}\0{uri}".encode("utf-8")).hexdigest()[:32]
 
@@ -65,7 +78,13 @@ def _revision() -> SourceRevisionDraft:
     )
 
 
-def _service(tmp_path: Path, *, source_id: str = SOURCE_ID, clock: _Clock | None = None):
+def _service(
+    tmp_path: Path,
+    *,
+    source_id: str = SOURCE_ID,
+    clock: _Clock | None = None,
+    publisher=None,
+):
     registry = SqliteSourceRegistry(tmp_path / "registry.sqlite3")
     lifecycle = SourceLifecycleService(registry, source_id_factory=lambda: source_id)
     record = lifecycle.register_source(
@@ -92,7 +111,12 @@ def _service(tmp_path: Path, *, source_id: str = SOURCE_ID, clock: _Clock | None
         correlation_id=CORRELATION,
         revision=_revision(),
     )
-    delete = UserSourceDeleteService(tmp_path / "cache", lifecycle, clock=clock or _utc)
+    delete = UserSourceDeleteService(
+        tmp_path / "cache",
+        lifecycle,
+        publisher=publisher,
+        clock=clock or _utc,
+    )
     delete.surfaces.seed(
         source_id,
         generation="generation-1",
@@ -157,6 +181,70 @@ def test_delete_publishes_barrier_and_hides_surfaces(tmp_path: Path) -> None:
     with pytest.raises(SourceLifecycleException) as exc:
         lifecycle.get_source(principal_id=PRINCIPAL, source_id=SOURCE_ID)
     assert exc.value.code is SourceLifecycleErrorCode.SOURCE_NOT_FOUND
+
+
+def test_delete_uses_authoritative_generation_when_current_is_stale(tmp_path: Path) -> None:
+    authoritative = SimpleNamespace(
+        documents=(
+            SimpleNamespace(
+                logical_uri="authoritative.md",
+                document_id=_document_id("authoritative.md"),
+            ),
+        ),
+    )
+    stale = SimpleNamespace(
+        documents=(
+            SimpleNamespace(
+                logical_uri="stale.md",
+                document_id=_document_id("stale.md"),
+            ),
+        ),
+    )
+    publisher = _GenerationPublisher(
+        current="stale-generation",
+        snapshots={"generation-1": authoritative, "stale-generation": stale},
+    )
+    _, _, delete, record = _service(tmp_path, publisher=publisher)
+
+    intent = _delete(delete, record)
+
+    tombstones = delete.list_tombstones(SOURCE_ID)
+    assert publisher.loads == [(SOURCE_ID, intent.generation_upper_bound)]
+    assert intent.generation_upper_bound == "generation-1"
+    assert any(item.logical_uri == "authoritative.md" for item in tombstones)
+    assert not any(item.logical_uri == "stale.md" for item in tombstones)
+    assert all(item.generation_upper_bound == "generation-1" for item in tombstones)
+
+
+def test_delete_uses_authoritative_generation_when_current_is_missing(tmp_path: Path) -> None:
+    authoritative = SimpleNamespace(
+        documents=(
+            SimpleNamespace(
+                logical_uri="authoritative.md",
+                document_id=_document_id("authoritative.md"),
+            ),
+            SimpleNamespace(
+                logical_uri="second.md",
+                document_id=_document_id("second.md"),
+            ),
+        ),
+    )
+    publisher = _GenerationPublisher(
+        current=None,
+        snapshots={"generation-1": authoritative},
+    )
+    _, _, delete, record = _service(tmp_path, publisher=publisher)
+
+    intent = _delete(delete, record)
+
+    tombstones = delete.list_tombstones(SOURCE_ID)
+    file_tombstones = {item.logical_uri: item.document_id for item in tombstones if item.document_id}
+    assert publisher.loads == [(SOURCE_ID, intent.generation_upper_bound)]
+    assert file_tombstones == {
+        "authoritative.md": _document_id("authoritative.md"),
+        "second.md": _document_id("second.md"),
+    }
+    assert all(item.generation_upper_bound == "generation-1" for item in tombstones)
 
 
 def test_repeat_request_id_is_idempotent(tmp_path: Path) -> None:
@@ -290,6 +378,27 @@ def test_hard_delete_fault_before_receipt_does_not_complete(tmp_path: Path) -> N
         receipt = delete.sweep_hard_delete(source_id, intent.request_id)
         assert receipt is not None
         assert registry.get_source(source_id).state is SourceLifecycleState.DELETED
+
+
+def test_hard_delete_receipt_resumes_deleted_transition(tmp_path: Path) -> None:
+    clock = _Clock(_utc())
+    registry, _, delete, record = _service(tmp_path, clock=clock)
+    intent = _delete(delete, record)
+    clock.now = _utc() + timedelta(days=MIN_AUDIT_RETENTION_DAYS)
+    delete.stage_faults["before_deleted_transition"] = [RuntimeError("injected")]
+
+    with pytest.raises(SourceDeleteError) as exc:
+        delete.sweep_hard_delete(SOURCE_ID, intent.request_id)
+    assert exc.value.code is SourceDeleteErrorCode.SOURCE_HARD_DELETE_INCOMPLETE
+    receipt = delete.get_receipt(SOURCE_ID, intent.request_id)
+    assert receipt is not None
+    assert registry.get_source(SOURCE_ID).state is SourceLifecycleState.DELETE_PENDING
+    assert delete.surfaces.readable(SOURCE_ID, "bm25") is False
+
+    resumed = delete.sweep_hard_delete(SOURCE_ID, intent.request_id)
+    assert resumed == receipt
+    assert registry.get_source(SOURCE_ID).state is SourceLifecycleState.DELETED
+    assert delete.sweep_hard_delete(SOURCE_ID, intent.request_id) == receipt
 
 
 def test_retention_boundary_blocks_then_emits_receipt(tmp_path: Path) -> None:

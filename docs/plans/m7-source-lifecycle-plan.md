@@ -1,6 +1,6 @@
 # M7 用户 Source 生命周期与千级检索准备计划
 
-> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；M7-1/M7-2/M7-3 已合并；M7-4 冻结 1k/3k BGE 门槛已通过（报告 `m7_exit=true` 只覆盖 `sa.source.benchmark.v1`）。真实五格式生产 parser、完整 provenance/recovery/delete propagation 尚未闭合，不构成 M7 阶段退出
+> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；M7-1/M7-2/M7-3/M7-4 已合并；当前增量是 M7-5：READY 提交后 CURRENT 激活失败保持 registry 权威，相同 FULL 重试修复指针。真实五格式生产 parser、完整 provenance/recovery/delete propagation 尚未闭合，不构成 M7 阶段退出
 > 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不构成生产开工、语料批准或退出证据
 > 前置：`M7-M6A-SOURCE-CONTRACT` 与 `M7-PROTECTED-BASELINE` 均为 `SATISFIED`；批准记录见 §4
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
@@ -917,7 +917,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 
 生产开工门禁为 `AUTHORIZED`，`authorized_by=justtodo123`，`authorized_at=2026-08-31`；授权参考为用户指令“批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论”。因此 M7 当前为 `ADMITTED / IN_PROGRESS`；本轮已形成 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 的局部实现，不关闭 P0、不批准 Network，也不形成 M7 exit。
 
-## 5. 获准后的实施顺序（M7-4 关闭冻结门槛为当前增量）
+## 5. 获准后的实施顺序（M7-5 READY/CURRENT 指针一致性为当前增量）
 
 1. ✅ 已落地版本化 lifecycle schema、Source Registry repository contract 和事务/回滚测试；已补齐文件级 manifest、parser matrix、normalized document 与 source-local FULL candidate/原子发布局部合同；
 2. ✅ 已落地受限增量同步、request/run 幂等、单 active run、cancel/retry/checkpoint/recovery 的 source-local 局部合同；
@@ -928,6 +928,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 7. ✅ M7-2 manifest-bound snapshot cache：有界 LRU（16）、无变化 FULL 保持已发布 `manifest_digest`、磁盘 identity fail-closed；见下列退出清单。
 8. ✅ M7-3 冻结 `sa.source.benchmark.v1`：已合并 runner 与 2026-09-04 实跑证据，报告 `m7_exit=false`（1k RSS、3k Recall@1/p50 未达标）。
 9. ✅ M7-4 关闭冻结门槛：2026-09-04 完整 20+200 / FULL 5+20 BGE 复跑通过（1k RSS 授权 768 MiB）。报告 `m7_exit=true` 只覆盖 benchmark 门槛；M8 仍须独立评估。
+10. 🔄 M7-5 READY/CURRENT 指针一致性：registry 仍是生命周期权威；CURRENT 只是可修复便利指针，失败不得把 READY 降级。
 
 
 ### M7-2：manifest-bound snapshot cache
@@ -1002,7 +1003,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 - [x] 任一门槛失败则 `m7_exit=false`，不得启动 M8（本次 1k RSS、3k Recall@1 与 query p50 失败）
 - [x] 文档与 disposable hash smoke 仍然区分冻结协议（`docs/baselines.md` 已追加失败证据）
 
-上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 198 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
+上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 205 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
 默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 1k/3k benchmark（含 vector identity 与 20 次样本）达标。2026-09-04 完整冻结 BGE 复跑 `sa.source.benchmark.v1` 门槛通过；M7 阶段仍须单独评估后才能进入 M8。
 
 ### M7-4：关闭冻结门槛（Recall@1 / p50 / RSS）
@@ -1037,6 +1038,40 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 - [x] 完整 20+200 / FULL 5+20 BGE 复跑写入报告（`artifacts/m7-frozen-benchmark.json`）
 - [x] 报告 `m7_exit=true` 仅表示 benchmark 通过；`m8_started=false`，不得自动启动 M8
 - [x] 既有 isolation / identity / overlay 合同不回退（search/snapshot/benchmark/governance 41 passed）
+
+### M7-5：READY 与 CURRENT 激活一致性
+
+本增量固定 `publish_full` 在 READY 提交之后激活 `CURRENT` 失败时的语义，并让删除与 hard-delete 恢复遵循同一 registry 权威；不批准 Network，不启动 M8，也不构成 M7 exit。Registry 的 `published_generation` 仍是生命周期权威；不得把文件指针反向升级为治理权威。不引入独立 repair marker：相同 FULL 重试就是指针修复路径。
+
+**稳定语义**
+
+- 顺序保持：materialize generation → registry `SYNCING -> READY` → 激活 `CURRENT`。
+- 第 3 步失败：调用者收到 `PUBLICATION_FAILED`；Source 保持 `READY`；新 generation 可按名字加载；`CURRENT` 可缺失或仍指向旧 generation。
+- 权威读取必须使用 registry `published_generation`。无 generation 的 `load_snapshot`/`published_path` 只反映便利指针，指针滞后不等于 last-good。
+- 已有 last-good 时，旧 `CURRENT` 目录在修复前仍可读，但查询/索引不得把它当成已发布 generation。
+- 相同内容的 FULL 重试必须幂等修复 `CURRENT`，不得新增 revision，也不得把已 `READY` 的 Source 降为 `DEGRADED`。
+
+**测试矩阵**
+
+| 用例 | 文件 | 通过标准 |
+| --- | --- | --- |
+| 首次发布激活失败 | `tests/M7/test_snapshot_pointer_consistency.py` | `READY`、无 `CURRENT`、generation 可按名字加载 |
+| 旧 CURRENT 仍可读 | `tests/M7/test_snapshot_pointer_consistency.py` | 便利指针仍指向旧 generation；权威加载为新 generation |
+| 重试修复指针 | `tests/M7/test_snapshot_pointer_consistency.py` | `CURRENT` 对齐且 revision 不增加 |
+| 重试失败不得降级 | `tests/M7/test_snapshot_pointer_consistency.py` | 仍为 `READY` / `PUBLICATION_FAILED` |
+| 删除时 CURRENT 缺失/滞后 | `tests/M7/test_source_delete.py` | 按 intent 的 `generation_upper_bound` 枚举文件级 tombstone |
+| receipt 后终态转换失败 | `tests/M7/test_source_delete.py` | 重试复用同一 receipt 并完成 `DELETE_PENDING -> DELETED` |
+
+**退出清单（M7-5 increment，不是自动 M7 exit）**
+
+- [x] READY 后激活失败不回滚 registry 发布
+- [x] 新 Source 无 CURRENT 时 generation 仍可按名字寻址
+- [x] 旧 CURRENT 在修复前可读，但不替代 registry
+- [x] 相同 FULL 重试修复 CURRENT 且不新增 revision
+- [x] 指针修复失败不得把 READY 降为 DEGRADED
+- [x] 删除按 intent 捕获的 published generation 发布文件级 tombstone，不依赖 CURRENT
+- [x] receipt 已写入后的终态转换故障可重试恢复，且 receipt 保持不可变
+- [ ] 真实五格式生产 parser、完整 provenance/recovery/delete 端到端证据仍未闭合
 
 ## 6. 撤销与后续边界
 

@@ -550,7 +550,7 @@ class UserSourceDeleteService:
             raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_NOT_FOUND)
         existing = self.get_receipt(source_id, request_id)
         if existing is not None:
-            return existing
+            return self._complete_deleted_transition(intent, existing)
         now = self._clock()
         if now.tzinfo is None:
             raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_INVALID_REQUEST)
@@ -577,25 +577,40 @@ class UserSourceDeleteService:
             )
             self._insert_receipt(receipt)
             self._inject_fault("before_deleted_transition")
-            current = self._internal_source(source_id)
-            if current is None or current.state is SourceLifecycleState.DELETED:
-                return receipt
-            try:
-                self._lifecycle.transition_source(
-                    principal_id=intent.owner_principal_id,
-                    source_id=source_id,
-                    expected_version=current.record_version,
-                    target_state=SourceLifecycleState.DELETED,
-                    actor_type=SourceActorType.SERVICE,
-                    correlation_id=intent.correlation_id,
-                )
-            except SourceLifecycleException as exc:
-                raise _translate_lifecycle(exc) from exc
-            return receipt
+            return self._complete_deleted_transition(intent, receipt)
         except SourceDeleteError:
             raise
         except Exception as exc:
             raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_HARD_DELETE_INCOMPLETE) from exc
+
+    def _complete_deleted_transition(
+        self,
+        intent: DeletionIntent,
+        receipt: HardDeleteReceipt,
+    ) -> HardDeleteReceipt:
+        current = self._internal_source(intent.source_id)
+        if current is None:
+            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_HARD_DELETE_INCOMPLETE)
+        if current.state is SourceLifecycleState.DELETED:
+            return receipt
+        if current.state is not SourceLifecycleState.DELETE_PENDING:
+            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_HARD_DELETE_INCOMPLETE)
+        try:
+            self._lifecycle.transition_source(
+                principal_id=intent.owner_principal_id,
+                source_id=intent.source_id,
+                expected_version=current.record_version,
+                target_state=SourceLifecycleState.DELETED,
+                actor_type=SourceActorType.SERVICE,
+                correlation_id=intent.correlation_id,
+            )
+        except SourceLifecycleException as exc:
+            if exc.code is SourceLifecycleErrorCode.SOURCE_VERSION_CONFLICT:
+                refreshed = self._internal_source(intent.source_id)
+                if refreshed is not None and refreshed.state is SourceLifecycleState.DELETED:
+                    return receipt
+            raise _translate_lifecycle(exc) from exc
+        return receipt
 
     def get_intent(self, source_id: str, request_id: str) -> DeletionIntent | None:
         with self._connect() as connection:
@@ -744,7 +759,11 @@ class UserSourceDeleteService:
 
     def _publish_tombstones(self, intent: DeletionIntent) -> None:
         documents: list[tuple[str, str | None]] = [(SOURCE_WIDE_URI, None)]
-        snapshot = None if self._publisher is None else self._publisher.load_snapshot(intent.source_id)
+        snapshot = (
+            None
+            if self._publisher is None or intent.generation_upper_bound is None
+            else self._publisher.load_snapshot(intent.source_id, intent.generation_upper_bound)
+        )
         if snapshot is not None:
             for document in snapshot.documents:
                 documents.append((document.logical_uri, document.document_id))

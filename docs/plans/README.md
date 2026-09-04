@@ -51,7 +51,7 @@ M6a 已完成强制决策、前置证据和负责人批准，现为 `ADMITTED / 
 | `m5-agent-session-delivery-plan.md` | 项目工程执行计划 | M5 已收口，作为 MVP 冻结（2026-08-18） |
 | `m6a-harness-skeleton-plan.md` | 项目工程执行计划 | M6a-4 收口完成；`ADMITTED / COMPLETE` |
 | `m6b-agent-core-plan.md` | 项目工程执行计划 | 默认关闭只读 preview 已完成 closeout；`ADMITTED / COMPLETE` |
-| `m7-source-lifecycle-plan.md` | 阶段执行计划 | 基础设施范围 `ADMITTED / IN_PROGRESS`；M7-1/M7-2/M7-3 已合并；M7-4 冻结 1k/3k BGE 已通过；Network 不在 scope 内，M8 仍阻断 |
+| `m7-source-lifecycle-plan.md` | 阶段执行计划 | 基础设施范围 `ADMITTED / IN_PROGRESS`；M7-1/M7-2/M7-3/M7-4 已合并；M7-5 固定 READY/CURRENT 指针一致性；Network 不在 scope 内，M8 仍阻断 |
 | `m7-p0-corpus-governance-report.md` | P0 语料治理报告 | 82 篇文档级 mapping 已建立；Network 31 篇来源/许可未闭合，停止等待人工复核，不因 M7 基础设施准入而关闭 |
 | `data-expansion-runbook.md` | 未来参考运行手册 | `DRAFT / NON-AUTHORITATIVE`；不批准数据扩展，不关闭 P0、退出或下游门禁 |
 | `m8-specialized-storage-plan.md` | 阶段准入准备计划 | M7 admission 不满足 `M8-M7-EXIT`；Milvus/LanceDB/Qdrant 均未选定，`BLOCKED / NOT_STARTED` |

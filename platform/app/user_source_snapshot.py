@@ -209,6 +209,10 @@ class UserSourceSnapshotPublisher:
         materialized without changing ``CURRENT``; only a committed READY revision
         may cause the convenience pointer to advance.  This prevents a failed CAS
         or registry transaction from exposing an uncommitted filesystem candidate.
+
+        If pointer activation fails after READY, the source stays READY, the
+        immutable generation remains addressable by name, and ``CURRENT`` may lag.
+        An identical FULL retry repairs the pointer and must not degrade READY.
         """
         with self._lock:
             record = self._lifecycle.get_source(principal_id=principal_id, source_id=source_id)
@@ -230,12 +234,25 @@ class UserSourceSnapshotPublisher:
                     last_good = self._load_last_good(source_id, record.published_generation)
                     candidate = self._build_candidate(source_root, source_id)
                     if candidate.generation == record.published_generation:
-                        if last_good is None:
-                            self._materialize_candidate(candidate)
-                            self._activate_generation(candidate)
-                        else:
-                            self._activate_generation(last_good)
+                        try:
+                            if last_good is None:
+                                self._materialize_candidate(candidate)
+                                self._activate_generation(candidate)
+                            else:
+                                self._activate_generation(last_good)
+                        except (OSError, FullSnapshotError) as exc:
+                            raise FullSnapshotError(
+                                FullSnapshotErrorCode.PUBLICATION_FAILED,
+                                "Source snapshot publication failed.",
+                            ) from exc
                         return record
+                except FullSnapshotError as exc:
+                    if (
+                        candidate is not None
+                        and candidate.generation == record.published_generation
+                    ):
+                        raise
+                    preflight_error = exc
                 except Exception as exc:
                     preflight_error = exc
 
