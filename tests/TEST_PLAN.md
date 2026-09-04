@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-09-04（M7-4 关闭冻结检索门槛；`tests/M7/` 198 项；冻结 BGE 复跑证据另记，不构成 exit）
+> 起始日期：2026-08-17 · 更新：2026-09-04（M7-4 关闭冻结门槛；`tests/M7/` 198 项；`sa.source.benchmark.v1` 的 `m7_exit=true` 不是 M7 阶段退出）
 
 ## 一、测试策略总览
 
@@ -175,7 +175,7 @@ tests/
 | 根级 `tests/`（含 M6_crawler、M6a、M6b、M7、source_inventory，不含 `platform/tests/`） | 历史 657 项（含当时 M7 102） | 2026-09-02 历史：656 passed、1 skipped | 本切片复验未重跑完整根级套件；M7 isolated 复验为 143 collected / 143 passed；M6b 当前 129 项（普通 126 + 专用 benchmark 3；首轮 111 项） |
 | `tests/M6b/` | 129 项 | 2026-08-29 当前：普通套件 126 passed、3 deselected；benchmark 3 passed；2026-08-28 首轮：111 passed | fake provider；native tool loop、API/auth、隐私、零写入与独立 blocking benchmark |
 | `tests/M6a/` | 124 项 | 2026-08-28：124 passed | 含 worker topology、generation 分离、缓存生命周期与 API/OpenAPI/链接收口 |
-| `tests/M7/` | 198 项 | 2026-09-04 M7-4 收口复验：198 passed；同日 M7-2 snapshot integrity/path validation 历史 195 passed；2026-09-03 协议内 p50 复用优化历史 190 passed；同日 generation-bound vector 历史 189 passed、Search overlay 历史 177 passed | source-local FTS5+vector identity、delete/isolation、Search/QA overlay、M7-2 snapshot cache 与 M7-4 exact-query/query-encode 合同；不证明冻结 20 次 1k/3k BGE 或 M7 exit |
+| `tests/M7/` | 198 项 | 2026-09-04 M7-4 收口复验：198 passed；同日 M7-2 snapshot integrity/path validation 历史 195 passed；2026-09-03 协议内 p50 复用优化历史 190 passed；同日 generation-bound vector 历史 189 passed、Search overlay 历史 177 passed | source-local FTS5+vector identity、delete/isolation、Search/QA overlay、M7-2 snapshot cache 与 M7-4 exact-query/query-encode 合同；`m7_exit=true` 只证明 `sa.source.benchmark.v1`，不证明 M7 exit |
 | `tests/source_inventory/` | 21 项 | 2026-08-27：21 passed | 外部资料只读盘点；tmp_path 迷你树，不扫描真实外部目录，不构成 M7 开工 |
 | `tests/regression/`（含 slow） | 61 项 | 2026-09-02 复验：61 passed | 含 SSE、结构化 CI、准入治理、导航与生产树契约；含显式 active-delivery 开工授权门禁 |
 | `tests/regression/test_rag_quality.py` slow | 3 项 | 2026-09-01 复测：3 passed；2026-08-28：3 passed | 默认 OS/DS/CO 90 题 Recall@3 门禁 |
@@ -490,7 +490,7 @@ M6b 不实现 ReAct Runner、写工具、checkpoint、幂等写或正式状态�
 | M6a-1/M6a-2/M6a-3 契约、适配与拓扑门禁 | `tests/M6a/`（`m6a`） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | `tools/run_evaluation.py` |
 | M6b 只读预览 | `tests/M6b/`（`m6b`）+ blocking offline benchmark | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 默认 90 题；真实 provider smoke 仅手工可选 |
 | 外部资料只读盘点 | `tests/source_inventory/`（`source_inventory`） | 不要求 | 使用 tmp_path 迷你树 | 不建索引、不计入 RAG 门禁 |
-| M7 lifecycle + FTS5/vector/offline + Search/QA overlay | `tests/M7/`（`m7`，198 项） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 证明 source-local 合同、generation-bound vector identity、Search/QA 可选 principal overlay、M7-2 snapshot identity/LRU 与 M7-4 exact-query/query-encode；不证明 preview 用户源、冻结 20 次 1k/3k BGE 或 M7 exit |
+| M7 lifecycle + FTS5/vector/offline + Search/QA overlay | `tests/M7/`（`m7`，198 项） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 证明 source-local 合同、generation-bound vector identity、Search/QA 可选 principal overlay、M7-2 snapshot identity/LRU 与 M7-4 exact-query/query-encode；不证明 preview 用户源或 M7 阶段退出。`m7_exit=true` 只覆盖 `sa.source.benchmark.v1` |
 | M8–M10 准入准备 | 不创建阶段测试目录；当前仅治理一致性门禁 | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
 
 ## 四、pytest 配置

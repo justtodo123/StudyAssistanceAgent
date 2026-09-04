@@ -636,5 +636,14 @@ Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明�
 
 本节追加记录 justtodo123 授权将冻结 BGE 协议的 `1k-single` 峰值 RSS 从 512 MiB 修订为 **768 MiB**，不回写 2026-08-29 准入前 BM25 保护基线，也不回写 2026-09-04 首轮冻结报告原文。3k RSS 仍为 1 GiB；Recall 与 p50/p95 门槛不放宽。修订原因：512 MiB 按无 BGE 的 BM25 1k（430 MiB）校准，无法覆盖 `sentence-transformers` + `BAAI/bge-small-zh-v1.5` 进程底盘。M7-4 探针约 551 MiB，低于 768 MiB，但仍须完整 20+200 / FULL 5+20 复跑后才能评估 `m7_exit`。不批准 Network，不启动 M8/Milvus。
 
-*创建：2026-08-12 · 更新：2026-09-04（追加 M7-4 1k RSS 768 MiB 授权；不回写历史记录，不启动 M8）·
+## M7-4 冻结 1k/3k BGE 复跑 — 2026-09-04
+
+本节追加完整冻结协议证据，不回写 2026-09-04 首轮失败原文，也不自动把 M7 阶段标为 `COMPLETE`。命令为 `platform/.venv` 下 `tools/run_m7_frozen_benchmark.py --backend bge --workload all --report artifacts/m7-frozen-benchmark.json`；查询 20+200，FULL 独立进程 5+20。本地报告 SHA-256 `aaad2d0246627e659c844003c06389b488e7d5ab6572825ba7307e72f428fd75`，不入库。`network_promoted=false`，`m8_started=false`。报告内 `m7_exit=true` 只表示 `sa.source.benchmark.v1` 门槛通过，不是 M8 开工授权。
+
+- 1k-single：通过。Recall@1/3/5=1.000；query p50 2.753 ms / p95 36.586 ms；peak RSS 575,467,520 B（约 549 MiB，低于授权后 768 MiB）；FULL p95 3.035 s；identity 100%；vector `attached`。
+- 3k-aggregate：通过。Recall@1/3/5=1.000；query p50 84.736 ms / p95 96.274 ms；peak RSS 575,467,520 B（约 549 MiB，低于 1 GiB）；FULL p95 7.282 s；identity 100%；vector `attached`。
+
+默认 OS/DS/CO 包与 Network candidate 边界不变。M8/Milvus 仍为 `BLOCKED / NOT_STARTED`，须另做 M7 阶段退出评估。
+
+*创建：2026-08-12 · 更新：2026-09-04（追加 M7-4 冻结 BGE 完整协议通过证据；不回写历史记录，不启动 M8）·
 维护：知识库、评测集或检索策略变化后复测并追加记录*

@@ -1,11 +1,11 @@
 # M7 用户 Source 生命周期与千级检索准备计划
 
-> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；M7-1/M7-2/M7-3 已合并；当前增量是 M7-4：关闭跨源 exact-query、单次 query encode，并将 1k RSS 授权为 768 MiB。冻结 1k/3k BGE 复跑证据另记。真实五格式生产 parser、完整 provenance/recovery/delete propagation 尚未闭合，不构成 M7 阶段退出
+> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；M7-1/M7-2/M7-3 已合并；M7-4 冻结 1k/3k BGE 门槛已通过（报告 `m7_exit=true` 只覆盖 `sa.source.benchmark.v1`）。真实五格式生产 parser、完整 provenance/recovery/delete propagation 尚未闭合，不构成 M7 阶段退出
 > 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不构成生产开工、语料批准或退出证据
 > 前置：`M7-M6A-SOURCE-CONTRACT` 与 `M7-PROTECTED-BASELINE` 均为 `SATISFIED`；批准记录见 §4
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
-> 本文件冻结强制决策与批准范围；当前已实现并冻结 M7-1 Source Registry、文件级 manifest、五格式 parser matrix、normalized document、source-local FULL/INCREMENTAL/delete/isolation 局部合同，并已落地 source-local FTS5/vector/offline fail-closed 与 Search/QA overlay。当前增量关闭冻结检索门槛，复跑证据另记；真实五格式生产 parser 与完整 provenance/recovery/delete propagation 仍未闭合。后续正式检索接入不得静默修改已冻结合同，仍须遵循本计划和验收门禁。Agent 不得自行批准准入或开工。
+> 本文件冻结强制决策与批准范围；当前已实现并冻结 M7-1 Source Registry、文件级 manifest、五格式 parser matrix、normalized document、source-local FULL/INCREMENTAL/delete/isolation 局部合同，并已落地 source-local FTS5/vector/offline fail-closed 与 Search/QA overlay。冻结 1k/3k BGE 门槛已通过，但真实五格式生产 parser 与完整 provenance/recovery/delete propagation 仍未闭合。后续正式检索接入不得静默修改已冻结合同，仍须遵循本计划和验收门禁。Agent 不得自行批准准入或开工。
 
 ## 1. 范围与非目标
 
@@ -927,7 +927,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 6. ✅ 已落地 generation-bound source-local vector：与同一 published generation 的 FTS5 identity-set 100% 对齐，缺 metadata/模型/generation 时用户源 fail closed；
 7. ✅ M7-2 manifest-bound snapshot cache：有界 LRU（16）、无变化 FULL 保持已发布 `manifest_digest`、磁盘 identity fail-closed；见下列退出清单。
 8. ✅ M7-3 冻结 `sa.source.benchmark.v1`：已合并 runner 与 2026-09-04 实跑证据，报告 `m7_exit=false`（1k RSS、3k Recall@1/p50 未达标）。
-9. 🔄 M7-4 关闭冻结门槛：跨源 exact-query、单次 query encode 与 1k RSS 768 MiB 授权已落地；完整冻结复跑证据另记。
+9. ✅ M7-4 关闭冻结门槛：2026-09-04 完整 20+200 / FULL 5+20 BGE 复跑通过（1k RSS 授权 768 MiB）。报告 `m7_exit=true` 只覆盖 benchmark 门槛；M8 仍须独立评估。
 
 
 ### M7-2：manifest-bound snapshot cache
@@ -1003,7 +1003,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 - [x] 文档与 disposable hash smoke 仍然区分冻结协议（`docs/baselines.md` 已追加失败证据）
 
 上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 198 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
-默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 1k/3k benchmark（含 vector identity 与 20 次样本）达标。M7-4 关闭冻结检索门槛的代码已落地；完整冻结复跑证据另记。M7 阶段仍须单独评估后才能进入 M8。
+默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 1k/3k benchmark（含 vector identity 与 20 次样本）达标。2026-09-04 完整冻结 BGE 复跑 `sa.source.benchmark.v1` 门槛通过；M7 阶段仍须单独评估后才能进入 M8。
 
 ### M7-4：关闭冻结门槛（Recall@1 / p50 / RSS）
 
@@ -1031,11 +1031,12 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 
 **退出清单（M7-4 increment，不是自动 M7 exit）**
 
-- [x] 跨源 exact-query top-1 合同
-- [x] 查询向量单次编码合同
-- [x] 1k peak RSS 门槛修订为 768 MiB（justtodo123 授权）
-- [ ] 完整冻结 BGE 复跑证据另记，不得把未记录报告写成 `m7_exit=true`
-- [x] 既有 isolation / identity / overlay 合同不回退
+- [x] 3k Recall@1 ≥ 0.70，且不靠降低门槛或 hash backend（完整复跑 1.000）
+- [x] 3k query p50 ≤ 250 ms（84.736 ms）
+- [x] 1k peak RSS ≤ 768 MiB（约 549 MiB）
+- [x] 完整 20+200 / FULL 5+20 BGE 复跑写入报告（`artifacts/m7-frozen-benchmark.json`）
+- [x] 报告 `m7_exit=true` 仅表示 benchmark 通过；`m8_started=false`，不得自动启动 M8
+- [x] 既有 isolation / identity / overlay 合同不回退（search/snapshot/benchmark/governance 41 passed）
 
 ## 6. 撤销与后续边界
 

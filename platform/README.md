@@ -447,7 +447,7 @@ M6b 已实现独立、默认关闭、只读的原生工具调用 preview，并�
 它不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。
 
 M7 当前为 `ADMITTED / IN_PROGRESS`。已实施的是独立 Source Registry 加上 source-local manifest、冻结 parser matrix、normalized document、
-离线单源 FULL candidate/发布合同、受限 incremental sync worker、已冻结的 source-local delete/isolation/FTS5/vector/offline 合同，以及 Search/QA 可选 principal overlay；阶段测试 `tests/M7/` 当前为 198 项（含 M7-2 snapshot identity/LRU 与 M7-4 exact-query/query-encode 合同）。M6b preview 仍不含用户源。当前测试与 disposable 1k/3k 证据不构成 M7 exit。
+离线单源 FULL candidate/发布合同、受限 incremental sync worker、已冻结的 source-local delete/isolation/FTS5/vector/offline 合同，以及 Search/QA 可选 principal overlay；阶段测试 `tests/M7/` 当前为 198 项（含 M7-2 snapshot identity/LRU 与 M7-4 exact-query/query-encode 合同）。M6b preview 仍不含用户源。当前测试与 disposable 1k/3k 证据不构成 M7 exit；`sa.source.benchmark.v1` 的 `m7_exit=true` 也不是阶段退出。
 默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
 ## 降级路径
@@ -530,4 +530,4 @@ Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知�
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-04（M7-4 关闭冻结检索门槛；`tests/M7/` 198 项；M7 仍为 `ADMITTED / IN_PROGRESS`）· 维护：随 API/配置变更同步更新*
+*创建：2026-08-11 · 更新：2026-09-04（M7-4 冻结 1k/3k BGE 门槛已通过；`tests/M7/` 198 项；M7 仍为 `ADMITTED / IN_PROGRESS`）· 维护：随 API/配置变更同步更新*
