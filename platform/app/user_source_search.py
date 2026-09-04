@@ -160,6 +160,14 @@ class UserSourceSearchService:
                 )
         routes: list[list[RetrievalChunk]] = []
         provenance_by_chunk: dict[str, UserSourceProvenance] = {}
+        published_ids = tuple(
+            current for current in source_ids if snapshot.published_generations.get(current)
+        )
+        query_vector = (
+            self._offline.encode_query(query, source_id=published_ids[0])
+            if published_ids
+            else None
+        )
         for current_source in source_ids:
             published = snapshot.published_generations.get(current_source)
             if not published:
@@ -176,6 +184,7 @@ class UserSourceSearchService:
                     query=query,
                     top_k=max(int(top_k), 20),
                     isolation_snapshot=snapshot,
+                    query_vector=query_vector,
                 )
             except (Fts5TokenizerError, SourceOfflineError, SourceIsolationError):
                 raise
@@ -189,7 +198,7 @@ class UserSourceSearchService:
                 routes.append(chunks)
                 for item in provenances:
                     provenance_by_chunk[item.chunk_id] = item
-        fused = _rrf_fuse(routes, max(int(top_k), 0))
+        fused = _rrf_fuse(routes, max(int(top_k), 0), query=query)
         provenance = tuple(provenance_by_chunk[chunk.id] for chunk in fused)
         if len(provenance) != len(fused):
             raise SourceOfflineError(SourceOfflineErrorCode.INDEX_INVALID, source_id=source_id)
@@ -351,13 +360,27 @@ def _generation_digest(snapshot: IsolationSnapshot, source_ids: tuple[str, ...])
     return hashlib.sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
 
 
-def _rrf_fuse(lists: list[list[RetrievalChunk]], top_k: int) -> list[RetrievalChunk]:
+def _rrf_fuse(
+    lists: list[list[RetrievalChunk]],
+    top_k: int,
+    *,
+    query: str = "",
+) -> list[RetrievalChunk]:
     scores: dict[str, float] = {}
     by_id: dict[str, RetrievalChunk] = {}
+    needle = query.strip()
     for route in lists:
         for rank, chunk in enumerate(route):
             by_id.setdefault(chunk.id, chunk)
             scores[chunk.id] = scores.get(chunk.id, 0.0) + 1.0 / (config.RRF_K + rank + 1)
+    if needle:
+        for chunk_id, chunk in by_id.items():
+            content = (chunk.content or "").strip()
+            title = (chunk.title or "").strip()
+            if content == needle or title == needle:
+                scores[chunk_id] += 1.0
+            elif needle in content or needle in title:
+                scores[chunk_id] += 0.25
     best_by_file: dict[str, tuple[str, float]] = {}
     for chunk_id, score in scores.items():
         file = by_id[chunk_id].file

@@ -632,5 +632,9 @@ Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明�
 
 本报告不是 M7 exit 证据，也不批准 Network 或 M8/Milvus。不得用 `tools/run_m7_benchmark.py` 的 disposable hash smoke 替代本记录。
 
-*创建：2026-08-12 · 更新：2026-09-04（追加 M7-3 冻结 BGE 实跑失败证据；不回写历史记录，不声称 M7 exit）·
+## M7-4 1k RSS 门槛修订 — 2026-09-04
+
+本节追加记录 justtodo123 授权将冻结 BGE 协议的 `1k-single` 峰值 RSS 从 512 MiB 修订为 **768 MiB**，不回写 2026-08-29 准入前 BM25 保护基线，也不回写 2026-09-04 首轮冻结报告原文。3k RSS 仍为 1 GiB；Recall 与 p50/p95 门槛不放宽。修订原因：512 MiB 按无 BGE 的 BM25 1k（430 MiB）校准，无法覆盖 `sentence-transformers` + `BAAI/bge-small-zh-v1.5` 进程底盘。M7-4 探针约 551 MiB，低于 768 MiB，但仍须完整 20+200 / FULL 5+20 复跑后才能评估 `m7_exit`。不批准 Network，不启动 M8/Milvus。
+
+*创建：2026-08-12 · 更新：2026-09-04（追加 M7-4 1k RSS 768 MiB 授权；不回写历史记录，不启动 M8）·
 维护：知识库、评测集或检索策略变化后复测并追加记录*

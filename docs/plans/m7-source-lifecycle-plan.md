@@ -1,11 +1,11 @@
 # M7 用户 Source 生命周期与千级检索准备计划
 
-> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；协议内 3k p50 复用优化已落地（hash 剖析非正式）。下一增量是 M7-3 冻结 1k/3k BGE 验收；M7-2 已合并。冻结 20 次 1k/3k BGE 未通过前不构成 M7 exit
+> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；M7-1/M7-2/M7-3 已合并；当前增量是 M7-4：关闭跨源 exact-query、单次 query encode，并将 1k RSS 授权为 768 MiB。冻结 1k/3k BGE 复跑证据另记。真实五格式生产 parser、完整 provenance/recovery/delete propagation 尚未闭合，不构成 M7 阶段退出
 > 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不构成生产开工、语料批准或退出证据
 > 前置：`M7-M6A-SOURCE-CONTRACT` 与 `M7-PROTECTED-BASELINE` 均为 `SATISFIED`；批准记录见 §4
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
-> 本文件冻结强制决策与批准范围；当前已实现并冻结 M7-1 Source Registry、文件级 manifest、五格式 parser matrix、normalized document、source-local FULL/INCREMENTAL/delete/isolation 局部合同，并已落地 source-local FTS5/vector/offline fail-closed 与 Search/QA overlay。冻结 20 次 1k/3k benchmark 仍未通过。后续正式检索接入不得静默修改已冻结合同，仍须遵循本计划和验收门禁。Agent 不得自行批准准入或开工。
+> 本文件冻结强制决策与批准范围；当前已实现并冻结 M7-1 Source Registry、文件级 manifest、五格式 parser matrix、normalized document、source-local FULL/INCREMENTAL/delete/isolation 局部合同，并已落地 source-local FTS5/vector/offline fail-closed 与 Search/QA overlay。当前增量关闭冻结检索门槛，复跑证据另记；真实五格式生产 parser 与完整 provenance/recovery/delete propagation 仍未闭合。后续正式检索接入不得静默修改已冻结合同，仍须遵循本计划和验收门禁。Agent 不得自行批准准入或开工。
 
 ## 1. 范围与非目标
 
@@ -404,7 +404,7 @@ M6a 的 `M6A-SOURCE-LIMITS` 与默认 90 题保护基线**不能**替代 `M7-PRO
 - 提供可生成且不入 Git 的两个 workload：`1k-single` 为 100 documents / 1,000 chunks / 256 MiB 以内的单 Source；`3k-aggregate` 为 300 documents / 3,000 chunks / 768 MiB 以内的三 Source 聚合。两者均覆盖中文为主、简繁/全半角/英文/数字混合文本，并固定 query gold labels。
 - 每个 workload 固定执行冷启动 FULL、warm no-op INCREMENTAL、10% added/modified/removed INCREMENTAL、冷重建和重启恢复；每种场景至少 20 次独立测量，前 5 次仅作 warm-up，不混入统计。硬件、Python、SQLite、jieba、embedding/backend、chunk/parser/tokenizer policy 版本必须写入报告。
 - 正确性门槛固定为：Recall@1 ≥ 0.70、Recall@3 ≥ 0.85、Recall@5 ≥ 0.90；同一 fixture 的 manifest、normalized-document、chunk、BM25/FTS5 与 vector identity 集合一致率为 100%；增量与重建不得引入未标注结果或丢失已标注 gold。
-- 性能与资源门槛固定为：`1k-single` 查询 p50 ≤ 150 ms、p95 ≤ 400 ms；`3k-aggregate` 查询 p50 ≤ 250 ms、p95 ≤ 750 ms；FULL 同步 p95 ≤ 30 s、冷重建 p95 ≤ 30 s、重启恢复 p95 ≤ 10 s；峰值 RSS ≤ 512 MiB（1k）/ 1 GiB（3k），索引持久化大小 ≤ 2x accepted normalized text bytes。所有分位数按请求耗时统计，超时按失败计入。
+- 性能与资源门槛固定为：`1k-single` 查询 p50 ≤ 150 ms、p95 ≤ 400 ms；`3k-aggregate` 查询 p50 ≤ 250 ms、p95 ≤ 750 ms；FULL 同步 p95 ≤ 30 s、冷重建 p95 ≤ 30 s、重启恢复 p95 ≤ 10 s；峰值 RSS ≤ 768 MiB（1k，2026-09-04 由 justtodo123 授权，自 BM25 校准的 512 MiB 修订为覆盖冻结 BGE/PyTorch 进程底盘）/ 1 GiB（3k），索引持久化大小 ≤ 2x accepted normalized text bytes。所有分位数按请求耗时统计，超时按失败计入。
 - 失败/降级门槛固定为：任一 parser、manifest、tokenizer、index 或 generation 校验失败时不得发布候选；last-good 保持可读；离线启动与错误语义由 `M7-OFFLINE-FALLBACK` 另行冻结。本决策不把未运行的性能数字宣称为 M7 保护基线证据。
 
 **默认、覆盖与证据**
@@ -917,7 +917,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 
 生产开工门禁为 `AUTHORIZED`，`authorized_by=justtodo123`，`authorized_at=2026-08-31`；授权参考为用户指令“批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论”。因此 M7 当前为 `ADMITTED / IN_PROGRESS`；本轮已形成 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 的局部实现，不关闭 P0、不批准 Network，也不形成 M7 exit。
 
-## 5. 获准后的实施顺序（M7-2 manifest snapshot 为当前增量；冻结 benchmark 仍未开始）
+## 5. 获准后的实施顺序（M7-4 关闭冻结门槛为当前增量）
 
 1. ✅ 已落地版本化 lifecycle schema、Source Registry repository contract 和事务/回滚测试；已补齐文件级 manifest、parser matrix、normalized document 与 source-local FULL candidate/原子发布局部合同；
 2. ✅ 已落地受限增量同步、request/run 幂等、单 active run、cancel/retry/checkpoint/recovery 的 source-local 局部合同；
@@ -926,7 +926,8 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 5. ✅ 已落地 Search/QA 可选 principal overlay：隔离后 FTS5+vector、generation/auth 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源；
 6. ✅ 已落地 generation-bound source-local vector：与同一 published generation 的 FTS5 identity-set 100% 对齐，缺 metadata/模型/generation 时用户源 fail closed；
 7. ✅ M7-2 manifest-bound snapshot cache：有界 LRU（16）、无变化 FULL 保持已发布 `manifest_digest`、磁盘 identity fail-closed；见下列退出清单。
-8. 🔄 M7-3 冻结 `sa.source.benchmark.v1`：2026-09-04 已按 BGE 1k/3k、查询 20+200、FULL 独立进程 5+20 实跑，报告 `m7_exit=false`（1k RSS、3k Recall@1/p50 未达标）。未通过前不得进入 M8。
+8. ✅ M7-3 冻结 `sa.source.benchmark.v1`：已合并 runner 与 2026-09-04 实跑证据，报告 `m7_exit=false`（1k RSS、3k Recall@1/p50 未达标）。
+9. 🔄 M7-4 关闭冻结门槛：跨源 exact-query、单次 query encode 与 1k RSS 768 MiB 授权已落地；完整冻结复跑证据另记。
 
 
 ### M7-2：manifest-bound snapshot cache
@@ -981,7 +982,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 - 查询协议：每个 workload 20 次 warm-up + 200 次 measured；warm-up 不进入 p50/p95/Recall；
 - FULL 协议：每个 workload 独立 OS 进程 5 次 warm-up + 20 次 measured，记录 FULL p95 与峰值 RSS；
 - 附加探针：warm no-op INCREMENTAL、10% added/modified/removed INCREMENTAL、重启恢复、corruption fail-closed、delete-barrier；
-- 门槛：Recall@1/3/5 ≥ 0.70/0.85/0.90；1k 查询 p50 ≤ 150 ms、p95 ≤ 400 ms、RSS ≤ 512 MiB；3k 查询 p50 ≤ 250 ms、p95 ≤ 750 ms、RSS ≤ 1 GiB；FULL p95 ≤ 30 s；identity 100%。全部通过才能把 `m7_exit` 标为 true。
+- 门槛：Recall@1/3/5 ≥ 0.70/0.85/0.90；1k 查询 p50 ≤ 150 ms、p95 ≤ 400 ms、RSS ≤ 768 MiB；3k 查询 p50 ≤ 250 ms、p95 ≤ 750 ms、RSS ≤ 1 GiB；FULL p95 ≤ 30 s；identity 100%。全部通过才能把 `m7_exit` 标为 true。
 
 **非目标**
 
@@ -1001,8 +1002,40 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 - [x] 任一门槛失败则 `m7_exit=false`，不得启动 M8（本次 1k RSS、3k Recall@1 与 query p50 失败）
 - [x] 文档与 disposable hash smoke 仍然区分冻结协议（`docs/baselines.md` 已追加失败证据）
 
-上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 195 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
-默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 1k/3k benchmark（含 vector identity 与 20 次样本）达标。2026-09-04 冻结 BGE 实跑 `m7_exit=false`，当前证据不满足退出。
+上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 198 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
+默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 1k/3k benchmark（含 vector identity 与 20 次样本）达标。M7-4 关闭冻结检索门槛的代码已落地；完整冻结复跑证据另记。M7 阶段仍须单独评估后才能进入 M8。
+
+### M7-4：关闭冻结门槛（Recall@1 / p50 / RSS）
+
+本增量只关闭 2026-09-04 冻结 BGE 报告中的失败项，不降低门槛，不批准 Network，不启动 M8/Milvus。任一门槛失败则 `m7_exit` 保持 false。
+
+**范围**
+
+- 3k Recall@1：跨源 RRF 打平时，精确查询命中不得被近重复邻居或 source 排序抢占 top-1；
+- 3k query p50：同一 search 请求内 BGE query 向量只编码一次，避免 3 源重复 encode；
+- 1k peak RSS：现行门槛 768 MiB（justtodo123 于 2026-09-04 授权）；继续加载冻结 BGE `BAAI/bge-small-zh-v1.5`，禁止改用 hash 冒充；
+- 复跑完整冻结协议：查询 20+200、FULL 独立进程 5+20，门槛仍按 `sa.source.benchmark.v1` 判定。
+
+**非目标**
+
+- 放宽 Recall@1 0.70 或 3k p50 250 ms；不得把 1k RSS 再放到超过已授权的 768 MiB；
+- Network 晋升、默认 90 题扩容、preview/quiz/sessions 用户源、M8/Milvus。
+
+**测试矩阵**
+
+| 用例 | 文件 | 通过标准 |
+| --- | --- | --- |
+| 跨源精确查询 top-1 | `tests/M7/test_user_source_search.py` | 3 个近重复源时 gold file 为 Recall@1 |
+| 查询向量单次编码 | `tests/M7/test_user_source_search.py` | 一次多源 search 只 `encode` 一次 query |
+| 冻结门槛复跑 | `tools/run_m7_frozen_benchmark.py` | 实跑 artifacts；失败不得把 `m7_exit` 标 true |
+
+**退出清单（M7-4 increment，不是自动 M7 exit）**
+
+- [x] 跨源 exact-query top-1 合同
+- [x] 查询向量单次编码合同
+- [x] 1k peak RSS 门槛修订为 768 MiB（justtodo123 授权）
+- [ ] 完整冻结 BGE 复跑证据另记，不得把未记录报告写成 `m7_exit=true`
+- [x] 既有 isolation / identity / overlay 合同不回退
 
 ## 6. 撤销与后续边界
 

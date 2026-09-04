@@ -30,6 +30,7 @@ pytestmark = pytest.mark.m7
 
 SOURCE_A = "user-01890f52-47e7-7abc-8def-0123456789ab"
 SOURCE_B = "user-01890f52-47e7-7abc-8def-0123456789ac"
+SOURCE_C = "user-01890f52-47e7-7abc-8def-0123456789ad"
 PRINCIPAL = "principal-owner"
 OTHER = "principal-other"
 CORRELATION = "corr-m7-search"
@@ -165,6 +166,50 @@ def test_rrf_fuses_two_authorized_sources(tmp_path: Path) -> None:
     assert public_uri(SOURCE_A, "a.md") in files
     assert public_uri(SOURCE_B, "b.md") in files
     assert all(item.origin_kind == "original" for item in result.provenance)
+
+
+def test_exact_query_wins_across_near_duplicate_sources(tmp_path: Path) -> None:
+    lifecycle, service = _service(tmp_path)
+    roots = {
+        SOURCE_A: tmp_path / "src-a",
+        SOURCE_B: tmp_path / "src-b",
+        SOURCE_C: tmp_path / "src-c",
+    }
+    texts = {
+        SOURCE_A: "金标词00000000",
+        SOURCE_B: "金标词01000000",
+        SOURCE_C: "金标词02000000",
+    }
+    for source_id, root in roots.items():
+        _register(lifecycle, source_id)
+        _write_docs(root, {"doc.md": texts[source_id]})
+        _publish(service, source_id=source_id, source_root=root)
+
+    result = service.search(principal_id=PRINCIPAL, query="金标词01000000", top_k=5)
+    assert result.chunks[0].file == public_uri(SOURCE_B, "doc.md")
+
+
+def test_query_vector_is_encoded_once_for_multi_source_search(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    lifecycle, service = _service(tmp_path)
+    for source_id, name in ((SOURCE_A, "src-a"), (SOURCE_B, "src-b"), (SOURCE_C, "src-c")):
+        _register(lifecycle, source_id)
+        root = tmp_path / name
+        _write_docs(root, {"doc.md": f"unique-{name}"})
+        _publish(service, source_id=source_id, source_root=root)
+
+    embedder = service._offline._vector.embedder
+    original = embedder.encode
+    calls = {"count": 0}
+
+    def wrapped(texts):  # type: ignore[no-untyped-def]
+        calls["count"] += 1
+        return original(texts)
+
+    monkeypatch.setattr(embedder, "encode", wrapped)
+    service.search(principal_id=PRINCIPAL, query="unique-src-b", top_k=5)
+    assert calls["count"] == 1
 
 
 def test_deleted_source_is_not_recalled(tmp_path: Path) -> None:

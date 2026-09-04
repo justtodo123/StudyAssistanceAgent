@@ -15,6 +15,7 @@ from . import config
 from .fts5_tokenizer import (
     Fts5TokenizerError,
     Fts5TokenizerErrorCode,
+    fts5_match_query,
     require_jieba,
 )
 from .source_delete import UserSourceDeleteService
@@ -197,6 +198,12 @@ class UserSourceOfflineGuard:
             snapshot=snapshot,
         )
 
+    def encode_query(self, query: str, *, source_id: str = "") -> list[float]:
+        try:
+            return self._vector.encode_query(query)
+        except VectorIndexError as exc:
+            raise self._map_vector(exc, source_id) from exc
+
     def search(
         self,
         *,
@@ -205,6 +212,7 @@ class UserSourceOfflineGuard:
         query: str,
         top_k: int = 5,
         isolation_snapshot: IsolationSnapshot | None = None,
+        query_vector: list[float] | None = None,
     ) -> tuple[Fts5Hit, ...]:
         validated = self.validate_for_query(
             principal_id=principal_id,
@@ -212,8 +220,21 @@ class UserSourceOfflineGuard:
             isolation_snapshot=isolation_snapshot,
         )
         try:
-            fts_hits = self._fts5.search(validated.source_id, validated.generation, query, top_k=top_k)
-            vector_hits = self._vector.search(validated.source_id, validated.generation, query, top_k=top_k)
+            match = fts5_match_query(query)
+            fts_hits = self._fts5.search(
+                validated.source_id,
+                validated.generation,
+                query,
+                top_k=top_k,
+                match=match,
+            )
+            vector_hits = self._vector.search(
+                validated.source_id,
+                validated.generation,
+                query,
+                top_k=top_k,
+                query_vector=query_vector,
+            )
             return _rrf_hits(fts_hits, vector_hits, top_k)
         except Fts5TokenizerError as exc:
             raise self._map_tokenizer(exc, source_id) from exc

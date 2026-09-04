@@ -140,9 +140,9 @@ def test_generation_switch_does_not_query_old_vector(tmp_path: Path) -> None:
     queried: list[str] = []
     original = service._offline._vector.search
 
-    def wrapped(source_id: str, generation: str, query: str, *, top_k: int = 5):
+    def wrapped(source_id: str, generation: str, query: str, *, top_k: int = 5, **kwargs):
         queried.append(generation)
-        return original(source_id, generation, query, top_k=top_k)
+        return original(source_id, generation, query, top_k=top_k, **kwargs)
 
     service._offline._vector.search = wrapped  # type: ignore[method-assign]
     _write_docs(root, {"lesson.md": "新世代独有术语NEWGENUNIQUE"})

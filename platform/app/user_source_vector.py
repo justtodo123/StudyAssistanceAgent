@@ -196,24 +196,39 @@ class SentenceTransformerEmbedder:
         except metadata.PackageNotFoundError as exc:
             raise VectorIndexError(VectorIndexErrorCode.DEPENDENCY_UNAVAILABLE) from exc
 
-    def encode(self, texts: list[str]) -> list[list[float]]:
+    def _ensure_model(self):
         self.require_runtime()
-        if self._model is None:
-            try:
-                from sentence_transformers import SentenceTransformer
+        if self._model is not None:
+            return self._model
+        try:
+            import torch
+            from sentence_transformers import SentenceTransformer
 
-                self._model = SentenceTransformer(self.model_name)
-            except Exception as exc:
-                raise VectorIndexError(VectorIndexErrorCode.DEPENDENCY_UNAVAILABLE) from exc
-        encoded = self._model.encode(
-            texts,
-            normalize_embeddings=self.normalize,
-            show_progress_bar=False,
-        )
-        values = [[float(item) for item in vector] for vector in encoded]
+            torch.set_grad_enabled(False)
+            threads = max(1, min(4, int(torch.get_num_threads() or 1)))
+            torch.set_num_threads(threads)
+            model = SentenceTransformer(self.model_name, local_files_only=True)
+            model.eval()
+            self._torch = torch
+            self._model = model
+        except Exception as exc:
+            raise VectorIndexError(VectorIndexErrorCode.DEPENDENCY_UNAVAILABLE) from exc
+        return self._model
+
+    def encode(self, texts: list[str]) -> list[list[float]]:
+        model = self._ensure_model()
+        with self._torch.inference_mode():
+            encoded = model.encode(
+                texts,
+                batch_size=32,
+                convert_to_numpy=True,
+                normalize_embeddings=self.normalize,
+                show_progress_bar=False,
+            )
+        values = encoded.tolist()
         if any(len(vector) != self.dimension for vector in values):
             raise VectorIndexError(VectorIndexErrorCode.INDEX_INVALID)
-        return [_l2_normalize(vector) for vector in values] if self.normalize else values
+        return values
 
     def metadata(self) -> dict[str, str]:
         return {
@@ -446,6 +461,17 @@ class UserSourceVectorIndex:
                 self._activate(snapshot.source_id, snapshot.generation)
             return metadata
 
+    def encode_query(self, query: str) -> list[float]:
+        try:
+            encoded = self._embedder.encode([query])
+        except VectorIndexError:
+            raise
+        except Exception as exc:
+            raise VectorIndexError(VectorIndexErrorCode.DEPENDENCY_UNAVAILABLE) from exc
+        if not encoded:
+            raise VectorIndexError(VectorIndexErrorCode.INDEX_INVALID)
+        return encoded[0]
+
     def search(
         self,
         source_id: str,
@@ -453,21 +479,17 @@ class UserSourceVectorIndex:
         query: str,
         *,
         top_k: int = 5,
+        query_vector: list[float] | None = None,
     ) -> tuple[VectorHit, ...]:
         runtime = self._runtimes.get((source_id, generation)) or self._ensure_runtime(source_id, generation)
         if top_k <= 0:
             return ()
-        try:
-            query_vector = self._embedder.encode([query])[0]
-        except VectorIndexError:
-            raise
-        except Exception as exc:
-            raise VectorIndexError(VectorIndexErrorCode.DEPENDENCY_UNAVAILABLE) from exc
-        if len(query_vector) != runtime.metadata.embedding_dim:
+        vector = query_vector if query_vector is not None else self.encode_query(query)
+        if len(vector) != runtime.metadata.embedding_dim:
             raise VectorIndexError(VectorIndexErrorCode.INDEX_INVALID)
         return _hits_from_matrix(
             runtime,
-            query_vector,
+            vector,
             top_k=top_k,
         )
 

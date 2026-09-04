@@ -33,7 +33,7 @@ M7 基础设施准入不批准 Network，也不改变其 `review / candidate / u
 | 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（默认 `SqliteVectorStore`，线性余弦；可显式切换内存 `LocalVectorStore`） |
 | RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 2026-08-31 复测 Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 将改为目标/掌握度驱动 |
-| 用户数据源 | 自定义知识目录，规模百→千→万 | 🔄 M7 Source Registry 到 FTS5/vector/offline 局部合同已落地，Search/QA 可选 principal overlay 已接入；preview/quiz/sessions 仍不含用户源。generation-bound vector 已与 FTS5 identity-set 对齐，但冻结 20 次 1k/3k BGE 协议未完成，不构成 M7 exit |
+| 用户数据源 | 自定义知识目录，规模百→千→万 | 🔄 M7 Source Registry 到 FTS5/vector/offline 局部合同已落地，Search/QA 可选 principal overlay 已接入；preview/quiz/sessions 仍不含用户源。generation-bound vector 已与 FTS5 identity-set 对齐；M7-4 已关闭跨源 exact-query 与单次 query encode，1k RSS 门槛授权为 768 MiB。冻结 1k/3k BGE 复跑证据另记，不构成 M7 阶段退出。M7 仍为 `ADMITTED / IN_PROGRESS` |
 | 专业化存储 | 当前 SQLite；M8 规划 LanceDB，万级可选 Qdrant；Milvus 未选定 | ⬜ M8（阻断） |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ⬜ M9 |
 | Harness 框架 | M6a 已收口；M6b 默认关闭的只读 preview 已完成 closeout；完整 Runner 未实现 | ✅ M6a/M6b `ADMITTED / COMPLETE`；M7 `ADMITTED / IN_PROGRESS`；M8–M10 阻断 |
@@ -123,7 +123,7 @@ StudyAssistanceAgent/
 │   ├── M6_crawler/        # crawler P0 离线测试（独立 marker / CI 已收口）
 │   ├── M6a/               # M6a harness 契约与兼容骨架测试
 │   ├── M6b/               # M6b 只读 Agent Preview 隔离测试与离线 benchmark
-│   ├── M7/                # M7 lifecycle/FTS5/vector/offline + Search/QA overlay contract（189 项）
+│   ├── M7/                # M7 lifecycle/FTS5/vector/offline + Search/QA overlay contract（198 项）
 │   ├── regression/        # 跨阶段回归套件
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）

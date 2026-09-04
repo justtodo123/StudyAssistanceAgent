@@ -237,10 +237,18 @@ class UserSourceFts5Index:
                 self._activate(snapshot.source_id, snapshot.generation)
             return metadata
 
-    def search(self, source_id: str, generation: str, query: str, *, top_k: int = 5) -> tuple[Fts5Hit, ...]:
+    def search(
+        self,
+        source_id: str,
+        generation: str,
+        query: str,
+        *,
+        top_k: int = 5,
+        match: str | None = None,
+    ) -> tuple[Fts5Hit, ...]:
         runtime = self._runtimes.get((source_id, generation)) or self._ensure_runtime(source_id, generation)
         try:
-            match = fts5_match_query(query)
+            match = fts5_match_query(query) if match is None else match
         except Fts5TokenizerError:
             raise
         connection: sqlite3.Connection | None = None

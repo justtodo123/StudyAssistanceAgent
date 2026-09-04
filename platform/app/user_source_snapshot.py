@@ -152,23 +152,24 @@ class UserSourceSnapshotPublisher:
         try:
             digest = (path / "SHA256").read_text(encoding="ascii").strip()
             payload_bytes = (path / "snapshot.json").read_bytes()
-            payload = json.loads(payload_bytes.decode("utf-8"))
-        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        except (OSError, UnicodeError) as exc:
             raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
         if hashlib.sha256(payload_bytes).hexdigest() != digest:
-            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
-        try:
-            snapshot = FullSnapshot.from_dict(payload)
-        except FullSnapshotError as exc:
-            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
-        if snapshot.source_id != source_id or snapshot.generation != resolved:
             raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
         cache_key = (source_id, resolved)
         with self._lock:
             cached = self._snapshot_cache.get(cache_key)
-            if cached is not None and cached[0] == digest and cached[1] == snapshot:
+            if cached is not None and cached[0] == digest:
                 self._snapshot_cache.move_to_end(cache_key)
                 return cached[1]
+        try:
+            payload = json.loads(payload_bytes.decode("utf-8"))
+            snapshot = FullSnapshot.from_dict(payload)
+        except (UnicodeError, json.JSONDecodeError, FullSnapshotError) as exc:
+            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
+        if snapshot.source_id != source_id or snapshot.generation != resolved:
+            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
+        with self._lock:
             self._remember_snapshot(cache_key, digest, snapshot)
         return snapshot
 

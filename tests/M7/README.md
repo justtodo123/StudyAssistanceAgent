@@ -29,8 +29,9 @@
 - `sa.source.offline-fallback.v1` 的依赖/metadata/索引完整性 fail-closed、不自动修复与显式 FULL repair；
 - Search/QA 可选 `principal_id` overlay：隔离后 FTS5+vector、auth/generation 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源。
 - `sa.source.vector.v1` 的 generation-bound source-local vector：绑定 source_id/revision/generation/embedding/chunk policy 与 identity-set；与 FTS5 chunk_id 集合 100% 一致；缺 metadata、generation/模型/identity 不一致或 vector 未附着时用户源 fail closed，不回退默认包 keyword-only。
-- 协议内热路径复用：已校验 generation 的 FTS5/vector runtime、snapshot chunk 缓存与隔离批处理；热缓存后 identity 被篡改仍 fail closed。`tests/M7/` 当前 195 项。冻结 20 次 1k/3k BGE 仍不是本目录的通过条件。
-- M7-3（进行中）：冻结 1k/3k BGE，查询 20+200，FULL 独立进程 5+20，RSS/p50/p95。hash smoke 不是冻结证据。
+- 协议内热路径复用：已校验 generation 的 FTS5/vector runtime、snapshot chunk 缓存与隔离批处理；热缓存后 identity 被篡改仍 fail closed。`tests/M7/` 当前 198 项。冻结 20 次 1k/3k BGE 仍不是本目录的通过条件。
+- M7-3 已合并：冻结 1k/3k BGE runner 与 2026-09-04 失败证据。hash smoke 不是冻结证据。
+- M7-4：跨源 exact-query 与 query-encode 合同；1k RSS 768 MiB 授权。冻结复跑证据另记，不是自动 M8 开工。
 - M7-2：manifest-bound snapshot cache。已发布 FULL snapshot 绑定 `source_id/generation/source_fingerprint/manifest_digest`；无变化重复 FULL 不得因 `created_at` 改写 digest 或新增 revision；进程内 LRU 上限 16；磁盘 identity 损坏 fail-closed。不覆盖冻结 BGE、Network 或 preview 用户源。
 
 测试 fixture 仅在运行时以 `tmp_path` 生成；不会读取或复制 `D:\111_Others_Subjects`，也不会提交 PDF、PPTX、DOCX
@@ -38,7 +39,7 @@
 
 FULL/INCREMENTAL、delete/isolation、FTS5/offline 与 generation-bound vector 仍是 source-local 工件；Search/QA 可通过可选 `principal_id` 叠加授权用户源。
 M6b preview、Quiz、Review Plan 与 study-sessions 不包含用户源。`CURRENT` 仅为本地便利指针，权威 published generation 仍由 lifecycle 的 immutable revision
-决定。本套件与 disposable 1k/3k 证据不构成 M7 exit；冻结 20 次 BGE 协议仍未跑完。
+决定。本套件与 disposable 1k/3k 证据不构成 M7 exit；冻结 20 次 BGE 协议证据另记。
 
 M7-2 测试矩阵（`test_full_snapshot.py` 增量，不是 M7 exit）：
 
