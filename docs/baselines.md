@@ -623,5 +623,14 @@ Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明�
 
 本条追记 source-local generation-bound 检索热路径的协议内优化，不改写 generation-bound vector 189 项原记录，也不改变 M7 `ADMITTED / IN_PROGRESS` 与 M8 `BLOCKED / NOT_STARTED`。2026-09-03 复验：`tests/M7/` 190 passed。优化保持 fail-closed：identity-set、generation 绑定、删除屏障与 owner allowlist 仍在查询前生效；vector 未附着或 metadata 损坏不降级到 keyword-only。`tools/profile_m7_search.py` 对 3k-aggregate 的 source-local hash 剖析为 query p50 约 105 ms / p95 约 109 ms，vector 已附着，但不是冻结 20 次 BGE 协议，不能当作 M7 exit 证据，也不批准 Network 或 M8/Milvus。
 
-*创建：2026-08-12 · 更新：2026-09-03（追加 generation-bound vector 合同复验；不回写历史证据）·
+## M7-3 冻结 1k/3k BGE 协议 — 2026-09-04
+
+本节追加记录 `sa.source.benchmark.v1` 冻结协议实跑，不回写 2026-09-03 hash 剖析原文，也不改变 M7 `ADMITTED / IN_PROGRESS` 或 M8 `BLOCKED / NOT_STARTED`。命令为 `platform/.venv` 下的 `tools/run_m7_frozen_benchmark.py --backend bge --workload all --report artifacts/m7-frozen-benchmark.json`；查询 20 warmup + 200 measured，FULL 独立 OS 进程 5+20，后端 `source_local_bge`（`BAAI/bge-small-zh-v1.5`）。本地报告 SHA-256 `ed495f7173f33b125c08d974f80a29f936c9fd59131f8811647df5456684f9a7`，不入库。`m7_exit=false`，`network_promoted=false`，`m8_started=false`。
+
+- 1k-single：Recall@1/3/5=1.000；query p50 5.596 ms / p95 190.223 ms；peak RSS 600,309,760 B（约 573 MiB）；FULL p95 4.923 s；identity 100%；vector `attached`。失败原因：peak RSS 超过 512 MiB。
+- 3k-aggregate：Recall@1/3/5=0.400/1.000/1.000；query p50 459.874 ms / p95 532.508 ms；peak RSS 659,996,672 B（约 629 MiB，低于 1 GiB）；FULL p95 9.496 s；identity 100%；vector `attached`。失败原因：Recall@1 低于 0.70，query p50 超过 250 ms。
+
+本报告不是 M7 exit 证据，也不批准 Network 或 M8/Milvus。不得用 `tools/run_m7_benchmark.py` 的 disposable hash smoke 替代本记录。
+
+*创建：2026-08-12 · 更新：2026-09-04（追加 M7-3 冻结 BGE 实跑失败证据；不回写历史记录，不声称 M7 exit）·
 维护：知识库、评测集或检索策略变化后复测并追加记录*

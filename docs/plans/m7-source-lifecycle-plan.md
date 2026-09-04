@@ -1,6 +1,6 @@
 # M7 用户 Source 生命周期与千级检索准备计划
 
-> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；协议内 3k p50 复用优化已落地（hash 剖析非正式）。下一增量是 M7-2 manifest-bound snapshot cache；冻结 20 次 1k/3k BGE 未通过，不构成 M7 exit
+> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；协议内 3k p50 复用优化已落地（hash 剖析非正式）。下一增量是 M7-3 冻结 1k/3k BGE 验收；M7-2 已合并。冻结 20 次 1k/3k BGE 未通过前不构成 M7 exit
 > 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不构成生产开工、语料批准或退出证据
 > 前置：`M7-M6A-SOURCE-CONTRACT` 与 `M7-PROTECTED-BASELINE` 均为 `SATISFIED`；批准记录见 §4
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
@@ -926,7 +926,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 5. ✅ 已落地 Search/QA 可选 principal overlay：隔离后 FTS5+vector、generation/auth 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源；
 6. ✅ 已落地 generation-bound source-local vector：与同一 published generation 的 FTS5 identity-set 100% 对齐，缺 metadata/模型/generation 时用户源 fail closed；
 7. ✅ M7-2 manifest-bound snapshot cache：有界 LRU（16）、无变化 FULL 保持已发布 `manifest_digest`、磁盘 identity fail-closed；见下列退出清单。
-8. ⬜ 冻结 `sa.source.benchmark.v1` 仍未满足：vector 已挂接但不是冻结 20 次 BGE 协议，3k 查询 p50 未复测达标。不得进入 M8。
+8. 🔄 M7-3 冻结 `sa.source.benchmark.v1`：2026-09-04 已按 BGE 1k/3k、查询 20+200、FULL 独立进程 5+20 实跑，报告 `m7_exit=false`（1k RSS、3k Recall@1/p50 未达标）。未通过前不得进入 M8。
 
 
 ### M7-2：manifest-bound snapshot cache
@@ -969,8 +969,40 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 - [x] 文档与实现一致：本计划、`tests/M7/README.md`、`tests/TEST_PLAN.md`、`docs/PLAN.md`
 - [x] 不声称 M7 exit，不批准 Network，不改变默认 OS/DS/CO 90 题包
 
+
+### M7-3：冻结 1k/3k BGE 验收证据
+
+本增量只补齐 `sa.source.benchmark.v1` 的可执行冻结证据，不批准 Network，不启动 M8/Milvus，也不把未达标报告写成 M7 exit。
+
+**范围**
+
+- 可生成、不入 Git 的 `1k-single`（100 docs / 1,000 chunks）与 `3k-aggregate`（300 docs / 3,000 chunks）；
+- 正式检索路径为 source-local FTS5 + 冻结 BGE `BAAI/bge-small-zh-v1.5`，禁止用 hash embedder 冒充冻结证据；
+- 查询协议：每个 workload 20 次 warm-up + 200 次 measured；warm-up 不进入 p50/p95/Recall；
+- FULL 协议：每个 workload 独立 OS 进程 5 次 warm-up + 20 次 measured，记录 FULL p95 与峰值 RSS；
+- 附加探针：warm no-op INCREMENTAL、10% added/modified/removed INCREMENTAL、重启恢复、corruption fail-closed、delete-barrier；
+- 门槛：Recall@1/3/5 ≥ 0.70/0.85/0.90；1k 查询 p50 ≤ 150 ms、p95 ≤ 400 ms、RSS ≤ 512 MiB；3k 查询 p50 ≤ 250 ms、p95 ≤ 750 ms、RSS ≤ 1 GiB；FULL p95 ≤ 30 s；identity 100%。全部通过才能把 `m7_exit` 标为 true。
+
+**非目标**
+
+- Network 晋升、默认 90 题扩容、preview/quiz/sessions 用户源、M8/Milvus。
+
+**测试矩阵**
+
+| 用例 | 文件 | 通过标准 |
+| --- | --- | --- |
+| frozen runner schema / 非 exit 冒烟 | `tests/M7/test_source_benchmark.py` | hash/tiny fixture；`m7_exit=false`；无宿主路径 |
+| 1k/3k BGE 冻结报告 | `tools/run_m7_frozen_benchmark.py` | 实跑 artifacts；门槛逐项判定；不得静默跳过 |
+
+**退出清单（M7-3 increment，不是自动 M7 exit）**
+
+- [x] frozen runner 可在离线 BGE 缓存下跑完 1k 与 3k（2026-09-04 `artifacts/m7-frozen-benchmark.json`）
+- [x] 查询 20+200、FULL 5+20、RSS/p50/p95/Recall/identity 写入报告
+- [x] 任一门槛失败则 `m7_exit=false`，不得启动 M8（本次 1k RSS、3k Recall@1 与 query p50 失败）
+- [x] 文档与 disposable hash smoke 仍然区分冻结协议（`docs/baselines.md` 已追加失败证据）
+
 上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 195 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
-默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 1k/3k benchmark（含 vector identity 与 20 次样本）达标。当前证据不满足退出。
+默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 1k/3k benchmark（含 vector identity 与 20 次样本）达标。2026-09-04 冻结 BGE 实跑 `m7_exit=false`，当前证据不满足退出。
 
 ## 6. 撤销与后续边界
 
