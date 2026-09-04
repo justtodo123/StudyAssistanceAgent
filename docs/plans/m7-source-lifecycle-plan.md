@@ -1,6 +1,6 @@
 # M7 用户 Source 生命周期与千级检索准备计划
 
-> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；协议内 3k p50 复用优化已落地（hash 剖析非正式）。冻结 20 次 1k/3k BGE 未通过，不构成 M7 exit
+> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；协议内 3k p50 复用优化已落地（hash 剖析非正式）。下一增量是 M7-2 manifest-bound snapshot cache；冻结 20 次 1k/3k BGE 未通过，不构成 M7 exit
 > 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不构成生产开工、语料批准或退出证据
 > 前置：`M7-M6A-SOURCE-CONTRACT` 与 `M7-PROTECTED-BASELINE` 均为 `SATISFIED`；批准记录见 §4
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
@@ -917,7 +917,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 
 生产开工门禁为 `AUTHORIZED`，`authorized_by=justtodo123`，`authorized_at=2026-08-31`；授权参考为用户指令“批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论”。因此 M7 当前为 `ADMITTED / IN_PROGRESS`；本轮已形成 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 的局部实现，不关闭 P0、不批准 Network，也不形成 M7 exit。
 
-## 5. 获准后的实施顺序（FTS5/vector/offline 局部合同已落地，后续仅冻结 benchmark）
+## 5. 获准后的实施顺序（M7-2 manifest snapshot 为当前增量；冻结 benchmark 仍未开始）
 
 1. ✅ 已落地版本化 lifecycle schema、Source Registry repository contract 和事务/回滚测试；已补齐文件级 manifest、parser matrix、normalized document 与 source-local FULL candidate/原子发布局部合同；
 2. ✅ 已落地受限增量同步、request/run 幂等、单 active run、cancel/retry/checkpoint/recovery 的 source-local 局部合同；
@@ -925,9 +925,51 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 4. ✅ 已落地 `jieba==0.42.1` / `sa.source.fts5-tokenizer.v1` generation-bound SQLite FTS5 与离线 fail-closed 校验/显式 FULL repair；
 5. ✅ 已落地 Search/QA 可选 principal overlay：隔离后 FTS5+vector、generation/auth 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源；
 6. ✅ 已落地 generation-bound source-local vector：与同一 published generation 的 FTS5 identity-set 100% 对齐，缺 metadata/模型/generation 时用户源 fail closed；
-7. ⬜ 冻结 `sa.source.benchmark.v1` 仍未满足：vector 已挂接但不是冻结 20 次 BGE 协议，3k 查询 p50 未复测达标。不得进入 M8。
+7. ✅ M7-2 manifest-bound snapshot cache：有界 LRU（16）、无变化 FULL 保持已发布 `manifest_digest`、磁盘 identity fail-closed；见下列退出清单。
+8. ⬜ 冻结 `sa.source.benchmark.v1` 仍未满足：vector 已挂接但不是冻结 20 次 BGE 协议，3k 查询 p50 未复测达标。不得进入 M8。
 
-上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 189 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
+
+### M7-2：manifest-bound snapshot cache
+
+本增量在已冻结的 source-local FULL candidate/原子发布之上，补齐 **已发布 snapshot 的身份绑定与有界缓存**。
+它不是 M7 exit，也不替代冻结 20 次 1k/3k BGE 协议。
+
+**范围**
+
+- 已发布 FULL snapshot 的身份绑定到 `source_id + generation + source_fingerprint + manifest_digest + document/chunk counts`；
+- 文件内容无变化的重复 FULL：不新增 revision，不因 manifest `created_at` 改写已发布 snapshot 或 `manifest_digest`；
+- 进程内 snapshot 缓存使用 LRU，上限固定 `SNAPSHOT_CACHE_MAX_ENTRIES = 16`；历史 generation 仍可从磁盘加载；
+- 磁盘 generation 与 expected snapshot identity 不一致时 fail-closed，不得把损坏 payload 当作 CURRENT；
+- 不修改已冻结的 `sa.source.manifest.v1` 字段集；`created_at` 仍是审计时间，snapshot 身份以内容指纹和已发布 digest 为准。
+
+**非目标**
+
+- 冻结 `sa.source.benchmark.v1` 的 20 次 1k/3k BGE、RSS/p50 门槛或 M7 exit；
+- Network 31 篇晋升、P0 语料闭环、默认 90 题扩容；
+- M6b preview / Quiz / Review Plan / study-sessions 接入用户源；
+- M8/Milvus、独立 `/api/v1/sources`、provenance 晋升链。
+
+**测试矩阵**
+
+| 用例 | 文件 | 通过标准 |
+| --- | --- | --- |
+| 无变化重复 FULL 忽略 volatile `created_at` | `tests/M7/test_full_snapshot.py` | 同 generation、同 `manifest_digest`、revision 仍为 1 |
+| snapshot 缓存有界 | `tests/M7/test_full_snapshot.py` | `len(cache) <= 16`；当前 generation 仍可加载且 digest 校验通过 |
+| 磁盘 identity 损坏 fail-closed | `tests/M7/test_full_snapshot.py` | SHA256 或 identity 字段不一致时不得激活/返回损坏 snapshot |
+| 既有 FULL last-good / 指针 / 失败降级 | `tests/M7/test_full_snapshot.py` 原 4 项 | 不回退 |
+
+回归：`tests/M7/` 全量 + `tests/regression/test_docs_consistency.py` / `test_governance_contract.py` / `test_document_governance.py`。不把 disposable 或冻结 BGE 报告当作本增量退出证据。
+
+**退出清单（M7-2 increment，不是 M7 exit）**
+
+- [x] `tests/M7/` 含新增 snapshot 合同全绿，既有 FULL/FTS5/vector/Search overlay 不回退
+- [x] 无变化 FULL 不新增 revision，且已发布 `manifest_digest` 稳定
+- [x] 进程内 snapshot 缓存不超过 16 条
+- [x] 身份损坏 fail-closed；last-good 不被错误 generation 覆盖
+- [x] 文档与实现一致：本计划、`tests/M7/README.md`、`tests/TEST_PLAN.md`、`docs/PLAN.md`
+- [x] 不声称 M7 exit，不批准 Network，不改变默认 OS/DS/CO 90 题包
+
+上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 195 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
 默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 1k/3k benchmark（含 vector identity 与 20 次样本）达标。当前证据不满足退出。
 
 ## 6. 撤销与后续边界

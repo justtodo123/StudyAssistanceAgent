@@ -8,8 +8,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import threading
+from collections import OrderedDict
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -37,6 +39,7 @@ from .source_registry import (
     SourceLifecycleState,
     SourceRecord,
     SourceRevisionDraft,
+    validate_user_source_id,
 )
 
 PARSER_SCHEMA_VERSION = "sa.source.parser-matrix.v1"
@@ -45,6 +48,8 @@ MAX_DOCUMENTS_PER_SOURCE = 100
 MAX_CHUNKS_PER_SOURCE = 1_000
 MAX_RAW_BYTES_PER_SOURCE = 256 * 1024 * 1024
 MAX_RAW_BYTES_PER_FILE = 32 * 1024 * 1024
+SNAPSHOT_CACHE_MAX_ENTRIES = 16
+_GENERATION_NAME_RE = re.compile(r"gen-m7-[0-9a-f]{24}")
 
 
 class FullSnapshotErrorCode(StrEnum):
@@ -107,22 +112,27 @@ class FullSnapshot:
     def from_dict(cls, payload: object) -> "FullSnapshot":
         if not isinstance(payload, dict) or payload.get("schema_name") != SNAPSHOT_SCHEMA_VERSION:
             raise FullSnapshotError(FullSnapshotErrorCode.BUILD_FAILED)
-        documents = tuple(
-            NormalizedDocument.from_dict(item) for item in payload.get("documents") or ()
-        )
-        snapshot = cls(
-            source_id=str(payload.get("source_id")),
-            generation=str(payload.get("generation")),
-            manifest_digest=str(payload.get("manifest_digest")),
-            source_fingerprint=str(payload.get("source_fingerprint")),
-            document_count=int(payload.get("document_count", -1)),
-            chunk_count=int(payload.get("chunk_count", -1)),
-            raw_bytes=int(payload.get("raw_bytes", -1)),
-            documents=documents,
-        )
-        if snapshot.canonical_bytes() != canonical_json(payload):
-            raise FullSnapshotError(FullSnapshotErrorCode.BUILD_FAILED)
-        return snapshot
+        try:
+            documents = tuple(
+                NormalizedDocument.from_dict(item) for item in payload.get("documents") or ()
+            )
+            snapshot = cls(
+                source_id=payload["source_id"],
+                generation=payload["generation"],
+                manifest_digest=payload["manifest_digest"],
+                source_fingerprint=payload["source_fingerprint"],
+                document_count=payload["document_count"],
+                chunk_count=payload["chunk_count"],
+                raw_bytes=payload["raw_bytes"],
+                documents=documents,
+            )
+            if snapshot.canonical_bytes() != canonical_json(payload):
+                raise FullSnapshotError(FullSnapshotErrorCode.BUILD_FAILED)
+            return snapshot
+        except FullSnapshotError:
+            raise
+        except (KeyError, TypeError, ValueError, OverflowError) as exc:
+            raise FullSnapshotError(FullSnapshotErrorCode.BUILD_FAILED) from exc
 
 
 class UserSourceSnapshotPublisher:
@@ -132,7 +142,7 @@ class UserSourceSnapshotPublisher:
         self._root = Path(cache_root) / "user-source-snapshots" / "v1"
         self._lifecycle = lifecycle
         self._lock = threading.RLock()
-        self._snapshot_cache: dict[tuple[str, str], tuple[str, FullSnapshot]] = {}
+        self._snapshot_cache: OrderedDict[tuple[str, str], tuple[str, FullSnapshot]] = OrderedDict()
 
     def load_snapshot(self, source_id: str, generation: str | None = None) -> FullSnapshot | None:
         path = self.published_path(source_id, generation)
@@ -141,25 +151,32 @@ class UserSourceSnapshotPublisher:
         resolved = generation or path.name.removeprefix("gen-")
         try:
             digest = (path / "SHA256").read_text(encoding="ascii").strip()
-        except OSError as exc:
+            payload_bytes = (path / "snapshot.json").read_bytes()
+            payload = json.loads(payload_bytes.decode("utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
             raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
+        if hashlib.sha256(payload_bytes).hexdigest() != digest:
+            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
+        try:
+            snapshot = FullSnapshot.from_dict(payload)
+        except FullSnapshotError as exc:
+            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
+        if snapshot.source_id != source_id or snapshot.generation != resolved:
+            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
         cache_key = (source_id, resolved)
         with self._lock:
             cached = self._snapshot_cache.get(cache_key)
-            if cached is not None and cached[0] == digest:
+            if cached is not None and cached[0] == digest and cached[1] == snapshot:
+                self._snapshot_cache.move_to_end(cache_key)
                 return cached[1]
-        try:
-            payload = json.loads((path / "snapshot.json").read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
-        snapshot = FullSnapshot.from_dict(payload)
-        if hashlib.sha256(snapshot.canonical_bytes()).hexdigest() != digest:
-            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
-        with self._lock:
-            self._snapshot_cache[cache_key] = (digest, snapshot)
+            self._remember_snapshot(cache_key, digest, snapshot)
         return snapshot
 
     def published_path(self, source_id: str, generation: str | None = None) -> Path | None:
+        try:
+            validate_user_source_id(source_id)
+        except ValueError as exc:
+            raise FullSnapshotError(FullSnapshotErrorCode.SOURCE_NOT_READY) from exc
         root = self._root / source_id
         if generation is None:
             generation_name = self._pointer_value(root / "CURRENT")
@@ -167,7 +184,13 @@ class UserSourceSnapshotPublisher:
                 return None
             path = root / generation_name
         else:
+            if _GENERATION_NAME_RE.fullmatch(f"gen-{generation}") is None:
+                raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
             path = root / f"gen-{generation}"
+        try:
+            path.relative_to(self._root)
+        except ValueError as exc:
+            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
         return path if path.is_dir() else None
 
     def publish_full(
@@ -203,10 +226,14 @@ class UserSourceSnapshotPublisher:
             preflight_error: Exception | None = None
             if record.state is SourceLifecycleState.READY:
                 try:
+                    last_good = self._load_last_good(source_id, record.published_generation)
                     candidate = self._build_candidate(source_root, source_id)
                     if candidate.generation == record.published_generation:
-                        self._materialize_candidate(candidate)
-                        self._activate_generation(candidate)
+                        if last_good is None:
+                            self._materialize_candidate(candidate)
+                            self._activate_generation(candidate)
+                        else:
+                            self._activate_generation(last_good)
                         return record
                 except Exception as exc:
                     preflight_error = exc
@@ -273,6 +300,31 @@ class UserSourceSnapshotPublisher:
                 ) from exc
             return ready
 
+    def _load_last_good(self, source_id: str, generation: str | None) -> FullSnapshot | None:
+        if not generation:
+            return None
+        try:
+            return self.load_snapshot(source_id, generation)
+        except FullSnapshotError:
+            return None
+
+    def _load_last_good_current(self, source_id: str) -> FullSnapshot | None:
+        path = self.published_path(source_id)
+        if path is None:
+            return None
+        return self._load_last_good(source_id, path.name.removeprefix("gen-"))
+
+    def _remember_snapshot(
+        self,
+        cache_key: tuple[str, str],
+        digest: str,
+        snapshot: FullSnapshot,
+    ) -> None:
+        self._snapshot_cache[cache_key] = (digest, snapshot)
+        self._snapshot_cache.move_to_end(cache_key)
+        while len(self._snapshot_cache) > SNAPSHOT_CACHE_MAX_ENTRIES:
+            self._snapshot_cache.popitem(last=False)
+
     def _degrade(
         self,
         *,
@@ -300,6 +352,8 @@ class UserSourceSnapshotPublisher:
         source_id: str,
         last_good: FullSnapshot | None = None,
     ) -> FullSnapshot:
+        if last_good is None:
+            last_good = self._load_last_good_current(source_id)
         manifest = build_manifest(
             source_root,
             source_id,
@@ -317,10 +371,7 @@ class UserSourceSnapshotPublisher:
             if entry.acceptance is not ManifestAcceptance.ACCEPTED:
                 continue
             reused = previous.get(entry.logical_uri)
-            if (
-                reused is not None
-                and reused.content_fingerprint == entry.content_fingerprint
-            ):
+            if reused is not None and reused.content_fingerprint == entry.content_fingerprint:
                 documents.append(reused)
                 continue
             path = Path(source_root) / Path(entry.logical_uri)
@@ -350,7 +401,8 @@ class UserSourceSnapshotPublisher:
                             "normalized_text_digest": document.normalized_text_digest,
                         }
                         for document in documents
-                    ]
+                    ],
+                    "raw_bytes": manifest.accepted_bytes,
                 }
             )
         ).hexdigest()
@@ -381,15 +433,25 @@ class UserSourceSnapshotPublisher:
             staging.mkdir()
             payload = snapshot.canonical_bytes()
             self._write_fsynced(staging / "snapshot.json", payload)
-            self._write_fsynced(staging / "SHA256", hashlib.sha256(payload).hexdigest().encode("ascii") + b"\n")
+            self._write_fsynced(
+                staging / "SHA256",
+                hashlib.sha256(payload).hexdigest().encode("ascii") + b"\n",
+            )
             self._fsync_directory(staging)
             if generation.exists():
-                if not self._is_valid_generation(generation, payload):
+                if self._is_valid_generation(generation, snapshot):
+                    self._discard_staging(staging)
+                    return
+                current = self._pointer_value(root / "CURRENT")
+                previous = self._pointer_value(root / "PREVIOUS")
+                if current == generation.name or previous == generation.name:
                     raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
-                self._discard_staging(staging)
-            else:
-                os.replace(staging, generation)
-                self._fsync_directory(root)
+                if generation.is_dir():
+                    shutil.rmtree(generation)
+                else:
+                    generation.unlink()
+            os.replace(staging, generation)
+            self._fsync_directory(root)
         except Exception:
             self._discard_staging(staging)
             raise
@@ -398,8 +460,7 @@ class UserSourceSnapshotPublisher:
         """Advance non-authoritative convenience pointers after READY commits."""
         root = self._root / snapshot.source_id
         generation = root / f"gen-{snapshot.generation}"
-        payload = snapshot.canonical_bytes()
-        if not self._is_valid_generation(generation, payload):
+        if not self._is_valid_generation(generation, snapshot):
             raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
         previous = self._pointer_value(root / "CURRENT")
         if previous is not None and previous != generation.name:
@@ -413,13 +474,27 @@ class UserSourceSnapshotPublisher:
             shutil.rmtree(staging, ignore_errors=True)
 
     @staticmethod
-    def _is_valid_generation(path: Path, expected: bytes) -> bool:
+    def _is_valid_generation(path: Path, expected: FullSnapshot) -> bool:
         try:
             payload = (path / "snapshot.json").read_bytes()
             digest = (path / "SHA256").read_text(encoding="ascii").strip()
         except OSError:
             return False
-        return payload == expected and hashlib.sha256(payload).hexdigest() == digest
+        if hashlib.sha256(payload).hexdigest() != digest:
+            return False
+        try:
+            loaded = FullSnapshot.from_dict(json.loads(payload.decode("utf-8")))
+        except (FullSnapshotError, json.JSONDecodeError, UnicodeError, TypeError, ValueError):
+            return False
+        return (
+            loaded.source_id == expected.source_id
+            and loaded.generation == expected.generation
+            and loaded.manifest_digest == expected.manifest_digest
+            and loaded.source_fingerprint == expected.source_fingerprint
+            and loaded.document_count == expected.document_count
+            and loaded.chunk_count == expected.chunk_count
+            and loaded.raw_bytes == expected.raw_bytes
+        )
 
     def _switch_pointer(self, path: Path, value: str) -> None:
         temporary = path.with_name(f".{path.name}-{uuid4().hex}")
@@ -433,7 +508,7 @@ class UserSourceSnapshotPublisher:
             value = path.read_text(encoding="ascii").strip()
         except OSError:
             return None
-        return value if value.startswith("gen-m7-") else None
+        return value if _GENERATION_NAME_RE.fullmatch(value) is not None else None
 
     @staticmethod
     def _write_fsynced(path: Path, payload: bytes) -> None:
@@ -467,6 +542,7 @@ __all__ = [
     "MAX_CHUNKS_PER_SOURCE",
     "MAX_RAW_BYTES_PER_SOURCE",
     "MAX_RAW_BYTES_PER_FILE",
+    "SNAPSHOT_CACHE_MAX_ENTRIES",
     "FullSnapshotErrorCode",
     "FullSnapshotError",
     "FullSnapshot",

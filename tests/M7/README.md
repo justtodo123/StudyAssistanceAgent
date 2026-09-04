@@ -29,7 +29,8 @@
 - `sa.source.offline-fallback.v1` 的依赖/metadata/索引完整性 fail-closed、不自动修复与显式 FULL repair；
 - Search/QA 可选 `principal_id` overlay：隔离后 FTS5+vector、auth/generation 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源。
 - `sa.source.vector.v1` 的 generation-bound source-local vector：绑定 source_id/revision/generation/embedding/chunk policy 与 identity-set；与 FTS5 chunk_id 集合 100% 一致；缺 metadata、generation/模型/identity 不一致或 vector 未附着时用户源 fail closed，不回退默认包 keyword-only。
-- 协议内热路径复用：已校验 generation 的 FTS5/vector runtime、snapshot chunk 缓存与隔离批处理；热缓存后 identity 被篡改仍 fail closed。`tests/M7/` 当前 190 项。冻结 20 次 1k/3k BGE 仍不是本目录的通过条件。
+- 协议内热路径复用：已校验 generation 的 FTS5/vector runtime、snapshot chunk 缓存与隔离批处理；热缓存后 identity 被篡改仍 fail closed。`tests/M7/` 当前 195 项。冻结 20 次 1k/3k BGE 仍不是本目录的通过条件。
+- M7-2：manifest-bound snapshot cache。已发布 FULL snapshot 绑定 `source_id/generation/source_fingerprint/manifest_digest`；无变化重复 FULL 不得因 `created_at` 改写 digest 或新增 revision；进程内 LRU 上限 16；磁盘 identity 损坏 fail-closed。不覆盖冻结 BGE、Network 或 preview 用户源。
 
 测试 fixture 仅在运行时以 `tmp_path` 生成；不会读取或复制 `D:\111_Others_Subjects`，也不会提交 PDF、PPTX、DOCX
 等二进制文件。sync 套件使用合成 Markdown parser fixture，不构成真实五格式 parser 成功。
@@ -37,6 +38,17 @@
 FULL/INCREMENTAL、delete/isolation、FTS5/offline 与 generation-bound vector 仍是 source-local 工件；Search/QA 可通过可选 `principal_id` 叠加授权用户源。
 M6b preview、Quiz、Review Plan 与 study-sessions 不包含用户源。`CURRENT` 仅为本地便利指针，权威 published generation 仍由 lifecycle 的 immutable revision
 决定。本套件与 disposable 1k/3k 证据不构成 M7 exit；冻结 20 次 BGE 协议仍未跑完。
+
+M7-2 测试矩阵（`test_full_snapshot.py` 增量，不是 M7 exit）：
+
+| 用例 | 通过标准 |
+| --- | --- |
+| 无变化重复 FULL 忽略 volatile `created_at` | 同 generation、同 `manifest_digest`、revision=1 |
+| snapshot 缓存有界 | `len(cache) <= 16`，当前 generation 仍可加载 |
+| 磁盘 identity 损坏 fail-closed | SHA256/identity 不一致不得当作已发布 snapshot |
+| 既有 FULL last-good / 指针 / 失败降级 | 原 4 项不回退 |
+
+M7-2 退出清单：上述矩阵全绿；既有 `tests/M7/` 不回退；不声称 M7 exit、不批准 Network、不扩大默认 90 题。
 
 M8/Milvus、M9、M10 与 Network 晋升仍不在本阶段范围内。
 
