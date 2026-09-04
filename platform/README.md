@@ -382,7 +382,7 @@ M7-1 新增 `app/source_registry.py`，实现 `sa.source.lifecycle.v1` 的版本
 同一 M7 局部切片还提供 `source_manifest.py`、`parser_matrix.py`、`normalized_document.py`、
 `user_source_snapshot.py`、`user_source_sync.py`、`source_delete.py`、`source_isolation.py`、`fts5_tokenizer.py`、`user_source_fts5.py`、`user_source_vector.py` 与 `source_offline.py`：支持用户源的文件级 canonical manifest、Markdown/纯文本/PDF/PPTX/DOCX 五格式
 冻结 parser contract、统一 normalized document/chunk identity，已注册单源的离线 FULL candidate、校验和、
-last-good 与 `CURRENT`/`PREVIOUS` convenience pointers，以及受限 INCREMENTAL、request/run 幂等、单 active run、
+last-good 与 `CURRENT`/`PREVIOUS` convenience pointers，M7-2 起已发布 snapshot 绑定 generation/`manifest_digest` 且进程内 LRU 上限 16，以及受限 INCREMENTAL、request/run 幂等、单 active run、
 cancel/retry/checkpoint/recovery，以及 tombstone/read barrier、索引/cache 不可读传播、30 天 hard-delete receipt 与查询前隔离过滤。FULL/INCREMENTAL/delete/isolation 只生成 source-local 内部工件；lifecycle 的
 immutable revision 才是 published generation 的权威，且重复请求与无变化 INCREMENTAL 对同一 generation 幂等。
 
@@ -447,7 +447,7 @@ M6b 已实现独立、默认关闭、只读的原生工具调用 preview，并�
 它不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。
 
 M7 当前为 `ADMITTED / IN_PROGRESS`。已实施的是独立 Source Registry 加上 source-local manifest、冻结 parser matrix、normalized document、
-离线单源 FULL candidate/发布合同、受限 incremental sync worker、已冻结的 source-local delete/isolation/FTS5/vector/offline 合同，以及 Search/QA 可选 principal overlay；阶段测试 `tests/M7/` 当前为 189 项。M6b preview 仍不含用户源。当前测试与 disposable 1k/3k 证据不构成 M7 exit。
+离线单源 FULL candidate/发布合同、受限 incremental sync worker、已冻结的 source-local delete/isolation/FTS5/vector/offline 合同，以及 Search/QA 可选 principal overlay；阶段测试 `tests/M7/` 当前为 195 项（含 M7-2 snapshot identity/LRU 合同）。M6b preview 仍不含用户源。当前测试与 disposable 1k/3k 证据不构成 M7 exit。
 默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
 ## 降级路径
