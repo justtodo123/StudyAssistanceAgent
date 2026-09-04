@@ -4,6 +4,19 @@ course: network
 tags: [网络层, 虚电路, 数据报, 转发]
 difficulty: 入门
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/network-layer.md
+document_id: f5c611ce3c57f1b02d7184c88f9f8f1f
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

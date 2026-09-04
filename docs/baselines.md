@@ -479,4 +479,149 @@ registry 双重授权、预算/retry/timeout/cancel/duplicate/stop reason、默�
 
 M6b 保持 `ADMITTED / COMPLETE`；M7 仍为 `BLOCKED / NOT_STARTED`。
 
-*创建：2026-08-12 · 更新：2026-08-29（追加 `stabilization-20260829-03`；不回写历史 closeout/stabilization 证据）· 维护：知识库、评测集或检索策略变化后复测并追加记录*
+## M7 准入前保护基线 `m7-admission-20260829-02` — 2026-08-29
+
+本节是 M7 人工准入候选的追加式证据。分类固定为 `disposable-reference`：一次性 harness 位于仓库外临时目录，
+只使用纯合成 Markdown、既有 M6a static extra / combined snapshot / BM25 接口和离线环境；未扫描或复制
+`D:\\111_Others_Subjects`，未访问网络、外部 LLM 或 provider，外部服务成本为 USD 0.0。报告位于被忽略的
+`reports/`，权威文档只登记 evidence ID 与 digest，不把原始报告作为受跟踪生产文件。
+
+### 不自引用的候选身份与报告完整性
+
+- Evidence ID：`m7-admission-20260829-02`；schema：`sa.source.admission-baseline.v1`；
+  overall：`PASS_WITH_STRUCTURAL_3K_GAP`；
+- parent commit：`ca714066295908333964533d311b1375d971b5d2`；
+- gate-spec diff SHA-256：`79709fa0bad3aad3ebc2897779a64a7cef5805d51e4e1bdde614a07c711770a2`；
+- plan-spec diff SHA-256：`ba7f5b8516abc1117397917ff99fddc4d9c8a7d2a9cc9acbacfd910e2192d1d4`；
+- tracked candidate diff SHA-256：`c439ea115fab4a6398e926100ec334625d4979a0298799adf6ead4a030ac689e`；
+  candidate identity SHA-256：`a9c753993e15e6ec71801fca73e1432082b66e3915d70aabab99a3c66d9c9c17`；
+- fixture manifest SHA-256：`8a60db52f8b253aa3baca847d69995b6593eb3c5635347c25f3c38c1125a4f46`；
+  query/gold manifest SHA-256：`d8c36f50d4a9fbb07e091a0c63f9910310f1c6702f81f22f2fa79be48eaace68`；
+- harness SHA-256：`db6f5f0e7036ad3328d6aaf8e86049fe9d3f766873e0558d3f0b036288120a71`；
+  environment manifest SHA-256：`44bca41cfac605c64b03d230c04da1fe8e4a96ef850f0c7c02f09c2f87965b9e`；
+  limit manifest SHA-256：`e379d13b2d28eccb11275dfad68982e5d79497afe06478428c50496feb5b5a3c`；
+- raw report SHA-256：`d35befc6b9376dc911ba5aaf65003798ab60edef036ec395973b4e92b6516757`；
+  canonical result SHA-256：`fcda6e52b5463b9dce05f250128509a90719824b50184f8571dcf59964d5b2bb`。
+
+上述 identity 绑定证据同步前的受测 payload；后续把证据本身追加到文档会自然改变 tracked diff，因此不得把最终包含
+本节的文档 diff 伪称为原始受测 payload，也不得回写历史 digest。
+
+### 可执行 1k current-state reference
+
+- fixture：1 个静态 extra、100 个 synthetic documents、1,000 个 extra chunks；默认包 682 chunks，combined 共
+  1,682 chunks；100 个固定 query/gold，5 次 warm-up、20 次 measured，共 2,000 次查询观察；
+- 质量：Recall@1/3/5 均为 `1.000`，分别通过 `0.70 / 0.85 / 0.90` 下限；
+- 查询延迟：p50 `108.695 ms`、p95 `216.757 ms`、max `696.645 ms`，通过 p50 `150 ms`、p95 `400 ms` 上限；
+- combined snapshot 冷构建 20 次：p50 `155.286 ms`、p95 `202.913 ms`；持久化 generation 重启加载 20 次：
+  p50 `21.142 ms`、p95 `38.989 ms`；
+- 资源：峰值 RSS `430,669,824 bytes`，通过 `512 MiB` 上限；持久化快照 `1,020,421 bytes`，accepted combined
+  text `610,186 bytes`，比率 `1.672311`，通过 `2.0` 上限；
+- 成本：CPU `292.90625 s`、wall `313.159033 s`、外部服务成本 USD `0.0`；全部冻结检查为 true。
+
+### 3k 结构性容量差距
+
+3k 未运行且未写成 PASS。目标 3,000 extra chunks 加当前默认 682 chunks，需要 combined `3,682` chunks；现行
+M6a combined hard max 为 `2,000`。对 `2,001` 的 hard-max probe 已被拒绝，`attempted_builder_bypass=false`，因此
+状态精确登记为 `UNAVAILABLE_PRE_ADMISSION_CAPACITY_LIMIT`。未提高限制、未绕过 `CombinedSnapshotBuilder`、未拆成
+误导性的独立运行。该差距允许当前保护基线进入人工准入候选，但真实 M7 获准后仍必须用
+`sa.source.benchmark.v1` 同时通过 1k 与 3k。
+
+### 继承保护矩阵与默认质量
+
+在同一候选树上固定 keyword-only / offline 边界后，实测如下；唯一 skip 是显式 online crawler smoke：
+
+| 范围 | 结果 |
+| --- | --- |
+| 根级 `tests/` | 546 collected；545 passed；1 skipped |
+| 合并 `tests/ platform/tests/` | 586 collected；585 passed；1 skipped |
+| M0–M5 + regression 保护选择 | 216 passed；3 benchmark tests deselected |
+| M6a/M6b 普通保护选择 | 250 passed；3 benchmark tests deselected |
+| crawler offline | 52 passed；1 online test deselected |
+| `platform/tests/` | 40 passed |
+| slow RAG quality | 3 passed |
+| M6b 专用 benchmark | 3 passed；126 non-benchmark tests deselected |
+
+M6b 专用报告均为 20 warm-up、200 measured、并发 2、200 completed、0 unexpected termination、replay
+consistency 100%。inherited / root / combined 三份 raw SHA-256 分别为
+`ae35f5d7a3120f9aa7a6b32fdc7426ac8246e47ae4d96d8096607dace2211173`、
+`a0176b07fe0eeee3c4d9d22e4b3105ce8bd9189c4737be9cdf2639af8290564a`、
+`3fe39d6fb70b519c2fafd5a9b9f7840f6ae727d191a550187385f77558412f6e`；对应 p95 为 `10.636 / 10.257 /
+10.689 ms`，内部 report digest 为 `1bc15a1a4df0cfe59f0a872c77c0ff641787fddf2febcf8cec2583648ee03785`、
+`2a45408113411334ecbc2864c75f42225336acbb7f1940460fca9b47ecdfab97`、
+`34979348163ee892530eb5e2168a086731225d6964d1daf465bd945627374add`。
+
+默认 OS/DS/CO 90 题 report raw SHA-256 为
+`238249d77f9f42c327c6221f16df382997449121a49e883df9186c2da866e90d`。keyword-only 下 Recall@3 为
+OS `0.986842`、DS `0.928571`、CO `1.000000`，加权 `0.972222`；三课均通过继承下限 `0.8`。Recall@1/5
+加权为 `0.627778 / 0.988889`，平均延迟 `119.813 ms`；Network 未自动加入。
+
+### 证明边界与状态结论
+
+该证据只证明既有 M6a static-extra materialization、combined snapshot publication/reload、BM25 1k current-state
+质量/容量和 2,000 combined hard max 的拒绝行为。它**不证明** M7 lifecycle、manifest、parser matrix、normalized
+document、provenance、增量同步、删除传播、checkpoint recovery、M7 3k 容量、任何 M7 退出条件，或网络/provider/
+跨机器性能。`warm_noop_incremental`、`ten_percent_incremental`、`delete_propagation` 与 `checkpoint_recovery` 均为
+`NOT_APPLICABLE_PRE_ADMISSION`。
+
+所有可执行 reference、继承回归、质量、隐私和兼容门禁通过，因此仅将
+`M7-PROTECTED-BASELINE` 从 `OPEN` 登记为 `SATISFIED`。M7 仍为 `BLOCKED / NOT_STARTED`，全部批准字段保持空值；
+仓库中没有新增 M7 生产模块、依赖、schema、API、runtime flag、worker、CI job 或 `tests/M7/`。本候选必须停在
+独立人工批准检查点，Agent 不得自行批准或开始 M7 生产实现。
+
+## 治理冻结复测 — 2026-08-31（P0 文档级 mapping 与 candidate 隔离）
+
+本节是追加式当前 checkout 证据，不改写 2026-08-29 的 M7 准入前保护基线或其 digest。治理范围仅包括
+Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明；未新增 M7 runtime 生产能力，M7 仍保持
+`BLOCKED / NOT_STARTED`，批准字段保持为空。
+
+- OS/DS/CO 继续使用历史可信默认 `knowledge-pack` 政策；默认评测固定为 90 题（OS 38 + DS 28 + CO 24），
+  不自动纳入 Network。
+- 默认 keyword-only 评测：Recall@1/3/5 为 `0.672 / 0.978 / 0.989`，平均延迟 `137.6 ms`；
+  Recall@3 分课程为 OS `1.000`、DS `0.929`、CO `1.000`。
+- Network 30 题仅显式通过 `--test-set tools/evaluations/network.json` 运行；Recall@1/3/5 均为 `0.000`。
+  这是 31 篇文档显式 `candidate`、不进入索引的预期 fail-closed 结果，不是默认 OS/DS/CO 质量回归。
+- 完整根级 `tests/`：554 collected；553 passed；1 skipped。根级与 `platform/tests/` 合并：594 collected；
+  593 passed；1 skipped。`platform/tests/` 受保护功能套件为 40 passed；唯一 skip 是显式 online crawler smoke。
+- mapping SHA-256 仍为 `d1bb072da917154a95705c7386b432aeba16af46c08a4fb76cd7d5c419a96fbe`；`git diff --check` 通过。
+
+本节只冻结当前治理验证结果，不代表 Network 来源/许可证已闭环，不代表 M7 admission，也不替代独立人工复核。
+
+## M7 基础设施受限准入登记 — 2026-08-31
+
+本节追加记录治理状态迁移，不回写上述历史测量时点的 `BLOCKED / NOT_STARTED` 原文。准入来自项目负责人
+`justtodo123` 的明确用户指令“`M7 基础设施可以获批；Network 数据仍不获批；M8/Milvus 继续阻断`”，不是由 benchmark、
+测试或 P0 mapping 自动推导。
+
+- M7 当前为 `ADMITTED / IN_PROGRESS`，批准 scope 为 `m7-infrastructure-only-v1`；
+- scope 只包含 Source lifecycle、provenance/manifest/parser、sync/delete/isolation、FTS5/offline fallback 和真实 1k/3k
+  benchmark 基础设施；
+- `implementation_start=AUTHORIZED`；lifecycle/FTS5/offline 与 Search/QA overlay 已实施，`tests/M7/` 当前 177 项通过；disposable 1k/3k FTS5 证据 vector 未挂接，不构成 M7 exit；
+- Network 31 篇继续为 `review / candidate / unresolved`，不可发布、不可索引；
+- M8 继续 `BLOCKED / NOT_STARTED`，`M8-M7-EXIT` 仍 `OPEN`；Milvus 未选择、未批准、未接入。
+
+## M7 source-local delete/isolation 冻结 — 2026-09-02
+
+本节是追加式当前 checkout 证据，不回写 2026-08-31 准入登记原文。2026-09-02 复验：`tests/M7/` 143 passed（其中 delete/isolation 24 passed），`tests/regression/` 61 passed。`sa.source.delete.v1` 与 `sa.source.isolation.v1` 的 source-local 合同自此冻结：不接入 `app.main`、Search、QA、preview 或公开 API。后续 FTS5、正式检索接入与 1k/3k benchmark 不得静默修改已冻结的删除/隔离 schema、错误码或不可读语义。
+
+## M7 source-local FTS5/offline checkout — 2026-09-03
+
+本节追加记录 source-local FTS5/jieba 与离线 fail-closed 校验/显式 FULL repair 的局部落地，不回写 2026-09-02 delete/isolation 冻结原文，也不改变 M7 `ADMITTED / IN_PROGRESS`。2026-09-03 复验：`tests/M7/` 162 passed（新增 FTS5/offline 19 passed），`tests/regression/` 61 passed。未接入 `app.main`、Search、QA、preview 或公开 API；未跑冻结 1k/3k benchmark；不得把 162 项局部合同视为 M7 exit 证据。M8/Milvus/Network 仍不在本范围。
+
+
+
+## M7 Search overlay + disposable 1k/3k FTS5 — 2026-09-03
+
+本节追加记录 Search/QA 可选 principal overlay，不回写 FTS5/offline 162 项原文，也不改变 M7 `ADMITTED / IN_PROGRESS` 或 M8 `BLOCKED / NOT_STARTED`。2026-09-03 复验：`tests/M7/` 177 passed。`tools/run_m7_benchmark.py` 的 disposable FTS5 跑数为：1k-single Recall@1/3/5=1.000，查询 p50 135 ms / p95 149 ms；3k-aggregate Recall@1/3/5=1.000，查询 p50 392 ms / p95 458 ms。vector 仍 `not_attached`；FULL 样本为 1 而非冻结 20 次；3k p50 超过 250 ms 门槛。该报告不是 M7 exit 证据，也不批准 Network 或 M8/Milvus。
+
+## M7 generation-bound vector checkout — 2026-09-03
+
+本节追加记录 source-local generation-bound vector 与 FTS5 identity-set 合同，不回写 Search overlay 177 项原文，也不改变 M7 `ADMITTED / IN_PROGRESS` 或 M8 `BLOCKED / NOT_STARTED`。2026-09-03 复验：`tests/M7/` 189 passed。用户源 vector 绑定 source_id、immutable revision、published generation、embedding model/version、chunk policy 与 identity-set digest；与同一 normalized published generation 的 FTS5 chunk_id 集合 100% 一致。vector metadata 缺失、generation/模型/identity 不一致时 M7 用户源 fail closed，不降级默认包 keyword-only。M0–M6 默认 pack/extras 的既有 vector fallback 保持不变。Preview/Quiz/Review/study-sessions 仍不含用户源。冻结 20 次 1k/3k BGE 协议与 3k p50 仍未达标，本记录不是 M7 exit 证据，也不批准 Network 或 M8/Milvus。
+
+
+
+## M7 协议内 3k p50 复用优化 — 2026-09-03
+
+本条追记 source-local generation-bound 检索热路径的协议内优化，不改写 generation-bound vector 189 项原记录，也不改变 M7 `ADMITTED / IN_PROGRESS` 与 M8 `BLOCKED / NOT_STARTED`。2026-09-03 复验：`tests/M7/` 190 passed。优化保持 fail-closed：identity-set、generation 绑定、删除屏障与 owner allowlist 仍在查询前生效；vector 未附着或 metadata 损坏不降级到 keyword-only。`tools/profile_m7_search.py` 对 3k-aggregate 的 source-local hash 剖析为 query p50 约 105 ms / p95 约 109 ms，vector 已附着，但不是冻结 20 次 BGE 协议，不能当作 M7 exit 证据，也不批准 Network 或 M8/Milvus。
+
+*创建：2026-08-12 · 更新：2026-09-03（追加 generation-bound vector 合同复验；不回写历史证据）·
+维护：知识库、评测集或检索策略变化后复测并追加记录*

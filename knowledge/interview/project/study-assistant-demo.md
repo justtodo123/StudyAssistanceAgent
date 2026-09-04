@@ -4,6 +4,22 @@ course: interview
 tags: [学习助手, 多轮, 测验]
 difficulty: 中等
 updated: 2026-08-18
+source_id: knowledge-pack
+logical_uri: interview/project/study-assistant-demo.md
+document_id: 1759fdc57babd957b64d2d84a2737abb
+provenance: project_authored_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: repository_commit
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: true
+publisher: StudyAssistanceAgent project
+author: repository contributor
+review_status: approved
+ingest_status: approved
+license_id: MIT
+license_status: approved
+license_verified_at: 2026-08-31
 ---
 
 ## 面试问题

@@ -70,3 +70,6 @@ platform/**/__pycache__/
 # ===== Evaluation reports (promote to docs/baselines.md before committing) =====
 /reports/
 
+
+# ===== Local test/run artifacts (not source of truth) =====
+/artifacts/

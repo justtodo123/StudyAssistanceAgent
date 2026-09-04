@@ -4,6 +4,19 @@ course: network
 tags: [网络安全, 攻击类型, 安全服务, 安全机制]
 difficulty: 入门
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/security-overview.md
+document_id: ca6361146cd37a78cf396982b3eeb417
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

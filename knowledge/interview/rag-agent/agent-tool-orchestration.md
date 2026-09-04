@@ -4,6 +4,22 @@ course: interview
 tags: [Agent, Tool Orchestration, 状态]
 difficulty: 进阶
 updated: 2026-08-18
+source_id: knowledge-pack
+logical_uri: interview/rag-agent/agent-tool-orchestration.md
+document_id: 76175185ef718924bb8d85c9aedb6623
+provenance: project_authored_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: repository_commit
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: true
+publisher: StudyAssistanceAgent project
+author: repository contributor
+review_status: approved
+ingest_status: approved
+license_id: MIT
+license_status: approved
+license_verified_at: 2026-08-31
 ---
 
 ## 面试问题

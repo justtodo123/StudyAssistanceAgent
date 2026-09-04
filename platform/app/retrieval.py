@@ -115,12 +115,14 @@ class MultiRecallService:
             [RetrievalScope], tuple[str, list[RetrievalChunk]]
         ]
         | None = None,
+        user_source_search: object | None = None,
     ) -> None:
         self._snapshot_provider = snapshot_provider
+        self._user_source_search = user_source_search
         self._chunks_by_scope: dict[str, list[RetrievalChunk]] = {}
         self._generation_by_scope: dict[str, str] = {}
         self._result_cache: OrderedDict[
-            tuple[str, str, str, int, float, str | None],
+            tuple[str, str, str, int, float, str | None, str | None],
             tuple[list[RetrievalChunk], str],
         ] = OrderedDict()
         self._cache_capacity = 128
@@ -137,6 +139,7 @@ class MultiRecallService:
         threshold: float | None = None,
         course: str | None = None,
         scope: RetrievalScope = RetrievalScope.DEFAULT_ONLY,
+        principal_id: str | None = None,
     ) -> tuple[list[RetrievalChunk], str]:
         """Return fused results from exactly one current source generation."""
         started = time.perf_counter()
@@ -152,7 +155,8 @@ class MultiRecallService:
                 stale_keys = [key for key in self._result_cache if key[1] == scope_key]
                 for key in stale_keys:
                     del self._result_cache[key]
-            cache_key = (generation, scope_key, question, top_k, threshold, course)
+            principal = (principal_id or '').strip() or None
+            cache_key = (generation, scope_key, question, top_k, threshold, course, principal)
             cached = self._result_cache.get(cache_key)
             if cached is not None:
                 results, mode = cached
@@ -191,6 +195,14 @@ class MultiRecallService:
 
             if not any(routes):
                 results, mode = [], "keyword-only"
+                results = self._merge_user_sources(
+                    results,
+                    question=question,
+                    top_k=top_k,
+                    principal_id=principal,
+                )
+                if results:
+                    mode = "hybrid"
             else:
                 mode = "hybrid" if len(routes) > 1 and all(routes) else "keyword-only"
                 # Keep a wider candidate set before applying content-type and course
@@ -201,6 +213,12 @@ class MultiRecallService:
                     results = [result for result in results if result.course == course]
                 else:
                     results = self._prioritize_content_type(question, results)
+                results = self._merge_user_sources(
+                    results,
+                    question=question,
+                    top_k=top_k,
+                    principal_id=principal,
+                )
                 results = results[:top_k]
 
             stored = self._copy_results(results)
@@ -220,6 +238,40 @@ class MultiRecallService:
                 cache_hit=False,
             )
             return self._copy_results(results), mode
+
+
+    def _merge_user_sources(
+        self,
+        results: list[RetrievalChunk],
+        *,
+        question: str,
+        top_k: int,
+        principal_id: str | None,
+    ) -> list[RetrievalChunk]:
+        """RRF-merge authorized user-source hits after isolation/FTS5."""
+        if not principal_id or self._user_source_search is None:
+            return results
+        try:
+            user_result = self._user_source_search.search(  # type: ignore[attr-defined]
+                principal_id=principal_id,
+                query=question,
+                top_k=max(top_k, 20),
+            )
+        except Exception as exc:
+            from .user_source_search import Fts5TokenizerError, SourceIsolationError, SourceOfflineError
+
+            if isinstance(exc, (SourceOfflineError, SourceIsolationError, Fts5TokenizerError)):
+                raise
+            return results
+        user_chunks = list(getattr(user_result, "chunks", ()))
+        if not user_chunks:
+            return results
+        from .user_source_search import ensure_user_provenance
+
+        ensure_user_provenance(user_chunks)
+        if not results:
+            return user_chunks[: max(top_k, 20)]
+        return self._rrf_fuse([results, user_chunks], max(top_k, 20))
 
     @staticmethod
     def _prioritize_content_type(

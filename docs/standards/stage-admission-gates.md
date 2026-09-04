@@ -25,12 +25,21 @@ M6a–M10 涉及 Source 身份、索引生命周期、外部模型、专业存�
 | 交付 | `NOT_STARTED` | 尚未实施生产能力 |
 | 交付 | `IN_PROGRESS` | 已获准并正在实施 |
 | 交付 | `COMPLETE` | 已满足阶段退出条件 |
+| 开工授权 | `NOT_AUTHORIZED` | 已准入范围尚未获得独立生产开工授权 |
+| 开工授权 | `AUTHORIZED` | 用户/项目负责人已明确允许已准入范围进入生产实施 |
+
+准入、交付和开工授权彼此独立。`ADMITTED / NOT_STARTED` 是合法状态：它表示治理范围已获准，
+但没有生产能力正在交付。阶段若登记 `implementation_start`，只有状态为 `AUTHORIZED` 且授权记录完整时，
+才能把交付改为 `IN_PROGRESS`；`NOT_AUTHORIZED` 必须继续保持 `NOT_STARTED`。
 
 M6a 的强制决策、前置证据与负责人批准已闭合，当前为 `ADMITTED / COMPLETE`：已获准实施，
 M6a-1 协议契约与 M6a-2 默认 `knowledge-pack` 兼容适配的自动化门禁已通过，M6a-3 与 M6a-4 已完成。
 M6b 的前置证据、八项决策、保护基线与独立批准也已闭合；获批的默认关闭只读 preview 已完成全部 closeout 门禁，
-当前为 `ADMITTED / COMPLETE`。M7–M10 仍为 `BLOCKED / NOT_STARTED`。M7 的十二项强制决策（含 provenance）均已冻结为 `RESOLVED`，但专属保护基线仍为 `OPEN`，且批准记录为空，因此这些决策关闭不构成阶段准入。M6a-P0 crawler
-本身只构成前置证据，不单独批准阶段。
+当前为 `ADMITTED / COMPLETE`。M7 的十二项强制决策、专属保护基线和人工批准已闭合，当前为
+`ADMITTED / IN_PROGRESS`；批准范围只包含 M7 基础设施，`implementation_start=AUTHORIZED`，当前局部实现为
+Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL sync 与已冻结的 delete/isolation 合同。Network 文档晋升/语料治理闭环、M8
+专业存储和 Milvus 后端选择均明确排除。M8–M10 仍为
+`BLOCKED / NOT_STARTED`。M6a-P0 crawler 本身只构成前置证据，不单独批准阶段。
 
 ## 3. 决策完成标准
 
@@ -64,18 +73,29 @@ M6b 的前置证据、八项决策、保护基线与独立批准也已闭合；�
 - 阶段计划、JSON 登记表与 `docs/PLAN.md` 一致；
 - 用户或项目负责人填写批准人、批准时间、批准引用、计划修订和决策集版本。
 
-Agent 不得自行批准准入。任何强制决策、前置证据或兼容不变量发生实质变化后，准入必须改为
+阶段可登记 `approval_scope` 来缩小并明确批准边界。scope 必须有稳定 `scope_id`、非空 `included` 和
+`excluded`；它不能替代强制决策、前置证据、五项批准字段或退出证据，也不能把被排除的数据、后端或下游阶段
+隐式提升为已批准。阶段可另登记 `implementation_start` 作为生产开工门禁；它只控制交付从
+`NOT_STARTED` 进入 `IN_PROGRESS`，不改变准入结论。
+
+Agent 不得自行批准准入或生产开工。任何强制决策、前置证据或兼容不变量发生实质变化后，准入必须改为
 `REVOKED`；在重新澄清和批准前不得继续生产实施。
 
-## 5. 阻断期间允许与禁止的工作
+## 5. 阻断或未获生产开工授权期间允许与禁止的工作
 
-`BLOCKED` 或 `REVOKED` 时仅允许：
+`BLOCKED`、`REVOKED`，或已登记 `implementation_start=NOT_AUTHORIZED` 时仅允许（本条不限制已登记为 `AUTHORIZED` 的 M7-1 范围）：
 
 - 设定澄清、契约和计划文档；
 - 只读代码调查；
 - 测试与 benchmark 方案设计；
 - 记录既有前置证据；
 - 经单独批准、可丢弃且不进入生产树的研究实验。
+
+M7 的一次性准入前实验使用 `sa.source.admission-baseline.v1`：只对既有 M6a 静态 Source/检索边界运行仓库外、纯合成、
+可丢弃的 current-state reference。现行 M6a combined hard max 为 2,000 chunks，因此 3k reference 必须记录为
+`UNAVAILABLE_PRE_ADMISSION_CAPACITY_LIMIT`，不得通过提高限制或绕过生产 builder 伪造通过。若可执行的 1k reference 与全部
+继承门禁通过，该精确容量差距可作为 M7 待解决项进入人工准入候选，不替代获准后必须同时通过 1k/3k 的
+`sa.source.benchmark.v1`，也不授权 Agent 批准阶段或编写 M7 生产代码。
 
 此时禁止：
 
@@ -85,6 +105,9 @@ Agent 不得自行批准准入。任何强制决策、前置证据或兼容不�
 - 接入正式 API、学习状态机或其他生产执行路径；
 - 增加声称该能力已经交付的 CI、README、面试或发布说明；
 - 开始依赖该阶段完成状态的后续阶段。
+
+上游阶段仅 `ADMITTED` 不等于已退出。下游 prerequisite 只有在上游生产实现、退出测试和所需 benchmark
+形成真实证据后才能改为 `SATISFIED`；因此 M7 准入本身不能满足 `M8-M7-EXIT`。
 
 ## 6. 继承且不可削弱的不变量
 
@@ -99,6 +122,7 @@ Agent 不得自行批准准入。任何强制决策、前置证据或兼容不�
 
 ## 7. 登记和维护
 
-JSON 登记表只保存状态、Decision ID、值/证据引用、前置证据和批准记录；详细理由留在对应阶段计划。
-任何状态变更必须在同一变更中同步阶段计划、登记表和 `docs/PLAN.md`，并通过文档一致性回归。
-批准记录为空时，阶段必须保持 `BLOCKED`。
+JSON 登记表保存状态、Decision ID、值/证据引用、前置证据、批准记录，以及可选的批准范围和生产开工门禁；
+详细理由留在对应阶段计划。任何状态变更必须在同一变更中同步阶段计划、登记表和 `docs/PLAN.md`，
+并通过文档一致性回归。批准记录为空时，阶段必须保持 `BLOCKED`；存在未完成的开工授权时，交付必须保持
+`NOT_STARTED`。

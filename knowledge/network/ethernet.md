@@ -4,6 +4,19 @@ course: network
 tags: [以太网, MAC地址, VLAN, STP]
 difficulty: 中等
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/ethernet.md
+document_id: 96ac68ba5f5bcdc072e8b1c1d84a8750
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

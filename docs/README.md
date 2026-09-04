@@ -13,6 +13,7 @@ docs/
 ├── reference/             # 外部参考资料索引
 │   ├── README.md          # 索引总览与维护规则
 │   ├── _template.md       # 新课程索引模板
+│   ├── document-mapping.json # Network/Interview 逐文档 P0 治理登记
 │   └── {course}.md        # 各课程原始资料登记（路径、类型、状态）
 ├── plans/                 # 学习计划、项目执行计划、计划辅助调查
 │   ├── README.md          # 计划目录说明
@@ -27,7 +28,8 @@ docs/
 │   ├── m6a-harness-skeleton-plan.md
 │   ├── m6b-agent-core-plan.md
 │   ├── m7-source-lifecycle-plan.md
-│   ├── data-expansion-runbook.md # M7 获准后才可参考的非权威数据扩展手册
+│   ├── m7-p0-corpus-governance-report.md # P0 文档级语料治理结果与未解决项
+│   ├── data-expansion-runbook.md # M7 数据扩展非权威未来参考；不批准语料
 │   ├── m8-specialized-storage-plan.md
 │   ├── m9-goal-driven-planning-plan.md
 │   └── m10-autonomous-runner-plan.md
@@ -76,12 +78,17 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
   `ADMITTED / COMPLETE`；获批的默认关闭只读 preview 已完成全部 closeout 门禁与证据同步；准入规则见
   [standards/stage-admission-gates.md](standards/stage-admission-gates.md)，
   机器登记见 [standards/stage-admission-gates.json](standards/stage-admission-gates.json)。M6b/M7 以 M6a 退出证据为
-  共同必要前置，但仍须分别满足专属保护基线、决策和批准，彼此不互为前置。
+  共同必要前置，彼此不互为前置。M7 的决策、保护基线与基础设施范围批准已闭合，当前为
+  `ADMITTED / IN_PROGRESS`；生产开工已授权，Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed
+局部合同已冻结；Network/M8/Milvus/M9/M10 未获批。
 - M7–M10 准入准备计划：
   [plans/m7-source-lifecycle-plan.md](plans/m7-source-lifecycle-plan.md)、
   [plans/m8-specialized-storage-plan.md](plans/m8-specialized-storage-plan.md)、
   [plans/m9-goal-driven-planning-plan.md](plans/m9-goal-driven-planning-plan.md)、
   [plans/m10-autonomous-runner-plan.md](plans/m10-autonomous-runner-plan.md)。计划存在只代表设定澄清准备，不能推导实现或批准。
+- M7 P0 语料治理结果见
+  [plans/m7-p0-corpus-governance-report.md](plans/m7-p0-corpus-governance-report.md)：82 篇 mapping 已建立，但 Network
+  31 篇仍缺逐文档 URL/原创与许可闭环，当前停止等待人工复核。
 - 当前 M6b 不接管正式学习会话；完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测后移 M10。
 - 默认 RAG 评测仍为 OS/DS/CO 三课 90 题；Network 评测集为显式运行的独立扩展。
 - `plans/references/` 只存放辅助决策的分析与事实调查，**不能作为最终支撑来源**。
@@ -91,7 +98,10 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 映射层：将 `D:\111_Others_Subjects` 中的原始资料目录登记为可检索的索引。
 - 主索引：[reference/README.md](reference/README.md) — 按优先级分类（核心专业课 / 专业拓展 / 其他）
 - 各课程索引：`reference/{course}.md` — 记录该课程原始资料的路径、文件类型、整理状态
-- 只读盘点：`tools/source_inventory.py` 输出文件级 manifest，区分工程文件与学习资料；不替代本目录的人工登记
+- 文档级 P0 治理：[reference/document-mapping.json](reference/document-mapping.json) — 登记 Network/Interview 82 篇正文的
+  稳定身份、来源、审核与许可状态；不作为 M7 runtime provenance、生产开工或 Network 晋升批准
+- 只读盘点：`tools/source_inventory.py` 输出文件级 manifest，区分工程文件与学习资料；`study_document` 仅表示
+  candidate 分类，不能授权入库或发布
 
 **维护规则**：
 - 新增外部资料 → 在 [reference/README.md](reference/README.md) 中加一行，并新建/追加对应课程索引文件
@@ -125,4 +135,5 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-08-28（M6b 只读 preview 已完成 closeout；M7 仍阻断）· 维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-09-03（M7 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed
+局部合同已冻结；Network/M8/Milvus/M9/M10 未获批）·维护：随项目演进同步更新*

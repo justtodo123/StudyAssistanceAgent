@@ -4,6 +4,19 @@ course: network
 tags: [传输层, 端口号, 复用分用, TCP, UDP]
 difficulty: 入门
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/transport-layer.md
+document_id: e4d8c2ebe014d95baed1c0625001f1a1
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

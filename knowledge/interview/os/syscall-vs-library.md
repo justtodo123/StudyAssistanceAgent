@@ -4,6 +4,22 @@ course: interview
 tags: [系统调用, 用户态, 内核态]
 difficulty: 入门
 updated: 2026-08-18
+source_id: knowledge-pack
+logical_uri: interview/os/syscall-vs-library.md
+document_id: b934117dddb6faacd41ef8d5c3435f5c
+provenance: project_authored_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: repository_commit
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: true
+publisher: StudyAssistanceAgent project
+author: repository contributor
+review_status: approved
+ingest_status: approved
+license_id: MIT
+license_status: approved
+license_verified_at: 2026-08-31
 ---
 
 ## 面试问题

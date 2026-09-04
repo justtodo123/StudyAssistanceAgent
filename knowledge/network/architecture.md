@@ -4,6 +4,19 @@ course: network
 tags: [OSI, TCP/IP, 体系结构, 协议分层]
 difficulty: 入门
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/architecture.md
+document_id: 1d0052cdec8e5d4f03854e6c01bfe1c2
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

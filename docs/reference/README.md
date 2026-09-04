@@ -2,6 +2,8 @@
 
 > 映射层：将 **`D:\111_Others_Subjects`** 中的原始资料目录登记为可检索的索引，并跟踪其是否已整理到 `knowledge/`。
 > 原始资料**不复制进仓库**，只在 Knowledge/ 笔记中通过这里做指针引用。
+> [`document-mapping.json`](document-mapping.json) 另行提供 Network/Interview 82 篇正文的 P0 文档级治理登记；
+> 它不是 M7 runtime provenance，也不批准 M7。
 
 - 仓库知识库本体：`knowledge/`（精炼 Markdown 笔记）
 - 原始资料根目录：`D:\111_Others_Subjects`（手工维护）
@@ -90,3 +92,7 @@ rg "分页" knowledge/
 - 新增外部资料 → 在 [README.md 主索引] 加一行，并新建/追加对应 `docs/reference/{course}.md` 登记。
 - 某课程已开始整理笔记 → 将该行状态改为 `📝 笔记已建`（入口指向 `knowledge/{course}/README.md`）。
 - 更新知识库时保持 `docs/reference/` 与本表同步（每次会话结束前检查）。
+- 课程页只负责导航；Network 与 Interview 的逐文档来源、身份、审核和许可决定见
+  [`document-mapping.json`](document-mapping.json)。
+- `source_inventory.py` 的 `study_document` 只是发现分类，固定保持 candidate 语义；它不是 `source_type`、审核结果、
+  `ingest_status`、注册方式或许可证决定，不能直接授权入库或发布。

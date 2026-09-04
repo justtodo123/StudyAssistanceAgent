@@ -4,6 +4,19 @@ course: network
 tags: [时延, 带宽, 吞吐量, 信道利用率]
 difficulty: 中等
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/performance.md
+document_id: ff8e84a9b5fb2ffa41e0fd38094a2a70
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

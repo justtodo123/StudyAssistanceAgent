@@ -36,9 +36,10 @@ PRD 将复选框分成三类，必须结合所在小节或行首标签解读：
 - M6b 只依赖 M6a 退出与保护基线，不依赖 M7。
 - M7 只依赖 M6a Source 契约与保护基线，不依赖 M6b。
 - M6b 与 M7 彼此不互为前置；各自的 Source/退出证据和保护基线必须独立留证，专属决策与批准也必须分别闭合。
-  M6b 默认关闭的只读 preview 已完成全部 closeout 门禁与证据同步，现为 `ADMITTED / COMPLETE`；M7 仍为
-  `BLOCKED / NOT_STARTED`。
-- M8 依赖 M7；M9 依赖 M7 与 M8；M10 依赖 M7–M9，不以 M6b 为写路径或 Source 生命周期前置。
+  M6b 默认关闭的只读 preview 已完成全部 closeout 门禁与证据同步，现为 `ADMITTED / COMPLETE`；M7 仅基础设施
+  scope 为 `ADMITTED / IN_PROGRESS`，生产开工已授权且 Source Registry、manifest/parser、normalized document 与
+source-local FULL/INCREMENTAL sync 与 delete/isolation 局部合同已冻结，Network 不在 scope 内。
+- M8 依赖真实 M7 exit；M7 admission 不能满足该前置。M9 依赖 M7 与 M8；M10 依赖 M7–M9。Milvus 未选定或获批。
 
 ## 当前文件
 
@@ -48,4 +49,4 @@ PRD 将复选框分成三类，必须结合所在小节或行首标签解读：
 
 ---
 
-*创建：2026-08-24 · 更新：2026-08-28（同步 M6b `ADMITTED / COMPLETE` 收口状态）· 维护：新增/修订 PRD 时同步本表*
+*创建：2026-08-24 · 更新：2026-09-02（同步 M7 `ADMITTED / IN_PROGRESS` 与已冻结的 source-local delete/isolation 合同）·维护：新增/修订 PRD 时同步本表*

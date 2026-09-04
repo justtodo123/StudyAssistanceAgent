@@ -4,6 +4,19 @@ course: network
 tags: [成帧, 透明传输, 差错检测, 数据链路层]
 difficulty: 入门
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/data-link-layer.md
+document_id: 55dad23805949e5784c27d71bdcaf4e0
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

@@ -1,11 +1,12 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "authority": "docs/PLAN.md",
   "policy": "docs/standards/stage-admission-gates.md",
   "decision_statuses": ["OPEN", "RESOLVED"],
   "admission_statuses": ["BLOCKED", "ADMITTED", "REVOKED"],
   "delivery_statuses": ["NOT_STARTED", "IN_PROGRESS", "COMPLETE"],
   "prerequisite_statuses": ["OPEN", "SATISFIED"],
+  "implementation_start_statuses": ["NOT_AUTHORIZED", "AUTHORIZED"],
   "stages": [
     {
       "stage": "M6a",
@@ -140,8 +141,8 @@
     {
       "stage": "M7",
       "plan": "docs/plans/m7-source-lifecycle-plan.md",
-      "admission_status": "BLOCKED",
-      "delivery_status": "NOT_STARTED",
+      "admission_status": "ADMITTED",
+      "delivery_status": "IN_PROGRESS",
       "prerequisites": [
         {"id": "M7-M6A-SOURCE-CONTRACT", "status": "SATISFIED", "evidence": [
           "docs/plans/m6a-harness-skeleton-plan.md",
@@ -154,7 +155,12 @@
           "tests/M6a/test_snapshot_publication.py",
           "tests/regression/test_path_privacy.py"
         ]},
-        {"id": "M7-PROTECTED-BASELINE", "status": "OPEN", "evidence": []}
+        {"id": "M7-PROTECTED-BASELINE", "status": "SATISFIED", "evidence": [
+          "docs/baselines.md",
+          "docs/plans/m7-source-lifecycle-plan.md",
+          "tests/TEST_PLAN.md",
+          "tests/regression/test_path_privacy.py"
+        ]}
       ],
       "mandatory_decisions": [
         {
@@ -243,7 +249,36 @@
         {"id": "M7-NORMALIZED-DOCUMENT", "status": "RESOLVED", "value": "sa.source.normalized-document.v1;unit-fields;stable-chunk-key;managed-cache;fingerprint-parser-schema-invalidation;staging-cleanup-follows-delete-semantics", "evidence": ["docs/plans/m7-source-lifecycle-plan.md#310-m7-normalized-documentresolved"]},
         {"id": "M7-PROVENANCE", "status": "RESOLVED", "value": "sa.source.provenance.v1;user-uri;bounded-qa-source-fields;new-identity-human-promotion;ai-draft-web-candidate-never-retrievable;atomic-update-and-delete-propagation", "evidence": ["docs/plans/m7-source-lifecycle-plan.md#311-m7-provenanceresolved", "docs/standards/stage-admission-gates.md#3-决策完成标准", "docs/standards/runtime-contracts.md#1-数据源类型与入库门禁", "docs/plans/m6a-harness-skeleton-plan.md", "tests/M6a/test_protocols.py", "tests/M6a/test_cache_lifecycle.py", "tests/M6a/test_snapshot_publication.py", "tests/regression/test_path_privacy.py"]}
       ],
-      "approval": {"approved_by": null, "approved_at": null, "approval_reference": null, "plan_revision": null, "decision_set_version": null}
+      "approval": {
+        "approved_by": "justtodo123",
+        "approved_at": "2026-08-31",
+        "approval_reference": "User instruction: M7 基础设施可以获批；Network 数据仍不获批；M8/Milvus 继续阻断",
+        "plan_revision": "v2.11",
+        "decision_set_version": "m7-decision-set-v1"
+      },
+      "approval_scope": {
+        "scope_id": "m7-infrastructure-only-v1",
+        "included": [
+          "m7.source-lifecycle-infrastructure",
+          "m7.provenance-manifest-parser-infrastructure",
+          "m7.sync-delete-isolation-infrastructure",
+          "m7.fts5-offline-fallback-infrastructure",
+          "m7.1k-3k-benchmark-implementation"
+        ],
+        "excluded": [
+          "network.document-promotion",
+          "network.corpus-governance-closure",
+          "corpus.automatic-approval",
+          "m8.specialized-storage",
+          "milvus.backend-selection"
+        ]
+      },
+      "implementation_start": {
+        "status": "AUTHORIZED",
+        "authorized_by": "justtodo123",
+        "authorized_at": "2026-08-31",
+        "authorization_reference": "User instruction: 批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论。"
+      }
     },
     {
       "stage": "M8",

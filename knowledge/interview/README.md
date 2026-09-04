@@ -43,6 +43,13 @@ updated: 2026-08-18
 3. `## 项目结合点`：联系 StudyAssistanceAgent 的真实实现。
 4. `## 继续追问`：准备下一层为什么、怎么做和如何验证。
 
+## 文档级 provenance 与许可
+
+51 篇正文均在 [`docs/reference/document-mapping.json`](../../docs/reference/document-mapping.json) 中逐篇登记。
+它们由仓库提交 `821fdf4` 创建，并明确声明为项目原创、AI 辅助整理的 Markdown；不宣称复制任何外部题库或课程资料正文。
+当前登记为 `project_authored_ai_assisted / approved / MIT`。新增或改写条目不得仅继承目录结论，必须同步更新自己的
+`logical_uri`、`document_id`、provenance、审核与许可字段。
+
 ## 维护规范
 
 - 只写提炼后的可复用内容，不复制 `D:I_Others_Subjects` 中的 PDF、PPT、实验工程或其他二进制资料。

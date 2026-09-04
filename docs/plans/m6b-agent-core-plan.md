@@ -82,7 +82,8 @@ M6a 完成是必要前置，但不会自动批准 M6b。`M6B-M6A-EXIT`、八项 
 | scope | M6b 默认关闭的只读 Agent Preview；明确不包含 M7 |
 
 批准允许在上述精确范围内实施 M6b，但不证明能力已经交付。只有阶段隔离测试、回归、隐私/零写入和阻断性离线
-benchmark 全部通过并追加收口证据后，才能将交付状态改为 `COMPLETE`。M7 保持 `BLOCKED / NOT_STARTED`。
+benchmark 全部通过并追加收口证据后，才能将交付状态改为 `COMPLETE`。在本计划批准时，M7 保持
+`BLOCKED / NOT_STARTED`；其后续状态以阶段准入登记表为准。
 
 ## 1. 背景与阶段定位
 

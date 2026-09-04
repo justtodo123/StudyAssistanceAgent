@@ -4,6 +4,19 @@ course: network
 tags: [子网划分, CIDR, 子网掩码, 路由聚合]
 difficulty: 中等
 updated: 2026-08-20
+source_id: knowledge-pack
+logical_uri: network/subnetting.md
+document_id: fb9fd95452aba8f2775637fe7aa6e4e5
+provenance: web_derived_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: legacy_course_index
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: false
+review_status: review
+ingest_status: candidate
+license_id: unknown
+license_status: unresolved
 ---
 
 ## 一句话概括（TL;DR）

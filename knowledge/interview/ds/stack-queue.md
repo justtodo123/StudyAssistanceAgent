@@ -4,6 +4,22 @@ course: interview
 tags: [栈, 队列, 数据结构]
 difficulty: 入门
 updated: 2026-08-18
+source_id: knowledge-pack
+logical_uri: interview/ds/stack-queue.md
+document_id: 10563c1036c1a7e764a73aee78cd47cb
+provenance: project_authored_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: repository_commit
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: true
+publisher: StudyAssistanceAgent project
+author: repository contributor
+review_status: approved
+ingest_status: approved
+license_id: MIT
+license_status: approved
+license_verified_at: 2026-08-31
 ---
 
 ## 面试问题

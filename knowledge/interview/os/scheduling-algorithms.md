@@ -4,6 +4,22 @@ course: interview
 tags: [调度, 时间片, 吞吐量]
 difficulty: 中等
 updated: 2026-08-18
+source_id: knowledge-pack
+logical_uri: interview/os/scheduling-algorithms.md
+document_id: e38c2a2a4f4744a920b887273b19d1a8
+provenance: project_authored_ai_assisted
+source_type: human_markdown
+format: markdown
+registration_method: repository_commit
+provenance_evidence: docs/reference/document-mapping.json
+project_authored: true
+publisher: StudyAssistanceAgent project
+author: repository contributor
+review_status: approved
+ingest_status: approved
+license_id: MIT
+license_status: approved
+license_verified_at: 2026-08-31
 ---
 
 ## 面试问题

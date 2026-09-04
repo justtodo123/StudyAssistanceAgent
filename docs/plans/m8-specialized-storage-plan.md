@@ -8,8 +8,8 @@
 ## 1. 范围与非目标
 
 M8 只在 M7 用真实 workload 证明现有检索存储不足或专业后端带来可量化收益后，规划统一 control plane、后端
-迁移和可回滚切换。LanceDB 是待决候选，不是当前默认；Qdrant 只在明确规模/运维条件满足时可选，不得静默
-引入服务依赖。学习状态、会话和复习历史继续由现有 SQLite 领域仓储负责。
+迁移和可回滚切换。M7 的 scoped admission 不满足 `M8-M7-EXIT`；只有真实 lifecycle/delete/isolation/fallback 与
+1k/3k 退出证据才能关闭该前置。LanceDB、Qdrant 和 Milvus 均未选定或获批，不得静默引入依赖或服务。学习状态、会话和复习历史继续由现有 SQLite 领域仓储负责。
 
 本计划不实现 Source 生命周期、目标规划、自主 Runner，也不因计划文件存在而添加依赖、容器、服务、schema
 migration 或生产 adapter。
@@ -56,7 +56,8 @@ migration 或生产 adapter。
 | plan_revision | — |
 | decision_set_version | — |
 
-批准为空，M8 保持 `BLOCKED / NOT_STARTED`。Agent 不得自行批准。
+批准为空，M8 保持 `BLOCKED / NOT_STARTED`。M7 admission 不改变这一状态，Milvus 也不是已选后端。
+Agent 不得自行批准。
 
 ## 5. 获准后的拟实施顺序
 
