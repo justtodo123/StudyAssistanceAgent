@@ -225,7 +225,7 @@ venv、harness、日志和索引仍只在系统临时目录；审阅后必须删
 corpus、empty-result parity 和 probe 覆盖；任何结果仍仅是 decision evidence input，不构成 backend
 selection 或 admission。
 
-### 3.14 `precommit-v3` 修正冻结配置（待执行）
+### 3.14 `precommit-v3` 修正冻结配置（已执行但无效）
 
 独立预审发现 `precommit-v1` 的“固定三个 namespace”与 `10k-capacity` 的 `10 × 1,000` source 结构冲突，
 且 10k 是否执行 query、empty/no-hit parity、exact/flat 下的 overlap 口径和 control-plane fault probe 边界
@@ -268,7 +268,7 @@ selection 或 admission。
 `5 warmup + 20 measured` 的 build/rebuild/import/reopen 样本，也没有实际执行完整 fault probe 与 gate
 calculation。因此该尝试整体无效；进程内数值不得从失败现场恢复、推导或与其他 experiment 混合。
 
-### 3.16 `precommit-v4` 最终口径修正（待执行）
+### 3.16 `precommit-v4` 最终口径修正（已执行但无效）
 
 下一次尝试使用新 experiment ID `sa.m8.admission-evidence.v4`、protocol `precommit-v4`。除 3.14 外，
 在 acquisition 和 measured run 前进一步冻结以下定义，以消除 `v3` 静态复核发现的统计和操作歧义：
@@ -321,6 +321,94 @@ Decision ID、选择后端、批准 M8 或授权生产实现。审阅记录完�
 若仍需继续实验，必须使用新的 experiment ID，在 measured run 前修正 per-sample cleanup，并让 stale
 manifest、stale generation、stale snapshot、真实 tombstone 与 hard-delete barrier 分别具有可判别的 fixture、
 预期错误分类和查询断言；新尝试不得复用或混合 `v1`–`v4` 的 raw/partial 数值。
+
+### 3.18 `precommit-v5` 静态冻结设计（未授权 acquisition 或执行）
+
+下一次实验只能使用新 experiment ID `sa.m8.admission-evidence.v5` 与 protocol `precommit-v5`。本节仅冻结
+静态设计；不继承此前只针对 `v3` 的 PyPI acquisition 授权，不授权安装、smoke 或 measured run。除本节
+修正外，3.10、3.14 和 3.16 的 synthetic corpus、版本、query、sampling、quality/latency/resource 门槛、
+临时目录与非准入边界继续适用；不得复用或混合 `v1`–`v4` 的 raw/partial 数值。
+
+#### 3.18.1 样本隔离、磁盘预算与清理 receipt
+
+- sample key 固定为 `experiment/backend/workload/operation/phase/ordinal`；每个 sample 使用唯一目录和全新
+  backend instance，不得跨样本复用实例、数据文件或 backend cache。`rebuild` 的 old/replacement 是唯一
+  允许的双实例窗口，且必须位于同一 sample 目录。
+- 每个 sample 必须在 `finally` 中依次执行：backend close/flush、记录 elapsed/RSS/过程 peak disk 与
+  close-after disk、递归清理、检查 sample 路径不存在且 residual bytes 为零、原子写出不含路径的 cleanup
+  receipt。任何 close、测量、删除或复核失败均停止该 backend/workload，不能继续计分。
+- staging record 与 cleanup receipt 写在独立于 sample data 的 audit 目录；每条记录先写同目录临时文件，
+  `fsync` 后以 replace/rename 原子发布，并绑定 sample hash。删除 source/index 不能删除对应 receipt。
+- 冻结原始 10k 预算基数 `B = 10,000 * 512 * 4 + canonical UTF-8 metadata bytes`，metadata bytes 在 corpus
+  生成后、任何 backend build 前由规范序列化计算并写入 frozen config。预算为：
+  `per_instance_disk_max = 2 * B + 64 MiB`；`per_operation_peak_disk_max` 在 `rebuild` 为
+  `2 * per_instance_disk_max + 64 MiB`，其余操作为 `per_instance_disk_max + 64 MiB`；
+  `temporary_root_peak_max = per_operation_peak_disk_max + 512 MiB`（包含 venv、staging、WAL、Arrow/cache
+  和报告预留）；sample data 的 `residual_bytes_max = 0`、`cleanup_failure_count = 0`。较小 workload 沿用
+  10k 上限，避免按实测结果修改预算。
+- acquisition 完成后先记录 venv/package footprint；若其与预留相加已超过 root 预算，或任何创建后、操作中
+  采样、sample 完成后、workload 完成后的 watchdog 超预算，立即停止并只发布 `ABORTED`。无法关闭文件
+  句柄并清理的 backend 不得重试掩盖残留，也不得继续其完整 run。
+
+#### 3.18.2 可判别 fault fixture 与稳定分类
+
+每项 fixture 只能改变一个绑定，并记录 fixture ID、mutation、expected/actual code、pointer/manifest digest、
+generation、snapshot、规范化 result IDs 与 `candidate_accessed`。每个 backend/workload/repetition 固定以下
+十一个独立 probe，必须 `11/11`；这显式取代 `v4` 的十项分母：
+
+| Probe | 单一变化与断言 |
+| --- | --- |
+| `wrong_dimension` | 只改变 query vector dimension；返回 `DIMENSION_MISMATCH`，不访问 candidate |
+| `missing_required_metadata` | 从 otherwise-valid manifest 只删除 `model`；返回 `METADATA_INVALID` |
+| `stale_manifest` | 只破坏 pointer 绑定的 manifest digest；返回 `STALE_MANIFEST`，零结果 |
+| `stale_generation` | pointer 与 manifest digest 保持自洽，只让 authoritative generation 与 candidate generation 不同；返回 `STALE_GENERATION` |
+| `stale_snapshot` | pointer 与 manifest digest 保持自洽，只让 authoritative snapshot 与 candidate snapshot 不同；返回 `STALE_SNAPSHOT` |
+| `cross_owner_source` | 使用语料中两个真实且不匹配的 owner/source 组成 filter；返回空集，不以不存在 owner 代替 |
+| `tombstone` | 对基线可命中的 delete sentinel 写真实 tombstone；控制面查询零命中，但物理对象仍存在 |
+| `hard_delete` | 对同一 sentinel 完成保留期后的物理 purge；对象、索引、cache 与 provenance 均不存在，并产生 immutable receipt |
+| `partial_unpublished` | candidate 存在但无 published pointer；返回 `UNPUBLISHED_CANDIDATE`，且 candidate 不可读 |
+| `reopen_validation` | 关闭重开后 count、identity digest、manifest digest 与 sentinel query 全部一致，否则 `REOPEN_INVALID` |
+| `last_good_rollback` | 新 candidate 校验失败或 cutover 中断；只读取旧 published generation，绝不访问 candidate |
+
+`last_good` 只适用于仍可证明 authorization、lifecycle、delete barrier、identity 与 generation 的已验证旧发布；
+其中任一条件不可证明时必须完全 fail closed，不得为了可用性返回 stale user-source 数据。
+
+#### 3.18.3 真实 tombstone、hard-delete 与 receipt
+
+- 每个删除 fixture 先发布包含稳定 `delete-sentinel` identity 的独立 source，基线 exact/filter query 必须命中；
+  fixture 不得与质量/延迟 corpus 共用可变状态。
+- Tombstone 后必须同时证明逻辑检索为零、物理 data-plane object 仍存在；hard-delete 仅在冻结模拟时钟满足
+  retention policy 后执行，并验证 backend object/index、wrapper cache、provenance 全部清除。
+- Immutable delete receipt 至少绑定 request/source/sentinel identity-set digest、各存储清理计数与 digest、
+  policy version、逻辑删除时间、物理完成时间和结果码。相同 request 重放必须返回相同 receipt；中断或
+  receipt 缺失时状态保持 `DELETE_PENDING` 且查询 fail closed，不能报告完成。
+- 这些是实验 publication wrapper 对 M7 语义的 fixture，不得宣称 LanceDB、Qdrant 或 SQLite 数据面原生
+  提供 M7 lifecycle、授权或 receipt 权威能力。
+
+#### 3.18.4 两阶段报告与唯一终态 publication
+
+- 所有 sample/probe/cleanup 原始记录只进入 audit staging；完整 inventory 必须与 frozen expected inventory
+  的数量和 digest 一致。样本清理完成不删除 staging audit record。
+- 全部样本、probe、network/redaction、预算和 cleanup gate 完成后，先原子生成 canonical `report.json`，
+  其中包含 frozen config hash、sample inventory digest、gate evaluation 及 invalid/abort 原因，再重新读取并
+  校验其 digest、schema 与 required inventory。
+- 只有上述复核全部通过才能原子生成 `publication.json`，绑定 experiment/protocol、report SHA-256、frozen
+  config hash、inventory digest、gate summary 与终态 `COMPLETE`。任何异常、超预算、清理失败、缺样本或
+  序列化失败只能生成终态 `ABORTED`/`INVALID` publication，且不得包含性能排名或候选比较结论。
+- 同一 experiment ID 只允许一个终态 publication；不能从 partial report 补写 `COMPLETE`。raw report 只留在
+ 临时根目录供独立审阅，审阅后连同 venv、harness、indexes 和 cache 一并删除；仓库只记录脱敏结论。
+
+#### 3.18.5 预执行门禁与治理边界
+
+在任何新 acquisition 前，必须先完成 harness 静态审阅、scaled smoke 设计审阅和磁盘预算预检，并重新取得
+明确指向 `v5`、PyPI、精确版本和新系统临时目录的依赖授权。smoke 也只能在该授权后执行，并必须使用与 full
+run 相同的 cleanup、probe 与 publication 代码路径；仅缩小 corpus/sample count，终态固定为
+`SMOKE_NON_ADMISSION`。
+
+即使 `v5` 有效且全部技术门禁通过，也只形成 `M8-BENCHMARK` 的人工决策输入，不能自动关闭该决策或其他
+七项 Decision ID，不能选择 LanceDB/Qdrant、增加生产依赖、创建 adapter/`tests/M8`、改变 M8
+`BLOCKED / NOT_STARTED`、填写批准字段或授权生产开工。Milvus、Qdrant server/container/service、真实源
+输入、外部目录读取、M9 与 M10 继续排除。
 
 ## 4. 后端无关 control/data-plane 契约草案
 
