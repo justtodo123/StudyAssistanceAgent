@@ -165,7 +165,7 @@ Content-Type: application/json
 ```
 
 响应字段：
-- `mode`: `"hybrid"`（向量+BM25）或 `"keyword-only"`（仅 BM25 或向量不可用时的降级）
+- `mode`: `"hybrid"`（向量+BM25）或 `"keyword-only"`（显式 `use_vector=false` 时的 BM25/用户源 FTS5，或默认向量不可用时的降级）
 - `results`: 切片列表，每条含 `file`（出处）、`title`、`course`、`score`、`content` 等
 
 ### 问答
@@ -386,7 +386,7 @@ last-good 与 `CURRENT`/`PREVIOUS` convenience pointers，M7-2 起已发布 snap
 cancel/retry/checkpoint/recovery，以及 tombstone/read barrier、索引/cache 不可读传播、30 天 hard-delete receipt 与查询前隔离过滤。FULL/INCREMENTAL/delete/isolation 只生成 source-local 内部工件；lifecycle 的
 immutable revision 才是 published generation 的权威，且重复请求与无变化 INCREMENTAL 对同一 generation 幂等。
 
-默认启动仍不创建 Source Registry。Search/QA 在请求携带可选 `principal_id` 且 registry 已存在时，才会懒加载用户源 FTS5+vector overlay 并与默认/extra 结果 RRF 融合；公开出处为 `user://{source_id}/{logical_uri}`。M6b preview、Quiz、Review Plan 与 study-sessions 不接收该 overlay。用户源 vector 与 FTS5 绑定同一 published generation 和 identity-set；缺依赖或元数据不一致时用户源 fail closed，不降级到默认包 keyword-only。不构成 M7 exit。M6a 静态额外源、默认 pack、学习状态 SQLite 与 M6b preview 均保持原契约。
+默认启动仍不创建 Source Registry。公共 Search/QA 请求体不接受 caller-selected `principal_id`，因此调用方不能通过 JSON 选择任意用户源；未来认证完成后，可信 principal 只作为 service-level 内部边界传入，才会懒加载用户源 FTS5+vector overlay 并与默认/extra 结果 RRF 融合。公开出处为 `user://{source_id}/{logical_uri}`。M6b preview、Quiz、Review Plan 与 study-sessions 不接收该 overlay。`use_vector=false` 时用户源只执行已授权的 FTS5 keyword route，不要求 vector runtime/metadata 或 query encoding；hybrid 模式仍要求 vector 与 FTS5 绑定同一 published generation 和 identity-set。缺依赖或元数据不一致时用户源 fail closed，不降级到默认包 keyword-only。用户源读路径在昂贵查询后执行有界的 process-local operation-lock revalidation；这不是跨进程 read lease。该能力不构成 M7 exit。M6a 静态额外源、默认 pack、学习状态 SQLite 与 M6b preview 均保持原契约。
 
 ## 配置
 
@@ -414,7 +414,7 @@ immutable revision 才是 published generation 的权威，且重复请求与无
 | `SA_LLM_TIMEOUT_S` | `60` | 单次生成超时（秒） |
 | `SA_LEARNING_STORE_PATH` | `platform/.cache/learning_state.sqlite3` | 学习会话与复习历史 SQLite |
 | `SA_SOURCE_REGISTRY_PATH` | `platform/.cache/source_registry.sqlite3` | M7-1 独立 Source Registry；默认启动路径暂不创建 |
-| `SA_USER_SOURCE_CACHE_PATH` | `platform/.cache/user-sources` | M7 用户源 snapshot/FTS5/vector 缓存；仅在 Search/QA 提供 principal 且 registry 已存在时懒加载 |
+| `SA_USER_SOURCE_CACHE_PATH` | `platform/.cache/user-sources` | M7 用户源 snapshot/FTS5/vector 缓存；仅在可信内部 principal 已注入且 registry 已存在时懒加载 |
 | `SA_INDEX_CACHE_PATH` | `platform/.cache/index` | 组合快照与 `service.lock` |
 | `SA_EXTRA_SOURCES` | `[]` | 启动期静态额外 Markdown 源，最多 3 个；只进 Search/QA |
 | `SA_EXTRA_SOURCES_STRICT` | `true` | 额外源失败时拒绝整次发布 |
@@ -446,8 +446,7 @@ M6a 已完成 Source/存储职责/Tool/Runner 薄适配、启动期静态额外�
 M6b 已实现独立、默认关闭、只读的原生工具调用 preview，并完成 closeout 收口，当前为 `ADMITTED / COMPLETE`。
 它不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。
 
-M7 当前为 `ADMITTED / IN_PROGRESS`。已实施的是独立 Source Registry 加上 source-local manifest、冻结 parser matrix、normalized document、
-离线单源 FULL candidate/发布合同、受限 incremental sync worker、已冻结的 source-local delete/isolation/FTS5/vector/offline 合同，以及 Search/QA 可选 principal overlay；阶段测试 `tests/M7/` 当前为 205 项（含 M7-2 snapshot identity/LRU、M7-4 exact-query/query-encode 与 M7-5 READY/CURRENT 指针合同）。M6b preview 仍不含用户源。当前测试与 disposable 1k/3k 证据不构成 M7 exit；`sa.source.benchmark.v1` 的 `m7_exit=true` 也不是阶段退出。
+M7 当前为 `ADMITTED / COMPLETE`。独立 Source Registry、source-local manifest、冻结 parser matrix、normalized document、单源 FULL candidate/发布合同、incremental sync worker、source-local delete/isolation/FTS5/vector/offline 合同，以及 Search/QA 的受信任内部 principal overlay 已完成；阶段测试 `tests/M7/` 当前收集 270 项。Python 3.13.3 当前执行为 267 passed / 3 failed，三个 TXT 真实 parser 用例因精确 `cpython-textio==3.11.9` 合同返回 `PARSER_UNAVAILABLE`，不得以放宽合同修复。2026-09-06 已在 `platform/.venv311` 的 Python 3.11.9 精确依赖环境中复跑 seed `20260904` 的五格式各 100 fixture × 20 次完整协议，全部 PASS，失败计数为 0，且 `external_source_reads=0`、`tmp_only=true`；报告仅位于系统临时目录且不入库。同步、删除、sweep 与查询最终发布门共享按 cache root 归一化的进程内 `RLock`；重试等待在锁外执行，查询昂贵读取后才短暂持锁复核。该协议依赖单 worker 拓扑，不是跨进程 read lease。五格式冻结协议、lifecycle/provenance E2E 和 BGE 证据彼此分离，技术证据与 `m7_exit=true` 均不自动构成阶段批准；justtodo123 于 2026-09-06 另行在 `m7-infrastructure-only-v1` 范围内批准 `M7 COMPLETE`。M8 的事实型 M7 退出前置已满足，但 M8 自身决策、后端选择和批准仍未闭合，因此保持 `BLOCKED / NOT_STARTED`。
 默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
 ## 降级路径
@@ -530,4 +529,4 @@ Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知�
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-04（M7-5 READY/CURRENT 指针一致性；`tests/M7/` 205 项；M7 仍为 `ADMITTED / IN_PROGRESS`）· 维护：随 API/配置变更同步更新*
+*创建：2026-08-11 · 更新：2026-09-06（M7 correctness 收口与独立完成批准；`tests/M7/` 当前收集 270 项；M8 仍阻断）· 维护：随 API/配置变更同步更新*
