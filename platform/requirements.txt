@@ -8,7 +8,7 @@ anthropic>=1.2.0,<2
 # M7 user-source parser matrix. Runtime rejects a missing or non-exact parser
 # version instead of selecting a fallback parser.
 markdown-it-py==4.0.0
-pypdf==6.0.0
+pypdf==6.16.1
 python-pptx==1.0.2
 python-docx==1.2.0
 
