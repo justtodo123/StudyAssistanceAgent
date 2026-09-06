@@ -122,7 +122,7 @@ class MultiRecallService:
         self._chunks_by_scope: dict[str, list[RetrievalChunk]] = {}
         self._generation_by_scope: dict[str, str] = {}
         self._result_cache: OrderedDict[
-            tuple[str, str, str, int, float, str | None, str | None],
+            tuple[str, str, str, int, float, str | None, str | None, bool],
             tuple[list[RetrievalChunk], str],
         ] = OrderedDict()
         self._cache_capacity = 128
@@ -140,11 +140,16 @@ class MultiRecallService:
         course: str | None = None,
         scope: RetrievalScope = RetrievalScope.DEFAULT_ONLY,
         principal_id: str | None = None,
+        use_vector: bool = True,
     ) -> tuple[list[RetrievalChunk], str]:
         """Return fused results from exactly one current source generation."""
         started = time.perf_counter()
+        normalized_top_k = max(int(top_k), 0)
+        if normalized_top_k == 0:
+            return [], "keyword-only"
         if threshold is None:
             threshold = config.VECTOR_THRESHOLD
+        candidate_k = max(normalized_top_k, 20)
 
         with self._lock:
             generation, chunks = self._load_snapshot(scope)
@@ -156,87 +161,70 @@ class MultiRecallService:
                 for key in stale_keys:
                     del self._result_cache[key]
             principal = (principal_id or '').strip() or None
-            cache_key = (generation, scope_key, question, top_k, threshold, course, principal)
-            cached = self._result_cache.get(cache_key)
+            cache_key = (
+                generation, scope_key, question, normalized_top_k, threshold,
+                course, principal, bool(use_vector),
+            )
+            # Principal-scoped results include user-source material whose
+            # authorization and publication digests are owned by the inner
+            # search service. Do not let this cache bypass its final gate.
+            cacheable = principal is None or self._user_source_search is None
+            cached = self._result_cache.get(cache_key) if cacheable else None
             if cached is not None:
                 results, mode = cached
                 self._result_cache.move_to_end(cache_key)
-                results = self._copy_results(results)
+                results = self._copy_results(results)[:normalized_top_k]
                 duration_ms = (time.perf_counter() - started) * 1000
                 metrics.record("search", duration_ms, len(results), cache_hit=True)
-                log_operation(
-                    "search",
-                    duration_ms=duration_ms,
-                    result_count=len(results),
-                    course=course,
-                    mode=mode,
-                    cache_hit=True,
-                )
+                log_operation("search", duration_ms=duration_ms, result_count=len(results),
+                              course=course, mode=mode, cache_hit=True)
                 return results, mode
 
-            # BM25_POOL=0 means search the complete corpus.
             pool = chunks if config.BM25_POOL <= 0 else chunks[: config.BM25_POOL]
             routes: list[list[RetrievalChunk]] = []
-
-            vector_store = _VectorHolder.get(scope, generation)
-            if vector_store is not None:
-                try:
-                    if not vector_store.is_synced(chunks):
-                        vector_store.replace_all(chunks)
-                    routes.append(vector_store.search(question, top_k=20, threshold=threshold))
-                except Exception:
-                    routes.append([])
-
+            if use_vector:
+                vector_store = _VectorHolder.get(scope, generation)
+                if vector_store is not None:
+                    try:
+                        if not vector_store.is_synced(chunks):
+                            vector_store.replace_all(chunks)
+                        routes.append(vector_store.search(question, top_k=candidate_k, threshold=threshold))
+                    except Exception:
+                        routes.append([])
             try:
-                bm25 = Bm25Search(pool)
-                routes.append(bm25.search(question, top_k=20))
+                routes.append(Bm25Search(pool).search(question, top_k=candidate_k))
             except Exception:
                 routes.append([])
 
             if not any(routes):
                 results, mode = [], "keyword-only"
-                results = self._merge_user_sources(
-                    results,
-                    question=question,
-                    top_k=top_k,
-                    principal_id=principal,
-                )
-                if results:
-                    mode = "hybrid"
             else:
-                mode = "hybrid" if len(routes) > 1 and all(routes) else "keyword-only"
-                # Keep a wider candidate set before applying content-type and course
-                # preferences. Otherwise interview notes or README navigation chunks can
-                # occupy every top-k slot and hide the underlying course note.
-                results = self._rrf_fuse(routes, max(top_k, 20))
+                mode = "hybrid" if use_vector and len(routes) > 1 and all(routes) else "keyword-only"
+                results = self._rrf_fuse(routes, candidate_k)
                 if course:
                     results = [result for result in results if result.course == course]
                 else:
                     results = self._prioritize_content_type(question, results)
-                results = self._merge_user_sources(
-                    results,
-                    question=question,
-                    top_k=top_k,
-                    principal_id=principal,
-                )
-                results = results[:top_k]
+            results = self._merge_user_sources(
+                results,
+                question=question,
+                top_k=normalized_top_k,
+                principal_id=principal,
+                use_vector=use_vector,
+            )[:normalized_top_k]
+            if results and not any(routes):
+                mode = "hybrid" if use_vector else "keyword-only"
 
             stored = self._copy_results(results)
-            self._result_cache[cache_key] = (stored, mode)
-            self._result_cache.move_to_end(cache_key)
-            while len(self._result_cache) > self._cache_capacity:
-                self._result_cache.popitem(last=False)
-
+            if cacheable:
+                self._result_cache[cache_key] = (stored, mode)
+                self._result_cache.move_to_end(cache_key)
+                while len(self._result_cache) > self._cache_capacity:
+                    self._result_cache.popitem(last=False)
             duration_ms = (time.perf_counter() - started) * 1000
             metrics.record("search", duration_ms, len(results), cache_hit=False)
-            log_operation(
-                "search",
-                duration_ms=duration_ms,
-                result_count=len(results),
-                course=course,
-                mode=mode,
-                cache_hit=False,
-            )
+            log_operation("search", duration_ms=duration_ms, result_count=len(results),
+                          course=course, mode=mode, cache_hit=False)
             return self._copy_results(results), mode
 
 
@@ -247,19 +235,20 @@ class MultiRecallService:
         question: str,
         top_k: int,
         principal_id: str | None,
+        use_vector: bool = True,
     ) -> list[RetrievalChunk]:
         """RRF-merge authorized user-source hits after isolation/FTS5."""
-        if not principal_id or self._user_source_search is None:
+        if not principal_id or self._user_source_search is None or top_k <= 0:
             return results
         try:
             user_result = self._user_source_search.search(  # type: ignore[attr-defined]
                 principal_id=principal_id,
                 query=question,
                 top_k=max(top_k, 20),
+                use_vector=use_vector,
             )
         except Exception as exc:
             from .user_source_search import Fts5TokenizerError, SourceIsolationError, SourceOfflineError
-
             if isinstance(exc, (SourceOfflineError, SourceIsolationError, Fts5TokenizerError)):
                 raise
             return results
@@ -267,11 +256,10 @@ class MultiRecallService:
         if not user_chunks:
             return results
         from .user_source_search import ensure_user_provenance
-
         ensure_user_provenance(user_chunks)
         if not results:
-            return user_chunks[: max(top_k, 20)]
-        return self._rrf_fuse([results, user_chunks], max(top_k, 20))
+            return user_chunks[:top_k]
+        return self._rrf_fuse([results, user_chunks], max(top_k, 20))[:top_k]
 
     @staticmethod
     def _prioritize_content_type(

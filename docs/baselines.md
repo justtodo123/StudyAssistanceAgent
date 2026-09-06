@@ -611,7 +611,7 @@ Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明�
 
 ## M7 Search overlay + disposable 1k/3k FTS5 — 2026-09-03
 
-本节追加记录 Search/QA 可选 principal overlay，不回写 FTS5/offline 162 项原文，也不改变 M7 `ADMITTED / IN_PROGRESS` 或 M8 `BLOCKED / NOT_STARTED`。2026-09-03 复验：`tests/M7/` 177 passed。`tools/run_m7_benchmark.py` 的 disposable FTS5 跑数为：1k-single Recall@1/3/5=1.000，查询 p50 135 ms / p95 149 ms；3k-aggregate Recall@1/3/5=1.000，查询 p50 392 ms / p95 458 ms。vector 仍 `not_attached`；FULL 样本为 1 而非冻结 20 次；3k p50 超过 250 ms 门槛。该报告不是 M7 exit 证据，也不批准 Network 或 M8/Milvus。
+本节追加记录 Search/QA 的受信任内部 principal overlay，不回写 FTS5/offline 162 项原文，也不改变 M7 `ADMITTED / IN_PROGRESS` 或 M8 `BLOCKED / NOT_STARTED`。2026-09-03 复验：`tests/M7/` 177 passed。`tools/run_m7_benchmark.py` 的 disposable FTS5 跑数为：1k-single Recall@1/3/5=1.000，查询 p50 135 ms / p95 149 ms；3k-aggregate Recall@1/3/5=1.000，查询 p50 392 ms / p95 458 ms。vector 仍 `not_attached`；FULL 样本为 1 而非冻结 20 次；3k p50 超过 250 ms 门槛。该报告不是 M7 exit 证据，也不批准 Network 或 M8/Milvus。
 
 ## M7 generation-bound vector checkout — 2026-09-03
 
@@ -632,5 +632,74 @@ Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明�
 
 本报告不是 M7 exit 证据，也不批准 Network 或 M8/Milvus。不得用 `tools/run_m7_benchmark.py` 的 disposable hash smoke 替代本记录。
 
-*创建：2026-08-12 · 更新：2026-09-04（追加 M7-3 冻结 BGE 实跑失败证据；不回写历史记录，不声称 M7 exit）·
+## M7-4 1k RSS 门槛修订 — 2026-09-04
+
+本节追加记录 justtodo123 授权将冻结 BGE 协议的 `1k-single` 峰值 RSS 从 512 MiB 修订为 **768 MiB**，不回写 2026-08-29 准入前 BM25 保护基线，也不回写 2026-09-04 首轮冻结报告原文。3k RSS 仍为 1 GiB；Recall 与 p50/p95 门槛不放宽。修订原因：512 MiB 按无 BGE 的 BM25 1k（430 MiB）校准，无法覆盖 `sentence-transformers` + `BAAI/bge-small-zh-v1.5` 进程底盘。M7-4 探针约 551 MiB，低于 768 MiB，但仍须完整 20+200 / FULL 5+20 复跑后才能评估 `m7_exit`。不批准 Network，不启动 M8/Milvus。
+
+## M7-4 冻结 1k/3k BGE 复跑 — 2026-09-04
+
+本节追加完整冻结协议证据，不回写 2026-09-04 首轮失败原文，也不自动把 M7 阶段标为 `COMPLETE`。命令为 `platform/.venv` 下 `tools/run_m7_frozen_benchmark.py --backend bge --workload all --report artifacts/m7-frozen-benchmark.json`；查询 20+200，FULL 独立进程 5+20。本地报告 SHA-256 `aaad2d0246627e659c844003c06389b488e7d5ab6572825ba7307e72f428fd75`，不入库。`network_promoted=false`，`m8_started=false`。报告内 `m7_exit=true` 只表示 `sa.source.benchmark.v1` 门槛通过，不是 M8 开工授权。
+
+- 1k-single：通过。Recall@1/3/5=1.000；query p50 2.753 ms / p95 36.586 ms；peak RSS 575,467,520 B（约 549 MiB，低于授权后 768 MiB）；FULL p95 3.035 s；identity 100%；vector `attached`。
+- 3k-aggregate：通过。Recall@1/3/5=1.000；query p50 84.736 ms / p95 96.274 ms；peak RSS 575,467,520 B（约 549 MiB，低于 1 GiB）；FULL p95 7.282 s；identity 100%；vector `attached`。
+
+默认 OS/DS/CO 包与 Network candidate 边界不变。M8/Milvus 仍为 `BLOCKED / NOT_STARTED`，须另做 M7 阶段退出评估。
+
+## M7-6 真实 parser 与生命周期/provenance 验收 — 2026-09-05
+
+本节追加运行时生成 fixture 的局部验收证据，不读取或复制 `D:\111_Others_Subjects`，不提交 PDF/PPTX/DOCX
+二进制。环境为 Windows 11、CPython 3.11.9、pytest 9.1.1；精确 parser contract 为
+`markdown-it-py==4.0.0`、`cpython-textio==3.11.9`、`pypdf==6.0.0`、`python-pptx==1.0.2`、
+`python-docx==1.2.0`。首轮定向命令覆盖 parser、normalized-document 与 lifecycle E2E，共 40 passed；当时
+`tests/M7/` 为 230 passed（1 个第三方 deprecation warning，61.80 s），作为 M7-6 扩展过程的历史证据保留。后续补齐查询校验顺序、非正 `top_k` 与最终 E2E 覆盖后，阶段口径曾增至 237 passed；2026-09-05 的 correctness 中间口径为 255 passed。首轮同时暴露并修正了检索结果顺序假设。
+E2E 覆盖 Source 注册、真实 Markdown
+FULL/INCREMENTAL、权威 generation/revision、`user://` provenance、服务重启、显式 offline FULL repair、principal
+隔离、DELETE_PENDING 搜索屏障及 BM25/vector/result-cache/provenance 不可读、30 天 hard-delete receipt 和幂等重试；
+receipt 还验证实际 generation-bound FTS5/vector 目录已清除，并在 Windows 删除前释放活动索引 runtime。
+这不是每格式 100 fixtures × 20 runs、真实外部课程资料或整个 M7 exit 的证据；M7 仍为
+`ADMITTED / IN_PROGRESS`，M8/Milvus 仍为 `BLOCKED / NOT_STARTED`。
+
+2026-09-05 完整根级回归复验（历史证据）：`tests/` 收集 810 项，809 passed、1 skipped；最终复验运行耗时 87.94 s。唯一 skip
+仍为显式 online crawler smoke。此前 M6b semaphore/deadline 用例的调度竞态已改为等待两个请求实际 admission，
+并修正由总 deadline 限定 semaphore wait 时的边界判定；未放宽终止原因断言，也未加入不确定 sleep。
+`tests/M7/` 同轮独立复验为 237 passed（60.24 s），`tests/regression/` 为 61 passed，`platform/tests/` 为 40 passed。
+该数字保留为 M7-6 当时的历史证据；2026-09-05 correctness 中间结果为 255 passed（72.96 s）。
+这组结果收口 M7-6 的完整回归缺口，但不等于整个 M7 exit。
+
+五格式冻结证据另以 `tools/run_m7_parser_evidence.py` 完整协议执行：seed `20260904`，Markdown/TXT/PDF/PPTX/DOCX
+各 100 个运行时 fixture、各 20 次，并逐项比较 parser output digest、normalized digest、document ID、chunk ID、
+当前进程与独立重启进程 deterministic identity digest。报告 schema 为
+`sa.source.parser-normalized-identity-evidence.v1`，本地报告 SHA-256
+`075094bea0f4f9e591ee4d69002b2d96284635d8273eec9c6e90fac43075f3be`（不入库）；五格式均 `PASS`，
+`parser_unavailable/parse_failed/normalization_failed/cold_restart_mismatch/deterministic_identity_mismatch` 均为 0，
+`external_source_reads=0`、`tmp_only=true`。该 parser/normalization/identity 证据不声称执行 source registry/sync/delete；生命周期与 provenance 由独立 E2E 测试覆盖。它与 1k/3k BGE 检索 benchmark 分离，仍不自动构成 M7 阶段退出或
+M8 开工授权。
+
+## Correctness 收口当前执行状态 — 2026-09-06
+
+2026-09-06 当前 `tests/M7/` 收集 270 项；Python 3.13.3 执行 267 passed / 3 failed。三个失败均为 TXT 真实 fixture 在精确
+`cpython-textio==3.11.9` 合同下返回 `PARSER_UNAVAILABLE`，属于环境不满足冻结 parser contract 时的预期 fail-closed，
+不应通过放宽断言或伪造版本修复。2026-09-06 使用 `platform/.venv311`（CPython 3.11.9 与精确冻结依赖）独立复跑
+seed `20260904` 的完整五格式协议：每格式 100 个运行时 fixture × 20 次，全部 `PASS`，五类失败计数均为 0，
+`external_source_reads=0`、`tmp_only=true`；报告只写入系统临时目录且不入库。该结果验证冻结环境，但不把 Python 3.13.3
+结果伪装为全绿。根级 `tests/` 当前收集 826 项，当前 checkout 离线 keyword mode 执行为 CPython 3.13.3 的 822 passed、1 skipped、3 个精确 TXT contract failures；同一套件在 CPython 3.11.9 精确环境为 825 passed、1 skipped。
+与 `platform/tests/` 合并收集 866 项；按根级 822 passed、1 skipped、3 个精确 TXT contract failures，加受保护
+`platform/tests/` 40 passed，可得当前已分别验证的合计口径为 862 passed、1 skipped、3 failed；本次未取得单次 combined run 的完整终态，不能把该合计写成一次独立执行结果。`tests/regression/` 62 passed，
+受保护 `platform/tests/` 40 passed。此前 810/850 等数字均保留为历史证据。公共 Search/QA 不接受 caller-selected `principal_id`；可信 principal 仅作为服务端内部边界。
+用户源读路径的 operation-lock final revalidation 是有界进程内保护，不是跨进程 read lease。
+本 correctness 执行状态在独立人工完成批准前仍记为 M7 `ADMITTED / IN_PROGRESS`；随后状态见下节。M8 仍为
+`BLOCKED / NOT_STARTED`。
+
+## M7 独立完成批准 — 2026-09-06
+
+上述 technical exit candidate、冻结 benchmark、五格式 parser evidence 与全量测试证据本身不产生阶段批准。其后，
+justtodo123 于 2026-09-06 通过 `User instruction: 批准 M7 COMPLETE`，在原批准范围
+`m7-infrastructure-only-v1` 内作出独立完成批准；原 2026-08-31 admission 与 production implementation
+authorization 记录保持不变。当前 M7 为 `ADMITTED / COMPLETE`。
+
+该批准使 `M8-M7-EXIT`、`M9-M7-EXIT`、`M10-M7-EXIT` 三项事实型前置成为 `SATISFIED`，但不批准任何下游
+阶段。M8、M9、M10 仍为 `BLOCKED / NOT_STARTED`；Network 文档晋升、P0 语料治理闭环、任意 corpus 自动批准、
+M8 专业化存储、Milvus/LanceDB/Qdrant 选择以及 M9/M10 实现继续处于原批准范围之外。
+
+*创建：2026-08-12 · 更新：2026-09-06（追加 M7 独立完成批准；不启动 M8）·
 维护：知识库、评测集或检索策略变化后复测并追加记录*

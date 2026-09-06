@@ -268,8 +268,6 @@ def _validate_declaration(data: bytes, declared_format: str, filename: str | Pur
         except UnicodeDecodeError as exc:
             raise ParserMatrixError(ParserErrorCode.PARSE_FAILED) from exc
     elif detected_container != spec.format:
-        if has_container_magic and detected_container is None:
-            raise ParserMatrixError(ParserErrorCode.PARSE_FAILED)
         raise ParserMatrixError(ParserErrorCode.FORMAT_MISMATCH)
     return spec
 

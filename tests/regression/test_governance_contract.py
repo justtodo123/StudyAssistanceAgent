@@ -141,6 +141,53 @@ def test_production_start_requires_explicit_authorization_for_active_delivery():
         }
     )
 
+
+def test_complete_active_stage_requires_scoped_completion_approval(repo_root):
+    stages = {
+        stage["stage"]: stage
+        for stage in _load_registry(repo_root)["stages"]
+    }
+
+    m7 = stages["M7"]
+    completion = m7["completion_approval"]
+    assert m7["delivery_status"] == "COMPLETE"
+    assert completion == {
+        "approved_by": "justtodo123",
+        "approved_at": "2026-09-06",
+        "approval_reference": "User instruction: 批准 M7 COMPLETE",
+        "approval_scope": "m7-infrastructure-only-v1",
+        "evidence": [
+            "docs/PLAN.md",
+            "docs/plans/m7-source-lifecycle-plan.md",
+            "docs/baselines.md",
+            "tests/M7/README.md",
+            "tests/TEST_PLAN.md",
+        ],
+    }
+    assert completion["approval_scope"] == m7["approval_scope"]["scope_id"]
+    assert set(m7["approval_scope"]["excluded"]) == {
+        "network.document-promotion",
+        "network.corpus-governance-closure",
+        "corpus.automatic-approval",
+        "m8.specialized-storage",
+        "milvus.backend-selection",
+    }
+
+    for stage in stages.values():
+        if (
+            stage["delivery_status"] == "COMPLETE"
+            and stage.get("implementation_start") is not None
+        ):
+            approval = stage.get("completion_approval")
+            assert approval is not None
+            assert approval["approved_by"]
+            assert approval["approved_at"]
+            assert approval["approval_reference"]
+            assert approval["evidence"]
+            scope = stage.get("approval_scope")
+            if scope is not None:
+                assert approval["approval_scope"] == scope["scope_id"]
+
 class TestGovernanceNavigation:
     def test_navigation_links_resolve(self, repo_root):
         for relative_path in NAVIGATION_DOCS:

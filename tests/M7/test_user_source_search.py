@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.models import QaRequest, RetrievalChunk
+from app.fts5_tokenizer import Fts5TokenizerError, Fts5TokenizerErrorCode
 from app.parser_matrix import ParsedDocument, ParsedUnit
 from app.qa import QaService
 from app.retrieval import MultiRecallService, RetrievalScope
@@ -17,6 +18,7 @@ from app.source_registry import (
     SourceActorType,
     SourceLifecycleService,
     SqliteSourceRegistry,
+    generate_uuid7,
 )
 from app.user_source_search import (
     LazyUserSourceSearch,
@@ -30,6 +32,7 @@ pytestmark = pytest.mark.m7
 
 SOURCE_A = "user-01890f52-47e7-7abc-8def-0123456789ab"
 SOURCE_B = "user-01890f52-47e7-7abc-8def-0123456789ac"
+SOURCE_C = "user-01890f52-47e7-7abc-8def-0123456789ad"
 PRINCIPAL = "principal-owner"
 OTHER = "principal-other"
 CORRELATION = "corr-m7-search"
@@ -87,6 +90,14 @@ def _publish(
         source_root=source_root,
         correlation_id=CORRELATION,
     )
+
+
+def test_default_delete_service_uses_search_snapshot_publisher(tmp_path: Path) -> None:
+    lifecycle, service = _service(tmp_path)
+
+    assert service._delete._publisher is service._snapshots
+    assert service._offline._delete is service._delete
+    assert service._offline._snapshots is service._snapshots
 
 
 def test_owner_search_returns_user_provenance_and_original_content(tmp_path: Path) -> None:
@@ -149,6 +160,67 @@ def test_result_cache_hits_until_generation_changes(tmp_path: Path) -> None:
     assert "读者写者问题" in third.chunks[0].content
 
 
+def test_cache_hit_revalidates_before_delete_barrier(
+    tmp_path: Path,
+) -> None:
+    lifecycle, service = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(root, {"lesson.md": "进程调度算法"})
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    first = service.search(principal_id=PRINCIPAL, query="进程调度")
+    assert first.chunks
+    record = lifecycle.get_source(principal_id=PRINCIPAL, source_id=SOURCE_A)
+
+    def delete_before_cache_return() -> None:
+        service._delete.request_delete(
+            principal_id=PRINCIPAL,
+            source_id=SOURCE_A,
+            request_id=generate_uuid7(),
+            expected_version=record.record_version,
+            actor_type=SourceActorType.USER,
+            correlation_id=CORRELATION,
+            reason="user-requested",
+        )
+
+    service._isolation.mid_request_mutations.append(delete_before_cache_return)
+    result = service.search(principal_id=PRINCIPAL, query="进程调度")
+    assert result.chunks == ()
+    assert result.provenance == ()
+    assert result.cache_hit is False
+
+
+def test_fresh_result_fails_closed_if_delete_starts_before_publish(
+    tmp_path: Path,
+) -> None:
+    lifecycle, service = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(root, {"lesson.md": "进程调度算法"})
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    record = lifecycle.get_source(principal_id=PRINCIPAL, source_id=SOURCE_A)
+
+    def delete_before_result_publish() -> None:
+        service._delete.request_delete(
+            principal_id=PRINCIPAL,
+            source_id=SOURCE_A,
+            request_id=generate_uuid7(),
+            expected_version=record.record_version,
+            actor_type=SourceActorType.USER,
+            correlation_id=CORRELATION,
+            reason="user-requested",
+        )
+
+    service._isolation.mid_request_mutations.append(delete_before_result_publish)
+    with pytest.raises(SourceIsolationError) as caught:
+        service.search(principal_id=PRINCIPAL, query="进程调度")
+    assert (
+        caught.value.code
+        is SourceIsolationErrorCode.SOURCE_ISOLATION_UNAVAILABLE
+    )
+    assert service._cache == {}
+
+
 def test_rrf_fuses_two_authorized_sources(tmp_path: Path) -> None:
     lifecycle, service = _service(tmp_path)
     _register(lifecycle, SOURCE_A)
@@ -165,6 +237,109 @@ def test_rrf_fuses_two_authorized_sources(tmp_path: Path) -> None:
     assert public_uri(SOURCE_A, "a.md") in files
     assert public_uri(SOURCE_B, "b.md") in files
     assert all(item.origin_kind == "original" for item in result.provenance)
+
+
+def test_exact_query_wins_across_near_duplicate_sources(tmp_path: Path) -> None:
+    lifecycle, service = _service(tmp_path)
+    roots = {
+        SOURCE_A: tmp_path / "src-a",
+        SOURCE_B: tmp_path / "src-b",
+        SOURCE_C: tmp_path / "src-c",
+    }
+    texts = {
+        SOURCE_A: "金标词00000000",
+        SOURCE_B: "金标词01000000",
+        SOURCE_C: "金标词02000000",
+    }
+    for source_id, root in roots.items():
+        _register(lifecycle, source_id)
+        _write_docs(root, {"doc.md": texts[source_id]})
+        _publish(service, source_id=source_id, source_root=root)
+
+    result = service.search(principal_id=PRINCIPAL, query="金标词01000000", top_k=5)
+    assert result.chunks[0].file == public_uri(SOURCE_B, "doc.md")
+
+
+def test_invalid_query_precedes_vector_dependency_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    lifecycle, service = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(root, {"doc.md": "进程调度算法"})
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    calls = {"count": 0}
+
+    def dependency_failure(query: str, *, source_id: str = "") -> list[float]:
+        calls["count"] += 1
+        raise SourceOfflineError(
+            SourceOfflineErrorCode.DEPENDENCY_UNAVAILABLE,
+            source_id=source_id,
+        )
+
+    monkeypatch.setattr(service._offline, "encode_query", dependency_failure)
+    for query in ("", " \t\r\n ", "\x00"):
+        with pytest.raises(Fts5TokenizerError) as caught:
+            service.search(principal_id=PRINCIPAL, query=query, top_k=5)
+        assert caught.value.code is Fts5TokenizerErrorCode.INVALID_QUERY
+        assert caught.value.repair_category == "correct-tokenizer-query"
+        if query:
+            assert query not in str(caught.value)
+    assert calls["count"] == 0
+
+
+def test_query_vector_is_encoded_once_for_multi_source_search(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    lifecycle, service = _service(tmp_path)
+    for source_id, name in ((SOURCE_A, "src-a"), (SOURCE_B, "src-b"), (SOURCE_C, "src-c")):
+        _register(lifecycle, source_id)
+        root = tmp_path / name
+        _write_docs(root, {"doc.md": f"unique-{name}"})
+        _publish(service, source_id=source_id, source_root=root)
+
+    embedder = service._offline._vector.embedder
+    original = embedder.encode
+    calls = {"count": 0}
+
+    def wrapped(texts):  # type: ignore[no-untyped-def]
+        calls["count"] += 1
+        return original(texts)
+
+    monkeypatch.setattr(embedder, "encode", wrapped)
+    service.search(principal_id=PRINCIPAL, query="unique-src-b", top_k=5)
+    assert calls["count"] == 1
+
+
+def test_non_positive_top_k_does_not_encode_query(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    lifecycle, service = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(root, {"doc.md": "进程调度算法"})
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    calls = {"count": 0}
+
+    def unexpected_encode(query: str, *, source_id: str = "") -> list[float]:
+        del query, source_id
+        calls["count"] += 1
+        raise AssertionError("query encoding must be skipped")
+
+    monkeypatch.setattr(service._offline, "encode_query", unexpected_encode)
+    for top_k in (0, -1):
+        result = service.search(
+            principal_id=PRINCIPAL,
+            query="进程调度",
+            top_k=top_k,
+        )
+        assert result.chunks == ()
+        assert result.provenance == ()
+        assert result.mode == "fts5"
+        assert result.auth_digest
+        assert result.generation_digest
+        assert result.cache_hit is False
+    assert calls["count"] == 0
 
 
 def test_deleted_source_is_not_recalled(tmp_path: Path) -> None:
@@ -229,7 +404,12 @@ def test_multirecall_without_principal_keeps_default_pack(tmp_path: Path) -> Non
     _write_docs(root, {"lesson.md": "这是一段不会出现在默认知识包中的用户源独有术语XYZUNIQUE"})
     _publish(service, source_id=SOURCE_A, source_root=root)
     recall = MultiRecallService(user_source_search=service)
-    results, _mode = recall.recall("XYZUNIQUE", top_k=5, scope=RetrievalScope.DEFAULT_ONLY)
+    results, _mode = recall.recall(
+        "XYZUNIQUE",
+        top_k=5,
+        scope=RetrievalScope.DEFAULT_ONLY,
+        use_vector=False,
+    )
     assert all(not chunk.file.startswith("user://") for chunk in results)
 
     merged, mode = recall.recall(
@@ -237,9 +417,185 @@ def test_multirecall_without_principal_keeps_default_pack(tmp_path: Path) -> Non
         top_k=5,
         scope=RetrievalScope.DEFAULT_ONLY,
         principal_id=PRINCIPAL,
+        use_vector=False,
     )
+    assert mode == "keyword-only"
     assert any(chunk.file.startswith("user://") for chunk in merged)
     assert any("XYZUNIQUE" in chunk.content for chunk in merged)
+
+
+def test_multirecall_principal_results_bypass_outer_cache(
+    tmp_path: Path,
+) -> None:
+    lifecycle, service = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(root, {"lesson.md": "用户源第一版术语CACHEGEN"})
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    recall = MultiRecallService(user_source_search=service)
+
+    first, first_mode = recall.recall(
+        "CACHEGEN",
+        top_k=5,
+        scope=RetrievalScope.DEFAULT_ONLY,
+        principal_id=PRINCIPAL,
+        use_vector=False,
+    )
+    assert first_mode == "keyword-only"
+    assert any("用户源第一版" in chunk.content for chunk in first)
+    assert recall._result_cache == {}
+
+    _write_docs(root, {"lesson.md": "用户源第二版术语CACHEGEN"})
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    second, second_mode = recall.recall(
+        "CACHEGEN",
+        top_k=5,
+        scope=RetrievalScope.DEFAULT_ONLY,
+        principal_id=PRINCIPAL,
+        use_vector=False,
+    )
+    assert second_mode == "keyword-only"
+    assert any("用户源第二版" in chunk.content for chunk in second)
+    assert all("用户源第一版" not in chunk.content for chunk in second)
+    assert recall._result_cache == {}
+
+
+def test_multirecall_top_k_caps_overlay_only_fresh_and_repeat(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        MultiRecallService,
+        "_load_snapshot",
+        lambda self, scope: ("empty-default", []),
+    )
+    lifecycle, service = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(
+        root,
+        {f"lesson-{index}.md": f"OVERLAYCAP common term {index}" for index in range(8)},
+    )
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    recall = MultiRecallService(user_source_search=service)
+
+    for top_k in (-1, 0, 1, 5):
+        first, first_mode = recall.recall(
+            "OVERLAYCAP",
+            top_k=top_k,
+            principal_id=PRINCIPAL,
+            use_vector=False,
+        )
+        second, second_mode = recall.recall(
+            "OVERLAYCAP",
+            top_k=top_k,
+            principal_id=PRINCIPAL,
+            use_vector=False,
+        )
+        assert len(first) == max(top_k, 0)
+        assert len(second) == max(top_k, 0)
+        assert first_mode == "keyword-only"
+        assert second_mode == "keyword-only"
+        assert all(chunk.file.startswith("user://") for chunk in first + second)
+
+
+def test_multirecall_top_k_caps_mixed_results_fresh_and_repeat(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    default_chunks = [
+        RetrievalChunk(
+            id=f"default-{index}",
+            course="os",
+            topic="mixed",
+            content_type="concept",
+            difficulty="medium",
+            tags=["MIXEDCAP"],
+            file=f"knowledge/os/default-{index}.md",
+            section="mixed",
+            content=f"MIXEDCAP default content {index}",
+        )
+        for index in range(8)
+    ]
+    monkeypatch.setattr(
+        MultiRecallService,
+        "_load_snapshot",
+        lambda self, scope: ("mixed-default", default_chunks),
+    )
+    lifecycle, service = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(
+        root,
+        {f"lesson-{index}.md": f"MIXEDCAP user content {index}" for index in range(8)},
+    )
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    recall = MultiRecallService(user_source_search=service)
+
+    for top_k in (-1, 0, 1, 5):
+        first, first_mode = recall.recall(
+            "MIXEDCAP",
+            top_k=top_k,
+            principal_id=PRINCIPAL,
+            use_vector=False,
+        )
+        second, second_mode = recall.recall(
+            "MIXEDCAP",
+            top_k=top_k,
+            principal_id=PRINCIPAL,
+            use_vector=False,
+        )
+        assert len(first) == max(top_k, 0)
+        assert len(second) == max(top_k, 0)
+        assert first_mode == "keyword-only"
+        assert second_mode == "keyword-only"
+        if top_k == 5:
+            assert any(chunk.file.startswith("user://") for chunk in first)
+            assert any(not chunk.file.startswith("user://") for chunk in first)
+
+
+def test_multirecall_principal_results_follow_current_authorization(
+    tmp_path: Path,
+) -> None:
+    lifecycle, service = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(root, {"lesson.md": "授权撤销术语AUTHCACHE"})
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    recall = MultiRecallService(user_source_search=service)
+
+    first, _ = recall.recall(
+        "AUTHCACHE",
+        top_k=5,
+        scope=RetrievalScope.DEFAULT_ONLY,
+        principal_id=PRINCIPAL,
+        use_vector=False,
+    )
+    assert any(chunk.file.startswith("user://") for chunk in first)
+
+    record = lifecycle.get_source(
+        principal_id=PRINCIPAL,
+        source_id=SOURCE_A,
+    )
+    from app.source_delete import UserSourceDeleteService
+    UserSourceDeleteService(tmp_path / "cache", lifecycle).request_delete(
+        principal_id=PRINCIPAL,
+        source_id=SOURCE_A,
+        request_id=generate_uuid7(),
+        expected_version=record.record_version,
+        actor_type=SourceActorType.USER,
+        correlation_id=CORRELATION,
+        reason="user-requested",
+    )
+    second, _ = recall.recall(
+        "AUTHCACHE",
+        top_k=5,
+        scope=RetrievalScope.DEFAULT_ONLY,
+        principal_id=PRINCIPAL,
+        use_vector=False,
+    )
+    assert all(not chunk.file.startswith("user://") for chunk in second)
+    assert recall._result_cache == {}
 
 
 def test_qa_with_principal_uses_user_provenance(tmp_path: Path) -> None:
@@ -249,11 +605,10 @@ def test_qa_with_principal_uses_user_provenance(tmp_path: Path) -> None:
     _write_docs(root, {"lesson.md": "这是一段不会出现在默认知识包中的用户源独有术语XYZUNIQUE"})
     _publish(service, source_id=SOURCE_A, source_root=root)
     qa = QaService(MultiRecallService(user_source_search=service), scope=RetrievalScope.DEFAULT_ONLY)
-    without = qa.answer(QaRequest(question="XYZUNIQUE", use_llm=False))
+    request = QaRequest(question="XYZUNIQUE", use_vector=False, use_llm=False)
+    without = qa.answer(request)
     assert all(not source.file.startswith("user://") for source in without.sources)
-    with_principal = qa.answer(
-        QaRequest(question="XYZUNIQUE", use_llm=False, principal_id=PRINCIPAL)
-    )
+    with_principal = qa.answer(request, principal_id=PRINCIPAL)
     assert any(source.file.startswith("user://") for source in with_principal.sources)
     assert "XYZUNIQUE" in with_principal.answer or with_principal.sources
 
@@ -262,14 +617,17 @@ def test_api_optional_principal_does_not_change_default_search() -> None:
     from app.main import app
 
     client = TestClient(app)
-    response = client.post("/api/v1/search", json={"question": "进程调度", "top_k": 3})
+    response = client.post(
+        "/api/v1/search",
+        json={"question": "进程调度", "top_k": 3, "use_vector": False},
+    )
     assert response.status_code == 200
     payload = response.json()
     assert payload["results"]
     assert all(item["file"].startswith(("knowledge/", "extra://")) for item in payload["results"])
 
 
-def test_api_with_principal_can_include_user_sources(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_api_with_principal_cannot_select_user_sources(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     lifecycle, service = _service(tmp_path)
     _register(lifecycle, SOURCE_A)
     root = tmp_path / "src-a"
@@ -281,17 +639,35 @@ def test_api_with_principal_can_include_user_sources(tmp_path: Path, monkeypatch
     client = TestClient(main.app)
     response = client.post(
         "/api/v1/search",
-        json={"question": "XYZUNIQUE", "top_k": 5, "principal_id": PRINCIPAL},
+        json={
+            "question": "XYZUNIQUE",
+            "top_k": 5,
+            "use_vector": False,
+            "principal_id": PRINCIPAL,
+        },
     )
     assert response.status_code == 200
-    files = [item["file"] for item in response.json()["results"]]
-    assert any(item.startswith("user://") for item in files)
+    assert all(
+        not item["file"].startswith("user://")
+        for item in response.json()["results"]
+    )
     qa = client.post(
         "/api/v1/qa",
-        json={"question": "XYZUNIQUE", "use_llm": False, "principal_id": PRINCIPAL},
+        json={
+            "question": "XYZUNIQUE",
+            "use_vector": False,
+            "use_llm": False,
+            "principal_id": PRINCIPAL,
+        },
     )
     assert qa.status_code == 200
-    assert any(item["file"].startswith("user://") for item in qa.json()["sources"])
+    assert all(
+        not item["file"].startswith("user://")
+        for item in qa.json()["sources"]
+    )
+    schema = client.get("/openapi.json").json()["components"]["schemas"]
+    assert "principal_id" not in schema["SearchRequest"]["properties"]
+    assert "principal_id" not in schema["QaRequest"]["properties"]
 
 
 def test_lazy_search_does_not_create_registry(tmp_path: Path) -> None:

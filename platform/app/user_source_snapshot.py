@@ -15,8 +15,10 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
+from typing import Callable
 from uuid import uuid4
 
+from .source_operation_lock import operation_lock
 from .normalized_document import (
     CHUNK_SCHEMA_VERSION,
     NormalizedDocument,
@@ -139,10 +141,18 @@ class UserSourceSnapshotPublisher:
     """Build and publish one registered source through the lifecycle service."""
 
     def __init__(self, cache_root: str | Path, lifecycle: SourceLifecycleService) -> None:
+        self._operation_lock = operation_lock(cache_root)
         self._root = Path(cache_root) / "user-source-snapshots" / "v1"
         self._lifecycle = lifecycle
         self._lock = threading.RLock()
         self._snapshot_cache: OrderedDict[tuple[str, str], tuple[str, FullSnapshot]] = OrderedDict()
+
+    def clear_source(self, source_id: str) -> None:
+        """Forget cached document bodies for one source."""
+        with self._lock:
+            for key in tuple(self._snapshot_cache):
+                if key[0] == source_id:
+                    self._snapshot_cache.pop(key, None)
 
     def load_snapshot(self, source_id: str, generation: str | None = None) -> FullSnapshot | None:
         path = self.published_path(source_id, generation)
@@ -152,23 +162,24 @@ class UserSourceSnapshotPublisher:
         try:
             digest = (path / "SHA256").read_text(encoding="ascii").strip()
             payload_bytes = (path / "snapshot.json").read_bytes()
-            payload = json.loads(payload_bytes.decode("utf-8"))
-        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        except (OSError, UnicodeError) as exc:
             raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
         if hashlib.sha256(payload_bytes).hexdigest() != digest:
-            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
-        try:
-            snapshot = FullSnapshot.from_dict(payload)
-        except FullSnapshotError as exc:
-            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
-        if snapshot.source_id != source_id or snapshot.generation != resolved:
             raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
         cache_key = (source_id, resolved)
         with self._lock:
             cached = self._snapshot_cache.get(cache_key)
-            if cached is not None and cached[0] == digest and cached[1] == snapshot:
+            if cached is not None and cached[0] == digest:
                 self._snapshot_cache.move_to_end(cache_key)
                 return cached[1]
+        try:
+            payload = json.loads(payload_bytes.decode("utf-8"))
+            snapshot = FullSnapshot.from_dict(payload)
+        except (UnicodeError, json.JSONDecodeError, FullSnapshotError) as exc:
+            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED) from exc
+        if snapshot.source_id != source_id or snapshot.generation != resolved:
+            raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
+        with self._lock:
             self._remember_snapshot(cache_key, digest, snapshot)
         return snapshot
 
@@ -201,15 +212,20 @@ class UserSourceSnapshotPublisher:
         source_root: str | Path,
         correlation_id: str,
         actor_type: SourceActorType = SourceActorType.SERVICE,
+        prepare_revision: Callable[[FullSnapshot, int], None] | None = None,
+        activate_revision: Callable[[FullSnapshot, int], None] | None = None,
     ) -> SourceRecord:
         """Build a complete candidate and publish its lifecycle revision.
 
-        The registry revision is the publication authority.  A generation is first
-        materialized without changing ``CURRENT``; only a committed READY revision
-        may cause the convenience pointer to advance.  This prevents a failed CAS
-        or registry transaction from exposing an uncommitted filesystem candidate.
+        The registry revision is the publication authority. A generation and its
+        mandatory serving artifacts are materialized and validated before the
+        READY revision commits. Convenience pointers advance only afterward.
+
+        If pointer activation fails after READY, the immutable generation remains
+        addressable by registry authority and an identical FULL retry repairs the
+        pointers without adding another revision.
         """
-        with self._lock:
+        with self._operation_lock, self._lock:
             record = self._lifecycle.get_source(principal_id=principal_id, source_id=source_id)
             if record.state not in {
                 SourceLifecycleState.REGISTERED,
@@ -218,23 +234,67 @@ class UserSourceSnapshotPublisher:
             }:
                 raise FullSnapshotError(FullSnapshotErrorCode.SOURCE_NOT_READY)
 
-            # A byte-for-byte repeat of the current immutable revision is a
-            # successful idempotent FULL request, not another revision.  The
-            # registry intentionally rejects duplicate (source, generation)
-            # pairs, so preflight a READY source before entering SYNCING.
             candidate: FullSnapshot | None = None
             preflight_error: Exception | None = None
-            if record.state is SourceLifecycleState.READY:
+            if record.state in {
+                SourceLifecycleState.READY,
+                SourceLifecycleState.DEGRADED,
+            }:
                 try:
-                    last_good = self._load_last_good(source_id, record.published_generation)
+                    last_good = self._load_last_good(
+                        source_id, record.published_generation
+                    )
                     candidate = self._build_candidate(source_root, source_id)
                     if candidate.generation == record.published_generation:
-                        if last_good is None:
-                            self._materialize_candidate(candidate)
-                            self._activate_generation(candidate)
-                        else:
-                            self._activate_generation(last_good)
+                        if record.published_revision_no is None:
+                            raise FullSnapshotError(
+                                FullSnapshotErrorCode.PUBLICATION_FAILED
+                            )
+                        try:
+                            if last_good is None:
+                                self._materialize_candidate(candidate, replace_invalid=True)
+                                resolved = candidate
+                            else:
+                                resolved = last_good
+                            if prepare_revision is not None:
+                                prepare_revision(
+                                    resolved, record.published_revision_no
+                                )
+                            self._activate_generation(resolved)
+                            if activate_revision is not None:
+                                activate_revision(
+                                    resolved, record.published_revision_no
+                                )
+                        except (OSError, FullSnapshotError) as exc:
+                            raise FullSnapshotError(
+                                FullSnapshotErrorCode.PUBLICATION_FAILED,
+                                "Source snapshot publication failed.",
+                            ) from exc
+                        if record.state is SourceLifecycleState.DEGRADED:
+                            syncing = self._lifecycle.transition_source(
+                                principal_id=principal_id,
+                                source_id=source_id,
+                                expected_version=record.record_version,
+                                target_state=SourceLifecycleState.SYNCING,
+                                actor_type=actor_type,
+                                correlation_id=correlation_id,
+                            )
+                            return self._lifecycle.transition_source(
+                                principal_id=principal_id,
+                                source_id=source_id,
+                                expected_version=syncing.record_version,
+                                target_state=SourceLifecycleState.READY,
+                                actor_type=actor_type,
+                                correlation_id=correlation_id,
+                            )
                         return record
+                except FullSnapshotError as exc:
+                    if (
+                        candidate is not None
+                        and candidate.generation == record.published_generation
+                    ):
+                        raise
+                    preflight_error = exc
                 except Exception as exc:
                     preflight_error = exc
 
@@ -251,6 +311,10 @@ class UserSourceSnapshotPublisher:
                     raise preflight_error
                 candidate = candidate or self._build_candidate(source_root, source_id)
                 self._materialize_candidate(candidate)
+                revisions = self._lifecycle._repository.list_revisions(source_id)
+                revision_no = revisions[-1].revision_no + 1 if revisions else 1
+                if prepare_revision is not None:
+                    prepare_revision(candidate, revision_no)
                 ready = self._lifecycle.transition_source(
                     principal_id=principal_id,
                     source_id=source_id,
@@ -287,12 +351,10 @@ class UserSourceSnapshotPublisher:
                     "Source snapshot publication failed.",
                 ) from exc
 
-            # The registry revision remains authoritative, but a return from a
-            # successful publication also guarantees that its local convenience
-            # pointer was advanced.  A failure here is surfaced rather than
-            # hidden; the immutable generation remains addressable by name.
             try:
                 self._activate_generation(candidate)
+                if activate_revision is not None:
+                    activate_revision(candidate, ready.published_revision_no or revision_no)
             except (OSError, FullSnapshotError) as exc:
                 raise FullSnapshotError(
                     FullSnapshotErrorCode.PUBLICATION_FAILED,
@@ -423,7 +485,12 @@ class UserSourceSnapshotPublisher:
         self._materialize_candidate(snapshot)
         self._activate_generation(snapshot)
 
-    def _materialize_candidate(self, snapshot: FullSnapshot) -> None:
+    def _materialize_candidate(
+        self,
+        snapshot: FullSnapshot,
+        *,
+        replace_invalid: bool = False,
+    ) -> None:
         """Durably write a generation without making it the current snapshot."""
         root = self._root / snapshot.source_id
         root.mkdir(parents=True, exist_ok=True)
@@ -444,13 +511,26 @@ class UserSourceSnapshotPublisher:
                     return
                 current = self._pointer_value(root / "CURRENT")
                 previous = self._pointer_value(root / "PREVIOUS")
-                if current == generation.name or previous == generation.name:
-                    raise FullSnapshotError(FullSnapshotErrorCode.PUBLICATION_FAILED)
-                if generation.is_dir():
-                    shutil.rmtree(generation)
-                else:
-                    generation.unlink()
-            os.replace(staging, generation)
+                if (
+                    (current == generation.name or previous == generation.name)
+                    and not replace_invalid
+                ):
+                    raise FullSnapshotError(
+                        FullSnapshotErrorCode.PUBLICATION_FAILED
+                    )
+                backup = root / f".invalid-{uuid4().hex}"
+                os.replace(generation, backup)
+                try:
+                    os.replace(staging, generation)
+                except Exception:
+                    if not generation.exists() and backup.exists():
+                        os.replace(backup, generation)
+                    raise
+                finally:
+                    if backup.exists() and generation.exists():
+                        self._discard_staging(backup)
+            else:
+                os.replace(staging, generation)
             self._fsync_directory(root)
         except Exception:
             self._discard_staging(staging)

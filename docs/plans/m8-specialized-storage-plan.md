@@ -1,15 +1,13 @@
 # M8 专业化检索存储准备计划
 
 > 当前状态：设计准备；`BLOCKED / NOT_STARTED`，未获准开工
-> 前置：M7 Source 生命周期与千级检索退出证据
+> 前置：`M8-M7-EXIT=SATISFIED`；M8 自身决策与批准仍未闭合
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
 
 ## 1. 范围与非目标
 
-M8 只在 M7 用真实 workload 证明现有检索存储不足或专业后端带来可量化收益后，规划统一 control plane、后端
-迁移和可回滚切换。M7 的 scoped admission 不满足 `M8-M7-EXIT`；只有真实 lifecycle/delete/isolation/fallback 与
-1k/3k 退出证据才能关闭该前置。LanceDB、Qdrant 和 Milvus 均未选定或获批，不得静默引入依赖或服务。学习状态、会话和复习历史继续由现有 SQLite 领域仓储负责。
+M8 在 M7 已完成 lifecycle/delete/isolation/fallback 与冻结 1k/3k 退出证据后，规划统一 control plane、后端迁移和可回滚切换。`M8-M7-EXIT` 已因技术证据与 2026-09-06 独立人工完成批准而成为 `SATISFIED`；这只关闭事实型前置，不批准 M8。LanceDB、Qdrant 和 Milvus 均未选定或获批，不得静默引入依赖或服务。学习状态、会话和复习历史继续由现有 SQLite 领域仓储负责。
 
 本计划不实现 Source 生命周期、目标规划、自主 Runner，也不因计划文件存在而添加依赖、容器、服务、schema
 migration 或生产 adapter。
@@ -18,7 +16,7 @@ migration 或生产 adapter。
 
 | Prerequisite ID | 当前状态 | 准入所需证据 |
 | --- | --- | --- |
-| `M8-M7-EXIT` | `OPEN` | M7 lifecycle/delete/isolation/fallback contract、保护回归和冻结的 1k/3k benchmark 真实通过记录 |
+| `M8-M7-EXIT` | `SATISFIED` | M7 lifecycle/delete/isolation/fallback contract、保护回归、冻结 1k/3k benchmark、独立完成批准；证据见 `docs/PLAN.md`、M7 计划与 `docs/baselines.md` |
 
 继承 M0–M5 API/学习闭环、SQLite session 恢复、默认 90 题、路径隐私和默认离线能力。专业向量后端不得成为
 学习状态存储，不得绕过 Source authorization，也不得使无可选依赖的本地启动失效。
@@ -41,7 +39,7 @@ migration 或生产 adapter。
 
 ## 4. 准入检查与批准记录
 
-- [ ] M7 退出证据证明 lifecycle、delete、isolation 和 fallback 已稳定；
+- [x] M7 退出证据与独立完成批准证明 lifecycle、delete、isolation 和 fallback 已稳定；
 - [ ] 八项强制决策全部 `RESOLVED`，依赖加入前已完成选择与打包决策；
 - [ ] migration/cutover/rollback 和 backend parity 有可执行测试方案；
 - [ ] benchmark 能比较当前 SQLite linear/BM25 与候选后端，并冻结 workload/阈值；
@@ -56,7 +54,7 @@ migration 或生产 adapter。
 | plan_revision | — |
 | decision_set_version | — |
 
-批准为空，M8 保持 `BLOCKED / NOT_STARTED`。M7 admission 不改变这一状态，Milvus 也不是已选后端。
+批准为空，M8 保持 `BLOCKED / NOT_STARTED`。M7 已完成只关闭 `M8-M7-EXIT`，不解决 M8 的八项强制决策或批准；Milvus 也不是已选后端。
 Agent 不得自行批准。
 
 ## 5. 获准后的拟实施顺序

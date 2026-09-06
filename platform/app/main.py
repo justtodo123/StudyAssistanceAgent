@@ -170,12 +170,8 @@ def search(req: SearchRequest) -> SearchResponse:
         req.top_k,
         course=req.course,
         scope=RetrievalScope.DEFAULT_PLUS_EXTRAS,
-        principal_id=req.principal_id,
+        use_vector=req.use_vector,
     )
-    if not req.use_vector and results:
-        # 模拟「关闭向量」仅观察关键词路：BM25 单路重算
-        results = bm25_only(req.question, req.top_k, req.course)
-        mode = "keyword-only"
     return SearchResponse(question=req.question, mode=mode, results=results)
 
 
@@ -253,20 +249,6 @@ def submit_study_answer(
         raise http_error(ErrorCode.SESSION_NOT_FOUND, str(exc)) from exc
     except IllegalSessionStateError as exc:
         raise http_error(ErrorCode.ILLEGAL_SESSION_STATE, str(exc)) from exc
-
-
-def bm25_only(question: str, top_k: int, course: str | None = None):
-    """关闭向量时展示关键词单路效果（示意，供可观测对比）。"""
-    from .bm25 import Bm25Search
-
-    _generation, chunks = _snapshot_publisher.view(
-        RetrievalScope.DEFAULT_PLUS_EXTRAS
-    )
-    if course:
-        chunks = [c for c in chunks if c.course == course]
-    pool = chunks if config.BM25_POOL <= 0 else chunks[: config.BM25_POOL]
-    bm25 = Bm25Search(pool)
-    return bm25.search(question, top_k)
 
 
 if _STATIC_DIR.is_dir():

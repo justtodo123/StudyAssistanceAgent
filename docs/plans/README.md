@@ -22,8 +22,9 @@
 - M6a：契约先行的兼容骨架，明确逻辑 Source 身份、快照失效/清理、Search/QA 传播边界和状态机唯一权威；
   M6b：前置、八项决策、保护基线与独立批准均已闭合，获批的独立只读原生工具调用预览已实现；
   完整自主 Runner 属于 M10
-- M6b 与 M7 都以 M6a 退出证据为共同必要前置，彼此不互为前置；M7 已取得基础设施 scope admission 与
-  独立生产开工授权，当前已形成 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline fail-closed 与 Search/QA overlay 局部合同；M8 依赖真实 M7 exit，M9 依赖 M7/M8，M10 依赖 M7–M9
+- M6b 与 M7 都以 M6a 退出证据为共同必要前置，彼此不互为前置；M7 已取得基础设施 scope admission、
+  独立生产开工授权与 2026-09-06 独立人工完成批准，当前为 `ADMITTED / COMPLETE`。M8/M9/M10 的事实型
+  M7 退出前置已满足，但 M8–M10 仍须分别闭合自身前置、决策与批准，当前均保持阻断
 - 不把 `references/` 中的分析当作执行计划或验收真源
 - 跨阶段运行时契约见 [`docs/standards/runtime-contracts.md`](../standards/runtime-contracts.md)
 - M6a–M10 准入政策见 [`docs/standards/stage-admission-gates.md`](../standards/stage-admission-gates.md)，机器登记见
@@ -40,9 +41,10 @@
 
 ## 当前计划
 
-M6a 已完成强制决策、前置证据和负责人批准，现为 `ADMITTED / COMPLETE`；M6b 获批的默认关闭只读 preview
-也已完成全部 closeout 门禁与证据同步，现为 `ADMITTED / COMPLETE`；M7 仅基础设施范围为
-`ADMITTED / IN_PROGRESS`，生产开工已授权且 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation、FTS5/offline 与 Search/QA overlay 已落地；冻结 1k/3k 未通过，M8–M10 保持阻断。最终状态以 [`docs/PLAN.md`](../PLAN.md) 为准。
+M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻结技术证据与 correctness 收口已完成，
+并于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准，现为
+`ADMITTED / COMPLETE`；技术证据本身不产生该批准。M8/M9/M10 的事实型 M7 退出前置已满足，但 M8–M10
+仍因自身前置、强制决策与批准未闭合而保持 `BLOCKED / NOT_STARTED`。最终状态以 [`docs/PLAN.md`](../PLAN.md) 为准。
 
 | 文件 | 类型 | 状态 |
 | --- | --- | --- |
@@ -51,10 +53,10 @@ M6a 已完成强制决策、前置证据和负责人批准，现为 `ADMITTED / 
 | `m5-agent-session-delivery-plan.md` | 项目工程执行计划 | M5 已收口，作为 MVP 冻结（2026-08-18） |
 | `m6a-harness-skeleton-plan.md` | 项目工程执行计划 | M6a-4 收口完成；`ADMITTED / COMPLETE` |
 | `m6b-agent-core-plan.md` | 项目工程执行计划 | 默认关闭只读 preview 已完成 closeout；`ADMITTED / COMPLETE` |
-| `m7-source-lifecycle-plan.md` | 阶段执行计划 | 基础设施范围 `ADMITTED / IN_PROGRESS`；M7-1 已合并；M7-2 已合并；当前增量 M7-3 冻结 1k/3k BGE；冻结 1k/3k 未通过，Network 不在 scope 内 |
-| `m7-p0-corpus-governance-report.md` | P0 语料治理报告 | 82 篇文档级 mapping 已建立；Network 31 篇来源/许可未闭合，停止等待人工复核，不因 M7 基础设施准入而关闭 |
-| `data-expansion-runbook.md` | 未来参考运行手册 | `DRAFT / NON-AUTHORITATIVE`；不批准数据扩展，不关闭 P0、退出或下游门禁 |
-| `m8-specialized-storage-plan.md` | 阶段准入准备计划 | M7 admission 不满足 `M8-M7-EXIT`；Milvus/LanceDB/Qdrant 均未选定，`BLOCKED / NOT_STARTED` |
+| `m7-source-lifecycle-plan.md` | 阶段执行计划 | 基础设施范围 `ADMITTED / COMPLETE`；独立完成批准日期为 2026-09-06；Network 不在 scope 内，下游阶段不自动获批 |
+| `m7-p0-corpus-governance-report.md` | P0 语料治理报告 | 82 篇文档级 mapping 已建立；Network 31 篇来源/许可未闭合，停止等待人工复核，不因 M7 完成而关闭 |
+| `data-expansion-runbook.md` | 未来参考运行手册 | `DRAFT / NON-AUTHORITATIVE`；不批准数据扩展，不关闭 P0 或下游门禁 |
+| `m8-specialized-storage-plan.md` | 阶段准入准备计划 | `M8-M7-EXIT=SATISFIED`；自身决策和批准未闭合，Milvus/LanceDB/Qdrant 均未选定，`BLOCKED / NOT_STARTED` |
 | `m9-goal-driven-planning-plan.md` | 阶段准入准备计划 | M9 目标驱动计划、mastery 与偏差；`BLOCKED / NOT_STARTED` |
 | `m10-autonomous-runner-plan.md` | 阶段准入准备计划 | M10 自主 Runner、写副作用与 Harness；`BLOCKED / NOT_STARTED` |
 

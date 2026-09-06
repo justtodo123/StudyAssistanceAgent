@@ -4,11 +4,12 @@
 > M0–M5 提供最小实现：默认计算机知识包、多路召回 RAG、学习会话与工作台。
 > M6 起按计划扩展：可插拔数据源、专业化存储、目标驱动学习计划与执行监控。
 
-**当前状态**：M6a-P0 crawler 已收口；M6a、M6b 均为 `ADMITTED / COMPLETE`；
-M7 仅基础设施范围为 `ADMITTED / IN_PROGRESS`，生产开工门禁已为 `AUTHORIZED`；M8–M10 仍为
-`BLOCKED / NOT_STARTED`；M0–M5 MVP 可用。
+**当前状态**：M6a-P0 crawler 已收口；M6a、M6b、M7 均为 `ADMITTED / COMPLETE`；M7 生产开工门禁保持
+`AUTHORIZED`，并于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准；M8–M10 的事实型
+M7 退出前置已满足，但 M8–M10 自身仍为 `BLOCKED / NOT_STARTED`；M0–M5 MVP 可用。
 2026-08-31 P0 语料治理复测已冻结：默认 OS/DS/CO 仍为可信 90 题包，Network candidate 不进入默认索引；
-M7 基础设施准入不批准 Network，也不改变其 `review / candidate / unresolved` 状态。
+M7 完成不批准 Network，也不改变其 `review / candidate / unresolved` 状态。CPython 3.11.9 精确冻结环境的五格式
+100×20 parser/normalization/identity 协议全 PASS；该技术证据与后续人工批准相互独立，不能自行完成阶段。
 `python tools/start_local.py` 可启动最小工作台。阶段、准入与定位以 [docs/PLAN.md](docs/PLAN.md) 为最终依据；
 统一硬门禁见 [stage-admission-gates.md](docs/standards/stage-admission-gates.md)。
 
@@ -17,7 +18,8 @@ M7 基础设施准入不批准 Network，也不改变其 `review / candidate / u
 ## 项目定位
 
 > 治理边界：M7 的 `approval_scope` 仅覆盖生命周期/来源基础设施；不包含 Network 文档晋升、P0 语料闭环、
-> 任意 corpus 自动批准、M8 专业化存储或 Milvus。M7 admission 不等于生产开工或 M7 exit。
+> 任意 corpus 自动批准、M8 专业化存储或 Milvus。M7 admission、生产开工授权和独立完成批准是三类不同记录；
+> M7 完成也不自动批准任何下游阶段。
 
 - 🎯 **目标**：通用学习 Agent harness，而不是单一课程聊天机器人
 - 📚 **默认知识包**：操作系统、数据结构、计算机组成原理（OS/DS/CO）；计算机网络 31 篇仍为 `review / candidate / unresolved`，不进入默认索引；用户源的离线基础设施局部实现已在 M7 形成
@@ -33,10 +35,10 @@ M7 基础设施准入不批准 Network，也不改变其 `review / candidate / u
 | 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（默认 `SqliteVectorStore`，线性余弦；可显式切换内存 `LocalVectorStore`） |
 | RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 2026-08-31 复测 Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 将改为目标/掌握度驱动 |
-| 用户数据源 | 自定义知识目录，规模百→千→万 | 🔄 M7 Source Registry 到 FTS5/vector/offline 局部合同已落地，Search/QA 可选 principal overlay 已接入；preview/quiz/sessions 仍不含用户源。generation-bound vector 已与 FTS5 identity-set 对齐，但冻结 20 次 1k/3k BGE 协议未完成，不构成 M7 exit |
-| 专业化存储 | 当前 SQLite；M8 规划 LanceDB，万级可选 Qdrant；Milvus 未选定 | ⬜ M8（阻断） |
+| 用户数据源 | 自定义知识目录，规模百→千→万 | ✅ M7 Source Registry、FTS5/vector/offline、delete/isolation 与 Search/QA 的受信任内部 principal overlay 已完成；preview/quiz/sessions 仍不含用户源。冻结技术证据通过，随后于 2026-09-06 取得独立人工完成批准，当前为 `ADMITTED / COMPLETE` |
+| 专业化存储 | 当前 SQLite；M8 规划 LanceDB，万级可选 Qdrant；Milvus 未选定 | ⬜ M8（`M8-M7-EXIT` 已满足，但 M8 自身决策与批准仍阻断） |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ⬜ M9 |
-| Harness 框架 | M6a 已收口；M6b 默认关闭的只读 preview 已完成 closeout；完整 Runner 未实现 | ✅ M6a/M6b `ADMITTED / COMPLETE`；M7 `ADMITTED / IN_PROGRESS`；M8–M10 阻断 |
+| Harness 框架 | M6a/M6b/M7 已收口；完整 Runner 未实现 | ✅ M6a/M6b/M7 `ADMITTED / COMPLETE`；M8–M10 `BLOCKED / NOT_STARTED` |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
@@ -123,7 +125,7 @@ StudyAssistanceAgent/
 │   ├── M6_crawler/        # crawler P0 离线测试（独立 marker / CI 已收口）
 │   ├── M6a/               # M6a harness 契约与兼容骨架测试
 │   ├── M6b/               # M6b 只读 Agent Preview 隔离测试与离线 benchmark
-│   ├── M7/                # M7 lifecycle/FTS5/vector/offline + Search/QA overlay contract（189 项）
+│   ├── M7/                # M7 lifecycle/FTS5/vector/offline + Search/QA internal overlay（270 项）
 │   ├── regression/        # 跨阶段回归套件
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）
@@ -212,7 +214,7 @@ cd ..
 | [docs/plans/m4-knowledge-base-scale-plan.md](docs/plans/m4-knowledge-base-scale-plan.md) | M4 课程知识库规模补齐计划（范围、验收、分支） |
 | [docs/plans/m6a-harness-skeleton-plan.md](docs/plans/m6a-harness-skeleton-plan.md) | M6a 契约与兼容骨架（含 crawler 前置收口） |
 | [docs/plans/m6b-agent-core-plan.md](docs/plans/m6b-agent-core-plan.md) | M6b 独立只读工具调用预览执行计划（已完成 closeout） |
-| [docs/plans/m7-source-lifecycle-plan.md](docs/plans/m7-source-lifecycle-plan.md) | M7 用户 Source 生命周期计划（基础设施范围已授权开工；局部实现持续进行中） |
+| [docs/plans/m7-source-lifecycle-plan.md](docs/plans/m7-source-lifecycle-plan.md) | M7 用户 Source 生命周期计划（基础设施范围已独立批准完成） |
 | [docs/plans/data-expansion-runbook.md](docs/plans/data-expansion-runbook.md) | M7 数据扩展未来参考手册；非权威且不批准 Network |
 | [docs/plans/m8-specialized-storage-plan.md](docs/plans/m8-specialized-storage-plan.md) | M8 专业化检索存储准入准备（被阻断） |
 | [docs/plans/m9-goal-driven-planning-plan.md](docs/plans/m9-goal-driven-planning-plan.md) | M9 目标驱动学习计划准入准备（被阻断） |

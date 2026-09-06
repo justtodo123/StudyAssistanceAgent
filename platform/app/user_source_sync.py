@@ -1,8 +1,8 @@
 """Source-local M7 sync worker for FULL and restricted INCREMENTAL runs.
 
-This module is intentionally disconnected from FastAPI, Search, QA, preview,
-and published retrieval indexes.  It only coordinates Source Registry control
-plane records with source-local snapshot artifacts.
+This module is intentionally disconnected from FastAPI, Search, QA, and preview.
+It coordinates Source Registry authority with source-local snapshot, FTS5, and
+vector artifacts while keeping retrieval serving outside the sync path.
 """
 from __future__ import annotations
 
@@ -17,6 +17,8 @@ from typing import Callable
 from .normalized_document import CHUNK_SCHEMA_VERSION
 from .parser_matrix import ParserMatrixError
 from .source_manifest import ManifestAcceptance, SourceManifestError, build_manifest, canonical_json
+from .source_offline import UserSourceOfflineGuard
+from .source_operation_lock import operation_lock
 from .source_registry import (
     SYNC_RUN_CANCELLED,
     SYNC_RUN_FAILED,
@@ -32,14 +34,17 @@ from .source_registry import (
     SyncRun,
     validate_uuid7,
 )
+from .user_source_fts5 import Fts5IndexError
 from .user_source_snapshot import (
     MAX_DOCUMENTS_PER_SOURCE,
     MAX_RAW_BYTES_PER_FILE,
     PARSER_SCHEMA_VERSION,
     FullSnapshot,
     FullSnapshotError,
+    FullSnapshotErrorCode,
     UserSourceSnapshotPublisher,
 )
+from .user_source_vector import VectorIndexError
 
 SYNC_SCHEMA_VERSION = "sa.source.sync.v1"
 SYNC_RETRY_DELAYS = (1.0, 2.0)
@@ -47,6 +52,7 @@ _STAGE_ENUMERATE = "ENUMERATE"
 _STAGE_PARSE = "PARSE"
 _STAGE_ASSEMBLE = "ASSEMBLE"
 _STAGE_VALIDATE = "VALIDATE"
+_STAGE_OPERATION_LOCK = "OPERATION_LOCK"
 _STAGE_PUBLISH = "PUBLISH"
 
 
@@ -97,11 +103,18 @@ class UserSourceSyncService:
         lifecycle: SourceLifecycleService,
         *,
         publisher: UserSourceSnapshotPublisher | None = None,
+        offline: UserSourceOfflineGuard | None = None,
         sleeper: Callable[[float], None] | None = None,
         retry_delays: tuple[float, float] = SYNC_RETRY_DELAYS,
     ) -> None:
         self._lifecycle = lifecycle
+        self._operation_lock = operation_lock(cache_root)
         self._publisher = publisher or UserSourceSnapshotPublisher(cache_root, lifecycle)
+        self._offline = offline or UserSourceOfflineGuard(
+            cache_root,
+            lifecycle,
+            snapshot_publisher=self._publisher,
+        )
         self._sleeper = sleeper or (lambda _delay: None)
         self._retry_delays = retry_delays
         self.stage_faults: dict[str, list[BaseException]] = {}
@@ -148,9 +161,54 @@ class UserSourceSyncService:
             except SourceLifecycleException as exc:
                 raise _translate(exc) from exc
             if run.status != SYNC_RUN_RUNNING:
+                # A successful FULL run may have committed READY before its
+                # non-authoritative CURRENT pointer activation failed.  Reuse
+                # the immutable candidate on an identical request to repair
+                # that convenience pointer without creating another run or
+                # revision.  The committed lifecycle result remains SUCCESS
+                # even when this repair attempt cannot complete.
+                if (
+                    run.status == SYNC_RUN_SUCCESS
+                    and strategy == "FULL"
+                    and run.candidate_generation
+                ):
+                    with self._operation_lock:
+                        record = self._lifecycle.get_source(
+                            principal_id=principal_id,
+                            source_id=source_id,
+                        )
+                        if (
+                            record.state is SourceLifecycleState.READY
+                            and record.published_generation == run.candidate_generation
+                            and record.published_revision_no is not None
+                        ):
+                            snapshot = self._publisher.load_snapshot(
+                                source_id,
+                                run.candidate_generation,
+                            )
+                            if snapshot is not None:
+                                try:
+                                    current = self._publisher.published_path(source_id)
+                                    if (
+                                        current is None
+                                        or current.name != f"gen-{snapshot.generation}"
+                                    ):
+                                        self._publisher._activate_generation(snapshot)
+                                    self._offline.activate_revision_indexes(
+                                        snapshot,
+                                        record.published_revision_no,
+                                    )
+                                except (
+                                    OSError,
+                                    FullSnapshotError,
+                                    Fts5IndexError,
+                                    VectorIndexError,
+                                ):
+                                    pass
                 return run
             self._process_active = (source_id, request_id)
             acquired = True
+        self._hook(_STAGE_OPERATION_LOCK)
         try:
             return self._execute(
                 principal_id=principal_id,
@@ -196,103 +254,149 @@ class UserSourceSyncService:
         actor_type: SourceActorType,
         run: SyncRun,
     ) -> SyncRun:
-        self._publishing = False
-        record = self._lifecycle.get_source(principal_id=principal_id, source_id=source_id)
-        try:
-            last_good = self._load_last_good(run)
-            input_digest, snapshot = self._run_build_stages(
-                principal_id=principal_id,
-                source_id=source_id,
-                request_id=request_id,
-                source_root=source_root,
-                run=run,
-                last_good=last_good,
-            )
-            self._checkpoint(
-                principal_id,
-                source_id,
-                request_id,
-                _STAGE_VALIDATE,
-                input_digest,
-                snapshot,
-            )
-            self._raise_if_cancelled(principal_id, source_id, request_id)
-            self._publishing = True
-            record, run = self._publish(
-                principal_id=principal_id,
-                source_id=source_id,
-                request_id=request_id,
-                correlation_id=correlation_id,
-                actor_type=actor_type,
-                snapshot=snapshot,
-                run=self._lifecycle.get_sync_run(
-                    principal_id=principal_id, source_id=source_id, request_id=request_id
-                ),
-            )
-            current = self._publisher.published_path(source_id)
-            if current is None or current.name != f"gen-{snapshot.generation}":
-                self._publisher._activate_generation(snapshot)
-            return run
-        except SourceSyncError as exc:
-            self._fail(
-                principal_id=principal_id,
-                source_id=source_id,
-                request_id=request_id,
-                correlation_id=correlation_id,
-                actor_type=actor_type,
-                code=exc.code,
-                status=(
-                    SYNC_RUN_CANCELLED
-                    if exc.code is SourceSyncErrorCode.SOURCE_SYNC_CANCELLED
-                    else SYNC_RUN_INTERRUPTED_INPUT_CHANGED
-                    if exc.code is SourceSyncErrorCode.SOURCE_SYNC_INTERRUPTED
-                    else SYNC_RUN_FAILED
-                ),
-            )
-            raise
-        except FullSnapshotError as exc:
-            error = SourceSyncError(SourceSyncErrorCode.SOURCE_SYNC_VALIDATION_FAILED)
-            self._fail(
-                principal_id=principal_id,
-                source_id=source_id,
-                request_id=request_id,
-                correlation_id=correlation_id,
-                actor_type=actor_type,
-                code=error.code,
-                status=SYNC_RUN_FAILED,
-            )
-            raise error from exc
-        except (SourceManifestError, ParserMatrixError) as exc:
-            error = SourceSyncError(SourceSyncErrorCode.SOURCE_SYNC_VALIDATION_FAILED)
-            self._fail(
-                principal_id=principal_id,
-                source_id=source_id,
-                request_id=request_id,
-                correlation_id=correlation_id,
-                actor_type=actor_type,
-                code=error.code,
-                status=SYNC_RUN_FAILED,
-            )
-            raise error from exc
-        except SourceLifecycleException as exc:
-            error = _translate(exc)
-            self._fail(
-                principal_id=principal_id,
-                source_id=source_id,
-                request_id=request_id,
-                correlation_id=correlation_id,
-                actor_type=actor_type,
-                code=error.code,
-                status=SYNC_RUN_FAILED,
-            )
-            raise error from exc
+        with self._operation_lock:
+            self._publishing = False
+            try:
+                record = self._lifecycle.get_source(
+                    principal_id=principal_id,
+                    source_id=source_id,
+                )
+                last_good = self._load_last_good(run, record.published_generation)
+                input_digest, snapshot = self._run_build_stages(
+                    principal_id=principal_id,
+                    source_id=source_id,
+                    request_id=request_id,
+                    source_root=source_root,
+                    run=run,
+                    last_good=last_good,
+                )
+                self._checkpoint(
+                    principal_id,
+                    source_id,
+                    request_id,
+                    _STAGE_VALIDATE,
+                    input_digest,
+                    snapshot,
+                )
+                self._raise_if_cancelled(principal_id, source_id, request_id)
+                self._publishing = True
+                record, run = self._publish(
+                    principal_id=principal_id,
+                    source_id=source_id,
+                    request_id=request_id,
+                    correlation_id=correlation_id,
+                    actor_type=actor_type,
+                    snapshot=snapshot,
+                    run=self._lifecycle.get_sync_run(
+                        principal_id=principal_id, source_id=source_id, request_id=request_id
+                    ),
+                )
+                try:
+                    current = self._publisher.published_path(source_id)
+                    if current is None or current.name != f"gen-{snapshot.generation}":
+                        self._publisher._activate_generation(snapshot)
+                    if record.published_revision_no is None:
+                        raise FullSnapshotError(
+                            FullSnapshotErrorCode.PUBLICATION_FAILED,
+                            "Source snapshot publication failed.",
+                        )
+                    self._offline.activate_revision_indexes(
+                        snapshot,
+                        record.published_revision_no,
+                    )
+                except (OSError, FullSnapshotError, Fts5IndexError, VectorIndexError):
+                    # READY/SUCCESS is authoritative once committed. Convenience
+                    # pointers are replayable and an identical request repairs them.
+                    pass
+                return run
+            except (FullSnapshotError, Fts5IndexError, VectorIndexError) as exc:
+                committed = self._lifecycle.get_sync_run(
+                    principal_id=principal_id,
+                    source_id=source_id,
+                    request_id=request_id,
+                )
+                if committed.status == SYNC_RUN_SUCCESS:
+                    raise
+                error = SourceSyncError(
+                    SourceSyncErrorCode.SOURCE_SYNC_VALIDATION_FAILED
+                )
+                self._fail(
+                    principal_id=principal_id,
+                    source_id=source_id,
+                    request_id=request_id,
+                    correlation_id=correlation_id,
+                    actor_type=actor_type,
+                    code=error.code,
+                    status=SYNC_RUN_FAILED,
+                )
+                raise error from exc
+            except SourceSyncError as exc:
+                self._fail(
+                    principal_id=principal_id,
+                    source_id=source_id,
+                    request_id=request_id,
+                    correlation_id=correlation_id,
+                    actor_type=actor_type,
+                    code=exc.code,
+                    status=(
+                        SYNC_RUN_CANCELLED
+                        if exc.code is SourceSyncErrorCode.SOURCE_SYNC_CANCELLED
+                        else SYNC_RUN_INTERRUPTED_INPUT_CHANGED
+                        if exc.code is SourceSyncErrorCode.SOURCE_SYNC_INTERRUPTED
+                        else SYNC_RUN_FAILED
+                    ),
+                )
+                raise
+            except (SourceManifestError, ParserMatrixError) as exc:
+                error = SourceSyncError(SourceSyncErrorCode.SOURCE_SYNC_VALIDATION_FAILED)
+                self._fail(
+                    principal_id=principal_id,
+                    source_id=source_id,
+                    request_id=request_id,
+                    correlation_id=correlation_id,
+                    actor_type=actor_type,
+                    code=error.code,
+                    status=SYNC_RUN_FAILED,
+                )
+                raise error from exc
+            except OSError:
+                error = SourceSyncError(SourceSyncErrorCode.SOURCE_SYNC_VALIDATION_FAILED)
+                self._fail(
+                    principal_id=principal_id,
+                    source_id=source_id,
+                    request_id=request_id,
+                    correlation_id=correlation_id,
+                    actor_type=actor_type,
+                    code=error.code,
+                    status=SYNC_RUN_FAILED,
+                )
+                raise
+            except SourceLifecycleException as exc:
+                error = _translate(exc)
+                self._fail(
+                    principal_id=principal_id,
+                    source_id=source_id,
+                    request_id=request_id,
+                    correlation_id=correlation_id,
+                    actor_type=actor_type,
+                    code=error.code,
+                    status=SYNC_RUN_FAILED,
+                )
+                raise error from exc
 
-    def _load_last_good(self, run: SyncRun) -> FullSnapshot | None:
+    def _load_last_good(
+        self,
+        run: SyncRun,
+        authoritative_generation: str | None,
+    ) -> FullSnapshot | None:
         if run.requested_strategy != "INCREMENTAL" or run.input_revision_no is None:
             if run.checkpoint_stage in {_STAGE_ASSEMBLE, _STAGE_VALIDATE} and run.candidate_generation:
                 return self._publisher.load_snapshot(run.source_id, run.candidate_generation)
             return self._publisher.load_snapshot(run.source_id)
-        snapshot = self._publisher.load_snapshot(run.source_id)
+        snapshot = self._publisher.load_snapshot(
+            run.source_id,
+            authoritative_generation,
+        )
         if snapshot is None:
             raise SourceSyncError(SourceSyncErrorCode.SOURCE_SYNC_PRECONDITION_FAILED)
         return snapshot
@@ -351,7 +455,10 @@ class UserSourceSyncService:
             self._raise_if_cancelled(principal_id, source_id, request_id)
             existing = self._publisher.published_path(source_id, snapshot.generation)
             if existing is None:
-                self._publisher._materialize_candidate(snapshot)
+                self._retry(
+                    _STAGE_ASSEMBLE,
+                    lambda: self._publisher._materialize_candidate(snapshot),
+                )
             self._checkpoint(
                 principal_id,
                 source_id,
@@ -429,6 +536,17 @@ class UserSourceSyncService:
             raw_bytes=snapshot.raw_bytes,
             checkpoint_stage=_STAGE_PUBLISH,
         )
+        prepare_revision = None
+        if revision is not None:
+            prepare_revision = lambda revision_no: self._offline.prepare_revision_indexes(
+                snapshot,
+                revision_no,
+            )
+        elif record.published_revision_no is not None:
+            self._offline.prepare_revision_indexes(
+                snapshot,
+                record.published_revision_no,
+            )
         try:
             return self._lifecycle.complete_sync_run(
                 principal_id=principal_id,
@@ -439,6 +557,7 @@ class UserSourceSyncService:
                 run=finished,
                 target_state=SourceLifecycleState.READY,
                 revision=revision,
+                prepare_revision=prepare_revision,
             )
         except SourceLifecycleException as exc:
             raise _translate(exc) from exc
@@ -555,10 +674,14 @@ class UserSourceSyncService:
         status: str,
     ) -> None:
         try:
-            record = self._lifecycle.get_source(principal_id=principal_id, source_id=source_id)
-            run = self._lifecycle.get_sync_run(
-                principal_id=principal_id, source_id=source_id, request_id=request_id
-            )
+            record = self._lifecycle._repository.get_source(source_id)
+            run = self._lifecycle._repository.get_sync_run(source_id, request_id)
+            if (
+                record is None
+                or record.owner_principal_id != principal_id
+                or run is None
+            ):
+                return
             finished = replace(run, status=status, result_code=code.value)
             if record.state is SourceLifecycleState.SYNCING:
                 self._lifecycle.complete_sync_run(

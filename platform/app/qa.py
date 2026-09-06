@@ -27,7 +27,12 @@ class QaService:
         self._recall = recall or MultiRecallService()
         self._scope = scope
 
-    def answer(self, req: QaRequest) -> QaResponse:
+    def answer(
+        self,
+        req: QaRequest,
+        *,
+        principal_id: str | None = None,
+    ) -> QaResponse:
         started = time.perf_counter()
         results: list[RetrievalChunk] = []
         mode = "keyword-only"
@@ -38,7 +43,8 @@ class QaService:
                 req.top_k,
                 course=req.course,
                 scope=self._scope,
-                principal_id=req.principal_id,
+                principal_id=principal_id,
+                use_vector=req.use_vector,
             )
             from .user_source_search import ensure_user_provenance
 

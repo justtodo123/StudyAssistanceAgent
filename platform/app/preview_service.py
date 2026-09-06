@@ -155,7 +155,13 @@ class PreviewService:
                 timeout=wait_seconds,
             )
         except TimeoutError:
-            if time.monotonic() - started >= self._limits.deadline_seconds:
+            # asyncio.wait_for may wake slightly before the exact deadline.  When
+            # the total deadline bounded the semaphore wait, preserve deadline
+            # semantics rather than exposing a scheduler-dependent overload.
+            if (
+                wait_seconds >= remaining
+                or time.monotonic() - started >= self._limits.deadline_seconds
+            ):
                 return self._response(_deadline_result(), correlation_id, started)
             error = _error(
                 "PREVIEW_OVERLOADED",

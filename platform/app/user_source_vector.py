@@ -10,6 +10,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import shutil
 import sqlite3
 import struct
@@ -31,9 +32,12 @@ except Exception:  # pragma: no cover - optional acceleration
 from . import config
 from .normalized_document import CHUNK_SCHEMA_VERSION
 from .source_manifest import canonical_json
+from .source_operation_lock import operation_lock
 from .user_source_fts5 import identity_set, identity_set_digest
 from .user_source_snapshot import FullSnapshot
 
+
+_GENERATION_NAME_RE = re.compile(r"gen-m7-[0-9a-f]{24}")
 
 VECTOR_SCHEMA_VERSION = "sa.source.vector.v1"
 VECTOR_STATUS_ATTACHED = "attached"
@@ -196,24 +200,36 @@ class SentenceTransformerEmbedder:
         except metadata.PackageNotFoundError as exc:
             raise VectorIndexError(VectorIndexErrorCode.DEPENDENCY_UNAVAILABLE) from exc
 
-    def encode(self, texts: list[str]) -> list[list[float]]:
+    def _ensure_model(self):
         self.require_runtime()
-        if self._model is None:
-            try:
-                from sentence_transformers import SentenceTransformer
+        if self._model is not None:
+            return self._model
+        try:
+            import torch
+            from sentence_transformers import SentenceTransformer
 
-                self._model = SentenceTransformer(self.model_name)
-            except Exception as exc:
-                raise VectorIndexError(VectorIndexErrorCode.DEPENDENCY_UNAVAILABLE) from exc
-        encoded = self._model.encode(
-            texts,
-            normalize_embeddings=self.normalize,
-            show_progress_bar=False,
-        )
-        values = [[float(item) for item in vector] for vector in encoded]
+            model = SentenceTransformer(self.model_name, local_files_only=True)
+            model.eval()
+            self._torch = torch
+            self._model = model
+        except Exception as exc:
+            raise VectorIndexError(VectorIndexErrorCode.DEPENDENCY_UNAVAILABLE) from exc
+        return self._model
+
+    def encode(self, texts: list[str]) -> list[list[float]]:
+        model = self._ensure_model()
+        with self._torch.inference_mode():
+            encoded = model.encode(
+                texts,
+                batch_size=32,
+                convert_to_numpy=True,
+                normalize_embeddings=self.normalize,
+                show_progress_bar=False,
+            )
+        values = encoded.tolist()
         if any(len(vector) != self.dimension for vector in values):
             raise VectorIndexError(VectorIndexErrorCode.INDEX_INVALID)
-        return [_l2_normalize(vector) for vector in values] if self.normalize else values
+        return values
 
     def metadata(self) -> dict[str, str]:
         return {
@@ -394,10 +410,16 @@ class UserSourceVectorIndex:
         *,
         embedder: VectorEmbedder | None = None,
     ) -> None:
+        self._operation_lock = operation_lock(cache_root)
         self._root = Path(cache_root) / "user-source-vector" / "v1"
         self._embedder = embedder or SentenceTransformerEmbedder()
         self._lock = threading.RLock()
         self._runtimes: dict[tuple[str, str], "_VectorRuntime"] = {}
+
+    def clear_source(self, source_id: str) -> None:
+        """Release cached runtimes before the source artifacts are removed."""
+        with self._operation_lock, self._lock:
+            self._drop_runtimes(source_id)
 
     @property
     def embedder(self) -> VectorEmbedder:
@@ -438,13 +460,33 @@ class UserSourceVectorIndex:
         *,
         revision_no: int,
         activate: bool = True,
+        repair_invalid: bool = False,
     ) -> VectorIndexMetadata:
-        with self._lock:
+        with self._operation_lock, self._lock:
             self._drop_runtimes(snapshot.source_id)
-            metadata = self._materialize(snapshot, revision_no=revision_no)
+            metadata = self._materialize(
+                snapshot,
+                revision_no=revision_no,
+                repair_invalid=repair_invalid,
+            )
             if activate:
                 self._activate(snapshot.source_id, snapshot.generation)
             return metadata
+
+    def activate(self, source_id: str, generation: str) -> None:
+        with self._operation_lock, self._lock:
+            self._activate(source_id, generation)
+
+    def encode_query(self, query: str) -> list[float]:
+        try:
+            encoded = self._embedder.encode([query])
+        except VectorIndexError:
+            raise
+        except Exception as exc:
+            raise VectorIndexError(VectorIndexErrorCode.DEPENDENCY_UNAVAILABLE) from exc
+        if not encoded:
+            raise VectorIndexError(VectorIndexErrorCode.INDEX_INVALID)
+        return encoded[0]
 
     def search(
         self,
@@ -453,23 +495,23 @@ class UserSourceVectorIndex:
         query: str,
         *,
         top_k: int = 5,
+        query_vector: list[float] | None = None,
     ) -> tuple[VectorHit, ...]:
-        runtime = self._runtimes.get((source_id, generation)) or self._ensure_runtime(source_id, generation)
         if top_k <= 0:
             return ()
-        try:
-            query_vector = self._embedder.encode([query])[0]
-        except VectorIndexError:
-            raise
-        except Exception as exc:
-            raise VectorIndexError(VectorIndexErrorCode.DEPENDENCY_UNAVAILABLE) from exc
-        if len(query_vector) != runtime.metadata.embedding_dim:
-            raise VectorIndexError(VectorIndexErrorCode.INDEX_INVALID)
-        return _hits_from_matrix(
-            runtime,
-            query_vector,
-            top_k=top_k,
-        )
+        with self._lock:
+            runtime = self._runtimes.get((source_id, generation)) or self._ensure_runtime(
+                source_id,
+                generation,
+            )
+            vector = query_vector if query_vector is not None else self.encode_query(query)
+            if len(vector) != runtime.metadata.embedding_dim:
+                raise VectorIndexError(VectorIndexErrorCode.INDEX_INVALID)
+            return _hits_from_matrix(
+                runtime,
+                vector,
+                top_k=top_k,
+            )
 
     def validate(
         self,
@@ -514,6 +556,8 @@ class UserSourceVectorIndex:
                 or metadata.embedding_model != expected["embedding_model"]
                 or metadata.embedding_version != expected["embedding_version"]
                 or str(metadata.embedding_dim) != expected["embedding_dim"]
+                or expected.get("embedding_normalize") not in {"true", "false"}
+                or metadata.embedding_normalize is not (expected["embedding_normalize"] == "true")
                 or metadata.chunk_schema_version != expected["chunk_schema_version"]
                 or metadata.vector_index_type != expected["vector_index_type"]
                 or metadata.vector_status != VECTOR_STATUS_ATTACHED
@@ -644,7 +688,13 @@ class UserSourceVectorIndex:
             matrix = [self._unpack(blob, metadata.embedding_dim) for blob in blobs]
         return tuple(pairs), matrix
 
-    def _materialize(self, snapshot: FullSnapshot, *, revision_no: int) -> VectorIndexMetadata:
+    def _materialize(
+        self,
+        snapshot: FullSnapshot,
+        *,
+        revision_no: int,
+        repair_invalid: bool = False,
+    ) -> VectorIndexMetadata:
         if not isinstance(revision_no, int) or isinstance(revision_no, bool) or revision_no < 1:
             raise VectorIndexError(VectorIndexErrorCode.BUILD_FAILED)
         root = self._root / snapshot.source_id
@@ -662,9 +712,22 @@ class UserSourceVectorIndex:
             )
             self._fsync_directory(staging)
             if generation.exists():
-                if not self._is_valid_generation(generation, metadata):
+                if self._is_valid_generation(generation, metadata):
+                    self._discard_staging(staging)
+                elif repair_invalid:
+                    backup = root / f".invalid-{uuid4().hex}"
+                    os.replace(generation, backup)
+                    try:
+                        os.replace(staging, generation)
+                    except Exception:
+                        if not generation.exists() and backup.exists():
+                            os.replace(backup, generation)
+                        raise
+                    finally:
+                        if backup.exists() and generation.exists():
+                            self._discard_staging(backup)
+                else:
                     raise VectorIndexError(VectorIndexErrorCode.PUBLICATION_FAILED)
-                self._discard_staging(staging)
             else:
                 os.replace(staging, generation)
                 self._fsync_directory(root)
@@ -854,7 +917,7 @@ class UserSourceVectorIndex:
             value = path.read_text(encoding="ascii").strip()
         except OSError:
             return None
-        return value if value.startswith("gen-m7-") else None
+        return value if _GENERATION_NAME_RE.fullmatch(value) is not None else None
 
     @staticmethod
     def _discard_staging(staging: Path) -> None:

@@ -142,7 +142,7 @@
       "stage": "M7",
       "plan": "docs/plans/m7-source-lifecycle-plan.md",
       "admission_status": "ADMITTED",
-      "delivery_status": "IN_PROGRESS",
+      "delivery_status": "COMPLETE",
       "prerequisites": [
         {"id": "M7-M6A-SOURCE-CONTRACT", "status": "SATISFIED", "evidence": [
           "docs/plans/m6a-harness-skeleton-plan.md",
@@ -278,6 +278,19 @@
         "authorized_by": "justtodo123",
         "authorized_at": "2026-08-31",
         "authorization_reference": "User instruction: 批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论。"
+      },
+      "completion_approval": {
+        "approved_by": "justtodo123",
+        "approved_at": "2026-09-06",
+        "approval_reference": "User instruction: 批准 M7 COMPLETE",
+        "approval_scope": "m7-infrastructure-only-v1",
+        "evidence": [
+          "docs/PLAN.md",
+          "docs/plans/m7-source-lifecycle-plan.md",
+          "docs/baselines.md",
+          "tests/M7/README.md",
+          "tests/TEST_PLAN.md"
+        ]
       }
     },
     {
@@ -285,7 +298,7 @@
       "plan": "docs/plans/m8-specialized-storage-plan.md",
       "admission_status": "BLOCKED",
       "delivery_status": "NOT_STARTED",
-      "prerequisites": [{"id": "M8-M7-EXIT", "status": "OPEN", "evidence": []}],
+      "prerequisites": [{"id": "M8-M7-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m7-source-lifecycle-plan.md", "docs/baselines.md"]}],
       "mandatory_decisions": [
         {"id": "M8-CONTROL-SCHEMA", "status": "OPEN", "value": null, "evidence": []},
         {"id": "M8-MIGRATION", "status": "OPEN", "value": null, "evidence": []},
@@ -304,7 +317,7 @@
       "admission_status": "BLOCKED",
       "delivery_status": "NOT_STARTED",
       "prerequisites": [
-        {"id": "M9-M7-EXIT", "status": "OPEN", "evidence": []},
+        {"id": "M9-M7-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m7-source-lifecycle-plan.md", "docs/baselines.md"]},
         {"id": "M9-M8-EXIT", "status": "OPEN", "evidence": []}
       ],
       "mandatory_decisions": [
@@ -325,7 +338,7 @@
       "admission_status": "BLOCKED",
       "delivery_status": "NOT_STARTED",
       "prerequisites": [
-        {"id": "M10-M7-EXIT", "status": "OPEN", "evidence": []},
+        {"id": "M10-M7-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m7-source-lifecycle-plan.md", "docs/baselines.md"]},
         {"id": "M10-M8-EXIT", "status": "OPEN", "evidence": []},
         {"id": "M10-M9-EXIT", "status": "OPEN", "evidence": []}
       ],

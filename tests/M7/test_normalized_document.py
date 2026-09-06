@@ -9,6 +9,9 @@ from types import SimpleNamespace
 
 import pytest
 
+from tests.M7.real_fixtures import fixture_bytes
+
+from app.parser_matrix import parse_document
 from app.normalized_document import (
     CHUNK_SCHEMA_VERSION,
     NormalizedDocument,
@@ -176,3 +179,81 @@ def test_normalized_document_requires_contiguous_ordinals_and_visible_units() ->
             "1.0.0",
             (NormalizedUnit("page", 1, text="内容"),),
         )
+
+
+@pytest.mark.parametrize("format", ["md", "txt", "pdf", "pptx", "docx"])
+def test_real_parser_output_normalizes_reproducibly(format: str) -> None:
+    data = fixture_bytes(format)
+    parsed = parse_document(data, format, filename=f"fixture.{format}")
+    fingerprint = hashlib.sha256(data).hexdigest()
+    logical_uri = f"generated/fixture.{format}"
+    values = {
+        "source_id": SOURCE_ID,
+        "document_id": _document_id(logical_uri),
+        "logical_uri": logical_uri,
+        "format": format,
+        "content_fingerprint": fingerprint,
+        "parser_id": parsed.parser_id,
+        "parser_version": parsed.parser_version,
+    }
+
+    first = normalize_document(parsed, **values)
+    recovered = NormalizedDocument.from_dict(json.loads(first.canonical_bytes()))
+    second = normalize_document(
+        parse_document(data, format, filename=f"fixture.{format}"),
+        **values,
+    )
+
+    assert first.canonical_bytes() == second.canonical_bytes()
+    assert recovered == first
+    assert first.normalized_text_digest == second.normalized_text_digest
+    assert [chunk.chunk_id for chunk in first.chunks()] == [chunk.chunk_id for chunk in second.chunks()]
+
+
+def test_real_parser_normalization_preserves_format_unit_semantics() -> None:
+    pdf_data = fixture_bytes("pdf")
+    pptx_data = fixture_bytes("pptx")
+    docx_data = fixture_bytes("docx")
+    pdf = parse_document(pdf_data, "pdf", filename="fixture.pdf")
+    pptx = parse_document(pptx_data, "pptx", filename="fixture.pptx")
+    docx = parse_document(docx_data, "docx", filename="fixture.docx")
+
+    normalized_pdf = normalize_document(
+        pdf,
+        source_id=SOURCE_ID,
+        document_id=_document_id("fixture.pdf"),
+        logical_uri="fixture.pdf",
+        format="pdf",
+        content_fingerprint=hashlib.sha256(pdf_data).hexdigest(),
+        parser_id=pdf.parser_id,
+        parser_version=pdf.parser_version,
+    )
+    normalized_pptx = normalize_document(
+        pptx,
+        source_id=SOURCE_ID,
+        document_id=_document_id("fixture.pptx"),
+        logical_uri="fixture.pptx",
+        format="pptx",
+        content_fingerprint=hashlib.sha256(pptx_data).hexdigest(),
+        parser_id=pptx.parser_id,
+        parser_version=pptx.parser_version,
+    )
+    normalized_docx = normalize_document(
+        docx,
+        source_id=SOURCE_ID,
+        document_id=_document_id("fixture.docx"),
+        logical_uri="fixture.docx",
+        format="docx",
+        content_fingerprint=hashlib.sha256(docx_data).hexdigest(),
+        parser_id=docx.parser_id,
+        parser_version=docx.parser_version,
+    )
+
+    assert [unit.unit_kind for unit in normalized_pdf.units] == ["page"]
+    assert [unit.unit_kind for unit in normalized_pptx.units] == ["slide"]
+    assert "Must not be indexed" not in normalized_pptx.canonical_bytes().decode("utf-8")
+    assert [(unit.heading_path, unit.title) for unit in normalized_docx.units] == [
+        ((), None),
+        (("第一节",), "第一节"),
+        (("第一节", "小节"), "小节"),
+    ]
