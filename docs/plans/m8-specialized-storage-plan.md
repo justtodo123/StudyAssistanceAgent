@@ -130,6 +130,198 @@ M9 或 M10。
 评估 LanceDB/Qdrant 与 dependency packaging；最后由负责人冻结 benchmark workload 和选择阈值。顺序
 不构成后端选择、生产开工授权或 M8 准入。
 
+### 3.10 本轮实验授权与预冻结门槛（仍不闭合决策）
+
+负责人 `justtodo123` 于 2026-09-06 明确授权一次可丢弃的、临时隔离的 LanceDB/Qdrant 比较实验，
+仅用于形成 M8 decision evidence。授权范围不包含 M8 admission、后端选择、生产实现、提交/合并/推送，
+也不包含 Milvus、Qdrant server/container/service、持久运行服务或任何生产依赖变更。实验不得读取或复制
+`D:\111_Others_Subjects`；所有 harness、synthetic corpus、vector、index、cache、venv、package archive
+和 raw report 必须位于唯一系统临时目录，完成审阅后清除。
+
+在首次 acquisition 或 measured run 前，冻结以下配置为
+`sa.m8.admission-evidence.v1` 的 `precommit-v1`；配置摘要必须覆盖 seed、1k/3k workload、10k 容量层、
+model/version、dimension、normalization、dtype、query/gold set、top-k、filter、warmup/measured、
+候选 mode、重复次数、报告 schema 和本节门槛。观察 measured 结果后不得修改；若需修改，必须创建新的
+experiment ID 和摘要，不得混用结果。建议的保守门槛如下：
+
+- **hard correctness**：未授权、跨 owner/source、stale generation/snapshot、错误 identity、tombstone/
+  hard-delete、未发布或部分构建结果、路径/凭据/源内容泄露均为零；count、identity-set、必需 metadata、
+  dimension/model/generation/snapshot 校验及规定 fault probe 的 fail-closed 行为为 100%。
+- **quality**：Recall@1/3/5 分别不低于 `0.70/0.85/0.90`；相对同一 workload 的 SQLite baseline 各项
+  绝对下降不超过 `0.01`；exact/flat top-k set agreement 不低于 `0.99`，approximate top-5 overlap
+  不低于 `0.98`；五次重复的 recall spread 不超过 `0.01`。归一化 cosine 分数 `1e-4` 内按 tie 处理，
+  报告按 stable chunk ID 规范化排序。
+- **latency**：1k/3k query 和 filtered-query p95 不超过
+  `max(1.25 * SQLite p95, SQLite p95 + 25 ms)`，p99 不超过 `1.50 * SQLite p99`；import/rebuild/
+  migration p95 不超过 SQLite 的 `1.25` 倍；五次重复 median drift 不超过 `20%`。
+- **capacity/resource**：10k 只有在全部 hard gate 通过且 query p95 比 SQLite 低至少 `25%`，或负责人
+  记录 SQLite 无法合理提供的明确容量/运维优势时，才具备采用理由；否则为不采用。peak RSS 不超过
+  `max(1.5 * SQLite peak RSS, SQLite peak RSS + 256 MiB)`，10k 绝对上限为 `1.5 GiB`，index disk 不超过
+  `2 * (raw float-vector bytes + UTF-8 metadata bytes) + 64 MiB`，隔离环境增量不超过 `1 GiB`。
+- **lifecycle/offline**：支持持久化的 mode reopen/recovery、last-good、rollback 和兼容重放均为 100%；
+  delete barrier 后命中、已发布 partial build、failed cutover stale result 和 measured unexpected error
+  均为零。运行时无 outbound network、无持久服务，默认 SQLite/BM25 路径无变化。
+
+本节是负责人批准的实验范围和预冻结设计，不是八项决策的最终单一结论；八项 ID 必须继续保持 `OPEN`，
+候选结果不能自动选择后端、生成 `RESOLVED`、改变 `BLOCKED / NOT_STARTED` 或产生批准记录。
+
+### 3.11 `precommit-v1` 的可执行冻结配置
+
+以下配置在 acquisition 前冻结；它只刻画**合成、已预编码向量的数据面**，不声称代表完整 M7
+end-to-end BGE 检索，也不能单独支持生产后端选择。这样可在不读取真实资料、不复制仓库语料且不将模型
+缓存带入实验目录的前提下，先比较 SQLite linear、LanceDB embedded 与 Qdrant Client local mode 的存储和
+查询行为。若未来要比较真实 BGE 路径，必须另建 experiment ID、重新冻结模型缓存位置与完整输入摘要。
+
+| 项 | 冻结值 |
+| --- | --- |
+| experiment ID / protocol | `sa.m8.admission-evidence.v1` / `precommit-v1` |
+| executor | CPython `3.11.9`；每次尝试均新建于唯一系统临时根目录的 venv；不得使用或修改仓库 venv |
+| candidates | `sqlite-linear`（基线）、`lancedb-embedded`、`qdrant-client-local`；后两者均为显式临时本地 mode，不启动 Qdrant server/container/service |
+| corpus | seed `20260906`，三个 synthetic owner/source namespace；stable chunk ID 为 `m8-{source}-{ordinal:05d}`；UTF-8 metadata 不含宿主机路径、源内容、凭据或真实 URI |
+| vector input | `synthetic-unit-vector-v1`，model/version 同名，`512` dimensions、`float32`、L2 normalized；每个 chunk/query 由固定 seed 生成，query 不调用 embedding runtime |
+| workloads | `1k-single`（1 source × 1,000 chunks）、`3k-aggregate`（3 × 1,000）、`10k-capacity`（10 × 1,000）；每个 chunk 有 source/owner/generation/snapshot/tombstone/filter metadata |
+| query/gold set | 每个 1k/3k workload 固定 200 个：50 exact、50 perturbed semantic、50 owner/filter、50 no-hit；exact 与 semantic 的 gold 为目标 chunk，filter 的 gold 必须属于目标 owner/source，no-hit 的 gold 为空 |
+| top-k / filter | `top_k=1/3/5`；filter 为 owner、source、published generation/snapshot 与 `tombstone=false` 的交集；稳定比较以 chunk ID 的规范化排序消除同分歧义 |
+| sampling | 每 backend/workload 五个独立重复；query 为 `20 warmup + 200 measured`；build/rebuild/import/reopen 为 `5 warmup + 20 measured`；10k 不产生后端选择结论，只记录容量门槛 |
+| candidate mode | 仅 exact/flat 搜索；不得为候选调入 HNSW/IVF 或未冻结的 ANN 参数；Qdrant 使用 local client，LanceDB 使用临时本地目录 |
+| fault probes | wrong dimension、missing required metadata、wrong/stale generation/snapshot、cross-owner/source filter、tombstone、partial/unpublished build、reopen、last-good/rollback simulation；期望均 fail closed 或零命中 |
+| network / lifecycle | installer acquisition 结束后 measured run 的 outbound network 为零；无持久服务；实验进程退出后临时根目录之外不得留下 index/cache/report/artifact |
+
+结构化报告固定 schema 为 `sa.m8.admission-evidence.report.v1`。顶层必须有：`experiment_id`、
+`protocol`、`frozen_config_sha256`、`environment`、`dependency_versions`、`redaction_checks`、
+`temporary_root_kind`、`network_observation`、`backends`、`workloads`、`gate_evaluation`、
+`unexpected_errors`、`limitations` 和 `cleanup`。每个 backend/workload/repetition 必须有：corpus、query、
+metadata 与 config hashes；build/rebuild/import/reopen/query 分位数；RSS、disk、count、identity-set digest；
+Recall@1/3/5、exact set agreement、top-5 overlap；filter/tombstone/generation/snapshot/fault 结果；错误类别和
+非泄露检查。报告只写临时根目录，汇总时仅能进入本计划的脱敏文字结论；raw JSON 不入库。
+
+### 3.12 2026-09-06 首次执行记录：无效，不作为决策证据
+
+已在唯一系统临时根目录中完成一次 `sa.m8.admission-evidence.v1` / `precommit-v1` 的可丢弃执行：
+CPython `3.11.9`，LanceDB `0.38.0`、Qdrant Client `1.19.0`、NumPy `2.4.6`、psutil `7.2.2`、
+PyArrow `25.0.1`；九个 backend/workload 组合均完成，运行时未记录 unexpected error、持久服务或真实
+源输入。raw report 未进入仓库，且在审阅后删除。
+
+该次执行**不满足冻结协议，故判定为无效，不能作为 `M8-BENCHMARK`、候选后端选择、任何决策关闭或
+准入的证据**。审阅发现临时 harness 的 `source_for()` 将 `1k-single` 和 `10k-capacity` 都限制为三个
+source namespace，分别偏离冻结的 `1 × 1,000` 与 `10 × 1,000` source 结构；此外，top-5 overlap 把
+50 个预期为空的 no-hit query 计为零，导致即使 SQLite canonical baseline 的 aggregate overlap 也仅为
+`0.75`，并使所有 parity gate 机械失败。harness 还未实现冻结表中全部的 required-metadata、stale
+ generation/snapshot、partial/unpublished、reopen、last-good/rollback fault probe。因此不得从该次
+运行的延迟、资源或质量数值推导候选优劣。
+
+如负责人仍需可用于决策的比较，必须新建 experiment ID 与配置摘要，修正 corpus namespace 与空结果
+parity 统计，完整实现冻结的 fault probes，并重新进行独立审阅；不得复用本次 raw report 或将其与后续
+结果混合。本记录不改变八项 Decision ID 的 `OPEN`、M8 的 `BLOCKED / NOT_STARTED` 或空批准字段。
+
+### 3.13 2026-09-06 `v2` 执行记录：无效，不作为决策证据
+
+在随后一次使用修正 corpus、empty-result parity 和 harness-level fault probes 的临时 `v2` 尝试中，九个
+组合虽然完成且没有 workload error，但报告环境实际为 CPython `3.13.3`，偏离预定的 CPython `3.11.9`。
+因此本次尝试同样无效，不能与前次结果混用，也不得据此比较候选、关闭任何决策或改变 M8 状态。raw report、
+venv、harness、日志和索引仍只在系统临时目录；审阅后必须删除。
+
+后续如继续，必须以新的 experiment ID，在 CPython `3.11.9` 隔离 venv 中重新执行，并保持本节已修正的
+corpus、empty-result parity 和 probe 覆盖；任何结果仍仅是 decision evidence input，不构成 backend
+selection 或 admission。
+
+### 3.14 `precommit-v3` 修正冻结配置（待执行）
+
+独立预审发现 `precommit-v1` 的“固定三个 namespace”与 `10k-capacity` 的 `10 × 1,000` source 结构冲突，
+且 10k 是否执行 query、empty/no-hit parity、exact/flat 下的 overlap 口径和 control-plane fault probe 边界
+仍不够明确。因此下一次有效尝试使用新 experiment ID `sa.m8.admission-evidence.v3`、protocol
+`precommit-v3`，不得复用或合并前两次 raw report。除以下修正外，3.10–3.11 的版本、阈值、临时目录、
+报告和清理约束继续适用：
+
+- workload 分别创建 `1`、`3`、`10` 个 source namespace，每个 source 恰有 `1,000` chunks；source ID 为
+  `source-{ordinal:02d}`，owner ID 为 `owner-{ordinal % 3:02d}`，stable chunk ID 仍为
+  `m8-{source}-{ordinal:05d}`。1k 因此只有一个 source/owner，3k 覆盖三个 owner，10k 的十个 source
+  确定性分配给三个 owner；wrong-owner probe 使用语料中不存在的 owner。
+- 1k、3k、10k 均执行固定 200 个 query 与 `20 warmup + 200 measured`；10k 的 query 仅用于容量、资源、
+  hard-correctness 和相对延迟门禁，不单独产生后端选择结论。三种 workload 均使用 50 exact、50
+  perturbed semantic、50 owner/source filter 和 50 no-hit；query/gold/config hash 必须逐 workload 记录。
+- no-hit 的预期与实际均为空时，empty-result agreement 记为 `1.0`；一方非空时记为 `0.0`。top-5 overlap
+  只对预期非空 query 计算，no-hit 单独汇总 empty-result agreement，不以零值稀释 overlap。候选均为
+  exact/flat，因此 `approximate_top5_overlap` 记为 `not_applicable`，同时以 `top5_overlap_vs_sqlite`
+  执行原 `0.98` parity 门禁。
+- 每个 backend/workload 执行五个独立 repetition；每个 repetition 的 query 使用规定 warmup/measured。
+  build、rebuild、import、reopen 各自执行 `5 warmup + 20 measured`，每个样本使用全新的 backend 实例或
+  明确关闭后重新打开的持久实例；不得把一次操作拆成多个伪样本。cold query 单独记录但不纳入冻结
+  warm-query latency 门禁。
+- wrong dimension 与 backend 原生 schema/filter/delete 行为由候选后端实测；required metadata、stale
+  generation/snapshot、partial/unpublished、last-good/rollback 是 harness control-plane publication
+  wrapper 的 fault probe。wrapper 必须先校验 authoritative manifest 和 published pointer，且未发布、
+  stale 或验证失败的 candidate 永远不能进入 query path；这些 probe 不得被描述成候选数据库的原生能力。
+- Qdrant point ID 使用由 stable chunk ID 确定性派生的 UUID，并把原 stable chunk ID 保留在 payload；所有
+  parity、identity-set digest 和报告比较均使用 stable chunk ID。LanceDB 使用显式 Arrow schema 和
+  pre-filter；两个候选均须在报告中证明 exact/flat 配置、required metadata 预校验以及关闭后 reopen。
+
+该修正冻结发生在 `v3` acquisition 和 measured run 前；执行后不得观察结果再改值。如实现或依赖 API
+要求再次改变上述口径，必须停止本次尝试、记录无效原因并创建新的 experiment ID。
+
+### 3.15 2026-09-06 `v3` 执行记录：无效，不作为决策证据
+
+`sa.m8.admission-evidence.v3` 在获准的 PyPI acquisition 后使用唯一系统临时目录与 CPython `3.11.9`
+启动，冻结依赖版本与预定一致；Qdrant local mode 运行时也明确报告其为 exact brute-force search。但是，
+临时 harness 在完成 measured backend loops 后因错误读取 `qdrant_client.__version__` 而在写出结构化报告前
+失败，未产生可审阅的 raw report。进一步静态复核发现该 harness 没有按冻结协议实现
+`5 warmup + 20 measured` 的 build/rebuild/import/reopen 样本，也没有实际执行完整 fault probe 与 gate
+calculation。因此该尝试整体无效；进程内数值不得从失败现场恢复、推导或与其他 experiment 混合。
+
+### 3.16 `precommit-v4` 最终口径修正（待执行）
+
+下一次尝试使用新 experiment ID `sa.m8.admission-evidence.v4`、protocol `precommit-v4`。除 3.14 外，
+在 acquisition 和 measured run 前进一步冻结以下定义，以消除 `v3` 静态复核发现的统计和操作歧义：
+
+- Recall@1/3/5 仅以 150 个预期非空 query 为分母；50 个 no-hit 只进入 empty-result agreement，且必须
+  `50/50` 为空。`top5_overlap_vs_sqlite` 也只以 SQLite top-5 非空 query 为分母，按
+  `|candidate ∩ sqlite| / |sqlite|` 计算；exact-set agreement 覆盖全部 200 个 query，empty/empty 为相等。
+- 每次 query repetition 先执行固定 20 个 warmup，再逐个计时全部 200 个 measured query；p50/p95/p99
+  基于五次 repetition 合计 1,000 个单 query 样本，而不是五个 repetition 平均值。quality 分 repetition
+  报告，recall spread 取五次最大值减最小值。
+- `build` 指从空目录创建 schema/collection/table 并导入完整 workload；`import` 指在已创建的空 schema 中
+  导入完整 workload；`rebuild` 指从已填充实例开始，删除旧数据面后重新创建并导入完整 workload；
+  `reopen` 指关闭已持久化的完整实例，重新连接并校验 count、identity-set 与固定 sentinel query；
+  `migration` 指从 canonical row manifest materialize 新候选实例并完成 count、identity、metadata 和
+  config 校验。每项各执行 5 个 warmup 和 20 个 measured full-workload 样本，样本结束即删除其临时实例。
+- SQLite baseline 使用文件型 SQLite 表保存同一 float32 vector 与 metadata，并以 NumPy exact cosine 线性
+  扫描查询；上述五项操作使用与候选相同的完整 workload 和边界定义。操作延迟比值只比较同名操作，
+  不以 schema 创建、单行写入或进程启动时间冒充其他操作。
+- 每个 backend/workload/repetition 的 probe 分母固定为 10：wrong dimension、missing required metadata、
+  stale generation、stale snapshot、cross-owner/source、tombstone、hard-delete、partial/unpublished、
+  reopen validation、last-good/rollback。预期拒绝或零命中计为 pass；已分类的预期拒绝写入
+  `expected_errors`，未分类异常、错误返回或泄露写入 `unexpected_errors`，hard gate 要求 `10/10`。
+- measured 阶段通过进程内 socket guard 阻止任何 outbound connect；发生尝试即写入 unexpected error 并
+  使 network gate 失败。依赖版本从安装元数据读取，不依赖包是否暴露 `__version__`。peak RSS 使用采样
+  线程覆盖操作区间；磁盘统计在关闭实例后、删除前执行。
+
+`v4` 仍只是合成预编码向量的数据面决策输入。即使全部门禁通过，也不能自动选择后端、关闭八项决策、
+授权生产实现或改变 `BLOCKED / NOT_STARTED`。
+
+### 3.17 2026-09-06 `v4` 完整执行记录：中止且无效，不作为决策证据
+
+`sa.m8.admission-evidence.v4` 在获准的唯一系统临时目录、CPython `3.11.9` 与冻结依赖下完成了非准入
+scaled smoke；smoke 只验证报告结构、三个后端的基本调用、五类 lifecycle 字段、十类 probe 分类、网络
+阻断和脱敏检查能够运行，按设计不满足 frozen sample count，不能成为准入证据。
+
+随后启动的完整 frozen run 未生成 `report.json` 或 `publication.json`，因此没有可审阅、可校验或可发布的
+完整证据。执行审计还发现临时 harness 将每个 workload 的五类 lifecycle 各保留 `5 warmup + 20 measured`
+个完整索引实例，且 `rebuild` 同时保留旧实例和 replacement；运行推进到 3k Qdrant query 前，临时根目录已
+增长到约 `7.0 GiB`。该行为偏离 3.16 中“样本结束即删除其临时实例”的冻结要求，并造成不必要的本机临时
+磁盘占用。为避免继续扩大占用，执行被人工停止；未恢复任何进程内数值，也未把 partial artifacts 当作结果。
+
+静态复核同时确认该 harness 的 `stale_generation` 与 `stale_snapshot` control-plane probe 只改变 manifest，
+却未同步改变 published pointer 中的 manifest digest，因此实际拒绝原因是 `stale_manifest`，没有独立证明
+冻结的 generation/snapshot mismatch 分类；`tombstone` 与 `hard_delete` 也复用了不存在 owner 的空结果，
+没有对真实 tombstoned/deleted identity 执行删除屏障验证。故即使该进程继续完成，其 probe 证据仍不满足
+`precommit-v4`。本次完整运行整体判定为无效，不得据此比较 SQLite、LanceDB 或 Qdrant，不得关闭任何
+Decision ID、选择后端、批准 M8 或授权生产实现。审阅记录完成后，raw partial indexes、smoke reports、venv
+和 harness 必须从系统临时目录清除。
+
+若仍需继续实验，必须使用新的 experiment ID，在 measured run 前修正 per-sample cleanup，并让 stale
+manifest、stale generation、stale snapshot、真实 tombstone 与 hard-delete barrier 分别具有可判别的 fixture、
+预期错误分类和查询断言；新尝试不得复用或混合 `v1`–`v4` 的 raw/partial 数值。
+
 ## 4. 后端无关 control/data-plane 契约草案
 
 本草案参考 [`platform/app/vector_store.py`](../../platform/app/vector_store.py) 的 `VectorStore`、
