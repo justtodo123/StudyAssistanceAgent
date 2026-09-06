@@ -13,6 +13,7 @@ tools/
 ├── run_m7_benchmark.py    # M7 1k/3k disposable source-local hash smoke（不构成 exit）
 ├── run_m7_frozen_benchmark.py # M7-3 冻结 1k/3k BGE 协议（20+200 查询，FULL 独立进程 5+20）
 ├── profile_m7_search.py   # M7 3k search stage profile（非正式 exit 证据）
+├── run_m7_parser_evidence.py # M7 五格式 parser/normalized/identity 冻结证据
 ├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   ├── requirements.txt   # crawler 独立依赖
 │   └── fetcher/cleaner/converter/dedup/pipeline
@@ -113,7 +114,7 @@ crawler 提供 fetch、clean、convert、dedup 和 pipeline 能力，依赖单�
 - 在线 smoke 非默认：`CRAWLER_ONLINE=1 pytest tests/M6_crawler -m "m6_crawler and online"`；
 - CI：`.github/workflows/offline-ci.yml` 的 `crawler-offline` job 安装 crawler 依赖并跑离线 marker；
   在线 smoke 仅 `workflow_dispatch` + `crawler_online_smoke=true`；
-- crawler 的存在不代表 M7 的持久化源注册、同步、删除传播或多源隔离已经完成。
+- crawler 的存在不代表 M7 的持久化源注册、同步、删除传播或多源隔离完成；这些能力后来在 M7 基础设施范围内完成，crawler 仍不自动注册 Source。
 
 
 ## source_inventory.py — 外部资料只读盘点
@@ -159,10 +160,39 @@ python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 
 默认设置 `SA_USE_VECTOR=false`、`HF_HUB_OFFLINE=1`，并以 `--workers 1` 启动唯一 uvicorn worker；不要求 LLM key。演示步骤见 [docs/demo.md](../docs/demo.md)。
 
----
+## run_m7_parser_evidence.py — M7 五格式解析/规范化/生命周期证据
 
-*创建：2026-08-11 · 更新：2026-08-27（新增外部资料只读盘点）· 维护：随新增工具脚本与评测集同步更新*
+运行时在临时目录生成 Markdown、TXT、PDF、PPTX、DOCX fixture，逐格式执行默认 100 个
+fixture、20 次运行，并比较当前进程与独立重启进程的解析结果、规范化摘要、文档 ID、chunk
+ID 及确定性 identity 摘要。脚本只读取临时生成的输入，不扫描外部资料目录，也不提交 fixture 或二进制
+文件。解析器依赖必须匹配 M7 冻结版本；缺失或版本不符时 fail-closed，并在报告中标记
+`SKIPPED_UNAVAILABLE`。
 
+```bash
+# 完整证据（Git Bash；必须使用 Python 3.11.9，并把报告写入系统临时目录）
+test "$(./platform/.venv311/Scripts/python -c 'import platform; print(platform.python_version())')" = "3.11.9"
+./platform/.venv311/Scripts/python tools/run_m7_parser_evidence.py \
+  --report "${TEMP:?}/m7-parser-evidence.json"
+
+# 快速冒烟：每种格式 1 个 fixture、1 次运行
+./platform/.venv311/Scripts/python tools/run_m7_parser_evidence.py --quick
+
+# 允许部分解析器不可用并继续其他格式（仍会在报告中记录 UNAVAILABLE）
+./platform/.venv311/Scripts/python tools/run_m7_parser_evidence.py --allow-unavailable
+```
+
+PowerShell 中的完整证据报告路径使用
+`--report "$env:TEMP\m7-parser-evidence.json"`。不要在 Git Bash 中写 `%TEMP%`：它不会展开，反而会在仓库内创建字面量
+`%TEMP%/` 目录。
+
+报告 schema 为 `sa.source.parser-normalized-identity-evidence.v1`，包含 fixture digest、解析器
+版本、规范化 digest、稳定 document/chunk identity、冷启动/重启不一致计数及外部读取计数。
+
+2026-09-05 历史完整冻结结果：seed `20260904`，五种格式各 100 个运行时 fixture、各 20 次运行，全部
+`PASS`；parser、normalization、cold-restart、deterministic identity 失败均为 0，`external_source_reads=0`、
+`tmp_only=true`。2026-09-06 已在 `platform/.venv311`（CPython 3.11.9 与精确冻结依赖）再次完成相同
+100×20 协议，五格式全部 `PASS`，失败计数均为 0；报告只写入系统临时目录且不入库。Python 3.13.3 对 TXT
+精确版本合同返回 `PARSER_UNAVAILABLE` 是预期 fail-closed。该 parser/normalization/identity 证据与独立的 source lifecycle/provenance E2E 及 1k/3k BGE 检索 benchmark 分离，本身不自动构成 M7 exit 或 M8 开工授权；M7 后续由 2026-09-06 的独立人工完成批准关闭，M8 仍未获批。
 
 ## run_m7_benchmark.py — M7 用户源 1k/3k 评测
 
@@ -190,3 +220,7 @@ python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 
 
 2026-09-03 disposable 一次样本：1k-single Recall@5=1.000、查询 p95 149 ms；3k-aggregate Recall@5=1.000、查询 p50 392 ms（超过冻结 250 ms）。FULL 样本数为 1，不是冻结的 20 次。
+
+---
+
+*创建：2026-08-11 · 更新：2026-09-06（M7 五格式冻结证据仍须在 Python 3.11.9 精确依赖环境执行）· 维护：随新增工具脚本与评测集同步更新*

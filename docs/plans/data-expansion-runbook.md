@@ -2,8 +2,8 @@
 
 > 状态：DRAFT / FUTURE REFERENCE / NON-AUTHORITATIVE
 > 仅保留为 M7 候选数据扩展运行手册；不构成 M7 准入、生产实施授权、验收通过或负责人批准。
-> 当前 M7 基础设施范围为 `ADMITTED / IN_PROGRESS`，`implementation_start=AUTHORIZED`，但本手册仍未获数据扩展执行授权；十二项强制决策与
-> `M7-PROTECTED-BASELINE` 的登记不因本文产生语料批准，Network 语料也不在批准范围内；
+> 当前 M7 基础设施范围为 `ADMITTED / COMPLETE`，原 `implementation_start=AUTHORIZED` 与 2026-09-06 独立完成批准均已登记；
+> 但本手册仍未获数据扩展执行授权。十二项强制决策、技术证据或完成批准均不因本文产生语料批准，Network 语料也不在批准范围内；
 > 最终状态以 [`docs/PLAN.md`](../PLAN.md) 和阶段准入门禁为准。
 > 进入任何数据扩展阶段前仍须取得明确范围授权并完成文末 Gate 0。Gate 0 只核验单个 Source 的合规与发布条件，
 > 不能替代 M7 阶段准入或人工批准。

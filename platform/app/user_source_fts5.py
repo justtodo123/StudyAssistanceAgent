@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import threading
@@ -28,8 +29,11 @@ from .fts5_tokenizer import (
     validate_tokenizer_metadata,
 )
 from .source_manifest import canonical_json
+from .source_operation_lock import operation_lock
 from .user_source_snapshot import FullSnapshot
 
+
+_GENERATION_NAME_RE = re.compile(r"gen-m7-[0-9a-f]{24}")
 
 INDEX_SCHEMA_VERSION = FTS_SCHEMA_VERSION
 VECTOR_STATUS_NOT_ATTACHED = "not_attached"
@@ -197,9 +201,15 @@ class UserSourceFts5Index:
     """Build and read one generation-bound FTS5 index per user source."""
 
     def __init__(self, cache_root: str | Path) -> None:
+        self._operation_lock = operation_lock(cache_root)
         self._root = Path(cache_root) / "user-source-fts5" / "v1"
         self._lock = threading.RLock()
         self._runtimes: dict[tuple[str, str], "_Fts5Runtime"] = {}
+
+    def clear_source(self, source_id: str) -> None:
+        """Release cached runtimes before the source artifacts are removed."""
+        with self._operation_lock, self._lock:
+            self._drop_runtimes(source_id)
 
     def published_path(self, source_id: str, generation: str | None = None) -> Path | None:
         root = self._root / source_id
@@ -225,17 +235,23 @@ class UserSourceFts5Index:
         activate: bool = True,
         vector_status: str = VECTOR_STATUS_NOT_ATTACHED,
         vector_identity_set_digest: str | None = None,
+        repair_invalid: bool = False,
     ) -> Fts5IndexMetadata:
-        with self._lock:
+        with self._operation_lock, self._lock:
             self._drop_runtimes(snapshot.source_id)
             metadata = self._materialize(
                 snapshot,
                 vector_status=vector_status,
                 vector_identity_set_digest=vector_identity_set_digest,
+                repair_invalid=repair_invalid,
             )
             if activate:
                 self._activate(snapshot.source_id, snapshot.generation)
             return metadata
+
+    def activate(self, source_id: str, generation: str) -> None:
+        with self._operation_lock, self._lock:
+            self._activate(source_id, generation)
 
     def search(
         self,
@@ -246,32 +262,36 @@ class UserSourceFts5Index:
         top_k: int = 5,
         match: str | None = None,
     ) -> tuple[Fts5Hit, ...]:
-        runtime = self._runtimes.get((source_id, generation)) or self._ensure_runtime(source_id, generation)
         try:
             match = fts5_match_query(query) if match is None else match
         except Fts5TokenizerError:
             raise
-        connection: sqlite3.Connection | None = None
-        try:
-            connection = sqlite3.connect(str(runtime.sqlite_path))
-            connection.row_factory = sqlite3.Row
-            rows = connection.execute(
-                """
-                SELECT chunk_id, document_id, bm25(chunks) AS score
-                FROM chunks
-                WHERE chunks MATCH ?
-                ORDER BY score
-                LIMIT ?
-                """,
-                (match, max(int(top_k), 0)),
-            ).fetchall()
-        except Fts5TokenizerError:
-            raise
-        except sqlite3.Error as exc:
-            raise Fts5TokenizerError(Fts5TokenizerErrorCode.INVALID_QUERY) from exc
-        finally:
-            if connection is not None:
-                connection.close()
+        with self._lock:
+            runtime = self._runtimes.get((source_id, generation)) or self._ensure_runtime(
+                source_id,
+                generation,
+            )
+            connection: sqlite3.Connection | None = None
+            try:
+                connection = sqlite3.connect(str(runtime.sqlite_path))
+                connection.row_factory = sqlite3.Row
+                rows = connection.execute(
+                    """
+                    SELECT chunk_id, document_id, bm25(chunks) AS score
+                    FROM chunks
+                    WHERE chunks MATCH ?
+                    ORDER BY score
+                    LIMIT ?
+                    """,
+                    (match, max(int(top_k), 0)),
+                ).fetchall()
+            except Fts5TokenizerError:
+                raise
+            except sqlite3.Error as exc:
+                raise Fts5TokenizerError(Fts5TokenizerErrorCode.INVALID_QUERY) from exc
+            finally:
+                if connection is not None:
+                    connection.close()
         hits = []
         for rank, row in enumerate(rows, start=1):
             hits.append(
@@ -411,6 +431,7 @@ class UserSourceFts5Index:
         *,
         vector_status: str = VECTOR_STATUS_NOT_ATTACHED,
         vector_identity_set_digest: str | None = None,
+        repair_invalid: bool = False,
     ) -> Fts5IndexMetadata:
         root = self._root / snapshot.source_id
         root.mkdir(parents=True, exist_ok=True)
@@ -432,9 +453,22 @@ class UserSourceFts5Index:
             )
             self._fsync_directory(staging)
             if generation.exists():
-                if not self._is_valid_generation(generation, metadata):
+                if self._is_valid_generation(generation, metadata):
+                    self._discard_staging(staging)
+                elif repair_invalid:
+                    backup = root / f".invalid-{uuid4().hex}"
+                    os.replace(generation, backup)
+                    try:
+                        os.replace(staging, generation)
+                    except Exception:
+                        if not generation.exists() and backup.exists():
+                            os.replace(backup, generation)
+                        raise
+                    finally:
+                        if backup.exists() and generation.exists():
+                            self._discard_staging(backup)
+                else:
                     raise Fts5IndexError(Fts5IndexErrorCode.PUBLICATION_FAILED)
-                self._discard_staging(staging)
             else:
                 os.replace(staging, generation)
                 self._fsync_directory(root)
@@ -614,7 +648,7 @@ class UserSourceFts5Index:
             value = path.read_text(encoding="ascii").strip()
         except OSError:
             return None
-        return value if value.startswith("gen-m7-") else None
+        return value if _GENERATION_NAME_RE.fullmatch(value) is not None else None
 
     @staticmethod
     def _discard_staging(staging: Path) -> None:

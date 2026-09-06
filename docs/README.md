@@ -78,9 +78,11 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
   `ADMITTED / COMPLETE`；获批的默认关闭只读 preview 已完成全部 closeout 门禁与证据同步；准入规则见
   [standards/stage-admission-gates.md](standards/stage-admission-gates.md)，
   机器登记见 [standards/stage-admission-gates.json](standards/stage-admission-gates.json)。M6b/M7 以 M6a 退出证据为
-  共同必要前置，彼此不互为前置。M7 的决策、保护基线与基础设施范围批准已闭合，当前为
-  `ADMITTED / IN_PROGRESS`；生产开工已授权，Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed
-局部合同已冻结；Network/M8/Milvus/M9/M10 未获批。
+  共同必要前置，彼此不互为前置。M7 的决策、保护基线、基础设施范围准入与生产开工授权已闭合，并于
+  2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准，当前为 `ADMITTED / COMPLETE`。
+  Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline
+  fail-closed 与 Search/QA 内部可信 principal overlay 已完成；技术证据本身不产生批准。M8/M9/M10 的事实型
+  M7 退出前置已满足，但阶段仍阻断；Network/M8/Milvus/M9/M10 未获批。
 - M7–M10 准入准备计划：
   [plans/m7-source-lifecycle-plan.md](plans/m7-source-lifecycle-plan.md)、
   [plans/m8-specialized-storage-plan.md](plans/m8-specialized-storage-plan.md)、

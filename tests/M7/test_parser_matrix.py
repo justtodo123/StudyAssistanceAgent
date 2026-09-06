@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
 
 import pytest
-from io import BytesIO
 from zipfile import ZipFile
+
+from tests.M7.real_fixtures import fixture_bytes, write_fixture
 
 from app.parser_matrix import (
     MAX_FILE_BYTES,
@@ -100,7 +102,7 @@ def test_parse_document_fails_closed_when_selected_parser_is_not_available() -> 
     if parser_availability("txt"):
         parsed = parse_document("第一课\r\n内容".encode("utf-8"), "txt", filename="lesson.txt")
         assert parsed.format == "txt"
-        assert parsed.units[0].text == "第一课 内容"
+        assert parsed.units[0].text == "第一课\n内容"
     else:
         with pytest.raises(ParserMatrixError) as caught:
             parse_document("第一课\r\n内容".encode("utf-8"), "txt", filename="lesson.txt")
@@ -134,3 +136,105 @@ def test_parsed_document_requires_exact_parser_identity_nonempty_units_and_conti
             spec.parser_version,
             (ParsedUnit("document", 1, "内容"),),
         )
+
+
+@pytest.mark.parametrize("format", ["md", "txt", "pdf", "pptx", "docx"])
+def test_real_binary_and_markdown_parsers_produce_stable_units(tmp_path: Path, format: str) -> None:
+    path = write_fixture(tmp_path, format)
+    from_bytes = parse_document(path.read_bytes(), format, filename=path.name)
+    from_file = parse_file(path, format)
+
+    assert from_bytes == from_file
+    assert from_bytes.parser_identity == f"{get_parser_spec(format).parser_id}@{get_parser_spec(format).parser_version}"
+    assert from_bytes.units
+    assert [unit.ordinal for unit in from_bytes.units] == list(range(len(from_bytes.units)))
+    assert all(unit.text.strip() for unit in from_bytes.units)
+
+
+def test_real_markdown_parser_preserves_heading_context(tmp_path: Path) -> None:
+    path = write_fixture(tmp_path, "md")
+    document = parse_file(path)
+    assert [unit.unit_kind for unit in document.units] == ["heading", "paragraph", "heading", "paragraph"]
+    assert document.units[2].heading_path == ("第一章", "简体/繁體")
+    assert "中文" in document.units[1].text
+
+
+def test_real_pptx_parser_skips_hidden_slides_and_preserves_source_ordinal(tmp_path: Path) -> None:
+    document = parse_file(write_fixture(tmp_path, "pptx"))
+    assert len(document.units) == 1
+    assert document.units[0].unit_kind == "slide"
+    assert document.units[0].source_ordinal == 1
+    assert "Must not be indexed" not in document.units[0].text
+
+
+def test_real_docx_parser_emits_heading_boundaries(tmp_path: Path) -> None:
+    document = parse_file(write_fixture(tmp_path, "docx"))
+    assert [unit.unit_kind for unit in document.units] == ["paragraph", "heading", "paragraph", "heading", "paragraph"]
+    assert document.units[1].heading_level == 1
+    assert document.units[3].heading_path == ("第一节", "小节")
+
+
+def test_real_pdf_parser_emits_page_unit(tmp_path: Path) -> None:
+    document = parse_file(write_fixture(tmp_path, "pdf"))
+    assert len(document.units) == 1
+    assert document.units[0].unit_kind == "page"
+    assert document.units[0].source_ordinal == 1
+    assert "PDF page one" in document.units[0].text
+
+
+def test_real_parser_rejects_corrupt_container_without_path_leak(tmp_path: Path) -> None:
+    path = tmp_path / "private-secret.docx"
+    path.write_bytes(b"PK\x03\x04not-a-document")
+    with pytest.raises(ParserMatrixError) as error:
+        parse_file(path)
+    assert _code(error) is ParserErrorCode.FORMAT_MISMATCH
+    assert str(path) not in str(error.value)
+
+
+@pytest.mark.parametrize("format", ["md", "txt", "pdf", "pptx", "docx"])
+def test_empty_real_document_fails_closed(tmp_path: Path, format: str) -> None:
+    path = tmp_path / f"empty.{format}"
+    if format in {"md", "txt"}:
+        path.write_bytes(b"")
+    elif format == "pdf":
+        from pypdf import PdfWriter
+
+        output = BytesIO()
+        PdfWriter().write(output)
+        path.write_bytes(output.getvalue())
+    elif format == "pptx":
+        from pptx import Presentation
+
+        output = BytesIO()
+        Presentation().save(output)
+        path.write_bytes(output.getvalue())
+    else:
+        from docx import Document
+
+        output = BytesIO()
+        Document().save(output)
+        path.write_bytes(output.getvalue())
+
+    with pytest.raises(ParserMatrixError) as error:
+        parse_file(path, format)
+    assert _code(error) is ParserErrorCode.PARSE_FAILED
+    assert str(path) not in str(error.value)
+
+
+def test_invalid_utf8_text_fails_closed_without_content_or_path_leak(tmp_path: Path) -> None:
+    path = tmp_path / "private-secret.txt"
+    path.write_bytes(b"prefix\xffsuffix")
+    with pytest.raises(ParserMatrixError) as error:
+        parse_file(path, "txt")
+    assert _code(error) is ParserErrorCode.PARSE_FAILED
+    assert b"prefix" not in str(error.value).encode()
+    assert str(path) not in str(error.value)
+
+
+def test_binary_magic_and_declared_extension_conflicts_fail_closed(tmp_path: Path) -> None:
+    path = tmp_path / "private-secret.pdf"
+    path.write_bytes(fixture_bytes("pdf"))
+    with pytest.raises(ParserMatrixError) as error:
+        parse_file(path, "txt")
+    assert _code(error) is ParserErrorCode.FORMAT_MISMATCH
+    assert str(path) not in str(error.value)

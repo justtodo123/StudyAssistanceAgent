@@ -1,11 +1,11 @@
 # M7 用户 Source 生命周期与千级检索准备计划
 
-> 当前状态：仅基础设施范围 `ADMITTED / IN_PROGRESS`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；M7-1/M7-2/M7-3/M7-4 已合并；当前增量是 M7-5：READY 提交后 CURRENT 激活失败保持 registry 权威，相同 FULL 重试修复指针。真实五格式生产 parser、完整 provenance/recovery/delete propagation 尚未闭合，不构成 M7 阶段退出
-> 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不构成生产开工、语料批准或退出证据
-> 前置：`M7-M6A-SOURCE-CONTRACT` 与 `M7-PROTECTED-BASELINE` 均为 `SATISFIED`；批准记录见 §4
+> 当前状态：仅基础设施范围 `ADMITTED / COMPLETE`；独立生产开工门禁为 `AUTHORIZED`；Search/QA overlay 与 generation-bound vector 已落地；M7-1/M7-2/M7-3/M7-4/M7-5/M7-6 的实现、冻结证据和 correctness 收口均已复验；justtodo123 于 2026-09-06 另行明确批准 `M7 COMPLETE`
+> 暂停边界：`data-expansion-runbook.md` 仅为未来参考，不构成生产开工、语料批准或下游阶段批准
+> 前置：`M7-M6A-SOURCE-CONTRACT` 与 `M7-PROTECTED-BASELINE` 均为 `SATISFIED`；准入、开工与独立完成批准记录见 §4
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
-> 本文件冻结强制决策与批准范围；当前已实现并冻结 M7-1 Source Registry、文件级 manifest、五格式 parser matrix、normalized document、source-local FULL/INCREMENTAL/delete/isolation 局部合同，并已落地 source-local FTS5/vector/offline fail-closed 与 Search/QA overlay。冻结 1k/3k BGE 门槛已通过，但真实五格式生产 parser 与完整 provenance/recovery/delete propagation 仍未闭合。后续正式检索接入不得静默修改已冻结合同，仍须遵循本计划和验收门禁。Agent 不得自行批准准入或开工。
+> 本文件冻结强制决策与批准范围；当前已实现并冻结 M7-1 Source Registry、文件级 manifest、五格式 parser matrix、normalized document、source-local FULL/INCREMENTAL/delete/isolation 合同，并已落地 source-local FTS5/vector/offline fail-closed 与 Search/QA overlay。冻结 1k/3k BGE 门槛已通过；M7-6 已完成真实五格式 parser/normalized-document 及 provenance/recovery/delete E2E 技术验收。技术证据本身不等于 human M7 COMPLETE 批准；本阶段完成状态来自 2026-09-06 的独立人工批准，且不扩展原 `m7-infrastructure-only-v1` scope。Agent 不得自行批准准入、阶段退出或 M8 开工。
 
 ## 1. 范围与非目标
 
@@ -17,7 +17,7 @@ PDF/PPT 复制进仓库。
 SQLite 控制面、版本化 lifecycle schema、用户源身份、CAS 状态机、五类 lifecycle record 持久化、owner-only 读取、
 schema fail-closed 与定量并发/回滚/重启/privacy workload；并已形成文件级 manifest、五格式冻结 parser matrix、normalized document
 和 source-local FULL candidate/原子发布的局部合同。该 lifecycle repository 是新的控制面边界，不是 M6a 已冻结的 published
- descriptor `SourceRegistryRepository`。FULL/INCREMENTAL/delete/isolation/FTS5/offline 已接入 Search/QA 可选 principal overlay；M6b preview 与正式学习会话仍不含用户源。完整 provenance 晋升链或独立 Source API 尚未创建。只读盘点
+ descriptor `SourceRegistryRepository`。FULL/INCREMENTAL/delete/isolation/FTS5/offline 已接入 Search/QA 的受信任内部 principal overlay；M6b preview 与正式学习会话仍不含用户源。完整 provenance 晋升链或独立 Source API 尚未创建。只读盘点
 `tools/source_inventory.py` 仍是 collect-only 调查，不能替代下列强制决策、语料批准或 M7 退出。
 
 ## 2. 前置证据与继承不变量
@@ -72,7 +72,7 @@ M6a 的 `M6A-SOURCE-LIMITS` 与默认 90 题保护基线**不能**替代 `M7-PRO
 `M7-LIFECYCLE-SCHEMA`、`M7-SYNC-SEMANTICS`、`M7-DELETE-SEMANTICS`、`M7-ISOLATION`、
 `M7-FTS5-TOKENIZER`、`M7-SCALE-LIMITS`、`M7-BENCHMARK`、`M7-OFFLINE-FALLBACK`、`M7-SOURCE-MANIFEST`、
 `M7-PARSER-MATRIX`、`M7-NORMALIZED-DOCUMENT` 与 `M7-PROVENANCE` 已依次闭合；M7 专属保护基线也已登记为
-`SATISFIED`。§4 的人工批准只覆盖基础设施，阶段当前为 `ADMITTED / IN_PROGRESS`，独立生产开工门禁为 `AUTHORIZED`；当前局部实现为 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 合同。
+`SATISFIED`。§4 的准入与完成批准都只覆盖基础设施；阶段当前为 `ADMITTED / COMPLETE`，独立生产开工门禁为 `AUTHORIZED`。完成状态来自独立人工批准，不是由测试或 benchmark 自动产生；当前实现包括 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/vector/offline fail-closed 合同。
 
 ### 3.1 `M7-LIFECYCLE-SCHEMA`（`RESOLVED`）
 
@@ -890,16 +890,19 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
   benchmark 已经存在；当前 `tests/M7` 仅覆盖局部合同，这些设计证据不替代已登记的准入前保护基线 `SATISFIED`。
 - 决策责任人：`justtodo123`；决策日期：`2026-08-29`。
 
-## 4. 准入检查与批准记录
+## 4. 准入、开工与完成批准记录
 
 - [x] M6a Source 契约退出证据已映射到 `M7-M6A-SOURCE-CONTRACT`（见 §2.1）；该前置本身不构成 M7 批准
-- [x] `M7-PROTECTED-BASELINE=SATISFIED`：`m7-admission-20260829-02` 的可执行 1k reference、继承保护回归与默认 90 题均通过；3k 精确登记为现行 M6a 容量差距
+- [x] `M7-PROTECTED-BASELINE=SATISFIED`：`m7-admission-20260829-02` 的可执行 1k reference、继承保护回归与默认 90 题均通过；3k 精确登记为当时 M6a 容量差距
 - [x] 十二项强制决策均为 `RESOLVED`，阶段计划与登记表证据一致
-- [ ] 由后续真实 M7 实现继续验证正式检索接入、离线 fallback 与 1k/3k benchmark；当前局部合同已覆盖 lifecycle、manifest、parser、normalized document、source-local FULL/INCREMENTAL sync 与 delete/isolation，但不构成完整 M7 验证
-- [x] `M7-BENCHMARK` 已冻结 1k/3k fixture、中文标注、Recall@1/3/5、p50/p95、资源与同步/重建阈值；尚无真实 M7 运行证据
+- [x] 正式检索接入、离线 fallback、冻结 1k/3k BGE benchmark、五格式 parser/normalized/identity 与 lifecycle/provenance E2E 已完成技术复验
+- [x] `M7-BENCHMARK` 已按冻结 1k/3k fixture、中文标注、Recall@1/3/5、p50/p95、资源与同步/重建阈值通过；报告中的 `m7_exit=true` 只覆盖该 benchmark 协议
 - [x] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表状态一致
-- [x] 用户或项目负责人完成仅限基础设施范围的阶段批准
-- [x] 用户或项目负责人完成独立生产开工授权（justtodo123，2026-08-31；本轮从 M7-1 Source Registry 起步）
+- [x] 用户或项目负责人完成仅限基础设施范围的阶段准入批准
+- [x] 用户或项目负责人完成独立生产开工授权（justtodo123，2026-08-31；从 M7-1 Source Registry 起步）
+- [x] 用户或项目负责人另行完成阶段退出批准（justtodo123，2026-09-06；`批准 M7 COMPLETE`）
+
+### 4.1 准入批准（保留原记录）
 
 | 批准字段 | 当前值 |
 | --- | --- |
@@ -915,20 +918,35 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
   1k/3k benchmark 的 M7 基础设施实现；
 - **excluded**：Network 文档晋升、Network P0 语料治理闭环、任何 corpus 自动批准、M8 专业存储、Milvus 后端选择。
 
-生产开工门禁为 `AUTHORIZED`，`authorized_by=justtodo123`，`authorized_at=2026-08-31`；授权参考为用户指令“批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论”。因此 M7 当前为 `ADMITTED / IN_PROGRESS`；本轮已形成 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 的局部实现，不关闭 P0、不批准 Network，也不形成 M7 exit。
+### 4.2 生产开工授权（保留原记录）
 
-## 5. 获准后的实施顺序（M7-5 READY/CURRENT 指针一致性为当前增量）
+生产开工门禁为 `AUTHORIZED`，`authorized_by=justtodo123`，`authorized_at=2026-08-31`；授权参考为用户指令“批准开始实施 M7 基础设施，按 M7-1 Source Registry 起步；排除 Network 31 篇晋升、M8/Milvus、M9/M10，不修改已冻结治理结论”。
+
+### 4.3 独立完成批准
+
+| 完成批准字段 | 当前值 |
+| --- | --- |
+| approved_by | `justtodo123` |
+| approved_at | `2026-09-06` |
+| approval_reference | `User instruction: 批准 M7 COMPLETE` |
+| approval_scope | `m7-infrastructure-only-v1` |
+| evidence | `docs/PLAN.md`、本计划、`docs/baselines.md`、`tests/M7/README.md`、`tests/TEST_PLAN.md` |
+
+该批准与准入批准、生产开工授权分开登记，不覆盖或扩大原批准范围。因此 M7 当前为 `ADMITTED / COMPLETE`。Network P0 仍未关闭，Network 文档与任意 corpus 未获自动批准；M8/Milvus、M9、M10 也未因 M7 完成而获准开工。
+
+## 5. 获准后的实施顺序（M7 已完成技术验收并取得独立完成批准）
 
 1. ✅ 已落地版本化 lifecycle schema、Source Registry repository contract 和事务/回滚测试；已补齐文件级 manifest、parser matrix、normalized document 与 source-local FULL candidate/原子发布局部合同；
 2. ✅ 已落地受限增量同步、request/run 幂等、单 active run、cancel/retry/checkpoint/recovery 的 source-local 局部合同；
 3. ✅ 已落地并冻结 source-local tombstone/read barrier、索引/cache 不可读传播、provenance 失效和检索隔离过滤局部合同；
 4. ✅ 已落地 `jieba==0.42.1` / `sa.source.fts5-tokenizer.v1` generation-bound SQLite FTS5 与离线 fail-closed 校验/显式 FULL repair；
-5. ✅ 已落地 Search/QA 可选 principal overlay：隔离后 FTS5+vector、generation/auth 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源；
+5. ✅ 已落地 Search/QA 的受信任内部 principal overlay：隔离后 FTS5+vector、generation/auth 缓存、跨源 RRF 与 `user://` provenance；preview/quiz/sessions 不含用户源；
 6. ✅ 已落地 generation-bound source-local vector：与同一 published generation 的 FTS5 identity-set 100% 对齐，缺 metadata/模型/generation 时用户源 fail closed；
 7. ✅ M7-2 manifest-bound snapshot cache：有界 LRU（16）、无变化 FULL 保持已发布 `manifest_digest`、磁盘 identity fail-closed；见下列退出清单。
 8. ✅ M7-3 冻结 `sa.source.benchmark.v1`：已合并 runner 与 2026-09-04 实跑证据，报告 `m7_exit=false`（1k RSS、3k Recall@1/p50 未达标）。
 9. ✅ M7-4 关闭冻结门槛：2026-09-04 完整 20+200 / FULL 5+20 BGE 复跑通过（1k RSS 授权 768 MiB）。报告 `m7_exit=true` 只覆盖 benchmark 门槛；M8 仍须独立评估。
-10. 🔄 M7-5 READY/CURRENT 指针一致性：registry 仍是生命周期权威；CURRENT 只是可修复便利指针，失败不得把 READY 降级。
+10. ✅ M7-5 READY/CURRENT 指针一致性：registry 仍是生命周期权威；CURRENT 只是可修复便利指针，失败不得把 READY 降级。
+11. ✅ M7-6 真实 parser 与 lifecycle/provenance 技术验收：五格式各 100 个运行时 fixture × 20 次全 PASS；完整根级、M7、回归与 platform 套件通过；justtodo123 于 2026-09-06 另行批准 `M7 COMPLETE`。
 
 
 ### M7-2：manifest-bound snapshot cache
@@ -1003,10 +1021,9 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 - [x] 任一门槛失败则 `m7_exit=false`，不得启动 M8（本次 1k RSS、3k Recall@1 与 query p50 失败）
 - [x] 文档与 disposable hash smoke 仍然区分冻结协议（`docs/baselines.md` 已追加失败证据）
 
-上述顺序按独立生产开工授权执行。Search/QA 可在请求提供 principal 时叠加授权用户源；默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前 205 项。benchmark 使用可生成 fixture，不把用户原始材料提交到 Git。退出条件包括所有契约/保护回归通过、
-默认 90 题不退化、删除后各索引不可召回、隔离零越权，以及冻结 1k/3k benchmark（含 vector identity 与 20 次样本）达标。2026-09-04 完整冻结 BGE 复跑 `sa.source.benchmark.v1` 门槛通过；M7 阶段仍须单独评估后才能进入 M8。
+上述顺序按独立生产开工授权执行。公共 Search/QA 请求体不接受 caller-selected `principal_id`；仅在服务端可信内部边界提供 principal 时叠加授权用户源。默认启动不创建 registry，M6b preview 不含用户源。`tests/M7/` 当前收集 270 项；Python 3.13.3 下 TXT 真实 parser 用例按精确 `cpython-textio==3.11.9` 合同 fail closed。2026-09-06 已在 `platform/.venv311` 的 Python 3.11.9 精确依赖环境中独立复跑 seed `20260904` 的五格式协议：每格式 100 个运行时 fixture × 20 次全 PASS，失败计数均为 0，`external_source_reads=0`、`tmp_only=true`，临时报告不入库。benchmark 与 parser fixture 均在运行时生成，不把用户原始材料提交到 Git。2026-09-04 完整冻结 BGE 复跑 `sa.source.benchmark.v1` 门槛通过；五格式 parser/normalized/identity 证据与独立 lifecycle/provenance E2E、历史完整回归彼此分离。独立只读 Exit Evaluation 只形成 technical exit candidate；随后 justtodo123 于 2026-09-06 明确批准 `M7 COMPLETE`，因此 M7 为 `ADMITTED / COMPLETE`。该批准不自动批准或启动 M8。
 
-### M7-4：关闭冻结门槛（Recall@1 / p50 / RSS）
+### M7-4：关闭冻结门槛（Recall@1 / p50 / RSS，已完成）
 
 本增量只关闭 2026-09-04 冻结 BGE 报告中的失败项，不降低门槛，不批准 Network，不启动 M8/Milvus。任一门槛失败则 `m7_exit` 保持 false。
 
@@ -1039,7 +1056,7 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 - [x] 报告 `m7_exit=true` 仅表示 benchmark 通过；`m8_started=false`，不得自动启动 M8
 - [x] 既有 isolation / identity / overlay 合同不回退（search/snapshot/benchmark/governance 41 passed）
 
-### M7-5：READY 与 CURRENT 激活一致性
+### M7-5：READY 与 CURRENT 激活一致性（已完成）
 
 本增量固定 `publish_full` 在 READY 提交之后激活 `CURRENT` 失败时的语义，并让删除与 hard-delete 恢复遵循同一 registry 权威；不批准 Network，不启动 M8，也不构成 M7 exit。Registry 的 `published_generation` 仍是生命周期权威；不得把文件指针反向升级为治理权威。不引入独立 repair marker：相同 FULL 重试就是指针修复路径。
 
@@ -1071,11 +1088,12 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 - [x] 指针修复失败不得把 READY 降为 DEGRADED
 - [x] 删除按 intent 捕获的 published generation 发布文件级 tombstone，不依赖 CURRENT
 - [x] receipt 已写入后的终态转换故障可重试恢复，且 receipt 保持不可变
-- [ ] 真实五格式生产 parser、完整 provenance/recovery/delete 端到端证据仍未闭合
+- [x] M7-6 已闭合真实五格式 parser/normalized-document 与 provenance/recovery/delete E2E 技术证据；这不自动构成 M7 exit
 
 ## 6. 撤销与后续边界
 
 任何 identity、删除、隔离、tokenizer、benchmark、文件级 manifest、parser matrix、normalized document
-或 provenance 前提实质变化，都将已准入状态改为 `REVOKED` 并停止实施。当前局部实现不改变这些后续门禁，也不构成 M7 exit。
-M8 只能使用 M7 的真实退出证据，不能把本计划、M7 admission、collect-only 盘点或 M6a 映射当作专业存储开工依据；
-Milvus 也未因本批准成为候选选择、依赖或实施范围。
+或 provenance 前提实质变化，都将已完成状态改为 `REVOKED` 并停止依赖其退出证据。M7 当前的 `COMPLETE`
+只覆盖 `m7-infrastructure-only-v1`，不改变 Network、corpus 自动批准、M8 专业存储或 Milvus 的排除边界。
+M8 的事实型 `M8-M7-EXIT` 前置现已满足，但 M8 自身仍为 `BLOCKED / NOT_STARTED`：八项强制决策、后端选择、
+依赖、迁移、parity、fallback、benchmark 和独立人工批准均未闭合。M9/M10 同样不会因 M7 完成而自动获批或开工。

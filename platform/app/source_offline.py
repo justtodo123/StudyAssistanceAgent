@@ -19,6 +19,7 @@ from .fts5_tokenizer import (
     require_jieba,
 )
 from .source_delete import UserSourceDeleteService
+from .source_operation_lock import operation_lock
 from .source_isolation import (
     IsolationSnapshot,
     SourceIsolationError,
@@ -92,7 +93,7 @@ class ValidatedSourceIndex:
     source_id: str
     generation: str
     metadata: Fts5IndexMetadata
-    vector_metadata: VectorIndexMetadata
+    vector_metadata: VectorIndexMetadata | None
     snapshot: FullSnapshot
 
 
@@ -112,11 +113,17 @@ class UserSourceOfflineGuard:
         isolation: SourceIsolationGate | None = None,
     ) -> None:
         self._root = Path(cache_root)
+        self._operation_lock = operation_lock(self._root)
         self._lifecycle = lifecycle
         self._snapshots = snapshot_publisher or UserSourceSnapshotPublisher(self._root, lifecycle)
         self._fts5 = fts5 or UserSourceFts5Index(self._root)
         self._vector = vector or UserSourceVectorIndex(self._root, embedder=vector_embedder)
-        self._delete = delete_service or UserSourceDeleteService(self._root, lifecycle)
+        self._delete = delete_service or UserSourceDeleteService(
+            self._root,
+            lifecycle,
+            publisher=self._snapshots,
+        )
+        self._delete.attach_index_runtimes(self._fts5, self._vector)
         self._isolation = isolation or SourceIsolationGate(lifecycle, self._delete)
 
     def validate_for_query(
@@ -125,6 +132,7 @@ class UserSourceOfflineGuard:
         principal_id: str,
         source_id: str,
         isolation_snapshot: IsolationSnapshot | None = None,
+        use_vector: bool = True,
     ) -> ValidatedSourceIndex:
         if isolation_snapshot is None:
             self._isolation.require_source(principal_id, source_id)
@@ -142,10 +150,14 @@ class UserSourceOfflineGuard:
             require_jieba()
         except Fts5TokenizerError as exc:
             raise self._map_tokenizer(exc, source_id) from exc
-        try:
-            self._vector.require_runtime()
-        except VectorIndexError as exc:
-            raise self._map_vector(exc, source_id) from exc
+        if not use_vector:
+            vector_metadata = None
+        else:
+            try:
+                self._vector.require_runtime()
+            except VectorIndexError as exc:
+                raise self._map_vector(exc, source_id) from exc
+            vector_metadata = None
         try:
             record = self._lifecycle.get_source(principal_id=principal_id, source_id=source_id)
         except Exception as exc:
@@ -163,32 +175,35 @@ class UserSourceOfflineGuard:
             raise SourceOfflineError(SourceOfflineErrorCode.REPAIR_REQUIRED, source_id=source_id)
         try:
             metadata = self._fts5.validate(source_id, record.published_generation, snapshot)
-            if metadata.vector_status != VECTOR_STATUS_ATTACHED:
-                raise SourceOfflineError(SourceOfflineErrorCode.INDEX_INVALID, source_id=source_id)
-            vector_metadata = self._vector.validate(
-                source_id,
-                record.published_generation,
-                snapshot,
-                revision_no=record.published_revision_no,
-            )
+            if use_vector:
+                if metadata.vector_status != VECTOR_STATUS_ATTACHED:
+                    raise SourceOfflineError(SourceOfflineErrorCode.INDEX_INVALID, source_id=source_id)
+                vector_metadata = self._vector.validate(
+                    source_id,
+                    record.published_generation,
+                    snapshot,
+                    revision_no=record.published_revision_no,
+                )
         except Fts5TokenizerError as exc:
             raise self._map_tokenizer(exc, source_id) from exc
         except Fts5IndexError as exc:
             raise self._map_index(exc, source_id) from exc
         except VectorIndexError as exc:
             raise self._map_vector(exc, source_id) from exc
-        snapshot_chunk_ids = {
-            chunk.chunk_id for document in snapshot.documents for chunk in document.chunks()
-        }
-        if (
-            vector_metadata.identity_set_digest != metadata.identity_set_digest
-            or metadata.vector_identity_set_digest != metadata.identity_set_digest
-            or vector_metadata.source_id != metadata.source_id
-            or vector_metadata.generation != metadata.generation
-            or vector_metadata.snapshot_fingerprint != metadata.snapshot_fingerprint
-            or len(snapshot_chunk_ids) != metadata.chunk_count
-            or len(snapshot_chunk_ids) != vector_metadata.chunk_count
-        ):
+        snapshot_chunk_ids = {chunk.chunk_id for document in snapshot.documents for chunk in document.chunks()}
+        if use_vector:
+            assert vector_metadata is not None
+            if (
+                vector_metadata.identity_set_digest != metadata.identity_set_digest
+                or metadata.vector_identity_set_digest != metadata.identity_set_digest
+                or vector_metadata.source_id != metadata.source_id
+                or vector_metadata.generation != metadata.generation
+                or vector_metadata.snapshot_fingerprint != metadata.snapshot_fingerprint
+                or len(snapshot_chunk_ids) != metadata.chunk_count
+                or len(snapshot_chunk_ids) != vector_metadata.chunk_count
+            ):
+                raise SourceOfflineError(SourceOfflineErrorCode.INDEX_INVALID, source_id=source_id)
+        elif len(snapshot_chunk_ids) != metadata.chunk_count:
             raise SourceOfflineError(SourceOfflineErrorCode.INDEX_INVALID, source_id=source_id)
         return ValidatedSourceIndex(
             source_id=source_id,
@@ -213,12 +228,20 @@ class UserSourceOfflineGuard:
         top_k: int = 5,
         isolation_snapshot: IsolationSnapshot | None = None,
         query_vector: list[float] | None = None,
+        use_vector: bool = True,
+        validated_index: ValidatedSourceIndex | None = None,
     ) -> tuple[Fts5Hit, ...]:
-        validated = self.validate_for_query(
+        validated = validated_index or self.validate_for_query(
             principal_id=principal_id,
             source_id=source_id,
             isolation_snapshot=isolation_snapshot,
+            use_vector=use_vector,
         )
+        if validated.source_id != source_id:
+            raise SourceIsolationError(
+                SourceIsolationErrorCode.SOURCE_ISOLATION_UNAVAILABLE,
+                "Source isolation is unavailable.",
+            )
         try:
             match = fts5_match_query(query)
             fts_hits = self._fts5.search(
@@ -228,14 +251,39 @@ class UserSourceOfflineGuard:
                 top_k=top_k,
                 match=match,
             )
-            vector_hits = self._vector.search(
-                validated.source_id,
-                validated.generation,
-                query,
-                top_k=top_k,
-                query_vector=query_vector,
-            )
-            return _rrf_hits(fts_hits, vector_hits, top_k)
+            if use_vector:
+                vector_hits = self._vector.search(
+                    validated.source_id,
+                    validated.generation,
+                    query,
+                    top_k=top_k,
+                    query_vector=query_vector,
+                )
+                results = _rrf_hits(fts_hits, vector_hits, top_k)
+            else:
+                results = fts_hits[: max(int(top_k), 0)]
+            with self._operation_lock:
+                current = self.validate_for_query(
+                    principal_id=principal_id,
+                    source_id=source_id,
+                    isolation_snapshot=None,
+                    use_vector=use_vector,
+                )
+                if (
+                    current.generation != validated.generation
+                    or current.metadata.snapshot_fingerprint
+                        != validated.metadata.snapshot_fingerprint
+                    or current.metadata.identity_set_digest != validated.metadata.identity_set_digest
+                    or (
+                        use_vector
+                        and current.vector_metadata != validated.vector_metadata
+                    )
+                ):
+                    raise SourceIsolationError(
+                        SourceIsolationErrorCode.SOURCE_ISOLATION_UNAVAILABLE,
+                        "Source isolation is unavailable.",
+                    )
+                return tuple(results)
         except Fts5TokenizerError as exc:
             raise self._map_tokenizer(exc, source_id) from exc
         except Fts5IndexError as exc:
@@ -262,40 +310,17 @@ class UserSourceOfflineGuard:
         except VectorIndexError as exc:
             raise self._map_vector(exc, source_id) from exc
         try:
-            record = self._snapshots.publish_full(
+            return self._snapshots.publish_full(
                 principal_id=principal_id,
                 source_id=source_id,
                 source_root=source_root,
                 correlation_id=correlation_id,
                 actor_type=actor_type,
+                prepare_revision=self._prepare_revision_indexes,
+                activate_revision=self._activate_revision_indexes,
             )
         except FullSnapshotError as exc:
             raise SourceOfflineError(SourceOfflineErrorCode.SOURCE_UNAVAILABLE, source_id=source_id) from exc
-        if record.published_generation is None:
-            raise SourceOfflineError(SourceOfflineErrorCode.REPAIR_REQUIRED, source_id=source_id)
-        try:
-            snapshot = self._snapshots.load_snapshot(source_id, record.published_generation)
-            if snapshot is None or record.published_revision_no is None:
-                raise SourceOfflineError(SourceOfflineErrorCode.REPAIR_REQUIRED, source_id=source_id)
-            digest = identity_set_digest(snapshot)
-            self._fts5.build(
-                snapshot,
-                activate=True,
-                vector_status=VECTOR_STATUS_ATTACHED,
-                vector_identity_set_digest=digest,
-            )
-            self._vector.build(
-                snapshot,
-                revision_no=record.published_revision_no,
-                activate=True,
-            )
-            self._fts5.validate(source_id, record.published_generation, snapshot)
-            self._vector.validate(
-                source_id,
-                record.published_generation,
-                snapshot,
-                revision_no=record.published_revision_no,
-            )
         except Fts5TokenizerError as exc:
             raise self._map_tokenizer(exc, source_id) from exc
         except Fts5IndexError as exc:
@@ -306,7 +331,48 @@ class UserSourceOfflineGuard:
             raise
         except Exception as exc:
             raise SourceOfflineError(SourceOfflineErrorCode.REPAIR_REQUIRED, source_id=source_id) from exc
-        return record
+
+    def prepare_revision_indexes(self, snapshot: FullSnapshot, revision_no: int) -> None:
+        """Materialize and validate mandatory indexes before authority commits."""
+        self._prepare_revision_indexes(snapshot, revision_no)
+
+    def activate_revision_indexes(self, snapshot: FullSnapshot, revision_no: int) -> None:
+        """Advance mandatory index convenience pointers after authority commits."""
+        self._activate_revision_indexes(snapshot, revision_no)
+
+    def _prepare_revision_indexes(self, snapshot: FullSnapshot, revision_no: int) -> None:
+        digest = identity_set_digest(snapshot)
+        self._fts5.build(
+            snapshot,
+            activate=False,
+            vector_status=VECTOR_STATUS_ATTACHED,
+            vector_identity_set_digest=digest,
+            repair_invalid=True,
+        )
+        self._vector.build(
+            snapshot,
+            revision_no=revision_no,
+            activate=False,
+            repair_invalid=True,
+        )
+        self._fts5.validate(snapshot.source_id, snapshot.generation, snapshot)
+        self._vector.validate(
+            snapshot.source_id,
+            snapshot.generation,
+            snapshot,
+            revision_no=revision_no,
+        )
+
+    def _activate_revision_indexes(self, snapshot: FullSnapshot, revision_no: int) -> None:
+        self._fts5.validate(snapshot.source_id, snapshot.generation, snapshot)
+        self._vector.validate(
+            snapshot.source_id,
+            snapshot.generation,
+            snapshot,
+            revision_no=revision_no,
+        )
+        self._fts5.activate(snapshot.source_id, snapshot.generation)
+        self._vector.activate(snapshot.source_id, snapshot.generation)
 
     @staticmethod
     def _map_tokenizer(exc: Fts5TokenizerError, source_id: str) -> Exception:

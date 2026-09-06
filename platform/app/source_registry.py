@@ -1210,6 +1210,8 @@ class SourceLifecycleService:
         actor_type: SourceActorType,
         correlation_id: str,
         revision: SourceRevisionDraft | None = None,
+        sync_run: SyncRun | None = None,
+        prepare_revision: Callable[[int], None] | None = None,
     ) -> SourceRecord:
         if not principal_id:
             raise SourceLifecycleException(
@@ -1248,6 +1250,7 @@ class SourceLifecycleService:
                 revision is not None
                 and revision.build_result != SUCCESSFUL_BUILD_RESULT
             )
+            or (prepare_revision is not None and revision is None)
         ):
             raise SourceLifecycleException(
                 SourceLifecycleErrorCode.SOURCE_INVALID_TRANSITION,
@@ -1280,6 +1283,25 @@ class SourceLifecycleService:
                     SourceLifecycleErrorCode.SOURCE_INVALID_TRANSITION,
                     "The Source lifecycle transition is invalid.",
                 )
+            if sync_run is not None:
+                if sync_run.source_id != source_id:
+                    raise SourceLifecycleException(
+                        SourceLifecycleErrorCode.SOURCE_ISOLATION_INVALID_REQUEST,
+                        "The Source sync request is invalid.",
+                    )
+                current_run = transaction.get_sync_run(
+                    source_id,
+                    sync_run.request_id,
+                )
+                if (
+                    current_run is None
+                    or current_run.run_id != sync_run.run_id
+                    or current_run.status != SYNC_RUN_RUNNING
+                ):
+                    raise SourceLifecycleException(
+                        SourceLifecycleErrorCode.SOURCE_NOT_FOUND,
+                        "The Source was not found.",
+                    )
 
             revision_record: SourceRevision | None = None
             published_revision_no = current.published_revision_no
@@ -1302,6 +1324,8 @@ class SourceLifecycleService:
                 )
                 published_revision_no = revision_no
                 published_generation = revision.generation
+                if prepare_revision is not None:
+                    prepare_revision(revision_no)
 
             updated = SourceRecord(
                 source_id=current.source_id,
@@ -1333,6 +1357,8 @@ class SourceLifecycleService:
                     created_at=now,
                 )
             )
+            if sync_run is not None:
+                transaction.update_sync_run(sync_run)
         return updated
 
     def list_audit_events(
@@ -1585,15 +1611,31 @@ class SourceLifecycleService:
     def update_sync_run(
         self, *, principal_id: str, source_id: str, run: SyncRun
     ) -> SyncRun:
-        record = self.get_source(principal_id=principal_id, source_id=source_id)
-        if run.source_id != record.source_id:
+        try:
+            principal = _validate_opaque_id(
+                principal_id,
+                field_name="principal_id",
+            )
+            validate_user_source_id(source_id)
+        except ValueError as exc:
             raise SourceLifecycleException(
                 SourceLifecycleErrorCode.SOURCE_ISOLATION_INVALID_REQUEST,
                 "The Source sync request is invalid.",
-            )
+            ) from exc
         now = _validate_utc(self._clock(), field_name="clock")
         updated = replace(run, updated_at=now, heartbeat_at=now)
         with self._repository.transaction() as transaction:
+            record = transaction.get_source(source_id)
+            if record is None or record.owner_principal_id != principal:
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_NOT_FOUND,
+                    "The Source was not found.",
+                )
+            if run.source_id != record.source_id:
+                raise SourceLifecycleException(
+                    SourceLifecycleErrorCode.SOURCE_ISOLATION_INVALID_REQUEST,
+                    "The Source sync request is invalid.",
+                )
             current = transaction.get_sync_run(source_id, run.request_id)
             if current is None or current.run_id != run.run_id:
                 raise SourceLifecycleException(
@@ -1664,6 +1706,7 @@ class SourceLifecycleService:
         run: SyncRun,
         target_state: SourceLifecycleState,
         revision: SourceRevisionDraft | None = None,
+        prepare_revision: Callable[[int], None] | None = None,
     ) -> tuple[SourceRecord, SyncRun]:
         now = _validate_utc(self._clock(), field_name="clock")
         finished = replace(run, updated_at=now, heartbeat_at=now, finished_at=now)
@@ -1675,9 +1718,9 @@ class SourceLifecycleService:
             actor_type=actor_type,
             correlation_id=correlation_id,
             revision=revision,
+            sync_run=finished,
+            prepare_revision=prepare_revision,
         )
-        with self._repository.transaction() as transaction:
-            transaction.update_sync_run(finished)
         return record, finished
 
     def create_source(self, **kwargs: object) -> SourceRecord:

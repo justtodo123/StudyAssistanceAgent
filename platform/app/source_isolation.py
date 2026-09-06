@@ -160,7 +160,7 @@ class SourceIsolationGate:
         *,
         snapshot: IsolationSnapshot | None = None,
     ) -> tuple[RetrievalHit, ...]:
-        resolved = snapshot if snapshot is not None else self._stable_snapshot(principal_id)
+        resolved = snapshot if snapshot is not None else self.capture_stable_snapshot(principal_id)
         allowed: list[RetrievalHit] = []
         hidden: dict[str, bool] = {}
         tombstones: dict[str, tuple] = {}
@@ -208,7 +208,7 @@ class SourceIsolationGate:
         if self.mid_request_mutations:
             self.mid_request_mutations.pop(0)()
 
-    def _stable_snapshot(self, principal_id: str) -> IsolationSnapshot:
+    def capture_stable_snapshot(self, principal_id: str) -> IsolationSnapshot:
         first = self.capture_snapshot(principal_id)
         self._fire_mutation()
         second = self.capture_snapshot(principal_id)

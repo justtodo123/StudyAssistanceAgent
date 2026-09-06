@@ -22,9 +22,19 @@ from app.source_registry import (
     SqliteSourceRegistry,
     generate_uuid7,
 )
-from app.user_source_fts5 import VECTOR_STATUS_ATTACHED, UserSourceFts5Index
+from app.user_source_fts5 import (
+    VECTOR_STATUS_ATTACHED,
+    Fts5IndexError,
+    Fts5IndexErrorCode,
+    UserSourceFts5Index,
+)
 from app.user_source_snapshot import UserSourceSnapshotPublisher
-from app.user_source_vector import HashVectorEmbedder, UserSourceVectorIndex
+from app.user_source_vector import (
+    HashVectorEmbedder,
+    UserSourceVectorIndex,
+    VectorIndexError,
+    VectorIndexErrorCode,
+)
 
 pytestmark = pytest.mark.m7
 
@@ -75,6 +85,13 @@ def _guard(tmp_path: Path) -> tuple[SourceLifecycleService, UserSourceOfflineGua
 
 def _code(error: pytest.ExceptionInfo[SourceOfflineError]) -> SourceOfflineErrorCode:
     return error.value.code
+
+
+def test_default_delete_service_uses_offline_snapshot_publisher(tmp_path: Path) -> None:
+    _lifecycle, guard, _source_root = _guard(tmp_path)
+
+    assert guard._delete._publisher is guard._snapshots
+    assert guard._isolation._delete is guard._delete
 
 
 def test_query_without_fts5_requires_explicit_full_repair_and_does_not_autorun(tmp_path: Path) -> None:
@@ -269,6 +286,194 @@ def test_failed_repair_keeps_last_good_fts5(tmp_path: Path, monkeypatch: pytest.
     validated = guard.validate_for_query(principal_id=PRINCIPAL, source_id=SOURCE_ID)
     assert validated.generation == good_generation
     assert UserSourceFts5Index(tmp_path / "cache").published_path(SOURCE_ID).name == f"gen-{good_generation}"
+
+
+def test_candidate_fts5_failure_keeps_authority_and_all_current_pointers(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    lifecycle, guard, source_root = _guard(tmp_path)
+    _write_docs(source_root, {"lesson.md": "旧版进程调度算法"})
+    first = guard.repair_full(
+        principal_id=PRINCIPAL,
+        source_id=SOURCE_ID,
+        source_root=source_root,
+        correlation_id=CORRELATION,
+    )
+    good_generation = first.published_generation
+    good_revision = first.published_revision_no
+    _write_docs(source_root, {"lesson.md": "新版虚拟内存置换算法"})
+
+    def fail_build(*args, **kwargs):
+        raise Fts5IndexError(Fts5IndexErrorCode.BUILD_FAILED)
+
+    monkeypatch.setattr(guard._fts5, "build", fail_build)
+    with pytest.raises(SourceOfflineError) as caught:
+        guard.repair_full(
+            principal_id=PRINCIPAL,
+            source_id=SOURCE_ID,
+            source_root=source_root,
+            correlation_id="corr-m7-fts5-candidate-fail",
+        )
+    assert _code(caught) is SourceOfflineErrorCode.SOURCE_UNAVAILABLE
+
+    record = lifecycle.get_source(principal_id=PRINCIPAL, source_id=SOURCE_ID)
+    assert record.state is SourceLifecycleState.DEGRADED
+    assert record.published_generation == good_generation
+    assert record.published_revision_no == good_revision
+    assert len(lifecycle._repository.list_revisions(SOURCE_ID)) == 1
+    assert guard._snapshots.published_path(SOURCE_ID).name == f"gen-{good_generation}"
+    assert guard._fts5.published_path(SOURCE_ID).name == f"gen-{good_generation}"
+    assert guard._vector.published_path(SOURCE_ID).name == f"gen-{good_generation}"
+    hits = guard.search(principal_id=PRINCIPAL, source_id=SOURCE_ID, query="进程调度")
+    assert hits and hits[0].generation == good_generation
+
+
+def test_candidate_vector_validation_failure_keeps_authority_and_all_current_pointers(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    lifecycle, guard, source_root = _guard(tmp_path)
+    _write_docs(source_root, {"lesson.md": "旧版进程调度算法"})
+    first = guard.repair_full(
+        principal_id=PRINCIPAL,
+        source_id=SOURCE_ID,
+        source_root=source_root,
+        correlation_id=CORRELATION,
+    )
+    good_generation = first.published_generation
+    good_revision = first.published_revision_no
+    _write_docs(source_root, {"lesson.md": "新版虚拟内存置换算法"})
+    original_validate = guard._vector.validate
+
+    def fail_candidate(source_id, generation, snapshot, *, revision_no=None):
+        if generation != good_generation:
+            raise VectorIndexError(VectorIndexErrorCode.INDEX_INVALID)
+        return original_validate(
+            source_id,
+            generation,
+            snapshot,
+            revision_no=revision_no,
+        )
+
+    monkeypatch.setattr(guard._vector, "validate", fail_candidate)
+    with pytest.raises(SourceOfflineError) as caught:
+        guard.repair_full(
+            principal_id=PRINCIPAL,
+            source_id=SOURCE_ID,
+            source_root=source_root,
+            correlation_id="corr-m7-vector-candidate-fail",
+        )
+    assert _code(caught) is SourceOfflineErrorCode.SOURCE_UNAVAILABLE
+
+    record = lifecycle.get_source(principal_id=PRINCIPAL, source_id=SOURCE_ID)
+    assert record.state is SourceLifecycleState.DEGRADED
+    assert record.published_generation == good_generation
+    assert record.published_revision_no == good_revision
+    assert len(lifecycle._repository.list_revisions(SOURCE_ID)) == 1
+    assert guard._snapshots.published_path(SOURCE_ID).name == f"gen-{good_generation}"
+    assert guard._fts5.published_path(SOURCE_ID).name == f"gen-{good_generation}"
+    assert guard._vector.published_path(SOURCE_ID).name == f"gen-{good_generation}"
+    hits = guard.search(principal_id=PRINCIPAL, source_id=SOURCE_ID, query="进程调度")
+    assert hits and hits[0].generation == good_generation
+
+
+def test_partial_index_activation_retry_repairs_all_current_pointers_without_new_revision(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    lifecycle, guard, source_root = _guard(tmp_path)
+    _write_docs(source_root, {"lesson.md": "旧版进程调度算法"})
+    first = guard.repair_full(
+        principal_id=PRINCIPAL,
+        source_id=SOURCE_ID,
+        source_root=source_root,
+        correlation_id=CORRELATION,
+    )
+    good_generation = first.published_generation
+    _write_docs(source_root, {"lesson.md": "新版虚拟内存置换算法"})
+    original_activate = guard._vector.activate
+    calls = {"n": 0}
+
+    def fail_once(source_id: str, generation: str) -> None:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise VectorIndexError(VectorIndexErrorCode.PUBLICATION_FAILED)
+        original_activate(source_id, generation)
+
+    monkeypatch.setattr(guard._vector, "activate", fail_once)
+    with pytest.raises(SourceOfflineError) as caught:
+        guard.repair_full(
+            principal_id=PRINCIPAL,
+            source_id=SOURCE_ID,
+            source_root=source_root,
+            correlation_id="corr-m7-vector-activation-fail",
+        )
+    assert _code(caught) is SourceOfflineErrorCode.INDEX_INVALID
+
+    published = lifecycle.get_source(principal_id=PRINCIPAL, source_id=SOURCE_ID)
+    new_generation = published.published_generation
+    assert published.state is SourceLifecycleState.READY
+    assert new_generation != good_generation
+    assert len(lifecycle._repository.list_revisions(SOURCE_ID)) == 2
+    assert guard._snapshots.published_path(SOURCE_ID).name == f"gen-{new_generation}"
+    assert guard._fts5.published_path(SOURCE_ID).name == f"gen-{new_generation}"
+    assert guard._vector.published_path(SOURCE_ID).name == f"gen-{good_generation}"
+    validated = guard.validate_for_query(principal_id=PRINCIPAL, source_id=SOURCE_ID)
+    assert validated.generation == new_generation
+
+    repaired = guard.repair_full(
+        principal_id=PRINCIPAL,
+        source_id=SOURCE_ID,
+        source_root=source_root,
+        correlation_id="corr-m7-vector-activation-retry",
+    )
+    assert repaired.published_generation == new_generation
+    assert len(lifecycle._repository.list_revisions(SOURCE_ID)) == 2
+    assert guard._snapshots.published_path(SOURCE_ID).name == f"gen-{new_generation}"
+    assert guard._fts5.published_path(SOURCE_ID).name == f"gen-{new_generation}"
+    assert guard._vector.published_path(SOURCE_ID).name == f"gen-{new_generation}"
+
+
+def test_degraded_same_generation_repair_does_not_duplicate_revision(
+    tmp_path: Path,
+) -> None:
+    lifecycle, guard, source_root = _guard(tmp_path)
+    _write_docs(source_root, {"lesson.md": "进程调度算法"})
+    first = guard.repair_full(
+        principal_id=PRINCIPAL,
+        source_id=SOURCE_ID,
+        source_root=source_root,
+        correlation_id=CORRELATION,
+    )
+    good_generation = first.published_generation
+    record = lifecycle.get_source(principal_id=PRINCIPAL, source_id=SOURCE_ID)
+    syncing = lifecycle.transition_source(
+        principal_id=PRINCIPAL,
+        source_id=SOURCE_ID,
+        expected_version=record.record_version,
+        target_state=SourceLifecycleState.SYNCING,
+        actor_type=SourceActorType.SERVICE,
+        correlation_id=CORRELATION,
+    )
+    lifecycle.transition_source(
+        principal_id=PRINCIPAL,
+        source_id=SOURCE_ID,
+        expected_version=syncing.record_version,
+        target_state=SourceLifecycleState.DEGRADED,
+        actor_type=SourceActorType.SERVICE,
+        correlation_id=CORRELATION,
+    )
+    repaired = guard.repair_full(
+        principal_id=PRINCIPAL,
+        source_id=SOURCE_ID,
+        source_root=source_root,
+        correlation_id="corr-m7-degraded-repair",
+    )
+    assert repaired.published_generation == good_generation
+    revisions = lifecycle._repository.list_revisions(SOURCE_ID)
+    assert len(revisions) == 1
+    assert revisions[0].generation == good_generation
+    assert lifecycle.get_source(
+        principal_id=PRINCIPAL, source_id=SOURCE_ID
+    ).state is SourceLifecycleState.READY
 
 
 def test_deleted_source_is_not_resurrected_by_repair(tmp_path: Path) -> None:

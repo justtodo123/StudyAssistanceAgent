@@ -16,8 +16,9 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 from pathlib import Path
-from typing import Callable, Iterable, Iterator, Mapping
+from typing import Callable, Iterable, Iterator, Mapping, Protocol
 
+from .source_operation_lock import operation_lock
 from .source_registry import (
     SourceActorType,
     SourceLifecycleErrorCode,
@@ -31,7 +32,8 @@ from .source_registry import (
 from .user_source_snapshot import UserSourceSnapshotPublisher
 
 DELETE_SCHEMA_VERSION = "sa.source.delete.v1"
-DELETE_SCHEMA_NUMERIC = 1
+DELETE_SCHEMA_NUMERIC = 2
+DELETE_OPERATION_SCHEMA_VERSION = 1
 MIN_AUDIT_RETENTION_DAYS = 30
 SOURCE_WIDE_URI = "*"
 DELETE_RETRY_DELAYS = (1.0, 2.0)
@@ -50,6 +52,12 @@ _DIGEST_RE = re.compile(r"^[0-9a-f]{64}$")
 _HIDDEN_STATES = frozenset(
     {SourceLifecycleState.DELETE_PENDING, SourceLifecycleState.DELETED}
 )
+
+class SourceIndexRuntime(Protocol):
+    """Source-scoped runtime cache that must be released before deletion."""
+
+    def clear_source(self, source_id: str) -> None: ...
+
 
 class SourceDeleteErrorCode(StrEnum):
     SOURCE_AUTH_REQUIRED = "SOURCE_AUTH_REQUIRED"
@@ -196,6 +204,16 @@ class HardDeleteReceipt:
             "policy_version": self.policy_version,
             "result_code": self.result_code,
         }
+
+
+@dataclass(frozen=True, slots=True)
+class _HardDeleteOperation:
+    source_id: str
+    request_id: str
+    object_counts: dict[str, int]
+    store_digests: dict[str, str]
+    started_at: datetime
+    schema_version: int = DELETE_OPERATION_SCHEMA_VERSION
 
 
 class SourceLocalRetrievalSurfaces:
@@ -367,6 +385,15 @@ CREATE TABLE tombstones (
     schema_version INTEGER NOT NULL,
     PRIMARY KEY(source_id, logical_uri)
 );
+CREATE TABLE hard_delete_operations (
+    source_id TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    object_counts TEXT NOT NULL,
+    store_digests TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    schema_version INTEGER NOT NULL,
+    PRIMARY KEY(source_id, request_id)
+);
 CREATE TABLE hard_delete_receipts (
     receipt_id TEXT PRIMARY KEY,
     source_id TEXT NOT NULL,
@@ -403,6 +430,8 @@ class UserSourceDeleteService:
         lifecycle: SourceLifecycleService,
         *,
         publisher: UserSourceSnapshotPublisher | None = None,
+        fts5: SourceIndexRuntime | None = None,
+        vector: SourceIndexRuntime | None = None,
         clock: Callable[[], datetime] | None = None,
         sleeper: Callable[[float], None] | None = None,
         retry_delays: tuple[float, float] = DELETE_RETRY_DELAYS,
@@ -411,17 +440,44 @@ class UserSourceDeleteService:
         if retention_days < MIN_AUDIT_RETENTION_DAYS:
             raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_INVALID_REQUEST)
         self._cache_root = Path(cache_root)
+        self._operation_lock = operation_lock(self._cache_root)
         self._lifecycle = lifecycle
         self._publisher = publisher
+        self._fts5 = fts5
+        self._vector = vector
+        self._runtimes: list[SourceIndexRuntime] = []
+        for runtime in (publisher, fts5, vector):
+            if runtime is not None:
+                self._runtimes.append(runtime)
         self._clock = clock or _utc_now
         self._sleeper = sleeper or (lambda _delay: None)
         self._retry_delays = retry_delays
         self._retention = timedelta(days=retention_days)
         self._db_path = self._cache_root / "source-delete" / "v1" / "delete.sqlite3"
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self.surfaces = SourceLocalRetrievalSurfaces(self._cache_root)
         self.stage_faults: dict[str, list[BaseException]] = {}
-        self._initialize()
+        with self._operation_lock:
+            self._initialize()
+
+    def attach_index_runtimes(
+        self,
+        fts5: SourceIndexRuntime,
+        vector: SourceIndexRuntime,
+    ) -> None:
+        """Use live retrieval indexes when clearing a source."""
+        with self._lock:
+            self._fts5 = fts5
+            self._vector = vector
+            for runtime in (fts5, vector):
+                if all(existing is not runtime for existing in self._runtimes):
+                    self._runtimes.append(runtime)
+
+    def attach_runtime(self, runtime: SourceIndexRuntime) -> None:
+        """Track a cache-owning runtime for hard-delete invalidation."""
+        with self._lock:
+            if all(existing is not runtime for existing in self._runtimes):
+                self._runtimes.append(runtime)
 
     def request_delete(
         self,
@@ -436,68 +492,70 @@ class UserSourceDeleteService:
         protocol_version: str = DELETE_SCHEMA_VERSION,
         extra_fields: Mapping[str, object] | None = None,
     ) -> DeletionIntent:
-        self._validate_request(
-            principal_id=principal_id,
-            source_id=source_id,
-            request_id=request_id,
-            expected_version=expected_version,
-            actor_type=actor_type,
-            reason=reason,
-            correlation_id=correlation_id,
-            protocol_version=protocol_version,
-            extra_fields=extra_fields,
-        )
-        existing = self.get_intent(source_id, request_id)
-        if existing is not None:
-            self._assert_idempotent(
-                existing,
+        retry_after_admission = False
+        with self._operation_lock:
+            self._validate_request(
+                principal_id=principal_id,
+                source_id=source_id,
+                request_id=request_id,
                 expected_version=expected_version,
                 actor_type=actor_type,
                 reason=reason,
+                correlation_id=correlation_id,
                 protocol_version=protocol_version,
+                extra_fields=extra_fields,
             )
-            return self._ensure_pending_and_barrier(
-                existing,
+            intent = self.get_intent(source_id, request_id)
+            if intent is not None:
+                self._assert_idempotent(
+                    intent,
+                    expected_version=expected_version,
+                    actor_type=actor_type,
+                    reason=reason,
+                    protocol_version=protocol_version,
+                )
+            else:
+                record = self._internal_source(source_id)
+                if record is None or record.owner_principal_id != principal_id:
+                    raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_NOT_FOUND)
+                if record.state is SourceLifecycleState.DELETED:
+                    raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_ALREADY_DELETED)
+                other = self._intent_for_source(source_id)
+                if other is not None:
+                    raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_VERSION_CONFLICT)
+                try:
+                    intent = self._write_intent(
+                        source_id=source_id,
+                        request_id=request_id,
+                        owner_principal_id=record.owner_principal_id,
+                        actor_type=actor_type,
+                        reason=reason,
+                        expected_version=expected_version,
+                        generation_upper_bound=record.published_generation,
+                        correlation_id=correlation_id,
+                    )
+                except sqlite3.IntegrityError as exc:
+                    other = self._intent_for_source(source_id)
+                    if other is None or other.request_id != request_id:
+                        raise SourceDeleteError(
+                            SourceDeleteErrorCode.SOURCE_VERSION_CONFLICT
+                        ) from exc
+                    intent = other
+            intent = self._ensure_pending_and_barrier(
+                intent,
                 principal_id=principal_id,
                 actor_type=actor_type,
                 correlation_id=correlation_id,
             )
-
-        record = self._internal_source(source_id)
-        if record is None or record.owner_principal_id != principal_id:
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_NOT_FOUND)
-        if record.state is SourceLifecycleState.DELETED:
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_ALREADY_DELETED)
-        other = self._intent_for_source(source_id)
-        if other is not None:
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_VERSION_CONFLICT)
-        try:
-            intent = self._write_intent(
-                source_id=source_id,
-                request_id=request_id,
-                owner_principal_id=record.owner_principal_id,
-                actor_type=actor_type,
-                reason=reason,
-                expected_version=expected_version,
-                generation_upper_bound=record.published_generation,
-                correlation_id=correlation_id,
+            retry_after_admission = not (
+                intent.barrier_published and intent.surfaces_unreadable
             )
-        except sqlite3.IntegrityError as exc:
-            other = self._intent_for_source(source_id)
-            if other is not None and other.request_id == request_id:
-                return self._ensure_pending_and_barrier(
-                    other,
-                    principal_id=principal_id,
-                    actor_type=actor_type,
-                    correlation_id=correlation_id,
-                )
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_VERSION_CONFLICT) from exc
-        return self._ensure_pending_and_barrier(
-            intent,
-            principal_id=principal_id,
-            actor_type=actor_type,
-            correlation_id=correlation_id,
-        )
+        if retry_after_admission:
+            if not self._retry_delays:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_FAILED)
+            self._sleeper(self._retry_delays[0])
+            return self._resume_barrier(intent, attempts=1)
+        return intent
 
     def _ensure_pending_and_barrier(
         self,
@@ -507,81 +565,135 @@ class UserSourceDeleteService:
         actor_type: SourceActorType,
         correlation_id: str,
     ) -> DeletionIntent:
-        record = self._internal_source(intent.source_id)
-        if record is None or record.owner_principal_id != principal_id:
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_NOT_FOUND)
-        if record.state is SourceLifecycleState.DELETED:
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_ALREADY_DELETED)
-        if record.state is not SourceLifecycleState.DELETE_PENDING:
+        with self._operation_lock:
+            record = self._internal_source(intent.source_id)
+            if record is None or record.owner_principal_id != principal_id:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_NOT_FOUND)
+            if record.state is SourceLifecycleState.DELETED:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_ALREADY_DELETED)
+            if record.state is not SourceLifecycleState.DELETE_PENDING:
+                try:
+                    self._lifecycle.transition_source(
+                        principal_id=principal_id,
+                        source_id=intent.source_id,
+                        expected_version=intent.expected_version,
+                        target_state=SourceLifecycleState.DELETE_PENDING,
+                        actor_type=actor_type,
+                        correlation_id=correlation_id,
+                    )
+                except SourceLifecycleException as exc:
+                    if exc.code is SourceLifecycleErrorCode.SOURCE_VERSION_CONFLICT:
+                        current = self._internal_source(intent.source_id)
+                        if current is None or current.state is not SourceLifecycleState.DELETE_PENDING:
+                            self._discard_unadmitted_intent(intent)
+                            raise SourceDeleteError(
+                                SourceDeleteErrorCode.SOURCE_VERSION_CONFLICT
+                            ) from exc
+                    else:
+                        raise _translate_lifecycle(exc) from exc
+                try:
+                    self._inject_fault("after_cas")
+                except SourceDeleteError:
+                    raise
+                except Exception as exc:
+                    raise SourceDeleteError(
+                        SourceDeleteErrorCode.SOURCE_DELETE_FAILED
+                    ) from exc
+            current = self.get_intent(intent.source_id, intent.request_id)
+            if current is None:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_FAILED)
+            if current.barrier_published and current.surfaces_unreadable:
+                return current
             try:
-                self._lifecycle.transition_source(
-                    principal_id=principal_id,
-                    source_id=intent.source_id,
-                    expected_version=intent.expected_version,
-                    target_state=SourceLifecycleState.DELETE_PENDING,
-                    actor_type=actor_type,
-                    correlation_id=correlation_id,
+                return self._resume_barrier_once(
+                    current.source_id,
+                    current.request_id,
                 )
-            except SourceLifecycleException as exc:
-                if exc.code is SourceLifecycleErrorCode.SOURCE_VERSION_CONFLICT:
-                    current = self._internal_source(intent.source_id)
-                    if current is None or current.state is not SourceLifecycleState.DELETE_PENDING:
-                        raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_VERSION_CONFLICT) from exc
-                else:
-                    raise _translate_lifecycle(exc) from exc
-            try:
-                self._inject_fault("after_cas")
             except SourceDeleteError:
                 raise
             except Exception as exc:
-                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_FAILED) from exc
-        if intent.barrier_published and intent.surfaces_unreadable:
-            return intent
-        try:
-            return self._resume_barrier(intent)
-        except SourceDeleteError:
-            raise
-        except Exception as exc:
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_FAILED) from exc
+                if not _is_retryable(exc):
+                    raise SourceDeleteError(
+                        SourceDeleteErrorCode.SOURCE_DELETE_FAILED
+                    ) from exc
+                return current
 
     def sweep_hard_delete(self, source_id: str, request_id: str) -> HardDeleteReceipt | None:
-        intent = self.get_intent(source_id, request_id)
-        if intent is None:
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_NOT_FOUND)
-        existing = self.get_receipt(source_id, request_id)
-        if existing is not None:
-            return self._complete_deleted_transition(intent, existing)
-        now = self._clock()
-        if now.tzinfo is None:
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_INVALID_REQUEST)
-        if now < intent.created_at + self._retention:
-            return None
-        if not intent.barrier_published or not intent.surfaces_unreadable:
-            intent = self._resume_barrier(intent)
-        started = now
-        try:
-            self._inject_fault("after_physical_clear")
-            counts, store_digests = self._physical_clear(source_id)
-            self._inject_fault("before_receipt")
-            receipt = HardDeleteReceipt(
-                receipt_id=generate_uuid7(),
-                source_id=source_id,
-                request_id=request_id,
-                scope_digest=_digest({"source_id": source_id, "request_id": request_id, "counts": counts}),
-                object_counts=counts,
-                store_digests=store_digests,
-                started_at=started,
-                finished_at=self._clock(),
-                policy_version=DELETE_SCHEMA_VERSION,
-                result_code="HARD_DELETE_COMPLETED",
-            )
-            self._insert_receipt(receipt)
-            self._inject_fault("before_deleted_transition")
-            return self._complete_deleted_transition(intent, receipt)
-        except SourceDeleteError:
-            raise
-        except Exception as exc:
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_HARD_DELETE_INCOMPLETE) from exc
+        while True:
+            with self._operation_lock:
+                intent = self.get_intent(source_id, request_id)
+                if intent is None:
+                    raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_NOT_FOUND)
+                existing = self.get_receipt(source_id, request_id)
+                if existing is not None:
+                    return self._complete_deleted_transition(intent, existing)
+                now = self._clock()
+                if now.tzinfo is None:
+                    raise SourceDeleteError(
+                        SourceDeleteErrorCode.SOURCE_DELETE_INVALID_REQUEST
+                    )
+                if now < intent.created_at + self._retention:
+                    return None
+                barrier_complete = (
+                    intent.barrier_published and intent.surfaces_unreadable
+                )
+            if not barrier_complete:
+                self._resume_barrier(intent)
+                continue
+
+            with self._operation_lock:
+                intent = self.get_intent(source_id, request_id)
+                if intent is None:
+                    raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_NOT_FOUND)
+                existing = self.get_receipt(source_id, request_id)
+                if existing is not None:
+                    return self._complete_deleted_transition(intent, existing)
+                now = self._clock()
+                if now.tzinfo is None:
+                    raise SourceDeleteError(
+                        SourceDeleteErrorCode.SOURCE_DELETE_INVALID_REQUEST
+                    )
+                if now < intent.created_at + self._retention:
+                    return None
+                if not intent.barrier_published or not intent.surfaces_unreadable:
+                    continue
+                try:
+                    operation = self._prepare_hard_delete_operation(
+                        source_id,
+                        request_id,
+                        now,
+                    )
+                    self._inject_fault("after_operation_prepared")
+                    self._physical_clear(operation)
+                    self._inject_fault("after_physical_clear")
+                    self._inject_fault("before_receipt")
+                    receipt = HardDeleteReceipt(
+                        receipt_id=generate_uuid7(),
+                        source_id=source_id,
+                        request_id=request_id,
+                        scope_digest=_digest(
+                            {
+                                "source_id": source_id,
+                                "request_id": request_id,
+                                "counts": operation.object_counts,
+                            }
+                        ),
+                        object_counts=operation.object_counts,
+                        store_digests=operation.store_digests,
+                        started_at=operation.started_at,
+                        finished_at=self._clock(),
+                        policy_version=DELETE_SCHEMA_VERSION,
+                        result_code="HARD_DELETE_COMPLETED",
+                    )
+                    receipt = self._insert_receipt(receipt)
+                    self._inject_fault("before_deleted_transition")
+                    return self._complete_deleted_transition(intent, receipt)
+                except SourceDeleteError:
+                    raise
+                except Exception as exc:
+                    raise SourceDeleteError(
+                        SourceDeleteErrorCode.SOURCE_HARD_DELETE_INCOMPLETE
+                    ) from exc
 
     def _complete_deleted_transition(
         self,
@@ -723,39 +835,80 @@ class UserSourceDeleteService:
         ):
             raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_REQUEST_CONFLICT)
 
-    def _resume_barrier(self, intent: DeletionIntent) -> DeletionIntent:
-        try:
-            self._publish_tombstones(intent)
-            self._inject_fault("after_tombstone")
-            self._mark_intent(intent.source_id, intent.request_id, barrier_published=True)
-            identities = [
-                item.document_id
-                for item in self.list_tombstones(intent.source_id)
-                if item.document_id
-            ]
-            self.surfaces.mark_stale_derivations(identities)
-            self.surfaces.mark_unreadable(intent.source_id)
-            self._inject_fault("after_surfaces_unreadable")
-            self._mark_intent(intent.source_id, intent.request_id, surfaces_unreadable=True)
-        except SourceDeleteError:
-            raise
-        except Exception as exc:
-            if _is_retryable(exc):
-                last_error: BaseException = exc
-                for delay in self._retry_delays:
-                    self._sleeper(delay)
-                    try:
-                        return self._resume_barrier(intent)
-                    except Exception as retry_exc:
-                        last_error = retry_exc
-                        if not _is_retryable(retry_exc):
-                            break
-                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_FAILED) from last_error
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_FAILED) from exc
-        updated = self.get_intent(intent.source_id, intent.request_id)
-        if updated is None:
-            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_FAILED)
-        return updated
+    def _discard_unadmitted_intent(self, intent: DeletionIntent) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                DELETE FROM deletion_intents
+                WHERE source_id = ? AND request_id = ?
+                  AND expected_version = ?
+                  AND barrier_published = 0 AND surfaces_unreadable = 0
+                """,
+                (intent.source_id, intent.request_id, intent.expected_version),
+            )
+            connection.commit()
+
+    def _resume_barrier(
+        self,
+        intent: DeletionIntent,
+        *,
+        attempts: int = 0,
+    ) -> DeletionIntent:
+        while True:
+            try:
+                return self._resume_barrier_once(
+                    intent.source_id,
+                    intent.request_id,
+                )
+            except SourceDeleteError:
+                raise
+            except Exception as exc:
+                if not _is_retryable(exc) or attempts >= len(self._retry_delays):
+                    raise SourceDeleteError(
+                        SourceDeleteErrorCode.SOURCE_DELETE_FAILED
+                    ) from exc
+                delay = self._retry_delays[attempts]
+                attempts += 1
+                self._sleeper(delay)
+
+    def _resume_barrier_once(
+        self,
+        source_id: str,
+        request_id: str,
+    ) -> DeletionIntent:
+        with self._operation_lock:
+            current = self.get_intent(source_id, request_id)
+            if current is None:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_FAILED)
+            if not current.barrier_published:
+                self._publish_tombstones(current)
+                self._inject_fault("after_tombstone")
+                self._mark_intent(
+                    current.source_id,
+                    current.request_id,
+                    barrier_published=True,
+                )
+            current = self.get_intent(source_id, request_id)
+            if current is None:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_FAILED)
+            if not current.surfaces_unreadable:
+                identities = [
+                    item.document_id
+                    for item in self.list_tombstones(current.source_id)
+                    if item.document_id
+                ]
+                self.surfaces.mark_stale_derivations(identities)
+                self.surfaces.mark_unreadable(current.source_id)
+                self._inject_fault("after_surfaces_unreadable")
+                self._mark_intent(
+                    current.source_id,
+                    current.request_id,
+                    surfaces_unreadable=True,
+                )
+            updated = self.get_intent(source_id, request_id)
+            if updated is None:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_DELETE_FAILED)
+            return updated
 
     def _publish_tombstones(self, intent: DeletionIntent) -> None:
         documents: list[tuple[str, str | None]] = [(SOURCE_WIDE_URI, None)]
@@ -795,32 +948,126 @@ class UserSourceDeleteService:
                 )
             connection.commit()
 
-    def _physical_clear(self, source_id: str) -> tuple[dict[str, int], dict[str, str]]:
+    def _get_hard_delete_operation(
+        self,
+        source_id: str,
+        request_id: str,
+    ) -> _HardDeleteOperation | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM hard_delete_operations WHERE source_id = ? AND request_id = ?",
+                (source_id, request_id),
+            ).fetchone()
+        if row is None:
+            return None
+        try:
+            counts = json.loads(row["object_counts"])
+            digests = json.loads(row["store_digests"])
+            if (
+                not isinstance(counts, dict)
+                or not isinstance(digests, dict)
+                or set(counts) != {"snapshots", "normalized_documents", "fts5", "vector", "tombstones", "surfaces"}
+                or set(digests) != set(counts)
+                or any(not isinstance(value, int) or value < 0 for value in counts.values())
+                or any(not isinstance(value, str) or _DIGEST_RE.fullmatch(value) is None for value in digests.values())
+            ):
+                raise ValueError
+            schema_version = int(row["schema_version"])
+            if schema_version != DELETE_OPERATION_SCHEMA_VERSION:
+                raise ValueError
+            return _HardDeleteOperation(
+                source_id=source_id,
+                request_id=request_id,
+                object_counts=counts,
+                store_digests=digests,
+                started_at=_parse_timestamp(row["started_at"]),
+                schema_version=schema_version,
+            )
+        except (TypeError, ValueError, KeyError, json.JSONDecodeError) as exc:
+            raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_HARD_DELETE_INCOMPLETE) from exc
+
+    def _prepare_hard_delete_operation(
+        self,
+        source_id: str,
+        request_id: str,
+        started_at: datetime,
+    ) -> _HardDeleteOperation:
+        existing = self._get_hard_delete_operation(source_id, request_id)
+        if existing is not None:
+            return existing
         snapshot_root = self._cache_root / "user-source-snapshots" / "v1" / source_id
         normalized_root = self._cache_root / "normalized-documents" / "v1" / source_id
+        fts5_root = self._cache_root / "user-source-fts5" / "v1" / source_id
+        vector_root = self._cache_root / "user-source-vector" / "v1" / source_id
         counts = {
             "snapshots": 1 if snapshot_root.exists() else 0,
             "normalized_documents": 1 if normalized_root.exists() else 0,
+            "fts5": 1 if fts5_root.exists() else 0,
+            "vector": 1 if vector_root.exists() else 0,
             "tombstones": len(self.list_tombstones(source_id)),
             "surfaces": 1 if self.surfaces.path(source_id).exists() else 0,
         }
-        self._rmtree(snapshot_root)
-        self._rmtree(normalized_root)
-        self.surfaces.physical_clear(source_id)
-        with self._connect() as connection:
-            connection.execute("DELETE FROM tombstones WHERE source_id = ?", (source_id,))
-            connection.commit()
-        store_digests = {
-            "snapshots": _digest({"source_id": source_id, "store": "snapshots", "cleared": True}),
-            "normalized_documents": _digest({"source_id": source_id, "store": "normalized", "cleared": True}),
-            "surfaces": self.surfaces.confirmation_digest(source_id),
-            "tombstones": _digest({"source_id": source_id, "store": "tombstones", "cleared": True}),
+        digests = {
+            store: _digest({"source_id": source_id, "store": store, "cleared": True})
+            for store in ("snapshots", "normalized_documents", "fts5", "vector", "tombstones")
         }
-        if any(not _DIGEST_RE.fullmatch(value) for value in store_digests.values()):
+        digests["surfaces"] = _digest({"source_id": source_id, "cleared": True})
+        operation = _HardDeleteOperation(
+            source_id=source_id,
+            request_id=request_id,
+            object_counts=counts,
+            store_digests=digests,
+            started_at=started_at,
+        )
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO hard_delete_operations
+                (source_id, request_id, object_counts, store_digests, started_at, schema_version)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    source_id,
+                    request_id,
+                    _canonical_json(counts),
+                    _canonical_json(digests),
+                    _timestamp(started_at),
+                    DELETE_OPERATION_SCHEMA_VERSION,
+                ),
+            )
+            connection.commit()
+        persisted = self._get_hard_delete_operation(source_id, request_id)
+        if persisted is None:
             raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_HARD_DELETE_INCOMPLETE)
-        if self.surfaces.path(source_id).exists() or snapshot_root.exists() or normalized_root.exists():
+        return persisted
+
+    def _physical_clear(self, operation: _HardDeleteOperation) -> None:
+        source_id = operation.source_id
+        snapshot_root = self._cache_root / "user-source-snapshots" / "v1" / source_id
+        normalized_root = self._cache_root / "normalized-documents" / "v1" / source_id
+        fts5_root = self._cache_root / "user-source-fts5" / "v1" / source_id
+        vector_root = self._cache_root / "user-source-vector" / "v1" / source_id
+        with self._operation_lock, self._lock:
+            runtimes = tuple(self._runtimes)
+            for runtime in runtimes:
+                runtime.clear_source(source_id)
+            self._rmtree(snapshot_root)
+            self._rmtree(normalized_root)
+            self._rmtree(fts5_root)
+            self._rmtree(vector_root)
+            self.surfaces.physical_clear(source_id)
+            with self._connect() as connection:
+                connection.execute("DELETE FROM tombstones WHERE source_id = ?", (source_id,))
+                connection.commit()
+        remaining = (
+            self.surfaces.path(source_id),
+            snapshot_root,
+            normalized_root,
+            fts5_root,
+            vector_root,
+        )
+        if any(path.exists() for path in remaining) or self.list_tombstones(source_id):
             raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_HARD_DELETE_INCOMPLETE)
-        return counts, store_digests
 
     def _write_intent(
         self,
@@ -893,31 +1140,51 @@ class UserSourceDeleteService:
             )
             connection.commit()
 
-    def _insert_receipt(self, receipt: HardDeleteReceipt) -> None:
+    def _insert_receipt(self, receipt: HardDeleteReceipt) -> HardDeleteReceipt:
         with self._connect() as connection:
-            connection.execute(
-                """
-                INSERT INTO hard_delete_receipts (
-                    receipt_id, source_id, request_id, scope_digest, object_counts,
-                    store_digests, started_at, finished_at, policy_version,
-                    result_code, schema_version
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    receipt.receipt_id,
-                    receipt.source_id,
-                    receipt.request_id,
-                    receipt.scope_digest,
-                    _canonical_json(receipt.object_counts),
-                    _canonical_json(receipt.store_digests),
-                    _timestamp(receipt.started_at),
-                    _timestamp(receipt.finished_at),
-                    receipt.policy_version,
-                    receipt.result_code,
-                    receipt.schema_version,
-                ),
-            )
-            connection.commit()
+            try:
+                connection.execute(
+                    """
+                    INSERT INTO hard_delete_receipts (
+                        receipt_id, source_id, request_id, scope_digest, object_counts,
+                        store_digests, started_at, finished_at, policy_version,
+                        result_code, schema_version
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        receipt.receipt_id,
+                        receipt.source_id,
+                        receipt.request_id,
+                        receipt.scope_digest,
+                        _canonical_json(receipt.object_counts),
+                        _canonical_json(receipt.store_digests),
+                        _timestamp(receipt.started_at),
+                        _timestamp(receipt.finished_at),
+                        receipt.policy_version,
+                        receipt.result_code,
+                        receipt.schema_version,
+                    ),
+                )
+                connection.commit()
+                return receipt
+            except sqlite3.IntegrityError:
+                row = connection.execute(
+                    "SELECT * FROM hard_delete_receipts WHERE source_id = ? AND request_id = ?",
+                    (receipt.source_id, receipt.request_id),
+                ).fetchone()
+                if row is None:
+                    raise
+                existing = _receipt_from_row(row)
+                if (
+                    existing.scope_digest != receipt.scope_digest
+                    or existing.object_counts != receipt.object_counts
+                    or existing.store_digests != receipt.store_digests
+                    or existing.started_at != receipt.started_at
+                    or existing.policy_version != receipt.policy_version
+                    or existing.result_code != receipt.result_code
+                ):
+                    raise
+                return existing
 
     def _intent_for_source(self, source_id: str) -> DeletionIntent | None:
         with self._connect() as connection:
@@ -948,11 +1215,122 @@ class UserSourceDeleteService:
             row = connection.execute(
                 "SELECT schema_family, schema_version FROM delete_meta WHERE singleton = 1"
             ).fetchone()
+            if row is None or row["schema_family"] != DELETE_SCHEMA_VERSION:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_SCHEMA_UNSUPPORTED)
+            try:
+                version = int(row["schema_version"])
+            except (TypeError, ValueError) as exc:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_SCHEMA_UNSUPPORTED) from exc
+            if version > DELETE_SCHEMA_NUMERIC or version < 1:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_SCHEMA_UNSUPPORTED)
+
+            operation_columns = connection.execute(
+                "PRAGMA table_info(hard_delete_operations)"
+            ).fetchall()
+            expected_operation_columns = {
+                "source_id",
+                "request_id",
+                "object_counts",
+                "store_digests",
+                "started_at",
+                "schema_version",
+            }
+            if operation_columns:
+                actual_columns = {row["name"] for row in operation_columns}
+                primary_key = {row["name"] for row in operation_columns if row["pk"]}
+                if (
+                    actual_columns != expected_operation_columns
+                    or primary_key != {"source_id", "request_id"}
+                ):
+                    raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_SCHEMA_UNSUPPORTED)
+            elif version == 1:
+                connection.execute(
+                    """
+                    CREATE TABLE hard_delete_operations (
+                        source_id TEXT NOT NULL,
+                        request_id TEXT NOT NULL,
+                        object_counts TEXT NOT NULL,
+                        store_digests TEXT NOT NULL,
+                        started_at TEXT NOT NULL,
+                        schema_version INTEGER NOT NULL,
+                        PRIMARY KEY(source_id, request_id)
+                    )
+                    """
+                )
+            else:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_SCHEMA_UNSUPPORTED)
+
+            receipt_columns = connection.execute(
+                "PRAGMA table_info(hard_delete_receipts)"
+            ).fetchall()
+            expected_receipt_columns = {
+                "receipt_id",
+                "source_id",
+                "request_id",
+                "scope_digest",
+                "object_counts",
+                "store_digests",
+                "started_at",
+                "finished_at",
+                "policy_version",
+                "result_code",
+                "schema_version",
+            }
+            if not receipt_columns:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_SCHEMA_UNSUPPORTED)
+            actual_receipt_columns = {row["name"] for row in receipt_columns}
+            receipt_primary_key = {
+                row["name"] for row in receipt_columns if row["pk"]
+            }
             if (
-                row is None
-                or row["schema_family"] != DELETE_SCHEMA_VERSION
-                or row["schema_version"] != DELETE_SCHEMA_NUMERIC
+                actual_receipt_columns != expected_receipt_columns
+                or receipt_primary_key != {"receipt_id"}
             ):
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_SCHEMA_UNSUPPORTED)
+            receipt_unique = [
+                row
+                for row in connection.execute(
+                    "PRAGMA index_list('hard_delete_receipts')"
+                ).fetchall()
+                if row["unique"]
+            ]
+            has_scope_unique = False
+            for index in receipt_unique:
+                index_name = index["name"]
+                indexed_columns = connection.execute(
+                    f"PRAGMA index_info('{index_name}')"
+                ).fetchall()
+                if {item["name"] for item in indexed_columns} == {
+                    "source_id",
+                    "request_id",
+                }:
+                    has_scope_unique = True
+                    break
+            if not has_scope_unique:
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_SCHEMA_UNSUPPORTED)
+            trigger_names = {
+                row["name"]
+                for row in connection.execute(
+                    """
+                    SELECT name
+                    FROM sqlite_master
+                    WHERE type = 'trigger' AND tbl_name = 'hard_delete_receipts'
+                    """
+                ).fetchall()
+            }
+            if not {
+                "hard_delete_receipts_no_update",
+                "hard_delete_receipts_no_delete",
+            }.issubset(trigger_names):
+                raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_SCHEMA_UNSUPPORTED)
+
+            if version == 1:
+                connection.execute(
+                    "UPDATE delete_meta SET schema_version = ? WHERE singleton = 1",
+                    (DELETE_SCHEMA_NUMERIC,),
+                )
+                connection.commit()
+            elif version != DELETE_SCHEMA_NUMERIC:
                 raise SourceDeleteError(SourceDeleteErrorCode.SOURCE_SCHEMA_UNSUPPORTED)
 
     @contextmanager

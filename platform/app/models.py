@@ -26,10 +26,6 @@ class SearchRequest(BaseModel):
     top_k: int = 5
     course: str | None = None
     use_vector: bool = True
-    principal_id: str | None = Field(
-        default=None,
-        description="Optional owner principal for M7 user-source overlay",
-    )
 
 
 class SearchResponse(BaseModel):
@@ -44,10 +40,6 @@ class QaRequest(BaseModel):
     course: str | None = None
     use_vector: bool = True
     use_llm: bool = False
-    principal_id: str | None = Field(
-        default=None,
-        description="Optional owner principal for M7 user-source overlay",
-    )
 
 
 class QaResponse(BaseModel):

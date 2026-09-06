@@ -53,9 +53,11 @@
 - M6a-P0 已收口，只构成 M6a 前置证据，不批准 M6a。
 - M6b 以 M6a 退出证据为共同必要前置，并须独立满足 `M6B-PROTECTED-BASELINE`、专属决策和批准；不依赖 M7。
 - M7 以 `M7-M6A-SOURCE-CONTRACT` 为共同必要前置，并须独立满足 `M7-PROTECTED-BASELINE`、专属决策和批准；不依赖 M6b。
-- M6b 与 M7 彼此不互为前置；M6b 当前为 `ADMITTED / COMPLETE`，M7 仅基础设施范围为
-  `ADMITTED / IN_PROGRESS`，生产开工已授权且 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 局部合同已冻结；Network 不在 M7 scope 内，M8/Milvus 继续阻断。
-- M8 依赖 M7；M9 依赖 M7 与 M8；M10 依赖 M7–M9，不以 M6b 为写路径或 Source 生命周期前置。
+- M6b 与 M7 彼此不互为前置；M6b 当前为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现与技术验收已完成，
+  并于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准，当前为
+  `ADMITTED / COMPLETE`；Network 不在 M7 scope 内，技术证据本身不产生批准。
+- M8/M9/M10 的事实型 M7 退出前置已满足，但 M8 仍须闭合自身决策与批准，M9 仍依赖 M8，M10 仍依赖
+  M8–M9；三个阶段均保持 `BLOCKED / NOT_STARTED`，且不以 M6b 为写路径或 Source 生命周期前置。
 
 ### 风险评估
 - **技术风险**：Runner 误写学习状态。缓解：状态机独占正式写入；M6b 只读；M10 完成授权/checkpoint/幂等后才写。
@@ -87,7 +89,7 @@
 
 ### 未来验收（仅在对应阶段 `ADMITTED` 后实施）
 - [ ] **未来验收** 自主 Runner 若启用，必须作为正交可选路径，失败不得回退创建正式 session（M10，`BLOCKED`）
-- [ ] **未来验收** M7 正式检索接入与 1k/3k benchmark 仍待完成；Network 晋升另行逐文档批准，当前已冻结的局部合同不等于 M7 exit
+- [x] **现行验收** M7 正式 Search/QA 内部可信 principal overlay、冻结 1k/3k BGE 与五格式 parser/lifecycle 证据已完成；2026-09-06 的独立人工批准完成阶段。Network 晋升仍须另行逐文档批准
 - [ ] **未来验收** 本阶段测试、`tests/regression/` 与对应性能/评测门禁通过后，才可合并或宣称该阶段交付
 
 ## 执行阶段
@@ -102,17 +104,19 @@
 
 ### 阶段2：核心开发
 **目标**：按准入顺序推进，不改现有里程碑切分；本阶段仅适用于已获 `ADMITTED` 的阶段。M6a 已完成；M6b
-默认关闭的隔离只读 preview 已完成全部 closeout 门禁与证据同步；M7 基础设施已获得独立生产开工授权，
-已形成并冻结 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 局部合同；M7 正式检索接入与 1k/3k benchmark 仍未完成；
+默认关闭的隔离只读 preview 已完成全部 closeout 门禁与证据同步；M7 基础设施已形成并冻结 Source Registry、
+manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline fail-closed
+与 Search/QA 内部可信 principal overlay 合同，并完成冻结 1k/3k BGE 与五格式证据；独立人工完成批准已登记。
 M8–M10 继续阻断。
 - [x] **现行保护** M6a：契约与兼容骨架，不改正式 API（`ADMITTED / COMPLETE`）
 - [x] **收口验收** M6b：阶段隔离、隐私/零写入、离线 benchmark、回归和文档门禁均已通过，
   已切换为 `ADMITTED / COMPLETE`；该收口不依赖或批准 M7
-- [x] **现行保护** M7 局部合同：独立 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed 已冻结（`ADMITTED / IN_PROGRESS`）；不等于 M7 退出
-- [ ] **未来验收** M7 后续增量：正式检索接入与千级 benchmark；
-  以 M6a Source 契约和 `M7-PROTECTED-BASELINE` 为前置，不依赖 M6b
-- [ ] **未来验收** M8–M9：专业化存储与目标计划（分别依赖 M7 / M7+M8）
-- [ ] **未来验收** M10：可选自主 Runner，状态机仍为默认；依赖 M7–M9，不以 M6b 为写前置
+- [x] **现行保护** M7 基础设施：Source Registry、manifest/parser、normalized document、source-local
+  FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline fail-closed、Search/QA overlay 与冻结技术验收已完成；
+  2026-09-06 独立人工批准后为 `ADMITTED / COMPLETE`，范围仍限 `m7-infrastructure-only-v1`
+- [ ] **未来验收** M8–M9：专业化存储与目标计划；事实型 M7 退出前置已满足，但 M8 自身门禁未闭合，M9 仍依赖 M8
+- [ ] **未来验收** M10：可选自主 Runner，状态机仍为默认；事实型 M7 退出前置已满足，但仍依赖 M8–M9，
+  不以 M6b 为写前置
 - **交付物**：各阶段计划中的退出条件
 - **时间**：阶段准入且适用的独立生产开工门禁为 `AUTHORIZED` 后才能开工
 

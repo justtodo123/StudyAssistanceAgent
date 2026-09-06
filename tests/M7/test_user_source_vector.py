@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
 
+from app import config
 from app.parser_matrix import ParsedDocument, ParsedUnit
 from app.retrieval import MultiRecallService, RetrievalScope
 from app.source_delete import UserSourceDeleteService
@@ -31,6 +34,7 @@ from app.user_source_search import UserSourceSearchService, public_uri
 from app.user_source_snapshot import UserSourceSnapshotPublisher
 from app.user_source_vector import (
     HashVectorEmbedder,
+    SentenceTransformerEmbedder,
     UserSourceVectorIndex,
     VectorIndexError,
     VectorIndexErrorCode,
@@ -94,6 +98,137 @@ def _publish(service: UserSourceSearchService, *, source_id: str, source_root: P
 
 def _code(error: pytest.ExceptionInfo[SourceOfflineError]) -> SourceOfflineErrorCode:
     return error.value.code
+
+
+def test_search_non_positive_top_k_does_not_load_runtime_or_encode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    index = UserSourceVectorIndex(tmp_path / "cache", embedder=HashVectorEmbedder())
+    calls = {"runtime": 0, "encode": 0}
+
+    def fail_runtime(*args, **kwargs):  # type: ignore[no-untyped-def]
+        calls["runtime"] += 1
+        raise AssertionError("runtime must not be loaded")
+
+    def fail_encode(*args, **kwargs):  # type: ignore[no-untyped-def]
+        calls["encode"] += 1
+        raise AssertionError("query must not be encoded")
+
+    monkeypatch.setattr(index, "_ensure_runtime", fail_runtime)
+    monkeypatch.setattr(index, "encode_query", fail_encode)
+    for top_k in (0, -1):
+        assert index.search(SOURCE_A, "m7-missing-generation", "任意查询", top_k=top_k) == ()
+    assert calls == {"runtime": 0, "encode": 0}
+
+
+def test_keyword_only_positive_query_skips_all_vector_entry_points(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    lifecycle, service, _ = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(root, {"lesson.md": "keyword-only-vector-spy"})
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    calls = {"runtime": 0, "validate": 0, "encode": 0, "search": 0}
+
+    def fail(name: str):  # type: ignore[no-untyped-def]
+        def unexpected(*args, **kwargs):  # type: ignore[no-untyped-def]
+            del args, kwargs
+            calls[name] += 1
+            raise AssertionError(f"vector {name} must be skipped")
+
+        return unexpected
+
+    monkeypatch.setattr(service._offline._vector, "require_runtime", fail("runtime"))
+    monkeypatch.setattr(service._offline._vector, "validate", fail("validate"))
+    monkeypatch.setattr(service._offline, "encode_query", fail("encode"))
+    monkeypatch.setattr(service._offline._vector, "search", fail("search"))
+    result = service.search(
+        principal_id=PRINCIPAL,
+        query="keyword-only-vector-spy",
+        top_k=5,
+        use_vector=False,
+    )
+    assert result.mode == "keyword-only"
+    assert result.chunks
+    assert calls == {"runtime": 0, "validate": 0, "encode": 0, "search": 0}
+
+
+def test_sentence_transformer_lazy_init_does_not_mutate_global_torch_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    global_calls: list[tuple[str, object]] = []
+    inference_active = False
+    constructed: list[tuple[str, dict[str, object]]] = []
+    eval_calls = 0
+    encode_calls: list[tuple[list[str], dict[str, object], bool]] = []
+
+    class FakeInferenceMode:
+        def __enter__(self):  # type: ignore[no-untyped-def]
+            nonlocal inference_active
+            inference_active = True
+
+        def __exit__(self, *args):  # type: ignore[no-untyped-def]
+            nonlocal inference_active
+            inference_active = False
+
+    class FakeEncoded:
+        def tolist(self) -> list[list[float]]:
+            return [[0.0] * int(config.EMBEDDING_EXPECTED_DIM)]
+
+    class FakeSentenceTransformer:
+        def __init__(self, model_name: str, **kwargs: object) -> None:
+            constructed.append((model_name, kwargs))
+
+        def eval(self) -> None:
+            nonlocal eval_calls
+            eval_calls += 1
+
+        def encode(self, texts: list[str], **kwargs: object) -> FakeEncoded:
+            encode_calls.append((texts, kwargs, inference_active))
+            return FakeEncoded()
+
+    fake_torch = SimpleNamespace(
+        set_grad_enabled=lambda enabled: global_calls.append(("set_grad_enabled", enabled)),
+        get_num_threads=lambda: global_calls.append(("get_num_threads", None)) or 8,
+        set_num_threads=lambda threads: global_calls.append(("set_num_threads", threads)),
+        inference_mode=lambda: FakeInferenceMode(),
+    )
+    fake_sentence_transformers = SimpleNamespace(SentenceTransformer=FakeSentenceTransformer)
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+    monkeypatch.setitem(sys.modules, "sentence_transformers", fake_sentence_transformers)
+
+    embedder = SentenceTransformerEmbedder()
+    monkeypatch.setattr(embedder, "require_runtime", lambda: None)
+
+    assert embedder.encode(["进程调度"]) == [[0.0] * embedder.dimension]
+    assert embedder.encode(["虚拟内存"]) == [[0.0] * embedder.dimension]
+    assert global_calls == []
+    assert constructed == [(embedder.model_name, {"local_files_only": True})]
+    assert eval_calls == 1
+    assert encode_calls == [
+        (
+            ["进程调度"],
+            {
+                "batch_size": 32,
+                "convert_to_numpy": True,
+                "normalize_embeddings": embedder.normalize,
+                "show_progress_bar": False,
+            },
+            True,
+        ),
+        (
+            ["虚拟内存"],
+            {
+                "batch_size": 32,
+                "convert_to_numpy": True,
+                "normalize_embeddings": embedder.normalize,
+                "show_progress_bar": False,
+            },
+            True,
+        ),
+    ]
 
 
 def test_fts5_and_vector_identity_sets_are_identical(tmp_path: Path) -> None:
@@ -265,6 +400,32 @@ def test_missing_or_corrupt_vector_metadata_returns_stable_offline_error(tmp_pat
     assert _code(mismatch) is SourceOfflineErrorCode.INDEX_INVALID
 
 
+def test_embedding_normalize_metadata_mismatch_fails_closed(
+    tmp_path: Path,
+) -> None:
+    lifecycle, service, cache = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(root, {"lesson.md": "进程调度算法"})
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    record = lifecycle.get_source(principal_id=PRINCIPAL, source_id=SOURCE_A)
+    path = UserSourceVectorIndex(cache, embedder=HashVectorEmbedder()).published_path(
+        SOURCE_A, record.published_generation
+    )
+    assert path is not None
+    metadata_path = path / "metadata.json"
+    payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+    payload["embedding_normalize"] = not payload["embedding_normalize"]
+    from app.source_manifest import canonical_json
+
+    encoded = canonical_json(payload)
+    metadata_path.write_bytes(encoded)
+    metadata_path.with_name("SHA256").write_text(hashlib_sha(encoded), encoding="ascii")
+    with pytest.raises(SourceOfflineError) as mismatch:
+        service.search(principal_id=PRINCIPAL, query="进程调度", source_id=SOURCE_A)
+    assert _code(mismatch) is SourceOfflineErrorCode.INDEX_INVALID
+
+
 def hashlib_sha(payload: bytes) -> str:
     import hashlib
 
@@ -314,6 +475,64 @@ def test_warm_vector_identity_mismatch_still_fails_closed(tmp_path: Path) -> Non
     with pytest.raises(SourceOfflineError) as caught:
         service.search(principal_id=PRINCIPAL, query="process-schedule-unique", source_id=SOURCE_A)
     assert _code(caught) is SourceOfflineErrorCode.INDEX_INVALID
+
+
+def test_warm_fts5_cache_hit_revalidates_index_contract(tmp_path: Path) -> None:
+    lifecycle, service, _ = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(root, {"lesson.md": "fts5-warm-cache-unique"})
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    first = service.search(
+        principal_id=PRINCIPAL,
+        query="fts5-warm-cache-unique",
+        use_vector=False,
+    )
+    assert first.chunks
+    record = lifecycle.get_source(principal_id=PRINCIPAL, source_id=SOURCE_A)
+    path = service._offline._fts5.published_path(SOURCE_A, record.published_generation)
+    assert path is not None
+    import sqlite3
+
+    connection = sqlite3.connect(path / "index.sqlite3")
+    connection.execute("DELETE FROM chunks")
+    connection.commit()
+    connection.close()
+    with pytest.raises(SourceOfflineError) as caught:
+        service.search(
+            principal_id=PRINCIPAL,
+            query="fts5-warm-cache-unique",
+            use_vector=False,
+        )
+    assert caught.value.code is SourceOfflineErrorCode.INDEX_INVALID
+
+
+def test_warm_vector_cache_hit_revalidates_index_contract(tmp_path: Path) -> None:
+    lifecycle, service, _ = _service(tmp_path)
+    _register(lifecycle, SOURCE_A)
+    root = tmp_path / "src-a"
+    _write_docs(root, {"lesson.md": "vector-warm-cache-unique"})
+    _publish(service, source_id=SOURCE_A, source_root=root)
+    first = service.search(
+        principal_id=PRINCIPAL,
+        query="vector-warm-cache-unique",
+    )
+    assert first.chunks
+    record = lifecycle.get_source(principal_id=PRINCIPAL, source_id=SOURCE_A)
+    path = service._offline._vector.published_path(SOURCE_A, record.published_generation)
+    assert path is not None
+    import sqlite3
+
+    connection = sqlite3.connect(path / "index.sqlite3")
+    connection.execute("DELETE FROM vectors")
+    connection.commit()
+    connection.close()
+    with pytest.raises(SourceOfflineError) as caught:
+        service.search(
+            principal_id=PRINCIPAL,
+            query="vector-warm-cache-unique",
+        )
+    assert caught.value.code is SourceOfflineErrorCode.INDEX_INVALID
 
 
 def test_last_good_generation_kept_when_new_vector_build_fails(

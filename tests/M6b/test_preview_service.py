@@ -429,14 +429,25 @@ def test_close_failure_is_suppressed_and_still_releases_capacity() -> None:
 def test_semaphore_wait_counts_against_total_deadline() -> None:
     async def scenario() -> None:
         gate = asyncio.Event()
-        limits = PreviewLimits(deadline_seconds=0.01)
-        service = _service(lambda key: _Client(gate=gate), limits=limits, wait=0.25)
+        admitted = asyncio.Event()
+        created = 0
+
+        def factory(key: str) -> _Client:
+            nonlocal created
+            del key
+            created += 1
+            if created == 2:
+                admitted.set()
+            return _Client(gate=gate)
+
+        limits = PreviewLimits(deadline_seconds=0.1)
+        service = _service(factory, limits=limits, wait=0.25)
         request = PreviewRequest(prompt="question")
-        first = asyncio.create_task(service.run(request, f"Bearer {_TOKEN}"))
-        second = asyncio.create_task(service.run(request, f"Bearer {_TOKEN}"))
-        await asyncio.sleep(0)
-        await asyncio.sleep(0)
-        result = await service.run(request, f"Bearer {_TOKEN}")
+        authorization = f"Bearer {_TOKEN}"
+        first = asyncio.create_task(service.run(request, authorization))
+        second = asyncio.create_task(service.run(request, authorization))
+        await asyncio.wait_for(admitted.wait(), timeout=1.0)
+        result = await service.run(request, authorization)
         assert result.status == "terminated"
         assert result.termination_reason == "deadline_exceeded"
         gate.set()

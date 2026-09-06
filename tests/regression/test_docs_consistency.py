@@ -21,18 +21,20 @@ class TestProjectStatusConsistency:
         plan = _read(repo_root, "docs/PLAN.md")
 
         assert "M6a-P0 crawler 已收口" in root
-        assert "M6a、M6b 均为 `ADMITTED / COMPLETE`" in plan
-        assert "M6b 默认关闭的只读 preview 已完成 closeout" in root
-        assert "M6b `ADMITTED / COMPLETE`" in root
+        assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in plan
+        assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in root
         assert "M8–M10" in root
         assert "M6–M10" in plan
         for text in (root, plan):
             assert "BLOCKED / NOT_STARTED" in text
         assert "ADMITTED / COMPLETE" in root
         assert "M6a 契约与兼容骨架" in root
-        assert "M7 `ADMITTED / IN_PROGRESS`" in root
-        assert "生产开工门禁已为 `AUTHORIZED`" in root
-        assert "M8–M10 阻断" in root
+        assert "M7 生产开工门禁保持" in root
+        assert "独立人工完成批准" in root
+        assert "M8–M10 的事实型" in root
+        assert "M7 退出前置已满足" in root
+        assert "M8–M10 自身仍为 `BLOCKED / NOT_STARTED`" in root
+        assert "M0–M5 MVP 可用。" in root
         assert "M10" in root and "自主 Runner" in root
         assert "课程笔记创建" not in root
         assert "错题集管理" not in root
@@ -305,7 +307,7 @@ class TestStageAdmissionConsistency:
         }
 
         assert m7["admission_status"] == "ADMITTED"
-        assert m7["delivery_status"] == "IN_PROGRESS"
+        assert m7["delivery_status"] == "COMPLETE"
         assert m7["approval_scope"] == {
             "scope_id": "m7-infrastructure-only-v1",
             "included": [
@@ -339,6 +341,19 @@ class TestStageAdmissionConsistency:
             ),
             "plan_revision": "v2.11",
             "decision_set_version": "m7-decision-set-v1",
+        }
+        assert m7["completion_approval"] == {
+            "approved_by": "justtodo123",
+            "approved_at": "2026-09-06",
+            "approval_reference": "User instruction: 批准 M7 COMPLETE",
+            "approval_scope": "m7-infrastructure-only-v1",
+            "evidence": [
+                "docs/PLAN.md",
+                "docs/plans/m7-source-lifecycle-plan.md",
+                "docs/baselines.md",
+                "tests/M7/README.md",
+                "tests/TEST_PLAN.md",
+            ],
         }
         assert len(m7["mandatory_decisions"]) == 12
         m7_decisions = {
@@ -374,21 +389,37 @@ class TestStageAdmissionConsistency:
                 "tests/regression/test_path_privacy.py",
             ],
         }
-        m8 = stages["M8"]
-        assert m8["admission_status"] == "BLOCKED"
-        assert m8["delivery_status"] == "NOT_STARTED"
-        m8_exit = next(
-            prerequisite
-            for prerequisite in m8["prerequisites"]
-            if prerequisite["id"] == "M8-M7-EXIT"
-        )
-        assert m8_exit["status"] == "OPEN"
-        assert m8_exit["evidence"] == []
+
+        downstream = {
+            "M8": "M8-M7-EXIT",
+            "M9": "M9-M7-EXIT",
+            "M10": "M10-M7-EXIT",
+        }
+        expected_exit_evidence = [
+            "docs/PLAN.md",
+            "docs/plans/m7-source-lifecycle-plan.md",
+            "docs/baselines.md",
+        ]
+        for stage_name, prerequisite_id in downstream.items():
+            stage = stages[stage_name]
+            assert stage["admission_status"] == "BLOCKED"
+            assert stage["delivery_status"] == "NOT_STARTED"
+            m7_exit = next(
+                prerequisite
+                for prerequisite in stage["prerequisites"]
+                if prerequisite["id"] == prerequisite_id
+            )
+            assert m7_exit == {
+                "id": prerequisite_id,
+                "status": "SATISFIED",
+                "evidence": expected_exit_evidence,
+            }
+            assert all(value is None for value in stage["approval"].values())
+
         assert all(
             decision["status"] == "OPEN"
-            for decision in m8["mandatory_decisions"]
+            for decision in stages["M8"]["mandatory_decisions"]
         )
-        assert all(value is None for value in m8["approval"].values())
 
     def test_authority_and_navigation_match_registry_state(self, repo_root):
         registry = _load_admission_registry(repo_root)
@@ -465,4 +496,7 @@ class TestStageAdmissionConsistency:
         assert "用户原始材料和大文件保存在仓库外" in prd
         assert "Source Registry、revision、索引控制数据和 manifest" in prd
         assert "由 M7/M8/M10 对应阶段契约决定" in prd
+        assert "M7 基础设施范围的实现与技术验收已完成" in prd
+        assert "独立人工完成批准" in prd
+        assert "M8/M9/M10 的事实型 M7 退出前置已满足" in prd
         assert "不得把用户原始材料复制进 Git" in prd

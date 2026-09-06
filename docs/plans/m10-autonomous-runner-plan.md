@@ -18,7 +18,7 @@ manifest 和 MCP 最小对外面。状态机继续作为正式默认与无 LLM f
 
 | Prerequisite ID | 当前状态 | 准入所需证据 |
 | --- | --- | --- |
-| `M10-M7-EXIT` | `OPEN` | Source lifecycle/delete/isolation/fallback 退出证据 |
+| `M10-M7-EXIT` | `SATISFIED` | M7 Source lifecycle/delete/isolation/fallback 与独立完成批准；证据见 `docs/PLAN.md`、M7 计划与 `docs/baselines.md` |
 | `M10-M8-EXIT` | `OPEN` | control schema、后端 parity/migration/fallback 或批准的维持现状结论 |
 | `M10-M9-EXIT` | `OPEN` | plan/mastery authority、deviation/replan、外部 AI fallback 和评测退出证据 |
 
@@ -62,7 +62,7 @@ manifest 和 MCP 最小对外面。状态机继续作为正式默认与无 LLM f
 | plan_revision | — |
 | decision_set_version | — |
 
-批准为空，M10 保持 `BLOCKED / NOT_STARTED`。Agent 不得自行批准。
+批准为空，M10 保持 `BLOCKED / NOT_STARTED`。`M10-M7-EXIT` 已满足，但 M8/M9 退出、十一项强制决策与独立批准仍为阻断项。Agent 不得自行批准。
 
 ## 5. 获准后的拟实施顺序
 
