@@ -322,7 +322,7 @@ Decision ID、选择后端、批准 M8 或授权生产实现。审阅记录完�
 manifest、stale generation、stale snapshot、真实 tombstone 与 hard-delete barrier 分别具有可判别的 fixture、
 预期错误分类和查询断言；新尝试不得复用或混合 `v1`–`v4` 的 raw/partial 数值。
 
-### 3.18 `precommit-v5` 静态冻结设计（未授权 acquisition 或执行）
+### 3.18 `precommit-v5` 静态冻结设计（执行后保留为历史协议）
 
 下一次实验只能使用新 experiment ID `sa.m8.admission-evidence.v5` 与 protocol `precommit-v5`。本节仅冻结
 静态设计；不继承此前只针对 `v3` 的 PyPI acquisition 授权，不授权安装、smoke 或 measured run。除本节
@@ -409,6 +409,123 @@ run 相同的 cleanup、probe 与 publication 代码路径；仅缩小 corpus/sa
 七项 Decision ID，不能选择 LanceDB/Qdrant、增加生产依赖、创建 adapter/`tests/M8`、改变 M8
 `BLOCKED / NOT_STARTED`、填写批准字段或授权生产开工。Milvus、Qdrant server/container/service、真实源
 输入、外部目录读取、M9 与 M10 继续排除。
+
+### 3.19 2026-09-07 `v5` scaled smoke 正式处置：证据有效但门禁未通过
+
+负责人另行明确授权 `sa.m8.admission-evidence.v5` 在新的唯一系统临时目录内安装冻结依赖并先执行
+scaled smoke。最终 harness 经独立静态复核后，在 CPython `3.11.9`、LanceDB `0.38.0`、Qdrant Client
+`1.19.0`、NumPy `2.4.6`、psutil `7.2.2`、PyArrow `25.0.1` 和合成预编码向量下完成三个冻结候选后端的
+smoke；所有运行内容均位于 Windows 用户级系统临时目录中的唯一根目录，未使用仓库 venv 或真实源资料。
+
+这里的“证据有效”只表示独立审阅可验证 publication、report、frozen config 与 inventory 的身份和哈希绑定，
+且能够核对运行库存、hard gate 与清理终态；不表示技术门禁通过。harness 发布的协议终态仍为
+`INVALID / GATE_FAILED`，不是 `SMOKE_NON_ADMISSION`，因此不得启动完整 frozen run。
+
+正式处置如下：
+
+- correctness 与全部十一类 probe 均通过（`60/60` quality/SQLite alignment、`66/66` probe）；网络尝试为
+  `0`，清理失败为 `0`，sample residual bytes 为 `0`，共核对 `96` 个样本。
+- report SHA-256 为 `1ec6be1a819759332a1e3edd93270efdb2be8ddff6bbcbfe0203fc03f4b53b98`，
+  frozen-config SHA-256 为 `d97897e6236d30fa1edee0c5edb19063dd45fd83558421425684c3a7ca9125bb`，
+  inventory digest 为 `aea84a32c94ffc912e1058e84feae5945462e509b27b8c776a213c29ab3919bd`；
+  expected/actual inventory 数量和 digest 均通过独立复核。这里只记录脱敏摘要，不保存 raw JSON。
+- `latency` 为 `16/24`、`lifecycle_latency` 为 `6/18`、`median_drift` 为 `33/36`，故
+  `overall_pass=false`。这些失败发生在极小 workload 和缩减采样的 smoke 中，固定启动、提交与 wrapper
+  开销相对 SQLite 亚毫秒基线占主导；该结果不能被解释为任一后端的质量缺陷、性能排名或后端选择结论。
+- 本记录只将本次 smoke 作为一条“证据有效但门禁未通过”的人工 decision input；不得与无效的 `v1`–`v4`
+  raw、partial 或派生数值混合、平均、复用或补写为通过结果。
+- 不写入候选排名，不选择 SQLite、LanceDB、Qdrant 或 Milvus，不批准生产依赖、adapter、migration、API、
+  runtime switch、worker、service/container、部署配置或生产测试变更，也不授权生产实现。
+- M8 继续保持 `BLOCKED / NOT_STARTED`；`M8-CONTROL-SCHEMA`、`M8-MIGRATION`、
+  `M8-LANCEDB-CRITERIA`、`M8-QDRANT-CRITERIA`、`M8-BACKEND-PARITY`、`M8-FALLBACK`、
+  `M8-DEPENDENCY-PACKAGING` 与 `M8-BENCHMARK` 八项决策全部保持 `OPEN`；backend selection、admission
+  和批准字段继续为空。
+- 独立审阅完成后，三个 `v5` 临时根目录及其中的 venv、harness、cache、corpus、index、sample、raw report、
+  inventory、receipt 和 publication 已全部删除，并确认无匹配的 `v5` 临时目录或状态文件残留。
+
+本处置关闭的是本次临时 smoke 的审阅与清理流程，不关闭任何 M8 Decision ID，也不构成修改门禁、启动下一版
+实验、运行 full protocol、M8 准入、合并或推送授权。若继续实验，必须先形成并审阅新的冻结协议与独立授权。
+
+### 3.20 2026-09-07 smoke 性能门禁人工校准审阅（仅作为未来协议输入）
+
+针对 `v5` scaled smoke 暴露出的统计口径问题，负责人完成以下人工校准；这些结论只约束未来协议草案，
+不回写或改判 `v5`，也不表示 `v6` 已冻结、获准 acquisition、获准执行或可以直接运行 full protocol：
+
+- 32/64 chunks 的 scaled smoke 不执行 query p99 相对比例门禁。此规模下解释器、计时与调度等固定开销
+  占比过高，不满足候选与 SQLite 基线可比的前提；相对性能门禁仅可在完整 workload 中裁决。
+- 两次 measured lifecycle sample 不用于判定 median drift。两个观测不足以形成有意义且稳定的漂移统计，
+  易被单次 GC 或调度抖动主导；median drift 仅可在 full run 的五次 repetition 上计算。
+- scaled smoke 不对 lifecycle 执行相对延迟裁决。未来协议继续遵守 3.16 的同名操作边界，不把进程启动、
+  schema 创建、提交或 publication wrapper 等固定开销冒充被比较操作；smoke 只检查 lifecycle 能否完成及
+  count、identity 和必要状态是否正确。
+- smoke 的职责是验证 harness、冻结依赖加载、probe、清理、网络阻断和证据链能够端到端运行，而不是预先
+  裁决性能。smoke 可以保留诊断性 timing，但该数值不得计入性能 pass/fail、候选排名或后端选择；性能裁决
+  只允许发生在另行冻结并获准执行的 full protocol。
+
+本次校准不删除 correctness、probe、network、cleanup、hash、inventory、预算和 residual 等 smoke hard gate；
+任一 hard gate 失败仍必须停止，且不得启动 full run。未来若建立 `v6`，必须使用新的 experiment ID，明确区分
+`smoke_integrity_pass` 与 `full_performance_pass`，先完成静态审阅并取得针对精确依赖、全新临时目录、smoke 和
+后续 full run 的独立授权。`v5` 继续保持 `INVALID / GATE_FAILED`，不得按本节追溯重算为通过。
+
+### 3.21 `precommit-v6` 静态冻结设计（未授权 acquisition 或执行）
+
+根据 3.20 人工校准，未来协议使用新 experiment ID `sa.m8.admission-evidence.v6` 与 protocol
+`precommit-v6`。本节冻结的是执行前的协议文本，不授权 acquisition、smoke、full run 或任何生产变更；协议
+必须在 v6 acquisition 和 measured run 前完成审阅，执行后不得依据观察到的结果修改样本、门槛、分母或终态。
+
+#### 3.21.1 smoke 与 full 的职责边界
+
+- smoke 的唯一裁决对象是 harness、依赖加载、probe 覆盖、网络阻断、清理、库存、磁盘预算和证据链的基本
+  运行完整性；终态固定为 `SMOKE_NON_ADMISSION`，即使白名单 hard gate 全部通过，也不形成后端选择或准入。
+- smoke 白名单包括 correctness、11/11 probe coverage、network、cleanup、inventory、disk budget 和
+  basic completion。query p99 比例、median drift 与 lifecycle 相对延迟只允许记录为诊断信息，不得计入
+  smoke pass/fail、排名或后端选择。
+- lifecycle smoke 只验证同名操作能够完成以及 count、identity 和必要状态正确；不得把进程启动、schema
+  创建、提交或 publication wrapper 固定开销纳入相对比较。full 仍遵守 3.16 的同名操作边界。
+- full 才裁决完整 quality、query latency、lifecycle latency、resource、reliability 和 packaging 门槛，
+  沿用 3.10、3.14、3.16 与 3.18 的已审阅定义；完整 workload 保持 1k/3k/10k corpus 结构。每个
+  backend/workload 执行五次独立 repetition，每次 query 为 20 warmup + 200 measured；每类 lifecycle
+  操作为 5 warmup + 20 measured full-workload 样本。median drift 仅在 full 的五次 repetition 上计算。
+- smoke workload 固定为 `smoke-1s-32`（1 source × 32 chunks）与 `smoke-2s-64`（2 sources × 32
+  chunks），每个 backend/workload 运行一次 repetition。每次 query 先做 20 个 warmup，再计时 12 个
+  measured query（exact、perturbed semantic、owner/source filter、no-hit 各 3 个）；build、import、rebuild、
+  reopen、migration 各做 1 warmup + 2 measured。所有 timing 仅作诊断，缩小规模不能改变 full 的 corpus
+  namespace、分母或阈值定义。
+
+#### 3.21.2 full 停止条件与重试规则
+
+- full 遇到磁盘预算 watchdog 超限、cleanup receipt 缺失、probe 非 `11/11`、网络探测触发或任何
+  `unexpected_error`，必须停止并发布 `ABORTED` 或 `INVALID`，不得继续计分或从 partial artifacts 恢复数值。
+- 同一 experiment ID 只允许一个终态 publication。失败不得通过反复调整实现、分母或门槛伪装为通过；任何
+  实质修改必须建立新 experiment ID、新 protocol 和新的授权链。
+- per-sample 唯一目录、`finally` 清理、atomic cleanup receipt、`residual_bytes_max=0`、哈希绑定、库存
+  digest、11 个单一变更 fixture 与三候选后端 `sqlite-linear`、`lancedb-embedded`、`qdrant-client-local`
+  继续沿用 v5 已审阅的 hard-boundary 实现要求。
+
+#### 3.21.3 环境、候选与审阅前置条件
+
+- v6 环境固定为 CPython `3.11.9`、LanceDB `0.38.0`、Qdrant Client `1.19.0`、NumPy `2.4.6`、
+  psutil `7.2.2` 与 PyArrow `25.0.1`；安装后必须断言精确 Python 版本，依赖版本必须从安装元数据读取并
+  与该清单一致。固定 synthetic vector model/version、seed、dimension、dtype 与 normalization 继续沿用
+  3.18 和本协议绑定的 frozen config，不得观察结果后变更。
+- 当前不得把本节视为 acquisition 授权；上述精确 PyPI 清单和唯一新临时根目录仍必须在授权文本中再次
+  明确。授权还必须明确只允许 smoke，或允许在 smoke 独立审计通过后继续 full，不能由执行者自行推定。
+- 不再混用 1k、3k、10k 的 source namespace；每个 fault probe 只改变一个绑定，并记录 expected/actual
+  code 与 `candidate_accessed`。不得读取或复制 `D:\111_Others_Subjects`，不得启动 Qdrant server、container
+  或持久服务。
+- 独立审阅者是未编写且未执行该 v6 harness 的独立审计角色；项目没有专职角色时，必须由单独会话完成静态
+  checklist 与证据核对，并留下 experiment/protocol、frozen-config hash、publication/report hash、库存
+  digest、probe coverage、network、cleanup 和 residual 的逐项审阅记录。独立审阅不能以“程序退出成功”替代。
+- 在任何 v6 acquisition 前，必须完成 harness 静态审计、scaled smoke 设计审阅和磁盘预算预检；取得授权
+  后仍须按“静态审计 → smoke → 独立审计 → 满足 smoke 白名单才可 full”的顺序执行。v6 harness 必须在
+  全新临时根目录中重新生成或重新实现，不能复制、修改或复用已删除的 v5 harness、venv、sample、index、
+  report、inventory、receipt、publication 或统计结果；可复用的只有本计划中公开冻结的协议语义。
+- 即使 full 全部通过，结果也只能作为 `M8-BENCHMARK` 的人工 decision input，不选择后端、不关闭决策、
+  不准入、不授权生产，也不自动 commit、merge 或 push。
+
+本节不构成 v6 执行授权。未来授权必须明确指向 `sa.m8.admission-evidence.v6` / `precommit-v6`、精确
+PyPI 版本、唯一新临时根目录、仅合成数据、执行范围（仅 smoke 或 smoke 通过后 full）、生产与服务边界以及
+审计后的完整清理要求；不满足这些条件时，v6 保持未启动。
 
 ## 4. 后端无关 control/data-plane 契约草案
 
