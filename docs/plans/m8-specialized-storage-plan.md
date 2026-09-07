@@ -478,8 +478,9 @@ smoke；所有运行内容均位于 Windows 用户级系统临时目录中的唯
 - smoke 的唯一裁决对象是 harness、依赖加载、probe 覆盖、网络阻断、清理、库存、磁盘预算和证据链的基本
   运行完整性；终态固定为 `SMOKE_NON_ADMISSION`，即使白名单 hard gate 全部通过，也不形成后端选择或准入。
 - smoke 白名单包括 correctness、11/11 probe coverage、network、cleanup、inventory、disk budget 和
-  basic completion。query p99 比例、median drift 与 lifecycle 相对延迟只允许记录为诊断信息，不得计入
-  smoke pass/fail、排名或后端选择。
+  basic completion。若任一 smoke hard gate 失败，smoke 终态必须为 `ABORTED` 或 `INVALID`，不得发布
+  `SMOKE_NON_ADMISSION` 作为通过终态；query p99 比例、median drift 与 lifecycle 相对延迟只允许记录为
+  诊断信息，不得计入 smoke pass/fail、排名或后端选择。
 - lifecycle smoke 只验证同名操作能够完成以及 count、identity 和必要状态正确；不得把进程启动、schema
   创建、提交或 publication wrapper 固定开销纳入相对比较。full 仍遵守 3.16 的同名操作边界。
 - full 才裁决完整 quality、query latency、lifecycle latency、resource、reliability 和 packaging 门槛，
@@ -520,12 +521,60 @@ smoke；所有运行内容均位于 Windows 用户级系统临时目录中的唯
   后仍须按“静态审计 → smoke → 独立审计 → 满足 smoke 白名单才可 full”的顺序执行。v6 harness 必须在
   全新临时根目录中重新生成或重新实现，不能复制、修改或复用已删除的 v5 harness、venv、sample、index、
   report、inventory、receipt、publication 或统计结果；可复用的只有本计划中公开冻结的协议语义。
+- canonical frozen config 必须分别记录 `fault_fixture_count=11` 与 `probe_queries_per_fixture=6`：前者是
+  3.18.2 列出的十一类独立 fault fixture 数量，后者是每个 fixture 内用于验证拒绝、零命中、reopen 或
+  rollback 行为的固定 probe query 数量，二者相乘得到 `66/66` probe-query 计数（与 3.20 已核对的 v5 smoke
+  实测一致）；两者不得共用 `probe_count` 名称、互作分母或在 inventory 中合并计数；smoke/full report 必须
+  分别核对 fixture coverage（`11/11`）与 probe-query 样本库存（`66/66`）。2026-09-07 独立重审未接受本条
+  对 `6` 与 full `66/66` 的定义，见 3.21.5；在该条按 3.21.5 口径修正并再次 PASS 前，不得当作已冻结契约。
 - 即使 full 全部通过，结果也只能作为 `M8-BENCHMARK` 的人工 decision input，不选择后端、不关闭决策、
   不准入、不授权生产，也不自动 commit、merge 或 push。
 
 本节不构成 v6 执行授权。未来授权必须明确指向 `sa.m8.admission-evidence.v6` / `precommit-v6`、精确
 PyPI 版本、唯一新临时根目录、仅合成数据、执行范围（仅 smoke 或 smoke 通过后 full）、生产与服务边界以及
 审计后的完整清理要求；不满足这些条件时，v6 保持未启动。
+
+#### 3.21.4 2026-09-07 文本补丁（已进入 3.21.5 重审）
+
+独立审阅者认为 v6 协议文本与处置方案整体自洽、可执行，但在冻结前识别出两个文本级缺口；本次已按意见
+修改：3.21.1 把任一 smoke hard gate 失败的唯一合法终态绑定为 `ABORTED` 或 `INVALID`，3.21.3 在
+canonical config 契约中区分 `fault_fixture_count=11` 与 `probe_queries_per_fixture=6`（对应 `66/66`），
+并禁止二者共用分母或库存计数。由于协议文本已经发生修改，3.21 必须由符合 3.21.3 定义的独立审阅者重新逐项审阅；在留下补丁后
+PASS 结论前，不得把该协议视为已完成静态审阅，也不得进入 acquisition 或执行。
+
+本次补丁不构成临时根目录创建、依赖安装、smoke、full、后端选择、决策关闭、M8 准入、生产实现、commit、
+merge 或 push 授权。重审通过后的下一步仍须由负责人针对 `sa.m8.admission-evidence.v6` / `precommit-v6`
+明确批准含 seed `20260906`、model/version `synthetic-unit-vector-v1`、精确依赖版本、全新唯一系统临时根目录和
+允许执行范围的授权文本。授权后仍按“新临时根目录 → 全新生成 harness → 独立静态审计 → 磁盘预算预检 →
+CPython `3.11.9` venv 与版本自校验 → scaled smoke → 独立证据核对 → 仅
+`smoke_integrity_pass=true` 才 full → 独立审阅 full → 删除整个临时根目录并确认无残留”执行；任何结果都只
+作为 `M8-BENCHMARK` 人工 decision input。
+
+#### 3.21.5 2026-09-07 独立重审记录（`NOT PASS`）
+
+独立审阅会话未编写且未执行 v6 harness（该 harness 尚不存在），于 2026-09-07 按 3.21.3 对 3.21 全文
+（含 3.21.4 工作区文本补丁）逐项重审。本记录不是 acquisition、smoke、full、后端选择、决策关闭、M8
+准入、生产实现、merge 或 push 授权。
+
+| 条款 | 结论 | 审阅要点 |
+| --- | --- | --- |
+| 3.21 题头 | `PASS` | 新 experiment `sa.m8.admission-evidence.v6` / protocol `precommit-v6`；只冻执行前协议文本；不授权 acquisition 或执行；执行后不得按观察结果改样本、门槛、分母或终态。 |
+| 3.21.1 职责与采样 | `PASS` | smoke 只裁决 harness、依赖、probe 覆盖、网络、清理、库存、磁盘预算和证据链完整性；p99 比例、median drift 与 lifecycle 相对延迟仅诊断；lifecycle smoke 只验证同名操作完成及 count/identity/必要状态；full 沿用 3.10/3.14/3.16/3.18 与 1k/3k/10k、五次 repetition、query `20 warmup + 200 measured`、lifecycle `5 warmup + 20 measured`；smoke workload 固定 `smoke-1s-32` / `smoke-2s-64`、每组合一次 repetition、12 个 measured query、lifecycle `1 warmup + 2 measured`，与 3.20 校准一致。 |
+| 3.21.1 失败终态补丁 | `PASS` | 任一 smoke hard gate 失败必须发布 `ABORTED` 或 `INVALID`，不得把 `SMOKE_NON_ADMISSION` 当作失败通过终态；成功路径仍为非准入终态 `SMOKE_NON_ADMISSION`。这与 3.19 中 v5 因性能门禁发布 `INVALID / GATE_FAILED`、从而不能进入 full 的教训一致。 |
+| 3.21.2 | `PASS` | full 遇磁盘预算 watchdog、缺 cleanup receipt、probe 非 `11/11`、网络探测或任何 `unexpected_error` 必须停止并发布 `ABORTED`/`INVALID`；同一 experiment ID 只允许一个终态；实质修改必须新 ID、新 protocol 和新授权链；三候选与 v5 hard-boundary 延续。 |
+| 3.21.3 环境与治理 | `PASS` | CPython `3.11.9` 与 LanceDB `0.38.0` / Qdrant Client `1.19.0` / NumPy `2.4.6` / psutil `7.2.2` / PyArrow `25.0.1`；本节不是授权；授权须重申精确版本、唯一新临时根和执行范围；禁止混用 1k/3k/10k namespace、读取外部资料目录、启动 Qdrant server/container/service；独立审阅者与 hash/inventory/probe/network/cleanup/residual checklist 完整；禁止复用已删除 v5 产物；即使 full 通过也只是 `M8-BENCHMARK` 输入。 |
+| 3.21.3 fixture/库存补丁 | `FAIL` | 补丁把 `66/66` 写成 `11 × probe_queries_per_fixture=6`，并把 `6` 解释为每个 fixture 内的 probe query 数，还要求 smoke 与 full 都核对 `66/66`。这与 3.18.2（每个 backend/workload/repetition 必须 `11/11`）和 3.19（v5 smoke `66/66` probe、共 `96` 个样本）不一致。v5/v6 smoke 拓扑为 3 backends × 2 workloads × 1 repetition；`3×2×11=66`，`3×2×(11 probe + 5 lifecycle)=96`。`6` 只是 smoke 的 backend×workload 组合数，不是 per-fixture query 分母。full 库存应为 `3 backends × 3 workloads × 5 repetitions × 11 fixtures = 495/495`，不得套用 smoke 的 `66/66`。`66/66` 出处是 3.19，不是 3.20。 |
+| 3.21.4 程序要求 | `PASS` | 正确要求协议文本修改后必须重审；补丁本身不构成执行或提交授权；后续仍须负责人对 seed `20260906`、`synthetic-unit-vector-v1`、精确依赖、新临时根和允许范围作书面授权。 |
+
+非阻断观察：3.21.1 白名单未点名 hash/residual（3.20 曾单列，3.21.3 审阅清单已覆盖）；`smoke_integrity_pass` 与 `full_performance_pass` 在 3.21.4 使用，但未在 3.21.1 绑定字段语义。下次文本修订时应写明前者仅由 smoke 白名单 hard gate 置位，诊断性 timing 不得置位。
+
+总评：`NOT PASS`。必须先把 3.21.3 的 canonical config 契约改为同时记录且不得混用的三项口径，并由未编写该修正的独立会话再次逐项重审至 `PASS` 后，才能把 `precommit-v6` 视为已完成静态审阅：
+
+- `fault_fixture_count=11`：3.18.2 的十一类独立 fixture；每个 backend/workload/repetition 核对 coverage `11/11`；
+- smoke probe 库存：`3 × 2 × 1 × 11 = 66/66`（与 3.19 已核对的 v5 smoke 实测一致）；
+- full probe 库存：`3 × 3 × 5 × 11 = 495/495`。
+
+在此之前不得 acquisition，不得创建 v6 临时根目录或 venv，不得执行 smoke 或 full。
 
 ## 4. 后端无关 control/data-plane 契约草案
 
