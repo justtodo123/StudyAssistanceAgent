@@ -521,12 +521,17 @@ smoke；所有运行内容均位于 Windows 用户级系统临时目录中的唯
   后仍须按“静态审计 → smoke → 独立审计 → 满足 smoke 白名单才可 full”的顺序执行。v6 harness 必须在
   全新临时根目录中重新生成或重新实现，不能复制、修改或复用已删除的 v5 harness、venv、sample、index、
   report、inventory、receipt、publication 或统计结果；可复用的只有本计划中公开冻结的协议语义。
-- canonical frozen config 必须分别记录 `fault_fixture_count=11` 与 `probe_queries_per_fixture=6`：前者是
-  3.18.2 列出的十一类独立 fault fixture 数量，后者是每个 fixture 内用于验证拒绝、零命中、reopen 或
-  rollback 行为的固定 probe query 数量，二者相乘得到 `66/66` probe-query 计数（与 3.20 已核对的 v5 smoke
-  实测一致）；两者不得共用 `probe_count` 名称、互作分母或在 inventory 中合并计数；smoke/full report 必须
-  分别核对 fixture coverage（`11/11`）与 probe-query 样本库存（`66/66`）。2026-09-07 独立重审未接受本条
-  对 `6` 与 full `66/66` 的定义，见 3.21.5；在该条按 3.21.5 口径修正并再次 PASS 前，不得当作已冻结契约。
+- canonical frozen config 必须分别记录且不得混用以下三项口径，禁止共用 `probe_count` 或
+  `probe_queries_per_fixture` 名称、互作分母或在 inventory 中合并计数：
+  - `fault_fixture_count=11`：3.18.2 列出的十一类独立 fault fixture；每个 backend/workload/repetition
+    必须核对 fixture coverage `11/11`；
+  - `smoke_probe_inventory=66`：`3 backends × 2 smoke workloads × 1 repetition × 11 fixtures = 66/66`，
+    与 3.19 已核对的 v5 smoke 实测一致；仅用于 smoke report/inventory；
+  - `full_probe_inventory=495`：`3 backends × 3 full workloads × 5 repetitions × 11 fixtures = 495/495`；
+    仅用于 full report/inventory，不得套用 smoke 的 `66/66`。
+  `6` 只是 smoke 的 backend×workload 组合数，不是每个 fixture 内的 probe query 数量，不得作为 frozen
+  config 分母写入。smoke report 必须同时核对 per-combination `11/11` 与 run-level `66/66`；full report
+  必须同时核对 per-combination `11/11` 与 run-level `495/495`。
 - 即使 full 全部通过，结果也只能作为 `M8-BENCHMARK` 的人工 decision input，不选择后端、不关闭决策、
   不准入、不授权生产，也不自动 commit、merge 或 push。
 
@@ -575,6 +580,19 @@ CPython `3.11.9` venv 与版本自校验 → scaled smoke → 独立证据核对
 - full probe 库存：`3 × 3 × 5 × 11 = 495/495`。
 
 在此之前不得 acquisition，不得创建 v6 临时根目录或 venv，不得执行 smoke 或 full。
+
+#### 3.21.6 2026-09-07 库存口径修正（待独立会话重审，仍为 `NOT PASS`）
+
+同一会话已按 3.21.5 要求改写 3.21.3 的 canonical config 契约：删除 `probe_queries_per_fixture=6`，改为
+分别记录 `fault_fixture_count=11`、`smoke_probe_inventory=66` 与 `full_probe_inventory=495`。因本会话
+既是 3.21.5 审阅者又是该修正作者，按 3.21.3/3.21.4 不得在本会话给出补丁后 `PASS`，也不得把
+`precommit-v6` 视为已完成静态审阅。
+
+下次独立重审必须由未编写 3.21.6 修正的会话，对 3.21 全文（含本次库存口径）逐项留下 PASS/审阅记录。
+在该 `PASS` 之前，不得 acquisition，不得创建 v6 临时根目录或 venv，不得执行 smoke 或 full。本次修正
+不构成执行、后端选择、决策关闭、M8 准入、生产实现、merge 或 push 授权。3.21.5 的非阻断观察（hash/
+residual 白名单点名，以及 `smoke_integrity_pass` / `full_performance_pass` 字段绑定）仍可在下次文本
+修订中一并处理，但不作为本次修正范围。
 
 ## 4. 后端无关 control/data-plane 契约草案
 
