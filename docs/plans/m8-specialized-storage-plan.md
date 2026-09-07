@@ -594,6 +594,37 @@ CPython `3.11.9` venv 与版本自校验 → scaled smoke → 独立证据核对
 residual 白名单点名，以及 `smoke_integrity_pass` / `full_performance_pass` 字段绑定）仍可在下次文本
 修订中一并处理，但不作为本次修正范围。
 
+#### 3.21.7 2026-09-07 独立重审记录（`PASS`）
+
+独立审阅会话未编写 3.21.6 库存口径修正，未编写且未执行 v6 harness（该 harness 尚不存在），于
+2026-09-07 按 3.21.3 定义对 3.21 全文（含 3.21.4 文本补丁、3.21.5 重审记录、3.21.6 库存口径修正）
+逐项重审。本记录是静态审阅结论，不是 acquisition、smoke、full、后端选择、决策关闭、M8 准入、生产
+实现、merge 或 push 授权。
+
+库存口径数学核验：`fault_fixture_count=11`（3.18.2 十一类单一变更 fixture）；`smoke_probe_inventory`
+`3 × 2 × 1 × 11 = 66/66`（与 3.19 已核对的 v5 smoke 实测一致）；`full_probe_inventory`
+`3 × 3 × 5 × 11 = 495/495`（数学成立）；交叉验证 3.19 的 `3 × 2 × (11 probe + 5 lifecycle) = 96`
+个样本与实测一致；`6` 仅是 smoke 的 backend×workload 组合数，不是 per-fixture query 分母。
+
+| 条款 | 结论 | 审阅要点 |
+| --- | --- | --- |
+| 3.21 题头 | `PASS` | 新 ID `sa.m8.admission-evidence.v6` / protocol `precommit-v6`；只冻结执行前协议文本；不授权 acquisition 或执行；执行后不得按观察结果改样本、门槛、分母或终态。 |
+| 3.21.1 职责与采样 | `PASS` | smoke 只裁决 harness/依赖/probe 覆盖/网络/清理/库存/磁盘预算/证据链完整性；p99 比例、median drift、lifecycle 相对延迟仅诊断；lifecycle smoke 只验证完成与 count/identity/必要状态；full 沿用 3.10/3.14/3.16/3.18、1k/3k/10k、5 repetition、query `20+200`、lifecycle `5+20`；smoke workload `smoke-1s-32`/`smoke-2s-64`、12 measured query（4 类×3）、lifecycle `1+2`，与 3.20 校准一致。 |
+| 3.21.1 失败终态补丁 | `PASS` | 任一 smoke hard gate 失败 → 唯一合法终态 `ABORTED`/`INVALID`，不得发布 `SMOKE_NON_ADMISSION`；成功路径仍为非准入终态；与 3.19 v5 `INVALID / GATE_FAILED` 教训一致。 |
+| 3.21.2 | `PASS` | full 遇磁盘 watchdog/缺 receipt/probe 非 11-11/网络触发/`unexpected_error` → 停止并 `ABORTED`/`INVALID`；同一 experiment ID 单终态；实质修改须新 ID+新协议+新授权链；三候选 `sqlite-linear`/`lancedb-embedded`/`qdrant-client-local` 与 v5 hard-boundary 延续。 |
+| 3.21.3 环境与治理 | `PASS` | CPython 3.11.9 + 五精确版本与 3.19 实测一致；本节不是授权；授权须重申精确版本/唯一新临时根/执行范围；禁混用 namespace、禁读 `D:\111_Others_Subjects`、禁启动 Qdrant server/container/service；独立审阅者定义与 checklist 完整；禁复用已删除 v5 产物；full 通过也只是 `M8-BENCHMARK` 输入。 |
+| 3.21.3 库存口径修正 | `PASS` | 三项口径（11 / 66 / 495）分别记录、分别核对、禁止混用或共用分母；`66/66` 出处修正为 3.19；`6` 身份说明正确；full 不套用 smoke 的 `66/66`。3.21.5 的 FAIL 项已解决。 |
+| 3.21.4 / 3.21.5 / 3.21.6 | `PASS` | 补丁程序要求、`NOT PASS` 判定与三项修正要求、审阅者与修正作者同会话不得自判 PASS 的程序合规性均自洽。 |
+
+非阻断观察（不构成 FAIL，建议下次文本修订一并处理）：① 3.21.1 白名单未点名 hash/residual，建议与 3.20 对齐；②
+`smoke_integrity_pass` / `full_performance_pass` 字段语义未绑定，建议写明前者仅由 smoke 白名单 hard gate 置位、
+诊断性 timing 不得置位，后者仅由 full 门槛裁决置位。
+
+总评：`PASS`。3.21.5 的阻塞项（库存口径）已由 3.21.6 正确修复；本会话为未编写 3.21.6 修正的独立审阅者，
+`precommit-v6` 可视为已完成静态审阅。本 PASS 不构成 acquisition、临时根目录创建、venv 创建、依赖安装、
+smoke、full、后端选择、决策关闭、M8 准入、生产实现、merge 或 push 授权；下一步仍须负责人签署指向 v6 的
+书面授权（seed `20260906`、`synthetic-unit-vector-v1`、精确依赖版本、唯一新临时根目录、执行范围勾选）。
+
 ## 4. 后端无关 control/data-plane 契约草案
 
 本草案参考 [`platform/app/vector_store.py`](../../platform/app/vector_store.py) 的 `VectorStore`、
