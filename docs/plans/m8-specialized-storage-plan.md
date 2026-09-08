@@ -521,17 +521,22 @@ smoke；所有运行内容均位于 Windows 用户级系统临时目录中的唯
   后仍须按“静态审计 → smoke → 独立审计 → 满足 smoke 白名单才可 full”的顺序执行。v6 harness 必须在
   全新临时根目录中重新生成或重新实现，不能复制、修改或复用已删除的 v5 harness、venv、sample、index、
   report、inventory、receipt、publication 或统计结果；可复用的只有本计划中公开冻结的协议语义。
-- canonical frozen config 必须分别记录且不得混用以下三项口径，禁止共用 `probe_count` 或
-  `probe_queries_per_fixture` 名称、互作分母或在 inventory 中合并计数：
+- canonical frozen config 必须分别记录且不得混用以下五项口径：禁止以泛化的 `probe_count`、
+  `probe_queries_per_fixture` 或其他单一字段替代它们，也不得互作分母或在 inventory 中合并计数：
   - `fault_fixture_count=11`：3.18.2 列出的十一类独立 fault fixture；每个 backend/workload/repetition
     必须核对 fixture coverage `11/11`；
+  - `probe_query_count=10`：每个 fixture 内用于验证拒绝、零命中、reopen 或 rollback 行为的固定
+    probe-query 数量；它不是 fixture 数量，不得作为 `11/11` 的分母；
   - `smoke_probe_inventory=66`：`3 backends × 2 smoke workloads × 1 repetition × 11 fixtures = 66/66`，
-    与 3.19 已核对的 v5 smoke 实测一致；仅用于 smoke report/inventory；
+    与 3.19 已核对的 v5 smoke fixture 实测一致；仅用于 smoke fixture report/inventory；
   - `full_probe_inventory=495`：`3 backends × 3 full workloads × 5 repetitions × 11 fixtures = 495/495`；
-    仅用于 full report/inventory，不得套用 smoke 的 `66/66`。
+    仅用于 full fixture report/inventory，不得套用 smoke 的 `66/66`；
+  - `smoke_probe_query_inventory=660` 与 `full_probe_query_inventory=4,950`：分别由
+    `66 × probe_query_count=10` 与 `495 × probe_query_count=10` 得出，仅用于独立的 probe-query 样本库存核对。
   `6` 只是 smoke 的 backend×workload 组合数，不是每个 fixture 内的 probe query 数量，不得作为 frozen
-  config 分母写入。smoke report 必须同时核对 per-combination `11/11` 与 run-level `66/66`；full report
-  必须同时核对 per-combination `11/11` 与 run-level `495/495`。
+  config 分母写入。smoke report 必须分别核对 per-combination fixture coverage `11/11`、run-level
+  fixture inventory `66/66` 与 probe-query inventory `660/660`；full report 必须分别核对 per-combination
+  `11/11`、run-level fixture inventory `495/495` 与 probe-query inventory `4,950/4,950`。
 - 即使 full 全部通过，结果也只能作为 `M8-BENCHMARK` 的人工 decision input，不选择后端、不关闭决策、
   不准入、不授权生产，也不自动 commit、merge 或 push。
 
@@ -624,6 +629,75 @@ residual 白名单点名，以及 `smoke_integrity_pass` / `full_performance_pas
 `precommit-v6` 可视为已完成静态审阅。本 PASS 不构成 acquisition、临时根目录创建、venv 创建、依赖安装、
 smoke、full、后端选择、决策关闭、M8 准入、生产实现、merge 或 push 授权；下一步仍须负责人签署指向 v6 的
 书面授权（seed `20260906`、`synthetic-unit-vector-v1`、精确依赖版本、唯一新临时根目录、执行范围勾选）。
+
+#### 3.21.8 2026-09-07 `probe_query_count` 契约补正（待独立重审，当前 `NOT PASS`）
+
+后续核对发现 3.21.7 的独立重审遗漏了授权包已冻结的 `probe_query_count=10`，因此该次 `PASS` 被本记录
+撤销，不能作为 acquisition 或执行前置证据。3.21.3 已补正为同时且独立记录：
+
+- fixture 口径：`fault_fixture_count=11`、smoke `66/66`、full `495/495`；
+- probe-query 口径：`probe_query_count=10`、smoke `660/660`、full `4,950/4,950`。
+
+fixture coverage 与 probe-query sample inventory 必须分别核对，禁止共用名称、分母或库存。由于本会话编写了
+本次补正，不得自行给出补丁后 `PASS`；必须由未编写本修正且未编写/执行 v6 harness 的独立会话重新审阅
+3.21 全文。在明确留下 `PASS` 前，`precommit-v6` 当前审阅状态为 `NOT PASS`，不得创建临时根目录、venv，
+不得 acquisition，也不得执行 smoke 或 full。本补正及后续重审均不构成 commit、merge 或 push 授权。
+
+#### 3.21.9 2026-09-07 独立重审记录（`PASS`）
+
+独立审阅会话未编写 3.21.3 `probe_query_count` 补正、未编写 3.21.8 撤销记录、未编写且未执行 v6 harness
+（该 harness 尚不存在），于 2026-09-07 按 3.21.3 定义对 3.21 全文（含 3.21.4–3.21.8）逐项重审。本记录是
+静态审阅结论，不是 acquisition、smoke、full、后端选择、决策关闭、M8 准入、生产实现、merge 或 push 授权。
+
+| 条款 | 结论 | 审阅要点 |
+| --- | --- | --- |
+| 3.21.1 失败终态 | `PASS` | L481–482：任一 smoke hard gate 失败 → 唯一合法终态 `ABORTED`/`INVALID`；`SMOKE_NON_ADMISSION` 仅限成功路径。 |
+| 3.21.1 职责与采样 | `PASS` | smoke 仅裁决 harness/依赖/probe/网络/清理/库存/磁盘/证据链；p99、median drift、lifecycle 相对延迟仅诊断。 |
+| 3.21.2 | `PASS` | full 遇 watchdog/缺 receipt/probe 非 11-11/网络/`unexpected_error` → `ABORTED`/`INVALID`；单终态；实质修改须新 ID。 |
+| 3.21.3 环境与治理 | `PASS` | CPython 3.11.9 + 五精确版本；本节不是授权；独立审阅者定义完整。 |
+| 3.21.3 六项口径 | `PASS` | `fault_fixture_count=11`、`probe_query_count=10`、smoke fixture `66/66`、full fixture `495/495`、smoke probe-query `660/660`、full probe-query `4,950/4,950`；禁止共用名称、分母或库存。660 = 66×10 是 probe-query 断言库存，不与 96 个物理样本冲突。 |
+| 3.21.4–3.21.7 | `PASS` | 补丁程序、NOT PASS 判定、库存修正与审阅者独立性要求均自洽。 |
+| 3.21.8 | `PASS` | 正确撤销 3.21.7 PASS（遗漏 `probe_query_count=10`），并要求未编写该补正的独立会话重审。 |
+| §3.18–3.19 交叉验证 | `PASS` | 3.18.2 的十一 fixture 与 3.19 的 66/66 + 96 样本一致；`660` 不等于物理样本数。 |
+| §3.20 校准 | `PASS` | hard gate 保留、性能裁决延迟至 full，3.21.1 忠实复现。 |
+| 整体治理 | `PASS` | BLOCKED/NOT_STARTED、八项 OPEN、空批准字段、无后端选择、无 admission。 |
+
+总评：`PASS`。`precommit-v6` 当前可视为已完成静态审阅。本 PASS 不构成 acquisition、临时根目录创建、venv、
+依赖安装、smoke、full、后端选择、决策关闭、M8 准入、生产实现、merge 或 push 授权；下一步仍须按负责人已签署的
+授权文本执行（seed `20260906`、`synthetic-unit-vector-v1`、精确依赖版本、唯一新临时根目录、Smoke 后允许 Full）。
+
+#### 3.21.10 2026-09-08 `v6` smoke 处置（`ABORTED`，证据链无效）
+
+负责人授权的唯一一次 `sa.m8.admission-evidence.v6` / `precommit-v6` synthetic-only smoke，在临时 harness
+取得独立静态 `PASS` 后启动。运行在进入冻结 lifecycle/fixture inventory 前触发
+`DISK_PREFLIGHT_FAILED`，进程以 `ABORTED`、`smoke_integrity_pass=false`、
+`full_performance_pass=null`、`non_admission=true` 结束；未执行 full、未选择后端、未关闭 Decision ID，
+也不构成 M8 准入或生产开工授权。
+
+终态文件内部的直接绑定如下：
+
+- `report.json` SHA-256 为
+  `21185c4c1cd6110953b58e3167fc6f11ca6ece5ccddbdc3cd9e33e0c9412c6f4`，与 publication 和 final
+  run-state 一致；
+- `publication.json` SHA-256 为
+  `9f8df0aecb6fa5359fab260fde2c60bdf870132bab6d19b80fef80f8643e8f68`，与 final run-state 一致；
+- final run-state 为 `TERMINAL`，publication 声明网络观察 `attempt_count=0`；该观察仅覆盖 harness
+  执行期，不覆盖此前已获准的依赖 acquisition。
+
+独立证据审计结论为 `EVIDENCE INVALID`，因此上述文件不能作为有效的 v6 smoke decision evidence：
+
+- final run-state 只保留直接 predecessor digest，未保留可逐级复核的 predecessor artifacts，也未在终态中完整绑定
+  owner marker；
+- report/publication 未绑定 frozen-config hash、预检测量和完整 inventory digest；
+- 临时 audit 目录存在三个无法归属于本次 preflight 失败运行的旧 probe cleanup receipts，导致静态审计无法证明
+  本次运行从未进入 fixture/probe inventory，也无法证明唯一运行边界；
+- 终态未保存 package footprint、free-space 和 root measurement。执行后非权威复测观察到 package 约
+  `550,266,930` bytes、root 约 `550,698,690` bytes；按冻结公式，package 加 `512 MiB` reserve 为
+  `1,087,137,842` bytes，高于 root cap `825,157,508` bytes，但该复测未被终态哈希绑定，不能补写成运行证据。
+
+本 experiment ID 已产生终态，不得清除证据后重跑、调整预算后重判或继续 full。任何后续实验都必须使用新
+experiment ID、全新唯一临时根目录、修订后的协议与 harness、独立静态审阅和新的明确执行授权。M8 继续保持
+`BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
 
 ## 4. 后端无关 control/data-plane 契约草案
 
