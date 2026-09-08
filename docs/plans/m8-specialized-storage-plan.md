@@ -736,6 +736,33 @@ clip 等 heavy extra。
 
 本归因不构成 acquisition、执行、后端选择、决策关闭、M8 准入或生产授权。
 
+#### 3.21.12 2026-09-08 `v7` 磁盘预算修正公式（草案，待 v7 协议独立审阅）
+
+基于 3.21.11 归因，修订 3.18.1 的磁盘预算定义。本草案**未生效**，仅作为 `sa.m8.admission-evidence.v7`
+协议起草输入；生效需 v7 协议冻结并取得独立审阅 `PASS` 与负责人授权。修订要点：
+
+1. **废除固定 `512 MiB` reserve**。原 `temporary_root_peak_max = per_operation_peak_disk_max + 512 MiB`
+   对 LanceDB 体系依赖规模严重低估（3.21.11），予以废弃。
+2. **双门禁模型**。拆分两个相互独立、不混算的预算上限：
+   - **依赖门禁** `package_footprint_cap`：等于实测 venv/package 解压后 footprint（acquisition 后立即
+     实测），加固定安全余量 `PACKAGE_RESERVE_MIB = 64`。`measured_package_footprint ≤
+     package_footprint_cap` 才允许进入 build 阶段。
+   - **工作区门禁** `peak_disk_cap`：覆盖 staging、WAL、Arrow/cache、corpus、index 与报告，
+     `peak_disk_cap = per_operation_peak_disk_max + WORK_RESERVE_MIB`。`WORK_RESERVE_MIB` 基于
+     3.18.1 的 `per_operation_peak_disk_max`（10k rebuild 约 275 MiB）放大，建议
+     `WORK_RESERVE_MIB = 1536`（1.5 GiB），使 v7 工作区门禁约 `1.8 GiB`；最终值在 v7 冻结时确定。
+   - 根目录总上限 `temporary_root_peak_max = measured_package_footprint + peak_disk_cap`，
+     即 v7 约为 `package(~525 MiB) + 1.8 GiB ≈ 2.3 GiB`，显著高于 v6 的 786.9 MiB。
+3. **watchdog 行为不变**：acquisition 后先记录 package footprint，超过依赖门禁立即 `ABORTED`；任何
+   创建后、操作中采样、sample 完成后、workload 完成后的 `peak_disk` 超过工作区门禁立即 `ABORTED`；
+   `residual_bytes_max = 0`、`cleanup_failure_count = 0` 保持。仅 `ABORTED`，不发布任何性能终态。
+4. **`qdrant-client-local` 不确定项**：是否引入本地 server 二进制待 v7 预检实测；若引入，纳入
+   package footprint 门禁核算。
+5. **门禁数值冻结纪律**：`PACKAGE_RESERVE_MIB` 与 `WORK_RESERVE_MIB` 必须在 v7 acquisition 前冻结，
+   不得在观察实测结果后反推修改；如需调整，须建立新 experiment ID 与新授权链。
+
+本草案不构成 acquisition、执行、后端选择、决策关闭、M8 准入或生产授权。
+
 ## 4. 后端无关 control/data-plane 契约草案
 
 本草案参考 [`platform/app/vector_store.py`](../../platform/app/vector_store.py) 的 `VectorStore`、
