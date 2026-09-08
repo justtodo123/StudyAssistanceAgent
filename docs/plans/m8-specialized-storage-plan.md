@@ -763,6 +763,33 @@ clip 等 heavy extra。
 
 本草案不构成 acquisition、执行、后端选择、决策关闭、M8 准入或生产授权。
 
+#### 3.21.13 2026-09-08 `v7` 执行处置（`INVALID`，无可采纳证据）
+
+负责人确认仅允许 smoke 的 `sa.m8.admission-evidence.v7` / `precommit-v7` synthetic-only 尝试，因执行顺序
+违规而终止。冻结顺序要求“全新 harness → 独立静态审计 → 磁盘预算预检 → venv/acquisition → 版本自校验 →
+scaled smoke”；实际在全新 harness 完成且取得独立静态 `PASS` 前，已创建 CPython 3.11.9 venv 并开始依赖
+acquisition。该顺序颠倒破坏了运行前置边界，不能通过事后补审恢复有效性。
+
+本次尝试唯一终态为 `INVALID`，`smoke_integrity_pass=false`。scaled smoke 与 full 均未运行，未产生可采纳的
+correctness、fault fixture、network、cleanup、inventory、disk-budget、evidence-chain 或性能证据；已完成的依赖安装
+和预检观察也不得作为 V7 decision evidence，不产生候选排名、后端选择、Decision 关闭、M8 准入或生产开工授权。
+
+执行终止后已停止未完成的 harness 生成，并通知独立静态审阅和证据核对会话不再处理本次尝试。唯一系统临时根目录及
+临时根外的终态副本均已删除，删除后复核临时根不存在且 `residual_bytes=0`。仓库只保留本节的去敏治理事实，不保留
+venv、package、harness、sample、index、report、inventory、receipt、publication 或其他临时产物。
+
+同一 experiment ID 已产生 `INVALID` 终态，不得恢复、补审、重跑、重判或继续 full。任何后续实验必须使用新的
+experiment ID、protocol、唯一临时根目录、全新 harness、独立静态审阅和新的明确书面授权。
+
+另确认 V7 的依赖门禁 `package_footprint_cap = measured_package_footprint + 64 MiB` 为自引用公式：被门禁变量同时
+决定自身上限，使 `measured_package_footprint ≤ package_footprint_cap` 在非负 reserve 下机械恒真，不能形成可失败的
+预算门禁。后续 `precommit-v8` 必须在 acquisition 前冻结不依赖实测 footprint 的绝对 package cap，并把“全新临时
+根目录 → 全新 harness → 独立静态 `PASS` → 磁盘预算预检 → venv/acquisition → 版本自校验 → scaled smoke”定义为
+不可颠倒的 hard gate；缺少任一修订不得授权执行。
+
+M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。本处置不构成 v8 协议、v8 静态审阅、v8
+执行授权、commit、merge 或 push 授权。
+
 ## 4. 后端无关 control/data-plane 契约草案
 
 本草案参考 [`platform/app/vector_store.py`](../../platform/app/vector_store.py) 的 `VectorStore`、
