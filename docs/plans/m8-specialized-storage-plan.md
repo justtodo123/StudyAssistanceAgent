@@ -699,6 +699,43 @@ fixture coverage 与 probe-query sample inventory 必须分别核对，禁止共
 experiment ID、全新唯一临时根目录、修订后的协议与 harness、独立静态审阅和新的明确执行授权。M8 继续保持
 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
 
+#### 3.21.11 2026-09-08 `v6` 磁盘预算归因分析（`v7` 预算公式修正依据）
+
+针对 3.21.10 的 `DISK_PREFLIGHT_FAILED` 根因做独立归因。冻结公式（342–346 行）反推 root cap
+`825,157,508` 得到 `metadata≈1.26 MiB`，各项为：`B≈21.7 MiB`、`per_instance≈105.5 MiB`、
+`per_operation_peak(rebuild)≈274.9 MiB`、`temporary_root_peak_max=786.9 MiB`。
+
+实测与缺口：package（依赖 venv）`550,266,930`（≈524.8 MiB）；`package + 512 MiB reserve =
+1,087,137,842`（≈1,036.8 MiB）高于 root cap `825,157,508`（≈786.9 MiB），缺口 ≈ `261,980,334`
+bytes（≈249.8 MiB）。
+
+**根因判定**：不是公式结构错误，而是固定 `512 MiB` reserve 对 LanceDB 体系的依赖规模严重低估——
+仅依赖 venv 实测即需 ≈525 MiB，已耗尽全部 reserve，staging/WAL/Arrow/报告/corpus 无空间。
+
+依赖体积归因（PyPI 冻结版本实测 wheel 压缩体积）：
+
+| 包 | wheel | 说明 |
+| --- | --- | --- |
+| lancedb 0.38.0 | 99.3 MiB | 主力；强制引入 lance-namespace(Lance 引擎) 与 pyarrow>=16 |
+| pyarrow 25.0.1 | 26.6 MiB | LanceDB 硬依赖，Arrow 存储引擎 |
+| numpy 2.4.6 | 12.0 MiB | 公共依赖 |
+| qdrant-client 1.19.0 | 0.4 MiB | 纯 Python 瘦客户端；但 `qdrant-client-local` 可能引入本地 server 二进制（待实测） |
+| grpcio（传递） | 4.9 MiB | qdrant-client 的 gRPC 层 |
+| psutil 7.2.2 | 0.1 MiB | 极小 |
+
+**结论**：LanceDB 全家桶（lancedb + lance-namespace + pyarrow + numpy ≈ 138+ MiB 压缩 wheel）解压后
+磁盘占用约 3–4 倍（与实测 524.8 MiB package 吻合），是预算被突破的绝对主因；未启用 pylance/embeddings/
+clip 等 heavy extra。
+
+**v7 预算公式修正建议**（不作为本次变更，待 v7 协议独立审阅）：
+1. 将固定 `512 MiB` reserve 替换为"实测依赖 footprint + 独立工作 reserve"双门禁模型；
+2. 建议 `temporary_root_peak_max = measured_package_footprint + work_reserve`，`work_reserve≥1.5 GiB`
+   （10k 的 per_operation_peak 本身 ~275 MiB，叠加 rebuild 需余量），即 v7 root cap 约 `2 GiB+`；
+3. 拆成两个独立门禁：`package_footprint ≤ cap1`（依赖上限）与 `peak_disk ≤ cap2`（工作区上限），不混算；
+4. `qdrant-client-local` 是否引入本地 server 二进制是不确定项，须在 v7 预检时实测纳入。
+
+本归因不构成 acquisition、执行、后端选择、决策关闭、M8 准入或生产授权。
+
 ## 4. 后端无关 control/data-plane 契约草案
 
 本草案参考 [`platform/app/vector_store.py`](../../platform/app/vector_store.py) 的 `VectorStore`、
