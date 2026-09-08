@@ -58,6 +58,7 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | `data-expansion-runbook.md` | 未来参考运行手册 | `DRAFT / NON-AUTHORITATIVE`；不批准数据扩展，不关闭 P0 或下游门禁 |
 | `m8-specialized-storage-plan.md` | 阶段准入准备计划 | `M8-M7-EXIT=SATISFIED`；V7 因顺序违规以 `INVALID` 封口（§3.21.13）；自身决策和批准未闭合，Milvus/LanceDB/Qdrant 均未选定，`BLOCKED / NOT_STARTED` |
 | `m8-v7-admission-protocol.md` | V7 静态冻结协议 | 独立静态审阅曾 `PASS`；执行尝试已 `INVALID`，不得恢复或重试同一 ID |
+| `m8-v8-admission-protocol.md` | V8 正式冻结协议 | 独立静态审阅 `PASS`；仅 scaled smoke 已授权，禁止 full；执行须从全新临时根与全新 harness 开始 |
 | `m9-goal-driven-planning-plan.md` | 阶段准入准备计划 | M9 目标驱动计划、mastery 与偏差；`BLOCKED / NOT_STARTED` |
 | `m10-autonomous-runner-plan.md` | 阶段准入准备计划 | M10 自主 Runner、写副作用与 Harness；`BLOCKED / NOT_STARTED` |
 
@@ -69,5 +70,6 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | [`references/stage-advancement-analysis.md`](references/stage-advancement-analysis.md) | M6–M10 推进分析 | 辅助决策；最终依据是 PLAN.md |
 | [`references/recruitment-driven-feasibility.md`](references/recruitment-driven-feasibility.md) | 招聘驱动可行性分析 | 辅助决策；结论已反映在 PLAN.md 的 M6a/M6b 拆分中 |
 | [`references/m8-v7-authorization-20260908.md`](references/m8-v7-authorization-20260908.md) | V7 仅-smoke 待签范围记录 | V7 已 `INVALID`；不是 M8 准入或 v8 授权 |
+| [`references/m8-v8-authorization-20260908.md`](references/m8-v8-authorization-20260908.md) | V8 仅 scaled smoke 授权记录 | 冻结 1 GiB package cap 与 1536 MiB work reserve；禁止 full；不是 M8 准入或生产授权 |
 
 > 后续由 `review-plan` Skill 生成的个人复习计划，继续使用 `{plan_name}-plan.md` 命名，避免与项目执行计划、调查材料混淆。

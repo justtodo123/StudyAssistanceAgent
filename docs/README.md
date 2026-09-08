@@ -22,7 +22,8 @@ docs/
 │   │   ├── agent-alignment-analysis.md
 │   │   ├── recruitment-driven-feasibility.md
 │   │   ├── stage-advancement-analysis.md
-│   │   └── m8-v7-authorization-20260908.md # V7 仅-smoke 待签范围记录；尝试已 INVALID
+│   │   ├── m8-v7-authorization-20260908.md # V7 仅-smoke 待签范围记录；尝试已 INVALID
+│   │   └── m8-v8-authorization-20260908.md # V8 已授权仅执行 scaled smoke；禁止 full
 │   ├── m3-engineering-execution-plan.md
 │   ├── m4-knowledge-base-scale-plan.md
 │   ├── m5-agent-session-delivery-plan.md
@@ -33,6 +34,7 @@ docs/
 │   ├── data-expansion-runbook.md # M7 数据扩展非权威未来参考；不批准语料
 │   ├── m8-specialized-storage-plan.md
 │   ├── m8-v7-admission-protocol.md # V7 静态冻结协议；执行尝试已 INVALID
+│   ├── m8-v8-admission-protocol.md # V8 正式冻结协议；仅 scaled smoke 已授权
 │   ├── m9-goal-driven-planning-plan.md
 │   └── m10-autonomous-runner-plan.md
 ├── standards/             # 开发规范
@@ -90,6 +92,8 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
   [plans/m8-specialized-storage-plan.md](plans/m8-specialized-storage-plan.md)、
   [plans/m8-v7-admission-protocol.md](plans/m8-v7-admission-protocol.md)（静态协议曾通过审阅，但 V7 尝试已因顺序违规
   `INVALID`；处置见主 M8 计划 §3.21.13）、
+  [plans/m8-v8-admission-protocol.md](plans/m8-v8-admission-protocol.md)（正式冻结并通过独立静态审阅；当前仅授权
+  scaled smoke，禁止 full）、
   [plans/m9-goal-driven-planning-plan.md](plans/m9-goal-driven-planning-plan.md)、
   [plans/m10-autonomous-runner-plan.md](plans/m10-autonomous-runner-plan.md)。计划存在只代表设定澄清准备，不能推导实现或批准。
 - M7 P0 语料治理结果见
@@ -98,8 +102,9 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 - 当前 M6b 不接管正式学习会话；完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测后移 M10。
 - 默认 RAG 评测仍为 OS/DS/CO 三课 90 题；Network 评测集为显式运行的独立扩展。
 - `plans/references/` 只存放辅助决策的分析与事实调查，**不能作为最终支撑来源**。V7 仅-smoke 待签范围记录见
-  [plans/references/m8-v7-authorization-20260908.md](plans/references/m8-v7-authorization-20260908.md)；该记录不是 M8 准入或
-  v8 授权。
+  [plans/references/m8-v7-authorization-20260908.md](plans/references/m8-v7-authorization-20260908.md)；V8 仅 scaled smoke
+  授权记录见 [plans/references/m8-v8-authorization-20260908.md](plans/references/m8-v8-authorization-20260908.md)。V8
+  授权禁止 full，且不构成 M8 准入或生产授权。
 
 ### reference/ — 外部资料索引
 

@@ -19,6 +19,7 @@
 | [`stage-advancement-analysis.md`](stage-advancement-analysis.md) | M6–M10 推进顺序与招聘项映射 | 辅助调查 |
 | [`recruitment-driven-feasibility.md`](recruitment-driven-feasibility.md) | 以招聘要求为唯一标准的可行性分析与阶段更新建议 | 辅助调查 |
 | [`m8-v7-authorization-20260908.md`](m8-v7-authorization-20260908.md) | V7 仅-smoke 待签范围记录；执行尝试已 `INVALID` | 不是 M8 准入或 v8 授权 |
+| [`m8-v8-authorization-20260908.md`](m8-v8-authorization-20260908.md) | V8 已授权仅执行 scaled smoke；冻结 `PACKAGE_FOOTPRINT_CAP=1 GiB` 与 `WORK_RESERVE_MIB=1536` | 不是 M8 准入或 full/生产授权 |
 
 招聘对照原文：[`docs/interview/StudyAssistanceAgent_requirement.md`](../../interview/StudyAssistanceAgent_requirement.md)。
 该原文同样不是计划依据。

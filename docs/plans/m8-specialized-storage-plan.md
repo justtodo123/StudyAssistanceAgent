@@ -790,6 +790,17 @@ experiment ID、protocol、唯一临时根目录、全新 harness、独立静态
 M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。本处置不构成 v8 协议、v8 静态审阅、v8
 执行授权、commit、merge 或 push 授权。
 
+#### 3.21.14 2026-09-08 `v8` 协议冻结与仅-smoke 授权
+
+`sa.m8.admission-evidence.v8` / `precommit-v8` 已形成正式冻结协议并取得独立静态审阅 `PASS`。协议将
+`PACKAGE_FOOTPRINT_CAP = 1073741824` bytes 固定为 acquisition 前确定、且不依赖实测 footprint 的绝对常量；
+`WORK_RESERVE_MIB = 1536`。同时将“全新唯一临时根目录 → 全新 harness → acquisition 前独立 harness 静态审计
+`PASS` → 磁盘预算预检 → venv/acquisition → 版本自校验 → scaled smoke”冻结为不可颠倒的 hard gate。
+
+负责人已明确授权仅执行 scaled smoke，禁止 full。该授权不允许跳过全新 harness 的 acquisition 前独立静态审计，
+也不构成后端选择、Decision 关闭、M8 admission、生产实现、merge 或 push 授权。M8 继续保持
+`BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
+
 ## 4. 后端无关 control/data-plane 契约草案
 
 本草案参考 [`platform/app/vector_store.py`](../../platform/app/vector_store.py) 的 `VectorStore`、
