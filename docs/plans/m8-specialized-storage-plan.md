@@ -883,11 +883,12 @@ V9 临时根仅作为 pre-freeze static-failure context；不得在该根上修�
 治理处置事实，不是实验、审计、cleanup 或执行证据。
 
 本段原先要求下一次尝试使用 `sa.m8.admission-evidence.v10` / `precommit-v10`；该历史后继指令已被
-§3.21.17 的 V10 `PRE_SOURCE_GOVERNANCE_INVALID` 处置 `superseded`，不得作为现行操作要求。V11 后续也已按
-§3.21.18 处置为 `PRE_SOURCE_PROVENANCE_INVALID`；当前后继为 V12，且仅完成阶段 1 source freeze。独立静态审计
-取得 `PASS` 前，仍禁止 preflight、创建 venv、安装或获取
-依赖、acquisition、smoke、full 和任何 benchmark。M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为
-`OPEN`。
+§3.21.17 的 V10 `PRE_SOURCE_GOVERNANCE_INVALID` 处置 `superseded`，不得作为现行操作要求。随后关于 V11
+及 V12 的内容同样属于当时的历史后继条件：V11 已按 §3.21.18 处置为 `PRE_SOURCE_PROVENANCE_INVALID`，V12
+虽完成阶段 1 source freeze，但其独立静态审计已于 `2026-09-09T12:12:34Z` 判定 `FAIL`，并按 §3.21.20
+以 `INDEPENDENT_STATIC_AUDIT_FAILED` 永久封口。故本段不得解释为 V12 当前等待 `PASS`；当前没有可继续的后继，
+仍禁止 preflight、创建 venv、安装或获取依赖、acquisition、smoke、full 和任何 benchmark。M8 继续保持
+`BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`；任何未来后继须另行书面授权并使用全新 V13 身份。
 
 #### 3.21.17 2026-09-09 `v10` pre-source governance failure（不可复用）
 

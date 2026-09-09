@@ -56,8 +56,10 @@ V11 仅绑定以下去敏处置 digest 作为 predecessor context，不绑定任
 指向 `precommit-v11` 及 preflight 阶段的负责人书面授权。本授权不构成、也不继承任何 preflight 或执行授权。
 
 实际 V11 marker 的初始 allowlist 遗漏 `source-manifest.json` 与 `source-generation-inventory.json`，且 marker
-没有末尾 LF。阶段 1 授权已被消费，但其证据根不满足 provenance 合同，故 V11 已正式处置为
-`PRE_SOURCE_PROVENANCE_INVALID`。本授权不得继续、恢复、补审或授权 V12；V12 必须使用新的书面授权、随机根、
-nonce、marker、source tree、manifest 与 inventory。
+没有末尾 LF。原授权第 1 项只显式要求 allowlist 覆盖 marker 与六个 source，第 3 项则另行授权生成 manifest 与
+inventory，未清楚表达后两项也必须由**初始** allowlist 覆盖；这是原授权文字与阶段 1 完整 provenance 合同之间的
+表述缺口，不得事后倒推为当时已有明确九文件要求。该缺口不改变实际 marker 不完整、阶段 1 授权已消费及 V11
+`PRE_SOURCE_PROVENANCE_INVALID` 的终态；本授权不得继续、恢复、补审，也不授权 V12 或任何后继动作。V12 的历史
+阶段 1 另有新的书面授权、随机根、nonce、marker、source tree、manifest 与 inventory，但现亦已永久封口且不可复用。
 
 M8 继续 `BLOCKED / NOT_STARTED`，八项 Decision 继续 `OPEN`。

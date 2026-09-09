@@ -27,6 +27,7 @@
 | [V12 independent static audit (FAIL)](m8-v12-independent-static-audit-fail-20260909.md) | 现行独立静态审计报告 | 最终 `FAIL`；四项机械门禁缺陷；V12 不可复用 |
 | [V12 independent static audit (historical)](m8-v12-independent-static-audit-20260909.md) | 历史审计记录 | 初判 `PASS` 已失效，仅作历史追溯 |
 | [V12 disposition](m8-v12-disposition-20260909.md) | 永久处置 | `INDEPENDENT_STATIC_AUDIT_FAILED`；不可复用 |
+| [M8 eleven-round governance review](m8-eleven-rounds-governance-review.md) | V1–V11 辅助治理复盘 | 仅供辅助判断；不是计划依据或授权 |
 
 以上记录都不是 M8 准入。V8–V12 不得授权其对应身份或后继；V12 独立静态审计最终为 `FAIL`，其授权仅覆盖已
 完成的阶段 1，从未覆盖独立审计 `PASS`、preflight 或执行。任何后继实验须由负责人另行书面授权。

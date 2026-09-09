@@ -82,6 +82,7 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | [V12 independent static audit (FAIL)](references/m8-v12-independent-static-audit-fail-20260909.md) | 现行独立静态审计报告 | 最终 `FAIL`；四项机械门禁缺陷；V12 不可复用 |
 | [V12 independent static audit (historical)](references/m8-v12-independent-static-audit-20260909.md) | 历史审计记录 | 初判 `PASS` 已失效，仅作历史追溯 |
 | [V12 disposition](references/m8-v12-disposition-20260909.md) | 永久处置 | `INDEPENDENT_STATIC_AUDIT_FAILED`；不可复用 |
+| [M8 eleven-round governance review](references/m8-eleven-rounds-governance-review.md) | V1–V11 辅助治理复盘 | 仅供辅助判断；不是计划依据或授权 |
 
 V8–V11 记录均不得授权其对应身份或后继。V12 独立静态审计已 `FAIL`，现以 `INDEPENDENT_STATIC_AUDIT_FAILED` 永久封口且不可复用，不得进入 preflight 或 harness；任何后继实验必须使用全新 V13 身份并取得新的书面授权。
 

@@ -119,6 +119,10 @@ containment、终态 schema、stop rules 及 gate freshness。predecessor digest
 
 ## 8. 2026-09-09 治理终态
 
+历史协议第 3.2 步只显式要求初始 allowlist 覆盖 marker 与六个 source，第 3.4 步又要求生成 manifest 与 inventory；
+二者合并后并未机械地写明后两项也必须由初始 allowlist 覆盖。因此，不得倒推声称 V11 当时已有清晰的九文件
+allowlist 合同；该规范缺口本身也是阶段 1 provenance 无法成立且不能原地补写的原因。
+
 V11 阶段 1 曾取得明确书面授权并创建唯一临时根，但首个 `root-provenance.json` 的初始
 `allowed_artifact_prefixes` 只覆盖 marker 与六个 source，遗漏阶段 1 必须生成的 `source-manifest.json` 和
 `source-generation-inventory.json`。对 marker 的只读字节核对同时确认：UTF-8 无 BOM、无 CR，但没有末尾 LF，
@@ -134,7 +138,10 @@ V11 阶段 1 曾取得明确书面授权并创建唯一临时根，但首个 `ro
 
 其 SHA-256 为 `d9dda09590956d185c96fcd828ce9daea2288b545f82887f0ec28c91ad07b64d`。该 digest 只绑定治理处置，
 不是实验、审计、cleanup 或执行证据。V11 未执行 generated Python、preflight、venv、acquisition、smoke、full
-或 benchmark。后继只能使用全新的递增身份；当前为 `sa.m8.admission-evidence.v12` / `precommit-v12`。
+或 benchmark。后继只能使用全新的递增身份；该记录形成时指定的历史后继为
+`sa.m8.admission-evidence.v12` / `precommit-v12`，其现行处置见下文。
 
-M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 保持 `OPEN`。V12 source freeze 后必须由未参与 authoring/
-repair/execution 的独立会话审计；只有独立 `PASS` 后，才可另行取得 preflight 与执行授权。
+M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 保持 `OPEN`。以上关于 V12 source freeze 后进行独立审计、以及
+独立 `PASS` 后再另行取得 preflight 与执行授权的内容，是 V11 记录形成时的历史后续流程要求，现已被 V12
+独立静态审计 `FAIL` 及 §3.21.20 / V12 disposition superseded。V12 已以
+`INDEPENDENT_STATIC_AUDIT_FAILED` 永久封口且不可复用；当前没有 V12 后续动作或现行后继。

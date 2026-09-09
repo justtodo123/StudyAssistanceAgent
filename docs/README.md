@@ -30,7 +30,8 @@ docs/
 │   │   ├── m8-v12-authorization-20260909.md # V12 阶段 1 授权已消费；V12 已封口
 │   │   ├── m8-v12-disposition-20260909.md # V12 永久处置；不可复用
 │   │   ├── m8-v12-independent-static-audit-20260909.md # V12 历史审计 PASS 已失效
-│   │   └── m8-v12-independent-static-audit-fail-20260909.md # V12 独立静态审计 FAIL
+│   │   ├── m8-v12-independent-static-audit-fail-20260909.md # V12 独立静态审计 FAIL
+│   │   └── m8-eleven-rounds-governance-review.md # V1–V11 辅助治理复盘；非计划依据或授权
 │   ├── m3-engineering-execution-plan.md
 │   ├── m4-knowledge-base-scale-plan.md
 │   ├── m5-agent-session-delivery-plan.md
