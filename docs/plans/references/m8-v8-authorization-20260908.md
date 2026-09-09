@@ -3,10 +3,14 @@
 授权日期：2026-09-08
 授权对象：`sa.m8.admission-evidence.v8` / `precommit-v8`
 授权协议：`docs/plans/m8-v8-admission-protocol.md`（独立静态审阅 §8 已 `PASS`）
-文档状态：**已授权，仅允许 scaled smoke**
-授权人（负责人）：用户于当前会话明确授权
+文档状态：**历史授权已消费并失效；V8 执行已 `INVALID`，不再允许任何执行**
+授权人（负责人）：用户于 2026-09-08 会话明确授权（历史记录）
 
-兹授权严格按照 `precommit-v8` 的不可颠倒 hard gate 顺序，在一个全新的唯一系统临时根目录中准备并执行 v8 临时合成实验。授权范围和冻结约束如下。
+以下为 2026-09-08 当时的历史授权原文与冻结范围，仅为保留审计链而保留；§10 已将其消费并失效，现不得据此执行。
+
+**不可执行声明**：本文档（含依赖、磁盘预算、工作负载、§6 执行顺序等历史内容）已被 V8 `INVALID`
+处置消费并失效且已 `superseded`，仅供治理与审计追溯。任何组织或个人不得据此创建根、建 venv、安装依赖、
+执行 preflight、smoke、full 或 benchmark，不得用于恢复或承接任何后续实验。
 
 ## 1. 环境与依赖（精确版本，安装后必须自校验）
 
@@ -112,3 +116,13 @@
 - `PACKAGE_FOOTPRINT_CAP`：**1073741824 bytes（1 GiB）**
 - `WORK_RESERVE_MIB`：**1536 MiB**
 - 授权日期：2026-09-08
+
+## 10. 2026-09-09 消费与失效处置
+
+该授权曾且仅曾允许 `sa.m8.admission-evidence.v8` / `precommit-v8` 的 scaled smoke。V8 实际临时根在独立
+harness 静态审计前出现 CPython `3.12` bytecode，source-only provenance 失效；三个源码哈希变化同时使原
+inventory/execution gate 过期。V8 执行因此以唯一终态 `INVALID` 永久封口，详见主 M8 计划 §3.21.15。
+
+本授权已消费且失效：不得据此继续、清理后恢复、补审、重算、重跑或重判 V8，也不得将其解释为后续 experiment
+ID 的授权。任何后续尝试都必须使用新的 protocol、唯一根、source-only provenance 链、独立静态审计与新的明确
+书面授权；独立 `PASS` 前继续停止在 preflight 之前。M8 仍为 `BLOCKED / NOT_STARTED`。

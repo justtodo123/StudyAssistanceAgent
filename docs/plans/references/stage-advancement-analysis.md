@@ -42,7 +42,7 @@ PLAN 已把定位定为「通用学习 Agent harness」，并把 M0–M5 冻成 
 | --- | --- | --- |
 | 工具协议 / 注册表 | M6 | 现有 QA/Quiz/Review 先变成 Tool，Runner 才能换 |
 | 额外知识源、规模 | M7 | 没有 Source，换库也加不了用户数据 |
-| 向量库专业化（LanceDB/Qdrant） | M8 | PLAN 已选嵌入式优先，不是 Milvus |
+| 向量库专业化（LanceDB/Qdrant） | M8 | PLAN 仅列候选并要求离线优先，尚未选择后端 |
 | 语义缓存、查询改写 | M8 或更后 | 先有可切换 Store，缓存才有稳定 embedding |
 | 画像 / 外部 AI 规划 / 监控 | M9 | 这是新定位的产品核心，但依赖目录与掌握度表 |
 | 可选 ReAct、Agent 评测 | M10 | 有 Tool + 计划执行后，ReAct 才是可回退的 Runner |
@@ -101,10 +101,10 @@ M6 协议（Source/Store/Tool/Runner）
 
 ### M8 专业化存储
 
-**PLAN 已定**：统一 schema；默认 LanceDB；Qdrant 万级可选；SQLite 线性后端降级。
+**现行 PLAN**：统一 schema；LanceDB、Qdrant 等仅为待评估候选；SQLite 线性后端保持现行基线与降级路径。
 
-招聘对照想用 Milvus，与 PLAN 冲突 → 以 PLAN 为准。
-LanceDB 解决单机千到万、零运维；Qdrant 只在万级夹具冒烟时需要，不应变成默认依赖。
+历史分析曾建议 LanceDB 处理单机千到万、Qdrant 仅作万级夹具候选；该建议不是后端选择，也不能覆盖 M8
+八项 `OPEN` Decision、独立批准与准入门禁。
 
 可顺手考虑、但不要写成 M8 必做：基于 BGE 的语义缓存（招聘 C2）。
 没有稳定 embedding 后端就做缓存，命中率数字没有意义。
@@ -113,7 +113,7 @@ LanceDB 解决单机千到万、零运维；Qdrant 只在万级夹具冒烟时�
 
 - 控制面（计划、掌握度、事件）和向量面分开，避免再出现 JSON 缓存扛主路径
 - 迁移必须从 M5 的 `vector_store.sqlite3` / `learning_state.sqlite3` 能过来
-- 无 LanceDB 时仍要能启动，这与「无 BGE 降级」是同一条产品原则
+- 未选择 LanceDB 或其他候选时仍要能启动，这与「无 BGE 降级」是同一条产品原则
 
 ### M9 目标驱动计划与执行监控
 
@@ -166,7 +166,7 @@ ReAct 是选工具的循环；M9 是选「今天学哪一条知识」的循环�
 
 - [ ] 阶段顺序仍是接口 → 数据源 → 存储 → 计划执行 → 可选 Runner
 - [ ] 默认 Runner 仍是学习闭环，ReAct 仍可选
-- [ ] 存储默认离线可跑，Qdrant 仍非默认
+- [ ] 存储默认离线可跑，Qdrant/LanceDB 等候选均不被预设为默认
 - [ ] 外部 AI 只看目录摘要，不看全书
 - [ ] 用户源在仓库外
 - [ ] 无 LLM / 无向量模型时核心路径仍在

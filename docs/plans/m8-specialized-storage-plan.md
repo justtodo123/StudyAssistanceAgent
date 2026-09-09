@@ -801,7 +801,114 @@ M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。本
 也不构成后端选择、Decision 关闭、M8 admission、生产实现、merge 或 push 授权。M8 继续保持
 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
 
-## 4. 后端无关 control/data-plane 契约草案
+#### 3.21.15 2026-09-09 `v8` 执行处置（`INVALID`，source-only provenance 失败）
+
+负责人报告：`sa.m8.admission-evidence.v8` / `precommit-v8` 的实际临时根在独立 harness 静态审计完成前出现
+CPython `3.12` bytecode（包括 `__pycache__` 下的 `.pyc`），因此不再满足 source-only provenance。随后有三个
+源码文件的 SHA-256 发生变化；原 inventory 与 execution gate 未随源文件变化重新生成，已失去 freshness，不能作为
+当前根的完整性证明。该次执行上下文以唯一终态 `INVALID` 永久封口；本节是去敏治理记录，不保存临时根、bytecode、
+venv、原始报告或其他实验产物。
+
+对失效根进行只读 forensic 核对时，观察到根 basename 为
+`sa-m8-v8-84cbcf3cdb324b54b06255834e3c9ee8`，污染文件为
+`__pycache__/acquisition-preflight.cpython-312.pyc`（29361 bytes）。这些值来自已失去可信 provenance 的根，只用于说明
+失败原因，不是可采纳实验、审计或 cleanup 证据。各文件的 inventory 与 forensic 值如下：
+
+- `acquisition-preflight.py`
+  - inventory：size `8922`；SHA-256
+    `18754309c9378d83427fe8ae13dacfa7a125d1d146eb094cfbd05597d21e0538`
+  - forensic current：size `21638`；SHA-256
+    `c5ae27079b751c207f9ae98ea59ddd2a8b85504161e4be40631b3e7affe18a1e`
+- `frozen-config.json`
+  - inventory：size `4351`；SHA-256
+    `6c36c32107e770b7d14f87c4691b36af69eb7357c06d5c137c94c4009362a0d6`
+  - forensic current：size `4329`；SHA-256
+    `fb0ad23c781b95f92826d27042a3bea6af064b8056352e166a449509088f0bb9`
+- `precommit_v8_smoke.py`
+  - inventory：size `47243`；SHA-256
+    `f794e3d46d55d7f2928d18f324c312d9f47ea28e742863d07586055c2a6fc43f`
+  - forensic current：size `47243`；SHA-256
+    `de09fd0e666fbebecab858f0b4d33d05a656c42d69740b6b09d7e52bbba24234`
+
+原 execution gate 同时为 `signed=false`、`static_audit_pass=false`、`auditor_independent=false`，且没有 auditor ID 或
+审计时间。另观察到相同 V8 身份下还有两个不完整临时根：`sa-m8-v8-3e807a8453b40d6c31c6dbc7c96aac64` 缺少 harness、静态
+checklist、source inventory 与 execution gate；`sa-m8-v8-fad68bc7e60d433bbd1bda69bb54cdf6` 缺少 root
+provenance 与 source inventory，且 gate 未签名、未绑定 source hashes。因此不得选择其中任何一个作为可信基线。
+上述核对不恢复 V8 有效性。三个根当时仍存在，且没有可采纳 cleanup receipt；`residual_bytes=0` 也未独立
+核验，因此不得宣称清理完成。
+
+该次 V8 尝试不产生可采纳的 correctness、fault-fixture、network、cleanup、inventory、disk-budget、性能或
+evidence-chain 证据，不产生候选排名、后端选择、Decision 关闭、M8 admission、生产实现、commit、merge 或 push
+授权。不得在 V8 根上补丁、清理后继续、补审、重算、重判、重跑或恢复；不得复用该根及其 harness、venv、sample、
+index、report、inventory、receipt、publication、bytecode 或统计结果。原 §3.21.14 记录的 V8 协议文本静态审阅
+`PASS` 与本执行处置互不覆盖：前者仅证明协议文本，后者永久证明该执行根的 provenance 失效。
+
+任何后续尝试必须使用新的 experiment ID、protocol、唯一系统临时根、root owner marker、全新 source tree/harness、
+source-only manifest、冻结配置、inventory、独立静态审计、与 audit record 绑定的 execution gate 和新的明确书面
+授权。新尝试必须从 provenance 开始：先取得 root-provenance/source-authoring 阶段授权，再创建根、生成并冻结
+source/tree/harness/config 哈希与 inventory；独立静态审计取得 `PASS` 后，才可创建与该 audit record 绑定的 gate，
+并另行申请 preflight 授权。独立 `PASS` 前，禁止 preflight、创建 venv、dependency acquisition、smoke 或 full。
+M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
+
+#### 3.21.16 2026-09-09 `v9` pre-freeze static-audit failure（不可复用）
+
+`sa.m8.admission-evidence.v9` / `precommit-v9` 在 source freeze 之前的作者侧只读复核中发现多个足以阻断
+source-only provenance、execution safety、evidence integrity 和 correctness gate 的实质缺陷。该复核不是独立
+静态审计，不产生 `PASS`，也不产生 inventory、execution gate 或任何执行授权。已确认的阻断项包括：
+
+- `frozen-config.json` 不是 canonical LF JSON，而 preflight/launcher 的 canonical loader 会拒绝该文件；
+- `query_sample()` 的 backend 目录创建顺序不安全；
+- source inventory 记录缺少协议要求的规范化相对路径、file type 和 byte size；
+- execution gate 未绑定独立 audit record 与负责人 release authorization；
+- root-wide symlink/reparse/resolved-containment 检查不完整；
+- network guard 未覆盖全部 DNS/name-lookup helper；
+- invalid fixture 的 mutation rejection、last-good rollback、tombstone/hard-delete 物理语义没有成为可验证的
+  success gate；
+- cleanup receipt 缺少完整上游绑定和 self-digest；failure publication 可能静默吞掉终态写入失败；
+- serializer 未显式拒绝 NaN/Infinity，loaded evidence 也没有统一递归拒绝 absolute path；
+- 协议要求绑定 V8 predecessor disposition digest，但没有同步冻结可独立重算的 canonical V8 disposition payload
+  与 digest 值；该合同不完整，不能追溯补造，也不得复制到后继协议。
+
+因此，V9 从未进入 source freeze，未取得独立静态审计 `PASS`，未生成可信的 source-generation inventory 或
+execution gate，未执行 preflight、venv creation、dependency acquisition、smoke、full 或 benchmark。当前
+V9 临时根仅作为 pre-freeze static-failure context；不得在该根上修复、清理后继续、补审、重算、重判、恢复、
+重跑或复用，也不得将作者侧 preliminary findings 当作正式 audit record。V9 授权记录保持 `NOT_AUTHORIZED`，
+且该授权未被消费、不能授权任何后续动作。该去敏处置的 canonical payload 为：
+
+```json
+{"execution_authorized":false,"execution_gate_created":false,"experiment_id":"sa.m8.admission-evidence.v9","independent_static_audit_pass":false,"protocol":"precommit-v9","root_reusable":false,"source_frozen":false,"source_inventory_created":false,"status":"PRE_FREEZE_STATIC_AUDIT_FAILED"}
+```
+
+其 SHA-256 为 `f0590baaf24a187db010539f8d5e2ebfbf19616cfc3cae43dd431202a8a16eb6`；该 digest 只绑定
+治理处置事实，不是实验、审计、cleanup 或执行证据。
+
+本段原先要求下一次尝试使用 `sa.m8.admission-evidence.v10` / `precommit-v10`；该历史后继指令已被
+§3.21.17 的 V10 `PRE_SOURCE_GOVERNANCE_INVALID` 处置 `superseded`，不得作为现行操作要求。当前潜在后继仅为
+新的递增身份 V11；这不构成任何阶段授权。独立静态审计取得 `PASS` 前，仍禁止 preflight、创建 venv、安装或获取
+依赖、acquisition、smoke、full 和任何 benchmark。M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为
+`OPEN`。
+
+#### 3.21.17 2026-09-09 `v10` pre-source governance failure（不可复用）
+
+`sa.m8.admission-evidence.v10` / `precommit-v10` 的临时根在治理记录仍明确禁止创建根期间被错误创建；其首个
+`root-provenance.json` 的 `allowed_artifact_prefixes` 仅允许自身，未允许未来 source artifact。因此该根违反了
+治理顺序；marker allowlist 也不足以支持后续 source authoring，但没有证据表明已写入 allowlist 外 artifact。该根已
+以唯一治理处置 `PRE_SOURCE_GOVERNANCE_INVALID` 封口，不得修复、补审、清理后继续、重算、重判、恢复、重跑
+或复用。根内除首个 provenance marker 外未写入 source 或其他 artifact，未执行生成 Python、preflight、venv、
+依赖获取、acquisition、smoke、full 或 benchmark；不得将其产生任何实验或准入证据。
+
+该去敏处置的 canonical payload（无尾随换行）为：
+
+```json
+{"experiment_id":"sa.m8.admission-evidence.v10","generated_python_executed":false,"preflight_started":false,"protocol":"precommit-v10","root_reusable":false,"source_authored":false,"status":"PRE_SOURCE_GOVERNANCE_INVALID","violations":["root_created_while_governance_record_forbade_root_creation","root_marker_allowlist_omitted_future_source_artifacts"]}
+```
+
+其 SHA-256 为 `1a7043b78e51d293ba5e0d37a7e0bfc409b05f0ba7d0bfb20010dea34aa8d4e9`；该 digest 仅绑定去敏治理事实，
+不是实验、审计、cleanup 或执行证据。V10 authorization 仍为 `NOT_AUTHORIZED`、未消费且不能授权任何后续动作。
+下一次有效尝试必须递增为 V11，并先取得明确指向 root-provenance/source-authoring 阶段的书面授权；随后才能
+创建 V11 根、生成并冻结 source tree，接受独立静态审计。只有独立 `PASS` 后，才可另行授权 preflight 或任何
+后续实验阶段。M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
+
 
 本草案参考 [`platform/app/vector_store.py`](../../platform/app/vector_store.py) 的 `VectorStore`、
 `SqliteVectorStore`、`LocalVectorStore`、`export_items()`、`migrate_store()`，以及

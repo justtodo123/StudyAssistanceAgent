@@ -216,8 +216,7 @@ M10 → Agent 评测 + MCP + 多 Agent 了解
 **与原分析一致，不变。**
 
 - 统一学习 schema
-- 默认 LanceDB
-- Qdrant 万级可选
+- LanceDB、Qdrant 等作为待评估候选，本文不选择默认后端
 
 **招聘价值**：★★★☆☆ 展示「存储可替换」的架构设计。
 

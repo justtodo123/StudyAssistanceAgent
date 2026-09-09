@@ -32,7 +32,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | 向量 | 本地 BGE（sentence-transformers），可选安装 | 离线、零 API 成本、隐私；未装时自动降级关键词 |
 | 检索 | BM25 + 向量多路召回 + RRF 融合 | 混合检索，鲁棒、无需调参 |
 | LLM | OpenAI 兼容接口（DeepSeek 等），可配 | 不配则降级为笔记摘要，保证总是有输出 |
-| 存储 | 当前学习状态与向量持久化均为 SQLite；M8 规划 LanceDB/Qdrant | 当前向量仍为线性余弦；协议可替换且默认离线可跑 |
+| 存储 | 当前学习状态与向量持久化均为 SQLite；M8 将评估 LanceDB/Qdrant 等候选，尚未选择 | 当前向量仍为线性余弦；协议可替换且默认离线可跑 |
 | 数据源 | 默认人工 Markdown pack；网页/AI 只产生候选或响应 | 检索允许名单见 runtime-contracts；不把原始 PDF 写入 Git |
 
 **架构**（参考 `ai_agent_platform` 的 MultiRecall/RRF/LongContext 模式，做个人级瘦身）：
@@ -143,7 +143,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | M6a | `ADMITTED` | `COMPLETE` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制决策与保护基线已闭合；justtodo123 于 2026-08-25 批准开工，M6a-1 与 M6a-2 自动化门禁已通过，M6a-4 已完成收口 |
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
 | M7 | `ADMITTED` | `COMPLETE` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策、保护基线、Source lifecycle/delete/isolation/fallback、冻结 1k/3k BGE 与五格式 100×20 parser/normalized/lifecycle 证据已闭合。原 2026-08-31 准入与开工授权保持不变；justtodo123 于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内独立批准 `M7 COMPLETE`。技术证据本身不产生批准；M6b preview、Quiz、Review Plan 与 study-sessions 仍不含用户源 |
-| M8 | `BLOCKED` | `NOT_STARTED` | [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md) | `M8-M7-EXIT=SATISFIED`；M8 自身八项强制决策、后端选择与独立批准仍未闭合，Milvus/LanceDB/Qdrant 均未选定或获批 |
+| M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | V8–V10 已封口；V11 未授权；决策、选择和批准仍 `OPEN` |
 | M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT=SATISFIED`；仍等待 M8 退出，计划/mastery 权威设定与独立批准仍 `OPEN` |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | `M10-M7-EXIT=SATISFIED`；仍等待 M8/M9，写授权、恢复、rollout 与独立批准仍 `OPEN` |
 
@@ -212,8 +212,12 @@ M8–M9，且都不以 M6b 为写路径或 Source 生命周期前置。
   内部服务边界；用户源读后 operation-lock 复核是有界进程内保护，不是跨进程 read lease。Network 文档晋升、P0 语料
   闭环、任何 corpus 自动批准、M8 专业存储和 Milvus 后端选择仍在批准范围外。
 - ⬜ **M8 专业化存储**：准备计划见
-  [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md)；`M8-M7-EXIT` 已满足，但 M8 自身决策与批准仍未闭合。
-  Milvus、LanceDB、Qdrant 均未选定或获批，不能在依赖、迁移、parity、fallback 和选择阈值闭合前成为默认。
+  [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md)；`M8-M7-EXIT` 已满足，但 M8 自身决策与批准
+  仍未闭合。V8 执行根已 `INVALID`，V9 已 `PRE_FREEZE_STATIC_AUDIT_FAILED`，V10 已
+  `PRE_SOURCE_GOVERNANCE_INVALID`；三者的 experiment/protocol 身份、根、source 与 artifact 均不得修复、恢复、
+  补审、重跑或复用。V11 只是当前潜在递增后继，不构成 root/source、preflight 或任何执行阶段授权；其 root/source
+  阶段须先取得明确书面授权，独立静态审计 `PASS` 后仍须另行授权 preflight。Milvus、LanceDB、Qdrant 均未选定或
+  获批，不能在依赖、迁移、parity、fallback 和选择阈值闭合前成为默认；八项 Decision 继续为 `OPEN`。
 - ⬜ **M9 目标驱动计划**：准备计划见
   [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md)；planner/mastery schema、唯一写入权威、
   偏差重规划、外部 AI 隐私/fallback 和评测阈值未闭合前保持阻断。
@@ -248,6 +252,6 @@ M8–M9，且都不以 M6b 为写路径或 Source 生命周期前置。
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.15（不是产品发布版本）· 更新：2026-09-06（M7 在独立人工批准后为
-`ADMITTED / COMPLETE`；M8/M9/M10 的事实型 M7 退出前置已满足，但 Network/M8/Milvus/M9/M10 均未获批）·
+*创建：2026-08-10 · PLAN 文档修订：v2.16（不是产品发布版本）· 更新：2026-09-09（V8/V9/V10 已按各自失败处置
+永久封口且不可复用；V11 仅为未授权潜在后继；M8/M9/M10 仍为 `BLOCKED / NOT_STARTED`，后端选择仍 `OPEN`）·
 维护：每次会话开工查看本文档*

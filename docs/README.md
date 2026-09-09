@@ -23,7 +23,9 @@ docs/
 │   │   ├── recruitment-driven-feasibility.md
 │   │   ├── stage-advancement-analysis.md
 │   │   ├── m8-v7-authorization-20260908.md # V7 仅-smoke 待签范围记录；尝试已 INVALID
-│   │   └── m8-v8-authorization-20260908.md # V8 已授权仅执行 scaled smoke；禁止 full
+│   │   ├── m8-v8-authorization-20260908.md # V8 历史授权已消费并失效；执行已 INVALID
+│   │   ├── m8-v9-authorization-20260909.md # V9 PRE_FREEZE_STATIC_AUDIT_FAILED；不可授权
+│   │   └── m8-v10-authorization-20260909.md # V10 PRE_SOURCE_GOVERNANCE_INVALID；不可授权
 │   ├── m3-engineering-execution-plan.md
 │   ├── m4-knowledge-base-scale-plan.md
 │   ├── m5-agent-session-delivery-plan.md
@@ -34,7 +36,9 @@ docs/
 │   ├── data-expansion-runbook.md # M7 数据扩展非权威未来参考；不批准语料
 │   ├── m8-specialized-storage-plan.md
 │   ├── m8-v7-admission-protocol.md # V7 静态冻结协议；执行尝试已 INVALID
-│   ├── m8-v8-admission-protocol.md # V8 正式冻结协议；仅 scaled smoke 已授权
+│   ├── m8-v8-admission-protocol.md # V8 历史冻结协议；执行已 INVALID
+│   ├── m8-v9-admission-protocol.md # V9 PRE_FREEZE_STATIC_AUDIT_FAILED；不可复用
+│   ├── m8-v10-admission-protocol.md # V10 PRE_SOURCE_GOVERNANCE_INVALID；不可复用
 │   ├── m9-goal-driven-planning-plan.md
 │   └── m10-autonomous-runner-plan.md
 ├── standards/             # 开发规范
@@ -58,7 +62,7 @@ docs/
 
 ### PLAN.md — 项目计划
 
-核心文件。定义项目定位（通用学习 Agent harness）、技术选型、里程碑（M0~M5 MVP，M6+ 规划中）。
+核心文件。定义项目定位（通用学习 Agent harness）、技术选型与里程碑；M0–M7 已收口，M8–M10 仍阻断。
 **每次会话开工前先看本文档**，明确当前里程碑与退出条件。
 
 ### prds/ — 需求澄清 PRD
@@ -92,8 +96,11 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
   [plans/m8-specialized-storage-plan.md](plans/m8-specialized-storage-plan.md)、
   [plans/m8-v7-admission-protocol.md](plans/m8-v7-admission-protocol.md)（静态协议曾通过审阅，但 V7 尝试已因顺序违规
   `INVALID`；处置见主 M8 计划 §3.21.13）、
-  [plans/m8-v8-admission-protocol.md](plans/m8-v8-admission-protocol.md)（正式冻结并通过独立静态审阅；当前仅授权
-  scaled smoke，禁止 full）、
+  [plans/m8-v8-admission-protocol.md](plans/m8-v8-admission-protocol.md)（历史冻结；协议文本曾通过独立静态审阅，但执行根已
+  `INVALID`，不得继续或复用）、
+  [plans/m8-v9-admission-protocol.md](plans/m8-v9-admission-protocol.md)（`PRE_FREEZE_STATIC_AUDIT_FAILED`；身份与根
+  永久冻结且不可复用）、[plans/m8-v10-admission-protocol.md](plans/m8-v10-admission-protocol.md)
+  （`PRE_SOURCE_GOVERNANCE_INVALID`；身份与根不可复用，`NOT_AUTHORIZED`）、
   [plans/m9-goal-driven-planning-plan.md](plans/m9-goal-driven-planning-plan.md)、
   [plans/m10-autonomous-runner-plan.md](plans/m10-autonomous-runner-plan.md)。计划存在只代表设定澄清准备，不能推导实现或批准。
 - M7 P0 语料治理结果见
@@ -102,9 +109,13 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 - 当前 M6b 不接管正式学习会话；完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测后移 M10。
 - 默认 RAG 评测仍为 OS/DS/CO 三课 90 题；Network 评测集为显式运行的独立扩展。
 - `plans/references/` 只存放辅助决策的分析与事实调查，**不能作为最终支撑来源**。V7 仅-smoke 待签范围记录见
-  [plans/references/m8-v7-authorization-20260908.md](plans/references/m8-v7-authorization-20260908.md)；V8 仅 scaled smoke
-  授权记录见 [plans/references/m8-v8-authorization-20260908.md](plans/references/m8-v8-authorization-20260908.md)。V8
-  授权禁止 full，且不构成 M8 准入或生产授权。
+  [plans/references/m8-v7-authorization-20260908.md](plans/references/m8-v7-authorization-20260908.md)；V8 历史授权记录见
+  [plans/references/m8-v8-authorization-20260908.md](plans/references/m8-v8-authorization-20260908.md)，现已消费并失效。
+  V9 未授权状态见
+  [plans/references/m8-v9-authorization-20260909.md](plans/references/m8-v9-authorization-20260909.md)，已登记为
+  `PRE_FREEZE_STATIC_AUDIT_FAILED`；V10 未授权状态见
+  [plans/references/m8-v10-authorization-20260909.md](plans/references/m8-v10-authorization-20260909.md)，已登记为
+  `PRE_SOURCE_GOVERNANCE_INVALID`。二者均不能授权自身或后继实验。
 
 ### reference/ — 外部资料索引
 
@@ -148,5 +159,6 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-03（M7 Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation 与 FTS5/offline fail-closed
-局部合同已冻结；Network/M8/Milvus/M9/M10 未获批）·维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-09-09（V8 永久 `INVALID`；V9 因 pre-freeze static-audit failure 冻结且不可复用；
+V10 已登记为 `PRE_SOURCE_GOVERNANCE_INVALID`，根不可复用且 authorization 仍为 `NOT_AUTHORIZED`；
+Network/M8/Milvus/M9/M10 未获批）·维护：随项目演进同步更新*

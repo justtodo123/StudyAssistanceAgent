@@ -56,9 +56,11 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | `m7-source-lifecycle-plan.md` | 阶段执行计划 | 基础设施范围 `ADMITTED / COMPLETE`；独立完成批准日期为 2026-09-06；Network 不在 scope 内，下游阶段不自动获批 |
 | `m7-p0-corpus-governance-report.md` | P0 语料治理报告 | 82 篇文档级 mapping 已建立；Network 31 篇来源/许可未闭合，停止等待人工复核，不因 M7 完成而关闭 |
 | `data-expansion-runbook.md` | 未来参考运行手册 | `DRAFT / NON-AUTHORITATIVE`；不批准数据扩展，不关闭 P0 或下游门禁 |
-| `m8-specialized-storage-plan.md` | 阶段准入准备计划 | `M8-M7-EXIT=SATISFIED`；V7 因顺序违规以 `INVALID` 封口（§3.21.13）；自身决策和批准未闭合，Milvus/LanceDB/Qdrant 均未选定，`BLOCKED / NOT_STARTED` |
+| `m8-specialized-storage-plan.md` | 阶段准入准备计划 | `BLOCKED / NOT_STARTED`；V7–V10 不可复用；V11 未授权 |
 | `m8-v7-admission-protocol.md` | V7 静态冻结协议 | 独立静态审阅曾 `PASS`；执行尝试已 `INVALID`，不得恢复或重试同一 ID |
-| `m8-v8-admission-protocol.md` | V8 正式冻结协议 | 独立静态审阅 `PASS`；仅 scaled smoke 已授权，禁止 full；执行须从全新临时根与全新 harness 开始 |
+| `m8-v8-admission-protocol.md` | V8 历史冻结协议 | 协议文本独立静态审阅曾 `PASS`；执行根已 `INVALID`，不得继续或复用 |
+| `m8-v9-admission-protocol.md` | V9 历史失败协议 | `PRE_FREEZE_STATIC_AUDIT_FAILED`；身份与根永久冻结且不可复用 |
+| `m8-v10-admission-protocol.md` | V10 历史失败协议 | `PRE_SOURCE_GOVERNANCE_INVALID`；身份与根不可复用，`NOT_AUTHORIZED` |
 | `m9-goal-driven-planning-plan.md` | 阶段准入准备计划 | M9 目标驱动计划、mastery 与偏差；`BLOCKED / NOT_STARTED` |
 | `m10-autonomous-runner-plan.md` | 阶段准入准备计划 | M10 自主 Runner、写副作用与 Harness；`BLOCKED / NOT_STARTED` |
 
@@ -70,6 +72,10 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | [`references/stage-advancement-analysis.md`](references/stage-advancement-analysis.md) | M6–M10 推进分析 | 辅助决策；最终依据是 PLAN.md |
 | [`references/recruitment-driven-feasibility.md`](references/recruitment-driven-feasibility.md) | 招聘驱动可行性分析 | 辅助决策；结论已反映在 PLAN.md 的 M6a/M6b 拆分中 |
 | [`references/m8-v7-authorization-20260908.md`](references/m8-v7-authorization-20260908.md) | V7 仅-smoke 待签范围记录 | V7 已 `INVALID`；不是 M8 准入或 v8 授权 |
-| [`references/m8-v8-authorization-20260908.md`](references/m8-v8-authorization-20260908.md) | V8 仅 scaled smoke 授权记录 | 冻结 1 GiB package cap 与 1536 MiB work reserve；禁止 full；不是 M8 准入或生产授权 |
+| [V8 authorization](references/m8-v8-authorization-20260908.md) | 历史授权 | 已消费并失效；V8 `INVALID` |
+| [V9 authorization](references/m8-v9-authorization-20260909.md) | 未授权记录 | `PRE_FREEZE_STATIC_AUDIT_FAILED`；不可复用 |
+| [V10 authorization](references/m8-v10-authorization-20260909.md) | 未授权记录 | `PRE_SOURCE_GOVERNANCE_INVALID`；不可复用 |
+
+V8–V10 记录均不得授权其对应身份或后继。
 
 > 后续由 `review-plan` Skill 生成的个人复习计划，继续使用 `{plan_name}-plan.md` 命名，避免与项目执行计划、调查材料混淆。

@@ -1,11 +1,14 @@
-# `precommit-v8` 正式冻结协议（仅 scaled smoke 已授权）
+# `precommit-v8` 历史冻结协议（执行已 `INVALID`）
 
-- 状态：**正式冻结；独立静态审阅 `PASS`；仅 scaled smoke 已获授权**
+- 状态：**历史冻结；协议文本独立静态审阅曾 `PASS`；执行根已 `INVALID`，不得继续或复用**
 - experiment ID：`sa.m8.admission-evidence.v8`
 - protocol：`precommit-v8`
 - 起草依据：`docs/plans/m8-specialized-storage-plan.md` §3.20 人工校准、§3.21 `precommit-v6` 已审阅设计、§3.21.11 `v6` 磁盘预算归因分析、§3.21.12 `v7` 磁盘预算修正公式（草案）、§3.21.13 `v7` 执行处置（`INVALID`）、`precommit-v7` 协议文本
 - 起草日期：2026-09-08
-- 本文件冻结执行前协议文本；执行权限来自 `references/m8-v8-authorization-20260908.md`，当前仅允许 scaled smoke，禁止 full 和任何生产变更。
+- 本文件保留执行前协议文本；`references/m8-v8-authorization-20260908.md` 是已消费并失效的历史授权，不再允许任何 V8 执行。
+- **不可执行声明**：本文件正文（含 §4 磁盘预算、§5 冻结执行顺序等历史可操作步骤）均为已以 `INVALID`
+  永久封口的 V8 历史设计文本，仅供治理与审计追溯；已被 V8 处置（§3.21.15）`superseded`。任何组织或个人
+  不得据此创建根、建 venv、安装依赖、执行 preflight、smoke、full 或 benchmark，不得复用其任何产物。
 
 ## 0. 为什么是 v8（继承与修订来源）
 
@@ -122,8 +125,8 @@ publication 或统计结果；可复用的只有本计划中公开冻结的协�
   psutil `7.2.2` 与 PyArrow `25.0.1`；安装后必须断言精确 Python 版本，依赖版本必须从安装元数据读取并
   与该清单一致。固定 synthetic vector model/version、seed、dimension、dtype 与 normalization 继续沿用
   3.18 和本协议绑定的 frozen config，不得观察结果后变更。
-- 当前不得把本文件视为 acquisition 授权；上述精确 PyPI 清单和唯一新临时根目录仍必须在授权文本中再次
-  明确。授权还必须明确只允许 smoke，或允许在 smoke 独立审计通过后继续 full，不能由执行者自行推定。
+- 本文件不得视为 acquisition 授权；历史授权已消费并失效。精确 PyPI 清单、唯一新临时根目录和 smoke/full
+  范围仅保留为 V8 历史冻结语义，不能由执行者据此继续 V8 或授权后继实验。
 - 不再混用 1k、3k、10k 的 source namespace；每个 fault probe 只改变一个绑定，并记录 expected/actual
   code 与 `candidate_accessed`。不得读取或复制 `D:\111_Others_Subjects`，不得启动 Qdrant server、container
   或持久服务。
@@ -157,15 +160,14 @@ publication 或统计结果；可复用的只有本计划中公开冻结的协�
 
 ## 7. 边界声明
 
-本协议文件本身不构成执行授权。当前独立授权见
-`references/m8-v8-authorization-20260908.md`，已明确指向 `sa.m8.admission-evidence.v8` / `precommit-v8`、
-精确 PyPI 版本、唯一新临时根目录、仅合成数据、仅 scaled smoke、生产与服务边界、
-`PACKAGE_FOOTPRINT_CAP = 1073741824` bytes、`WORK_RESERVE_MIB = 1536` 以及审计后的完整清理要求。
-该授权明确禁止 full；即使 `smoke_integrity_pass=true`，也不得自动进入 full。
+本协议文件本身不构成执行授权。历史独立授权见 `references/m8-v8-authorization-20260908.md`，曾明确指向
+`sa.m8.admission-evidence.v8` / `precommit-v8`、精确 PyPI 版本、唯一新临时根目录、仅合成数据、仅 scaled
+smoke、生产与服务边界、`PACKAGE_FOOTPRINT_CAP = 1073741824` bytes、`WORK_RESERVE_MIB = 1536` 以及审计后的
+完整清理要求。该授权已因 §9 处置而消费并失效；不得再进入 §5 任一步骤，即使已有局部产物或
+`smoke_integrity_pass=true` 也不得继续。
 
-协议静态审阅 `PASS` 与仅-smoke 授权均已闭合，但执行仍必须从 §5 第一步开始，不得提前 acquisition、创建
-venv 或执行 smoke。M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 保持 `OPEN`，无后端选择、
-无 admission、无生产实现授权。
+协议文本静态审阅 `PASS` 仅作为历史事实保留。M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 保持
+`OPEN`，无后端选择、无 admission、无生产实现授权。
 
 ## 8. 独立静态审阅记录（`PASS`）
 
@@ -188,8 +190,22 @@ venv 或执行 smoke。M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision
 总评：`PASS`。`precommit-v8` 正确落实了 §3.21.13 要求的两项必改项：磁盘预算依赖门禁已由自引用公式改为 acquisition 前冻结的绝对常量（§4.1），执行顺序固化为不可颠倒的 hard gate（§5），并对 v7 的 `INVALID` 处置做出显式、可追溯的继承与排除；其余协议语义忠实沿袭 v7 已审阅内容，六项库存口径与引用章节均与主计划一致，未发现自引用漏洞或内部矛盾。
 
 本 `PASS` 仅表示协议文本完成静态审阅，**不构成**后端选择、决策关闭、M8 准入、生产实现、commit、merge
-或 push 授权。独立的 V8 书面授权现仅允许 scaled smoke，明确禁止 full；执行仍须严格按 §5 的不可颠倒
-顺序开始，且全新 harness 必须在 acquisition 前另行取得独立静态审计 `PASS`。
+或 push 授权。V8 当时的独立书面授权仅允许 scaled smoke，明确禁止 full；该授权现已因 §9 的执行处置而消费并
+失效，不再允许任何 V8 执行。
 
 > 审阅来源注：协议起草会话未自行判定 `PASS`；§8 记录来自未编写本协议、未编写且未执行 v8 harness 的
 > 独立会话逐项审阅。
+
+## 9. 2026-09-09 执行处置（历史冻结，`INVALID`）
+
+V8 的实际临时根在独立 harness 静态审计前出现 CPython `3.12` bytecode，破坏 source-only provenance；三个源码
+SHA-256 随后发生变化，原 source inventory 与 execution gate 因未绑定当前源码而过期。该根已以唯一终态
+`INVALID` 永久封口，详见 `m8-specialized-storage-plan.md` §3.21.15。
+
+§8 的 `PASS` 仍是协议文本的历史审阅结论，不是该执行根的 harness 审计，也不能恢复其 provenance。禁止在 V8
+根上补丁、清理后继续、补审、重算、重判、重跑或恢复；禁止复用 V8 harness、venv、sample、index、report、
+inventory、receipt、publication、bytecode 或统计结果。V8 授权不再有效，也不能授权任何后续实验。
+
+后续尝试必须建立新 experiment ID、protocol、唯一根、source-only manifest、冻结 hash/inventory/gate、独立静态
+审计与新书面授权。在新 harness 独立静态审计 `PASS` 前必须停止在 preflight 之前。M8 继续保持
+`BLOCKED / NOT_STARTED`，八项 Decision 保持 `OPEN`。
