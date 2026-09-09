@@ -83,6 +83,6 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | [V12 independent static audit (historical)](references/m8-v12-independent-static-audit-20260909.md) | 历史审计记录 | 初判 `PASS` 已失效，仅作历史追溯 |
 | [V12 disposition](references/m8-v12-disposition-20260909.md) | 永久处置 | `INDEPENDENT_STATIC_AUDIT_FAILED`；不可复用 |
 
-V8–V11 记录均不得授权其对应身份或后继。V12 当前只能进入独立静态审计，不得执行 preflight 或 harness。
+V8–V11 记录均不得授权其对应身份或后继。V12 独立静态审计已 `FAIL`，现以 `INDEPENDENT_STATIC_AUDIT_FAILED` 永久封口且不可复用，不得进入 preflight 或 harness；任何后继实验必须使用全新 V13 身份并取得新的书面授权。
 
 > 后续由 `review-plan` Skill 生成的个人复习计划，继续使用 `{plan_name}-plan.md` 命名，避免与项目执行计划、调查材料混淆。
