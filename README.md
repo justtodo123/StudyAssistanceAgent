@@ -6,8 +6,8 @@
 
 **当前状态**：M6a-P0 crawler 已收口；M6a、M6b、M7 均为 `ADMITTED / COMPLETE`；M7 生产开工门禁保持
 `AUTHORIZED`，并于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准；M8–M10 的事实型
-M7 退出前置已满足，但 M8–M10 自身仍为 `BLOCKED / NOT_STARTED`；M8 的 V8/V9/V10 尝试均已按不同失败处置
-永久封口且不可复用，V11 仅为未授权潜在后继；M0–M5 MVP 可用。
+M7 退出前置已满足，但 M8–M10 自身仍为 `BLOCKED / NOT_STARTED`；M8 的 V8–V11 已按不同失败处置永久封口且
+不可复用，V12 阶段 1 的独立静态审计已 `FAIL` 并永久封口，不得继续或复用；M0–M5 MVP 可用。
 2026-08-31 P0 语料治理复测已冻结：默认 OS/DS/CO 仍为可信 90 题包，Network candidate 不进入默认索引；
 M7 完成不批准 Network，也不改变其 `review / candidate / unresolved` 状态。CPython 3.11.9 精确冻结环境的五格式
 100×20 parser/normalization/identity 协议全 PASS；该技术证据与后续人工批准相互独立，不能自行完成阶段。
@@ -37,7 +37,7 @@ M7 完成不批准 Network，也不改变其 `review / candidate / unresolved` �
 | RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 2026-08-31 复测 Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 将改为目标/掌握度驱动 |
 | 用户数据源 | 自定义知识目录，规模百→千→万 | ✅ M7 Source Registry、FTS5/vector/offline、delete/isolation 与 Search/QA 的受信任内部 principal overlay 已完成；preview/quiz/sessions 仍不含用户源。冻结技术证据通过，随后于 2026-09-06 取得独立人工完成批准，当前为 `ADMITTED / COMPLETE` |
-| 专业化存储 | 当前 SQLite；M8 将评估 LanceDB/Qdrant 等候选，尚未选择专业后端 | ⬜ M8（V8/V9/V10 已失败封口且不可复用；V11 未授权；八项 Decision 与后端选择仍 `OPEN`） |
+| 专业化存储 | 当前 SQLite；M8 将评估 LanceDB/Qdrant 等候选，尚未选择专业后端 | ⬜ M8（V8–V11 已失败封口且不可复用；V12 独立静态审计 `FAIL`，已永久封口且不可复用；八项 Decision 与后端选择仍 `OPEN`） |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ⬜ M9 |
 | Harness 框架 | M6a/M6b/M7 已收口；完整 Runner 未实现 | ✅ M6a/M6b/M7 `ADMITTED / COMPLETE`；M8–M10 `BLOCKED / NOT_STARTED` |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |

@@ -56,11 +56,13 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | `m7-source-lifecycle-plan.md` | 阶段执行计划 | 基础设施范围 `ADMITTED / COMPLETE`；独立完成批准日期为 2026-09-06；Network 不在 scope 内，下游阶段不自动获批 |
 | `m7-p0-corpus-governance-report.md` | P0 语料治理报告 | 82 篇文档级 mapping 已建立；Network 31 篇来源/许可未闭合，停止等待人工复核，不因 M7 完成而关闭 |
 | `data-expansion-runbook.md` | 未来参考运行手册 | `DRAFT / NON-AUTHORITATIVE`；不批准数据扩展，不关闭 P0 或下游门禁 |
-| `m8-specialized-storage-plan.md` | 阶段准入准备计划 | `BLOCKED / NOT_STARTED`；V7–V10 不可复用；V11 未授权 |
+| `m8-specialized-storage-plan.md` | 阶段准入准备计划 | `BLOCKED / NOT_STARTED`；V7–V12 不可复用；V12 独立静态审计 `FAIL` |
 | `m8-v7-admission-protocol.md` | V7 静态冻结协议 | 独立静态审阅曾 `PASS`；执行尝试已 `INVALID`，不得恢复或重试同一 ID |
 | `m8-v8-admission-protocol.md` | V8 历史冻结协议 | 协议文本独立静态审阅曾 `PASS`；执行根已 `INVALID`，不得继续或复用 |
 | `m8-v9-admission-protocol.md` | V9 历史失败协议 | `PRE_FREEZE_STATIC_AUDIT_FAILED`；身份与根永久冻结且不可复用 |
 | `m8-v10-admission-protocol.md` | V10 历史失败协议 | `PRE_SOURCE_GOVERNANCE_INVALID`；身份与根不可复用，`NOT_AUTHORIZED` |
+| `m8-v11-admission-protocol.md` | V11 历史失败协议 | `PRE_SOURCE_PROVENANCE_INVALID`；身份、根与 source 不可复用 |
+| `m8-v12-admission-protocol.md` | V12 历史失败协议 | `INDEPENDENT_STATIC_AUDIT_FAILED`；身份、根与 source 不可复用 |
 | `m9-goal-driven-planning-plan.md` | 阶段准入准备计划 | M9 目标驱动计划、mastery 与偏差；`BLOCKED / NOT_STARTED` |
 | `m10-autonomous-runner-plan.md` | 阶段准入准备计划 | M10 自主 Runner、写副作用与 Harness；`BLOCKED / NOT_STARTED` |
 
@@ -75,7 +77,12 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | [V8 authorization](references/m8-v8-authorization-20260908.md) | 历史授权 | 已消费并失效；V8 `INVALID` |
 | [V9 authorization](references/m8-v9-authorization-20260909.md) | 未授权记录 | `PRE_FREEZE_STATIC_AUDIT_FAILED`；不可复用 |
 | [V10 authorization](references/m8-v10-authorization-20260909.md) | 未授权记录 | `PRE_SOURCE_GOVERNANCE_INVALID`；不可复用 |
+| [V11 authorization](references/m8-v11-authorization-20260909.md) | 历史阶段 1 授权 | 已消费；`PRE_SOURCE_PROVENANCE_INVALID` |
+| [V12 authorization](references/m8-v12-authorization-20260909.md) | 阶段 1 授权 | 已消费；V12 已因独立审计 `FAIL` 封口 |
+| [V12 independent static audit (FAIL)](references/m8-v12-independent-static-audit-fail-20260909.md) | 现行独立静态审计报告 | 最终 `FAIL`；四项机械门禁缺陷；V12 不可复用 |
+| [V12 independent static audit (historical)](references/m8-v12-independent-static-audit-20260909.md) | 历史审计记录 | 初判 `PASS` 已失效，仅作历史追溯 |
+| [V12 disposition](references/m8-v12-disposition-20260909.md) | 永久处置 | `INDEPENDENT_STATIC_AUDIT_FAILED`；不可复用 |
 
-V8–V10 记录均不得授权其对应身份或后继。
+V8–V11 记录均不得授权其对应身份或后继。V12 当前只能进入独立静态审计，不得执行 preflight 或 harness。
 
 > 后续由 `review-plan` Skill 生成的个人复习计划，继续使用 `{plan_name}-plan.md` 命名，避免与项目执行计划、调查材料混淆。

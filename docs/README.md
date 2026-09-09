@@ -25,7 +25,12 @@ docs/
 │   │   ├── m8-v7-authorization-20260908.md # V7 仅-smoke 待签范围记录；尝试已 INVALID
 │   │   ├── m8-v8-authorization-20260908.md # V8 历史授权已消费并失效；执行已 INVALID
 │   │   ├── m8-v9-authorization-20260909.md # V9 PRE_FREEZE_STATIC_AUDIT_FAILED；不可授权
-│   │   └── m8-v10-authorization-20260909.md # V10 PRE_SOURCE_GOVERNANCE_INVALID；不可授权
+│   │   ├── m8-v10-authorization-20260909.md # V10 PRE_SOURCE_GOVERNANCE_INVALID；不可授权
+│   │   ├── m8-v11-authorization-20260909.md # V11 PRE_SOURCE_PROVENANCE_INVALID；授权已消费
+│   │   ├── m8-v12-authorization-20260909.md # V12 阶段 1 授权已消费；V12 已封口
+│   │   ├── m8-v12-disposition-20260909.md # V12 永久处置；不可复用
+│   │   ├── m8-v12-independent-static-audit-20260909.md # V12 历史审计 PASS 已失效
+│   │   └── m8-v12-independent-static-audit-fail-20260909.md # V12 独立静态审计 FAIL
 │   ├── m3-engineering-execution-plan.md
 │   ├── m4-knowledge-base-scale-plan.md
 │   ├── m5-agent-session-delivery-plan.md
@@ -39,6 +44,8 @@ docs/
 │   ├── m8-v8-admission-protocol.md # V8 历史冻结协议；执行已 INVALID
 │   ├── m8-v9-admission-protocol.md # V9 PRE_FREEZE_STATIC_AUDIT_FAILED；不可复用
 │   ├── m8-v10-admission-protocol.md # V10 PRE_SOURCE_GOVERNANCE_INVALID；不可复用
+│   ├── m8-v11-admission-protocol.md # V11 PRE_SOURCE_PROVENANCE_INVALID；不可复用
+│   ├── m8-v12-admission-protocol.md # V12 INDEPENDENT_STATIC_AUDIT_FAILED；不可复用
 │   ├── m9-goal-driven-planning-plan.md
 │   └── m10-autonomous-runner-plan.md
 ├── standards/             # 开发规范
@@ -100,7 +107,11 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
   `INVALID`，不得继续或复用）、
   [plans/m8-v9-admission-protocol.md](plans/m8-v9-admission-protocol.md)（`PRE_FREEZE_STATIC_AUDIT_FAILED`；身份与根
   永久冻结且不可复用）、[plans/m8-v10-admission-protocol.md](plans/m8-v10-admission-protocol.md)
-  （`PRE_SOURCE_GOVERNANCE_INVALID`；身份与根不可复用，`NOT_AUTHORIZED`）、
+  （`PRE_SOURCE_GOVERNANCE_INVALID`；身份与根不可复用）、
+  [plans/m8-v11-admission-protocol.md](plans/m8-v11-admission-protocol.md)
+  （`PRE_SOURCE_PROVENANCE_INVALID`；身份、根与 source 不可复用）和
+  [plans/m8-v12-admission-protocol.md](plans/m8-v12-admission-protocol.md)
+  （阶段 1 已 source freeze，但独立静态审计 `FAIL`；`INDEPENDENT_STATIC_AUDIT_FAILED` 不可复用）、
   [plans/m9-goal-driven-planning-plan.md](plans/m9-goal-driven-planning-plan.md)、
   [plans/m10-autonomous-runner-plan.md](plans/m10-autonomous-runner-plan.md)。计划存在只代表设定澄清准备，不能推导实现或批准。
 - M7 P0 语料治理结果见
@@ -115,7 +126,14 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
   [plans/references/m8-v9-authorization-20260909.md](plans/references/m8-v9-authorization-20260909.md)，已登记为
   `PRE_FREEZE_STATIC_AUDIT_FAILED`；V10 未授权状态见
   [plans/references/m8-v10-authorization-20260909.md](plans/references/m8-v10-authorization-20260909.md)，已登记为
-  `PRE_SOURCE_GOVERNANCE_INVALID`。二者均不能授权自身或后继实验。
+  `PRE_SOURCE_GOVERNANCE_INVALID`；V11 历史授权与失败处置见
+  [plans/references/m8-v11-authorization-20260909.md](plans/references/m8-v11-authorization-20260909.md)，V12 阶段 1
+  授权见 [plans/references/m8-v12-authorization-20260909.md](plans/references/m8-v12-authorization-20260909.md)。
+  V12 独立静态审计最终 `FAIL`，报告见
+  [plans/references/m8-v12-independent-static-audit-fail-20260909.md](plans/references/m8-v12-independent-static-audit-fail-20260909.md)，
+  永久处置见
+  [plans/references/m8-v12-disposition-20260909.md](plans/references/m8-v12-disposition-20260909.md)；V12 已封口且不可复用，
+  未取得 preflight 或执行授权。
 
 ### reference/ — 外部资料索引
 
@@ -159,6 +177,4 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M10。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-09（V8 永久 `INVALID`；V9 因 pre-freeze static-audit failure 冻结且不可复用；
-V10 已登记为 `PRE_SOURCE_GOVERNANCE_INVALID`，根不可复用且 authorization 仍为 `NOT_AUTHORIZED`；
-Network/M8/Milvus/M9/M10 未获批）·维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-09-09（V8–V12 已分别失败封口且不可复用；Network/M8/Milvus/M9/M10 未获批）·维护：随项目演进同步更新*

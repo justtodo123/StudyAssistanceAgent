@@ -883,8 +883,9 @@ V9 临时根仅作为 pre-freeze static-failure context；不得在该根上修�
 治理处置事实，不是实验、审计、cleanup 或执行证据。
 
 本段原先要求下一次尝试使用 `sa.m8.admission-evidence.v10` / `precommit-v10`；该历史后继指令已被
-§3.21.17 的 V10 `PRE_SOURCE_GOVERNANCE_INVALID` 处置 `superseded`，不得作为现行操作要求。当前潜在后继仅为
-新的递增身份 V11；这不构成任何阶段授权。独立静态审计取得 `PASS` 前，仍禁止 preflight、创建 venv、安装或获取
+§3.21.17 的 V10 `PRE_SOURCE_GOVERNANCE_INVALID` 处置 `superseded`，不得作为现行操作要求。V11 后续也已按
+§3.21.18 处置为 `PRE_SOURCE_PROVENANCE_INVALID`；当前后继为 V12，且仅完成阶段 1 source freeze。独立静态审计
+取得 `PASS` 前，仍禁止 preflight、创建 venv、安装或获取
 依赖、acquisition、smoke、full 和任何 benchmark。M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为
 `OPEN`。
 
@@ -905,9 +906,77 @@ V9 临时根仅作为 pre-freeze static-failure context；不得在该根上修�
 
 其 SHA-256 为 `1a7043b78e51d293ba5e0d37a7e0bfc409b05f0ba7d0bfb20010dea34aa8d4e9`；该 digest 仅绑定去敏治理事实，
 不是实验、审计、cleanup 或执行证据。V10 authorization 仍为 `NOT_AUTHORIZED`、未消费且不能授权任何后续动作。
-下一次有效尝试必须递增为 V11，并先取得明确指向 root-provenance/source-authoring 阶段的书面授权；随后才能
-创建 V11 根、生成并冻结 source tree，接受独立静态审计。只有独立 `PASS` 后，才可另行授权 preflight 或任何
-后续实验阶段。M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
+本段要求递增为 V11 的历史后继指令已被 §3.21.18 的 V11 处置 `superseded`，其后继 V12 亦已于 §3.21.20 以
+`INDEPENDENT_STATIC_AUDIT_FAILED` 永久封口。目前没有现行后继；任何后继实验须由负责人另行书面授权，并从全新
+身份与根开始。M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
+
+#### 3.21.18 2026-09-09 `v11` pre-source provenance failure（不可复用）
+
+`sa.m8.admission-evidence.v11` / `precommit-v11` 曾取得仅限阶段 1 的书面授权并创建随机临时根。但首个 marker 的
+初始 allowlist 只覆盖 marker 与六个 source，遗漏阶段 1 必须生成的 `source-manifest.json` 和
+`source-generation-inventory.json`；marker 原始 bytes 同时没有末尾 LF。V11 因此在 source freeze 前以唯一终态
+`PRE_SOURCE_PROVENANCE_INVALID` 永久封口，不得修复、补写、补审、恢复、重跑、重判或复用。
+
+去敏处置 canonical payload（无尾随换行）为：
+
+```json
+{"experiment_id":"sa.m8.admission-evidence.v11","generated_python_executed":false,"marker_canonical_lf":false,"marker_initial_allowlist_complete":false,"preflight_started":false,"protocol":"precommit-v11","root_reusable":false,"source_freeze_completed":false,"source_reusable":false,"status":"PRE_SOURCE_PROVENANCE_INVALID","violations":["root_marker_allowlist_omitted_stage1_manifest_and_inventory","root_marker_missing_single_terminal_lf"]}
+```
+
+其 SHA-256 为 `d9dda09590956d185c96fcd828ce9daea2288b545f82887f0ec28c91ad07b64d`。V11 未执行 generated
+Python、preflight、venv、acquisition、smoke、full 或 benchmark；其授权已消费并失效。
+
+#### 3.21.19 2026-09-09 `v12` 阶段 1 source freeze（历史阶段）
+
+负责人已明确授权 `sa.m8.admission-evidence.v12` / `precommit-v12` 的 root-provenance/source-authoring/
+source-freeze 阶段。V12 使用全新随机临时根与 nonce；首个 marker allowlist 从写入起覆盖阶段 1 全部九个文件。
+marker 写入后、任何 source 写入前，已立即验证 UTF-8 无 BOM、无 CR、恰好一个末尾 LF、canonical-byte equality、
+self-digest、根仅含 marker、父链/根/marker 无 reparse/link 且 hard-link count 为 1。
+
+六个 V12 source 已重新实现并冻结，随后排他生成 canonical source manifest 与 source-generation inventory。冻结
+绑定为：marker SHA-256 `746c7bd7c0ebb783dedb4a25ad08abfb2afcd1120ad408db5dfb39c43eaba7ce`，source records
+SHA-256 `8f1477622dcc0795a9924814f689b6498b0bcb31fdb404d516c919180bf70e71`，manifest SHA-256
+`22c2a544fdacf1829dc1fa0f4e13f6b9d4e99be52f15f5ca3f1ec46d68b38df7`。根内最终恰好九个普通文件，
+无 bytecode、venv、目录、reparse、hard link 或额外 stream；generated Python、preflight 与 acquisition 均未执行。
+
+该段记录的是历史 source-freeze 终点；随后独立会话于 `2026-09-09T12:12:34Z` 给出 `FAIL`，V12 已由下方
+§3.21.20 永久封口。作者/修复者会话不具备独立审计资格，V12 不得继续或复用。M8 继续
+`BLOCKED / NOT_STARTED`，八项 Decision 继续 `OPEN`。
+
+#### 3.21.20 2026-09-09 `v12` 独立静态审计失败（不可复用）
+
+独立会话于 `2026-09-09T12:12:34Z` 对 V12 冻结根完成只读静态审计，最终结论为 **`FAIL`**。审计确认冻结根身份、
+nonce、四项冻结 digest、九文件集合与字节合同均与冻结记录一致；但阶段 1 source 中存在四项未闭合的机械门禁
+缺陷，不能出具独立静态审计 `PASS`。现行独立审计报告为
+[`references/m8-v12-independent-static-audit-fail-20260909.md`](references/m8-v12-independent-static-audit-fail-20260909.md)；较早的 `PASS`
+记录已失效，仅存于
+[`references/m8-v12-independent-static-audit-20260909.md`](references/m8-v12-independent-static-audit-20260909.md)
+作历史追溯。
+
+四项阻断缺陷（均经审计者对冻结 source 的逐行静态核验）：
+
+1. **tombstone 证据不足**（`precommit_v12_smoke.py:667-674`）：仅验证 tombstone 后目标不在前五个检索结果且
+   物理 `tombstoned=true`，未在删除前保存目标可见性基线，不能机械证明“物理保留但检索不可见”。
+2. **hard-delete 连续性证据不足**（`precommit_v12_smoke.py:674-679`）：仅验证物理移除、条目数减一与一次非空
+   检索，未与删除前结果或 oracle 对照，不能证明剩余检索连续、排序正确且完整。
+3. **运行期 hard-link/ADS 门禁缺失**（`precommit_v12_smoke.py:738-746`、`749-771`）：运行期树扫描与清理仅
+   检查 symlink/reparse/containment，未逐项检查运行期文件 hard-link count 与 NTFS ADS，不满足 D1/F3 的
+   完整 link/ADS 防护。
+4. **异常路径无机械可证明的失败终态与清理闭合**（`precommit_v12_smoke.py:892-955`）：cleanup、receipt、
+   report 或 publication 任一步失败时，顶层仅打印错误并以非零码退出，未排他写入 `ABORTED`/`INVALID` 终态，
+   也未保证失败后残留清理，不满足 F4 的 fail-closed 要求。
+
+V12 因此以唯一终态 `INDEPENDENT_STATIC_AUDIT_FAILED` 永久封口，不得修复、补审、清理后继续、重跑、重判、恢复或
+复用；其身份、临时根与六个 source 均不可复用。V12 从未进入 preflight、venv、acquisition、smoke、full 或
+benchmark；生成 Python 从未被执行、导入或编译。永久处置细则见
+[`references/m8-v12-disposition-20260909.md`](references/m8-v12-disposition-20260909.md)；按该处置的既定口径，
+V12 不另造 canonical disposition payload 或 disposition digest，冻结快照值仅作历史字节身份保留。该审计为静态
+只读：三后端、fixture/probe 库存与 cleanup 均未执行，审计不含任何运行期结论；历史时序（marker 后、source 前的
+根状态）与 ADS 观察仅适用于审计时快照，不可重放。
+
+M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision（含后端选择）全部保持 `OPEN`；本处置不选择、不批准任何
+后端，也不授权 preflight 或任何执行。任何后继实验须由负责人另行书面授权，并按全新身份、根与 allowlist 从零
+开始，重新接受独立静态审计。
 
 
 本草案参考 [`platform/app/vector_store.py`](../../platform/app/vector_store.py) 的 `VectorStore`、
