@@ -5,7 +5,7 @@
 - 状态：**`INDEPENDENT_STATIC_AUDIT_FAILED`（阶段 1 已消费；V12 永久封口）**
 - 前置处置：V8 `INVALID`、V9 `PRE_FREEZE_STATIC_AUDIT_FAILED`、V10
   `PRE_SOURCE_GOVERNANCE_INVALID`、V11 `PRE_SOURCE_PROVENANCE_INVALID`；四者永久不可复用
-- 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
+- 最终状态权威：[`docs/PLAN.md`](../../PLAN.md)
 
 ## 1. 目标与边界
 
@@ -72,8 +72,8 @@ manifest/inventory digest，核对字节合同、路径/链接、网络、数据
 作者会话不得自判 `PASS`；只有独立审计明确 `PASS` 后，负责人原本才可另行、分离地授权 preflight。
 
 该门禁已于 `2026-09-09T12:12:34Z` 得到 **`FAIL`**，故其成功分支永久不可达。现行报告见
-[`references/m8-v12-independent-static-audit-fail-20260909.md`](references/m8-v12-independent-static-audit-fail-20260909.md)，
-处置见 [`references/m8-v12-disposition-20260909.md`](references/m8-v12-disposition-20260909.md)。较早的历史
+[`m8-v12-independent-static-audit-fail-20260909.md`](m8-v12-independent-static-audit-fail-20260909.md)，
+处置见 [`m8-v12-disposition-20260909.md`](m8-v12-disposition-20260909.md)。较早的历史
 `PASS` 记录已失效，不得作为 gate、release、preflight 或执行输入。V12 不得继续；M8 仍为
 `BLOCKED / NOT_STARTED`。
 

@@ -60,5 +60,13 @@ V12 从本处置起永久封口：
 
 ## 6. M8 状态
 
-M8 继续保持 **`BLOCKED / NOT_STARTED`**。八项强制 Decision 全部保持 **`OPEN`**；
+M8 继续保持 **`BLOCKED / NOT_STARTED`**。八项强制 Decision 在本处置形成时全部保持 **`OPEN`**；
 `sqlite-linear`、`lancedb-embedded`、`qdrant-client-local` 均未被选择、批准或准入生产。
+
+## 7. 2026-09-10 后续状态
+
+八项强制 Decision 后来经独立批准记录全部 `RESOLVED`，但该政策闭合不修复、恢复或重判 V12，也不选择后端、
+批准 M8 admission 或授权生产开工。本处置第 5 节当时提出的全新 V13 后继方向后来同样在未 binding、未建根、
+未 source freeze、未获授权且从未执行的状态下永久停止；见
+[`m8-v13-disposition-20260910.md`](m8-v13-disposition-20260910.md)。任何后续 M8 实证必须使用全新协议身份，
+不得复用 V12 或 V13。

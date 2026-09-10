@@ -6,8 +6,10 @@
 
 **当前状态**：M6a-P0 crawler 已收口；M6a、M6b、M7 均为 `ADMITTED / COMPLETE`；M7 生产开工门禁保持
 `AUTHORIZED`，并于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准；M8–M10 的事实型
-M7 退出前置已满足，但 M8–M10 自身仍为 `BLOCKED / NOT_STARTED`；M8 的 V8–V11 已按不同失败处置永久封口且
-不可复用，V12 阶段 1 的独立静态审计已 `FAIL` 并永久封口，不得继续或复用；M0–M5 MVP 可用。
+M7 退出前置已满足，但 M8–M12 仍为 `BLOCKED / NOT_STARTED`；M8 八项 Decision 已于 2026-09-10 逐项批准并
+`RESOLVED`，阶段 admission、新实证协议和后端选择仍未完成。M8 的 V8–V12 已按不同失败处置永久封口且不可复用；V13 已
+处置为 `SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`。新路线为 M8 单机 100K capacity、M11 10K 真实 approved
+chunks、M12 可选云端单用户部署；M0–M5 MVP 可用。
 2026-08-31 P0 语料治理复测已冻结：默认 OS/DS/CO 仍为可信 90 题包，Network candidate 不进入默认索引；
 M7 完成不批准 Network，也不改变其 `review / candidate / unresolved` 状态。CPython 3.11.9 精确冻结环境的五格式
 100×20 parser/normalization/identity 协议全 PASS；该技术证据与后续人工批准相互独立，不能自行完成阶段。
@@ -36,10 +38,10 @@ M7 完成不批准 Network，也不改变其 `review / candidate / unresolved` �
 | 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（默认 `SqliteVectorStore`，线性余弦；可显式切换内存 `LocalVectorStore`） |
 | RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 2026-08-31 复测 Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 将改为目标/掌握度驱动 |
-| 用户数据源 | 自定义知识目录，规模百→千→万 | ✅ M7 Source Registry、FTS5/vector/offline、delete/isolation 与 Search/QA 的受信任内部 principal overlay 已完成；preview/quiz/sessions 仍不含用户源。冻结技术证据通过，随后于 2026-09-06 取得独立人工完成批准，当前为 `ADMITTED / COMPLETE` |
-| 专业化存储 | 当前 SQLite；M8 将评估 LanceDB/Qdrant 等候选，尚未选择专业后端 | ⬜ M8（V8–V11 已失败封口且不可复用；V12 独立静态审计 `FAIL`，已永久封口且不可复用；八项 Decision 与后端选择仍 `OPEN`） |
+| 用户数据源 | 自定义知识目录，真实数据当前→3K→10K，30K/100K 分级扩展 | ✅ M7 Source Registry、FTS5/vector/offline、delete/isolation 与 Search/QA 的受信任内部 principal overlay 已完成；preview/quiz/sessions 仍不含用户源。冻结技术证据通过，随后于 2026-09-06 取得独立人工完成批准，当前为 `ADMITTED / COMPLETE` |
+| 专业化存储 | SQLite/M7 控制面；M8 验证 100K capacity，LanceDB 为单机第一候选，Qdrant 为云端条件候选 | ⬜ M8（八项 Decision 已 `RESOLVED`；后端选择、新实证协议与 admission 未授权） |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ⬜ M9 |
-| Harness 框架 | M6a/M6b/M7 已收口；完整 Runner 未实现 | ✅ M6a/M6b/M7 `ADMITTED / COMPLETE`；M8–M10 `BLOCKED / NOT_STARTED` |
+| Harness 框架 | M6a/M6b/M7 已收口；完整 Runner、真实数据规模化与云部署未实现 | ✅ M6a/M6b/M7 `ADMITTED / COMPLETE`；M8–M12 `BLOCKED / NOT_STARTED` |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
@@ -66,7 +68,7 @@ StudyAssistanceAgent/
 │   ├── PLAN.md            # ★ 项目计划（路线图）
 │   ├── reference/         # 外部参考资料索引（D:\111_Others_Subjects 的映射）
 │   ├── standards/         # 开发规范（Git 提交规范等）
-│   ├── plans/              # 学习计划、项目执行计划、计划辅助调查
+│   ├── plans/              # 学习计划、项目执行计划及辅助/历史治理记录
 │   └── interview/         # 面试叙事、考点映射与招聘对齐调查
 ├── platform/              # Python 后端（FastAPI + 轻量 RAG）
 │   ├── README.md          # API 文档与启动指南
@@ -203,14 +205,14 @@ cd ..
 | [tests/TEST_PLAN.md](tests/TEST_PLAN.md) | ★ 迭代测试计划（阶段隔离、回归策略、执行矩阵） |
 | [docs/reference/README.md](docs/reference/README.md) | 外部原始资料索引（D:\111_Others_Subjects 映射） |
 | [docs/interview/README.md](docs/interview/README.md) | 面试叙事：一句话、设计决策、考点映射、能力边界 |
-| [docs/plans/README.md](docs/plans/README.md) | 复习计划 / 执行计划 / `references/` 调查材料导航 |
-| [docs/plans/references/README.md](docs/plans/references/README.md) | 计划辅助调查（非最终依据；最终依据是 PLAN.md） |
+| [docs/plans/README.md](docs/plans/README.md) | 复习计划 / 执行计划 / `references/` 辅助与历史治理记录导航 |
+| [docs/plans/references/README.md](docs/plans/references/README.md) | 分析调查及限定范围的历史治理记录；不能产生阶段授权 |
 | [docs/plans/references/stage-advancement-analysis.md](docs/plans/references/stage-advancement-analysis.md) | M6–M10 推进分析（辅助决策） |
 | [docs/demo.md](docs/demo.md) | 离线演示手册（一键启动与学习闭环） |
 | [docs/baselines.md](docs/baselines.md) | RAG 与交付延迟基线 |
 | [docs/standards/git-conventions.md](docs/standards/git-conventions.md) | Git 提交规范（Conventional Commits） |
 | [docs/standards/runtime-contracts.md](docs/standards/runtime-contracts.md) | 数据源门禁、检索参数、错误码、质量分层 |
-| [docs/standards/stage-admission-gates.md](docs/standards/stage-admission-gates.md) | M6a–M10 决策、准入、撤销与阻断规则（PLAN 为最终权威） |
+| [docs/standards/stage-admission-gates.md](docs/standards/stage-admission-gates.md) | M6a–M12 决策、准入、撤销与阻断规则（PLAN 为最终权威） |
 | [docs/plans/m3-engineering-execution-plan.md](docs/plans/m3-engineering-execution-plan.md) | M3 工程质量阶段执行记录（已完成） |
 | [docs/plans/m4-knowledge-base-scale-plan.md](docs/plans/m4-knowledge-base-scale-plan.md) | M4 课程知识库规模补齐计划（范围、验收、分支） |
 | [docs/plans/m6a-harness-skeleton-plan.md](docs/plans/m6a-harness-skeleton-plan.md) | M6a 契约与兼容骨架（含 crawler 前置收口） |
@@ -220,6 +222,8 @@ cd ..
 | [docs/plans/m8-specialized-storage-plan.md](docs/plans/m8-specialized-storage-plan.md) | M8 专业化检索存储准入准备（被阻断） |
 | [docs/plans/m9-goal-driven-planning-plan.md](docs/plans/m9-goal-driven-planning-plan.md) | M9 目标驱动学习计划准入准备（被阻断） |
 | [docs/plans/m10-autonomous-runner-plan.md](docs/plans/m10-autonomous-runner-plan.md) | M10 自主 Runner 与 Harness 对外准入准备（被阻断） |
+| [docs/plans/m11-data-scaling-plan.md](docs/plans/m11-data-scaling-plan.md) | M11 真实数据规模化准入准备；10K approved chunks 退出目标 |
+| [docs/plans/m12-cloud-deployment-plan.md](docs/plans/m12-cloud-deployment-plan.md) | M12 可选云端单用户部署准入准备 |
 | [knowledge/README.md](knowledge/README.md) | 知识库导航与写作规范（含 51 条面经） |
 | [CLAUDE.md](CLAUDE.md) | Agent 项目级开发指导 |
 

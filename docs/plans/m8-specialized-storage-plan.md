@@ -1,25 +1,31 @@
 # M8 专业化检索存储准入准备计划
 
 > 当前状态：准入准备；`BLOCKED / NOT_STARTED`，未获准开工
-> 前置：`M8-M7-EXIT=SATISFIED`；M8 自身八项决策与批准仍未闭合
+> 前置：`M8-M7-EXIT=SATISFIED`；M8 八项 Decision 已于 2026-09-10 逐项批准并 `RESOLVED`，阶段 admission 仍未批准
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
 
 ## 1. Context、范围与非目标
 
 M7 基础设施范围已在 `m7-infrastructure-only-v1` 内取得独立完成批准，故 `M8-M7-EXIT` 的事实型前置
-已满足。这只关闭 M8 的前置事实，不批准 M8。M8 仍为 `BLOCKED / NOT_STARTED`，八项强制决策全部为
-`OPEN`，批准字段为空；LanceDB、Qdrant、Milvus 均未选定。
+已满足。负责人 `justtodo123` 于 2026-09-10 逐项批准 D1–D8，八项强制 Decision 已 `RESOLVED`；审批记录见
+[`references/m8-decision-closure-v1.md`](references/m8-decision-closure-v1.md)。这只关闭政策 Decision，不批准
+M8 admission、后端选择、V13 或生产实现；M8 仍为 `BLOCKED / NOT_STARTED`，LanceDB、Qdrant、Milvus 均未选定。
 
-本轮只做准入准备：decision records、后端无关 control/data-plane 契约、迁移/回滚/回退策略和
-benchmark/test design。不得因本计划存在而创建生产 adapter、`tests/M8/`、schema migration、
-依赖、runtime switch、API、worker、service/container 或部署配置；不得宣称后端已选择、能力已交付、
-benchmark 已通过或 M8 已获批。不得读取或复制 `D:\111_Others_Subjects`，不得启动 Network promotion、
-M9 或 M10。
+M8 的目标调整为 local-first 可扩展检索数据面：在 SQLite/M7 Registry 继续作为唯一控制面权威、SQLite linear
+cosine 继续作为 oracle/fallback 的前提下，验证单机 100K chunks 的容量与生命周期能力。LanceDB 是 10K–100K
+单机第一评估候选但不是预选后端；Qdrant 仅在未来可选云端或明确服务化触发条件下评估；Milvus 当前不采用。
+范围决策见 [`references/m8-m12-scope-decision-v1.md`](references/m8-m12-scope-decision-v1.md)。
 
-专业向量后端（若未来获准）只能是可重建的数据面索引，不能成为 source lifecycle、授权、学习状态、
-会话或 review history 的权威。现有 SQLite 领域仓储、M7 registry、默认 BM25、SQLite linear cosine、
-默认离线启动和 M0–M5 学习闭环必须保持兼容。
+本轮仍只做准入准备：decision records、后端无关 control/data-plane 契约、迁移/回滚/回退策略和
+benchmark/test design。不得因 Decision 已关闭而创建生产 adapter、`tests/M8/`、schema migration、依赖、runtime
+switch、API、worker、service/container 或部署配置；不得宣称后端已选择、能力已交付、benchmark 已通过或 M8 已
+获批。不得读取或复制 `D:\111_Others_Subjects`，不得启动 Network promotion、M9 或 M10。
+
+专业向量后端只能是可重建的数据面索引，不能成为 source lifecycle、授权、学习状态、会话或 review history 的
+权威。当前 embedding 基线为 `BAAI/bge-small-zh-v1.5 / 512 / float32 / L2 normalized`，每个 generation 必须绑定
+完整 profile；维度变化必须新建 generation。现有 SQLite 领域仓储、M7 registry、默认 BM25、SQLite linear cosine、
+默认离线启动和 M0–M5 学习闭环必须保持兼容。M8 的 100K 是 synthetic/半合成容量证据，不是 100K 真实语料质量声明。
 
 ## 2. 前置证据与不可削弱的不变量
 
@@ -36,11 +42,11 @@ M9 或 M10。
 - 默认无可选依赖、无外部网络服务、无运行中服务时仍能启动并保留既有降级路径；
 - `StudySessionService` 继续独占正式状态转换、答案评估、学习持久化和 review-log。
 
-## 3. 八项强制决策（全部保持 OPEN）
+## 3. 八项强制决策（2026-09-10 全部 `RESOLVED`）
 
-所有记录必须先形成单一政策或明确“不采用”的结论，才能在未来标记 `RESOLVED`。候选列表、`TBD`、
-空值、“实现时决定”或没有可复现证据都不满足准入门禁。本节只定义决策记录和定稿顺序，不替负责人
-填写结论、批准或后端选择。
+负责人及独立批准人 `justtodo123` 于 2026-09-10 在本会话中对 D1–D8 逐项明确批准。该批准关闭政策 Decision，
+不自动选择后端、不批准 M8 admission、不授权 V13 或生产实现。唯一政策、证据、复核/撤销条件和逐项批准信息以
+[`references/m8-decision-closure-v1.md`](references/m8-decision-closure-v1.md) 为准。
 
 每条记录的必填字段为：Decision ID、问题与范围、单一政策/不采用结论、默认值与允许覆盖、排除范围、
 输入校验与拒绝行为、失败行为、M0–M7 兼容影响、安全/隐私/授权/保留影响、workload 与量化阈值、
@@ -49,14 +55,14 @@ M9 或 M10。
 
 | Decision ID | 状态 | 本轮记录焦点 | 责任人/日期 |
 | --- | --- | --- | --- |
-| `M8-CONTROL-SCHEMA` | `OPEN` | control/data-plane 权威边界与 schema/version | — / — |
-| `M8-MIGRATION` | `OPEN` | export、integrity、shadow read、cutover、rollback | — / — |
-| `M8-LANCEDB-CRITERIA` | `OPEN` | 本地/嵌入式候选的选择或不采用标准 | — / — |
-| `M8-QDRANT-CRITERIA` | `OPEN` | 服务型候选的选择或不采用标准 | — / — |
-| `M8-BACKEND-PARITY` | `OPEN` | protocol、filter、排序、metadata、snapshot、error parity | — / — |
-| `M8-FALLBACK` | `OPEN` | 缺依赖、损坏、服务故障与迁移中断矩阵 | — / — |
-| `M8-DEPENDENCY-PACKAGING` | `OPEN` | 可选依赖、平台、离线、许可证与升级边界 | — / — |
-| `M8-BENCHMARK` | `OPEN` | workload、指标、样本、环境与选择阈值 | — / — |
+| `M8-CONTROL-SCHEMA` | `RESOLVED` | SQLite/M7 权威控制面；专业索引仅为可重建数据面 | justtodo123 / 2026-09-10 |
+| `M8-MIGRATION` | `RESOLVED` | 冻结导出、隔离构建、shadow read、人工 cutover、last-good | justtodo123 / 2026-09-10 |
+| `M8-LANCEDB-CRITERIA` | `RESOLVED` | 单机第一候选；全部硬门槛与另行采纳后才 opt-in | justtodo123 / 2026-09-10 |
+| `M8-QDRANT-CRITERIA` | `RESOLVED` | 非本地默认；仅云端/服务化触发后的条件候选 | justtodo123 / 2026-09-10 |
+| `M8-BACKEND-PARITY` | `RESOLVED` | identity/auth/lifecycle 零容差；score/order 用冻结容差 | justtodo123 / 2026-09-10 |
+| `M8-FALLBACK` | `RESOLVED` | 默认包 SQLite/BM25 回退；user-source 状态不可证即拒绝 | justtodo123 / 2026-09-10 |
+| `M8-DEPENDENCY-PACKAGING` | `RESOLVED` | 隔离 optional extras；无强制服务或网络 | justtodo123 / 2026-09-10 |
+| `M8-BENCHMARK` | `RESOLVED` | 1K correctness、10K single-user、100K capacity/filter、可选并发 | justtodo123 / 2026-09-10 |
 
 ### 3.1 `M8-CONTROL-SCHEMA` — control/data-plane 边界
 
@@ -162,8 +168,10 @@ experiment ID 和摘要，不得混用结果。建议的保守门槛如下：
   delete barrier 后命中、已发布 partial build、failed cutover stale result 和 measured unexpected error
   均为零。运行时无 outbound network、无持久服务，默认 SQLite/BM25 路径无变化。
 
-本节是负责人批准的实验范围和预冻结设计，不是八项决策的最终单一结论；八项 ID 必须继续保持 `OPEN`，
-候选结果不能自动选择后端、生成 `RESOLVED`、改变 `BLOCKED / NOT_STARTED` 或产生批准记录。
+本节记录 2026-09-06 当时由负责人批准的实验范围和预冻结设计，不是后来八项决策的最终单一结论；在该历史
+时点，八项 ID 必须继续保持 `OPEN`，候选结果不能自动选择后端、生成 `RESOLVED`、改变
+`BLOCKED / NOT_STARTED` 或产生批准记录。八项 Decision 后来于 2026-09-10 另行逐项批准并 `RESOLVED`；该后续
+处置不追溯改变本节记录的当时状态，也不产生后端选择、阶段 admission 或开工授权。
 
 ### 3.11 `precommit-v1` 的可执行冻结配置
 
@@ -212,7 +220,8 @@ source namespace，分别偏离冻结的 `1 × 1,000` 与 `10 × 1,000` source �
 
 如负责人仍需可用于决策的比较，必须新建 experiment ID 与配置摘要，修正 corpus namespace 与空结果
 parity 统计，完整实现冻结的 fault probes，并重新进行独立审阅；不得复用本次 raw report 或将其与后续
-结果混合。本记录不改变八项 Decision ID 的 `OPEN`、M8 的 `BLOCKED / NOT_STARTED` 或空批准字段。
+结果混合。在该次执行记录形成时，八项 Decision ID 仍为 `OPEN`，M8 仍为 `BLOCKED / NOT_STARTED` 且批准字段
+为空。八项 Decision 后来于 2026-09-10 另行 `RESOLVED`，不改变本次执行无效的历史结论。
 
 ### 3.13 2026-09-06 `v2` 执行记录：无效，不作为决策证据
 
@@ -436,7 +445,7 @@ smoke；所有运行内容均位于 Windows 用户级系统临时目录中的唯
   raw、partial 或派生数值混合、平均、复用或补写为通过结果。
 - 不写入候选排名，不选择 SQLite、LanceDB、Qdrant 或 Milvus，不批准生产依赖、adapter、migration、API、
   runtime switch、worker、service/container、部署配置或生产测试变更，也不授权生产实现。
-- M8 继续保持 `BLOCKED / NOT_STARTED`；`M8-CONTROL-SCHEMA`、`M8-MIGRATION`、
+- 在本次处置形成时，M8 继续保持 `BLOCKED / NOT_STARTED`；`M8-CONTROL-SCHEMA`、`M8-MIGRATION`、
   `M8-LANCEDB-CRITERIA`、`M8-QDRANT-CRITERIA`、`M8-BACKEND-PARITY`、`M8-FALLBACK`、
   `M8-DEPENDENCY-PACKAGING` 与 `M8-BENCHMARK` 八项决策全部保持 `OPEN`；backend selection、admission
   和批准字段继续为空。
@@ -660,7 +669,7 @@ fixture coverage 与 probe-query sample inventory 必须分别核对，禁止共
 | 3.21.8 | `PASS` | 正确撤销 3.21.7 PASS（遗漏 `probe_query_count=10`），并要求未编写该补正的独立会话重审。 |
 | §3.18–3.19 交叉验证 | `PASS` | 3.18.2 的十一 fixture 与 3.19 的 66/66 + 96 样本一致；`660` 不等于物理样本数。 |
 | §3.20 校准 | `PASS` | hard gate 保留、性能裁决延迟至 full，3.21.1 忠实复现。 |
-| 整体治理 | `PASS` | BLOCKED/NOT_STARTED、八项 OPEN、空批准字段、无后端选择、无 admission。 |
+| 整体治理 | `PASS` | 当时状态为 BLOCKED/NOT_STARTED、八项 OPEN、空批准字段、无后端选择、无 admission。 |
 
 总评：`PASS`。`precommit-v6` 当前可视为已完成静态审阅。本 PASS 不构成 acquisition、临时根目录创建、venv、
 依赖安装、smoke、full、后端选择、决策关闭、M8 准入、生产实现、merge 或 push 授权；下一步仍须按负责人已签署的
@@ -696,8 +705,8 @@ fixture coverage 与 probe-query sample inventory 必须分别核对，禁止共
   `1,087,137,842` bytes，高于 root cap `825,157,508` bytes，但该复测未被终态哈希绑定，不能补写成运行证据。
 
 本 experiment ID 已产生终态，不得清除证据后重跑、调整预算后重判或继续 full。任何后续实验都必须使用新
-experiment ID、全新唯一临时根目录、修订后的协议与 harness、独立静态审阅和新的明确执行授权。M8 继续保持
-`BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
+experiment ID、全新唯一临时根目录、修订后的协议与 harness、独立静态审阅和新的明确执行授权。该终态形成时，M8
+继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
 
 #### 3.21.11 2026-09-08 `v6` 磁盘预算归因分析（`v7` 预算公式修正依据）
 
@@ -787,7 +796,7 @@ experiment ID、protocol、唯一临时根目录、全新 harness、独立静态
 根目录 → 全新 harness → 独立静态 `PASS` → 磁盘预算预检 → venv/acquisition → 版本自校验 → scaled smoke”定义为
 不可颠倒的 hard gate；缺少任一修订不得授权执行。
 
-M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。本处置不构成 v8 协议、v8 静态审阅、v8
+M8 在该处置形成时继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。本处置不构成 v8 协议、v8 静态审阅、v8
 执行授权、commit、merge 或 push 授权。
 
 #### 3.21.14 2026-09-08 `v8` 协议冻结与仅-smoke 授权
@@ -798,7 +807,7 @@ M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。本
 `PASS` → 磁盘预算预检 → venv/acquisition → 版本自校验 → scaled smoke”冻结为不可颠倒的 hard gate。
 
 负责人已明确授权仅执行 scaled smoke，禁止 full。该授权不允许跳过全新 harness 的 acquisition 前独立静态审计，
-也不构成后端选择、Decision 关闭、M8 admission、生产实现、merge 或 push 授权。M8 继续保持
+也不构成后端选择、Decision 关闭、M8 admission、生产实现、merge 或 push 授权。该授权形成时，M8 继续保持
 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
 
 #### 3.21.15 2026-09-09 `v8` 执行处置（`INVALID`，source-only provenance 失败）
@@ -848,7 +857,7 @@ source-only manifest、冻结配置、inventory、独立静态审计、与 audit
 授权。新尝试必须从 provenance 开始：先取得 root-provenance/source-authoring 阶段授权，再创建根、生成并冻结
 source/tree/harness/config 哈希与 inventory；独立静态审计取得 `PASS` 后，才可创建与该 audit record 绑定的 gate，
 并另行申请 preflight 授权。独立 `PASS` 前，禁止 preflight、创建 venv、dependency acquisition、smoke 或 full。
-M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
+该处置形成时，M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
 
 #### 3.21.16 2026-09-09 `v9` pre-freeze static-audit failure（不可复用）
 
@@ -887,8 +896,9 @@ V9 临时根仅作为 pre-freeze static-failure context；不得在该根上修�
 及 V12 的内容同样属于当时的历史后继条件：V11 已按 §3.21.18 处置为 `PRE_SOURCE_PROVENANCE_INVALID`，V12
 虽完成阶段 1 source freeze，但其独立静态审计已于 `2026-09-09T12:12:34Z` 判定 `FAIL`，并按 §3.21.20
 以 `INDEPENDENT_STATIC_AUDIT_FAILED` 永久封口。故本段不得解释为 V12 当前等待 `PASS`；当前没有可继续的后继，
-仍禁止 preflight、创建 venv、安装或获取依赖、acquisition、smoke、full 和任何 benchmark。M8 继续保持
-`BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`；任何未来后继须另行书面授权并使用全新 V13 身份。
+仍禁止 preflight、创建 venv、安装或获取依赖、acquisition、smoke、full 和任何 benchmark。M8 在该段形成时继续保持
+`BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`；该段当时提出的全新 V13 后继方向已被
+§12 记录的 V13 永久处置取代，不得再使用 V13 身份。
 
 #### 3.21.17 2026-09-09 `v10` pre-source governance failure（不可复用）
 
@@ -909,7 +919,7 @@ V9 临时根仅作为 pre-freeze static-failure context；不得在该根上修�
 不是实验、审计、cleanup 或执行证据。V10 authorization 仍为 `NOT_AUTHORIZED`、未消费且不能授权任何后续动作。
 本段要求递增为 V11 的历史后继指令已被 §3.21.18 的 V11 处置 `superseded`，其后继 V12 亦已于 §3.21.20 以
 `INDEPENDENT_STATIC_AUDIT_FAILED` 永久封口。目前没有现行后继；任何后继实验须由负责人另行书面授权，并从全新
-身份与根开始。M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
+身份与根开始。该处置形成时，M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
 
 #### 3.21.18 2026-09-09 `v11` pre-source provenance failure（不可复用）
 
@@ -941,7 +951,7 @@ SHA-256 `8f1477622dcc0795a9924814f689b6498b0bcb31fdb404d516c919180bf70e71`，man
 无 bytecode、venv、目录、reparse、hard link 或额外 stream；generated Python、preflight 与 acquisition 均未执行。
 
 该段记录的是历史 source-freeze 终点；随后独立会话于 `2026-09-09T12:12:34Z` 给出 `FAIL`，V12 已由下方
-§3.21.20 永久封口。作者/修复者会话不具备独立审计资格，V12 不得继续或复用。M8 继续
+§3.21.20 永久封口。作者/修复者会话不具备独立审计资格，V12 不得继续或复用。该历史阶段形成时，M8 继续
 `BLOCKED / NOT_STARTED`，八项 Decision 继续 `OPEN`。
 
 #### 3.21.20 2026-09-09 `v12` 独立静态审计失败（不可复用）
@@ -975,7 +985,7 @@ V12 不另造 canonical disposition payload 或 disposition digest，冻结快�
 只读：三后端、fixture/probe 库存与 cleanup 均未执行，审计不含任何运行期结论；历史时序（marker 后、source 前的
 根状态）与 ADS 观察仅适用于审计时快照，不可重放。
 
-M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision（含后端选择）全部保持 `OPEN`；本处置不选择、不批准任何
+该处置形成时，M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision（含后端选择）全部保持 `OPEN`；本处置不选择、不批准任何
 后端，也不授权 preflight 或任何执行。任何后继实验须由负责人另行书面授权，并按全新身份、根与 allowlist 从零
 开始，重新接受独立静态审计。
 
@@ -1045,7 +1055,12 @@ M8 被批准和开工前不创建 `tests/M8/`。获准后测试计划必须覆�
 
 ### 8.1 固定 workload
 
-- 1k single-source 与 3k aggregate 作为与 M7 连续的基线；10k 只作为容量决策待定层；
+- `1k-correctness`：作为与 M7 连续的 SQLite oracle、正确性、生命周期和 parity 基线；
+- `10k-single-user`：本地单用户 build/incremental/query/reopen/delete 与资源验证；
+- `100k-capacity`：固定 seed synthetic/半合成容量、构建、恢复、RSS 与磁盘验证；
+- `100k-filtered`：覆盖 owner/source/generation/snapshot/tombstone 的过滤和隔离；
+- `100k-concurrent`：仅在负责人确认需要判断服务化触发条件时执行；
+- 100K capacity 证据不得冒充 100K 真实生产语料质量，后者属于后续数据规模化阶段；
 - lexical、semantic、no-hit、mixed、owner/filter queries；`top_k` 1/3/5；cold 与 warm；
 - build/rebuild、upsert/replace、shadow read、migration、tombstone/delete、restart、cutover、rollback；
 - 受控 reader/writer 并发，明确不以随机 sleep 或 elapsed-time 断言替代 stage/fault hooks；
@@ -1060,9 +1075,10 @@ report hashes、sample count、redaction checks、错误/fallback 计数、每�
 
 quick smoke 只能作为开发反馈，必须显式标记非冻结证据，不得选择后端、批准 M8 或授权生产实现。
 
-### 8.3 待负责人定稿的阈值类别
+### 8.3 已批准的阈值类别与后续冻结要求
 
-`M8-BENCHMARK` 未 `RESOLVED` 前不填写最终数值；至少冻结以下类别：
+`M8-BENCHMARK` 已于 2026-09-10 `RESOLVED`，批准了规模层、指标类别与 hard-gate 原则；具体数值阈值仍必须在
+任何实证运行前由独立协议冻结，不能在看到结果后修改。至少覆盖以下类别：
 
 1. hard correctness：未授权、stale generation、tombstone、wrong identity 结果必须为零；
 2. quality：Recall@1/3/5、identity-set parity 与 SQLite baseline 非劣性；
@@ -1078,7 +1094,7 @@ M7 的冻结门槛只作为方法和 baseline 参考，不能自动成为 M8 的
 ## 9. 准入检查与批准记录
 
 - [x] `M8-M7-EXIT=SATISFIED`，证据可追溯至 M7 计划、baseline 和 `docs/PLAN.md`；
-- [ ] 八项强制决策全部 `RESOLVED`；
+- [x] 八项强制决策全部 `RESOLVED`；负责人 `justtodo123` 于 2026-09-10 逐项批准，见 `m8-decision-closure-v1.md`；
 - [ ] control/data-plane parity、migration/cutover/rollback 和 fallback 具有可执行的后续测试方案；
 - [ ] benchmark workload、环境、样本协议和数值阈值已冻结；
 - [ ] `docs/PLAN.md`、本计划和 registry 一致；
@@ -1101,8 +1117,9 @@ M7 的冻结门槛只作为方法和 baseline 参考，不能自动成为 M8 的
 容器、部署配置或阶段测试目录。验证顺序：
 
 1. 检查文档链接、Markdown 格式和 `git diff --check`；
-2. 解析 registry，与本计划和 `docs/PLAN.md` 核对八个 Decision ID、`OPEN`、`M8-M7-EXIT=SATISFIED`、
-   `BLOCKED / NOT_STARTED` 和空批准字段；
+2. 解析 registry，与本计划和 `docs/PLAN.md` 核对八个 Decision ID 均为 `RESOLVED`，且每项精确政策值与
+   evidence 非空；同时核对 `M8-M7-EXIT=SATISFIED`、`BLOCKED / NOT_STARTED`、空 admission approval 字段和
+   implementation-start 未获授权；
 3. 运行既有 `tests/regression/test_docs_consistency.py` 与 `test_governance_contract.py`；
 4. 静态审计无 `tests/M8`、无 M8 production adapter/API/flag/schema/service/container、无候选依赖、
    无外部源目录读取、无二进制或生成 artifact，且 M7 protected baseline 未变；
@@ -1116,3 +1133,30 @@ M7 的冻结门槛只作为方法和 baseline 参考，不能自动成为 M8 的
 后续若改变 M7 contract、数据 schema、embedding/model、benchmark workload、依赖打包或后端策略，必须
 重新审阅相关 decision record；实质变化时 M8 准入应 `REVOKED`，在重新澄清和批准前停止生产实施。M9
 不得把本计划存在当作数据层已稳定的证据。
+
+## 12. V13 未绑定草案的永久停止与新协议边界
+
+V12 的独立静态审计已确认四项机械缺口：tombstone 没有删除前可见性基线、hard-delete 没有剩余检索
+oracle、运行期扫描缺少 hard-link/NTFS ADS 门禁、异常路径缺少可证明的失败终态与 cleanup closure。V12
+已按 [`references/m8-v12-disposition-20260909.md`](references/m8-v12-disposition-20260909.md) 永久封口；不得
+在 V12 身份上修复或补审。
+
+V13 曾作为书面后继草案记录于 [`m8-v13-admission-protocol.md`](references/m8-v13-admission-protocol.md)，身份为
+`sa.m8.admission-evidence.v13` / `precommit-v13`；现已由
+[`references/m8-v13-disposition-20260910.md`](references/m8-v13-disposition-20260910.md) 处置为
+`SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`。该协议要求全新随机根和
+allowlist，并把四项缺口落实为可独立重算的 before/after oracle、reopen 检查、`st_nlink == 1` 与 NTFS ADS
+枚举、`failure-intent`/`cleanup-receipt`/`terminal` 排他链和覆盖各 writer/cleanup 阶段的故障注入。它从未授权创建根、
+preflight、venv、依赖、运行、后端选择或 M8 admission；M8 继续 `BLOCKED / NOT_STARTED`，八项 Decision 已在
+后续范围重构中 `RESOLVED`，但不得据此恢复 V13。
+
+2026-09-10 的协议文本审计又在授权前闭合了四根存放拓扑、成功终态无环顺序、cleanup retained exact set、
+primary/fallback 排他和 execution 阶段化 exact set，结论为 `PASS_AFTER_REVISION / DRAFT_NOT_AUTHORIZED`；见
+[`references/m8-v13-protocol-text-audit-20260910.md`](references/m8-v13-protocol-text-audit-20260910.md)。该结论只针对
+文档设计，不是未来 source-freeze 后的独立静态审计，也不改变 M8 状态或产生任何授权。
+
+V13 的 repository binding 从未建立，最终路径、revision 与 blob SHA-256 均保持未绑定占位，不得再填写或恢复。
+适配评估见 [`references/m8-v13-scale-fit-assessment-20260910.md`](references/m8-v13-scale-fit-assessment-20260910.md)：
+现有 V13 不覆盖已批准的 1K/10K/100K workload、资源预算、完整 embedding profile 和新候选政策，不能作为完整 M8
+实证协议。后续如确需实证，必须使用全新协议身份，重新冻结文本和 repository binding，再按
+`S → A → G → E` 分离书面授权。

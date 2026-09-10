@@ -5,7 +5,7 @@
 - 状态：**`PRE_SOURCE_PROVENANCE_INVALID`；身份、根与 source 永久不可复用**
 - 前置处置：V8 `INVALID`、V9 `PRE_FREEZE_STATIC_AUDIT_FAILED`、V10 `PRE_SOURCE_GOVERNANCE_INVALID`（三者永久不可复用）
 - 本文件现为去敏历史处置记录，**不构成**任何后继身份或阶段授权。
-- 最终状态权威：[`docs/PLAN.md`](../PLAN.md)；准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
+- 最终状态权威：[`docs/PLAN.md`](../../PLAN.md)；准入政策：[`stage-admission-gates.md`](../../standards/stage-admission-gates.md)
 
 ## 1. 身份与前置处置
 

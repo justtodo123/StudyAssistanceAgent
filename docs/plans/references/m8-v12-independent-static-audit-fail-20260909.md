@@ -86,3 +86,10 @@ V12 阶段 1 独立静态审计结论为 **`FAIL`**。冻结根身份、九文�
 本报告不授权 preflight、venv、dependency acquisition、smoke、full、benchmark、后端选择、M8 admission、生产实现、commit、merge 或 push。M8 继续保持 **`BLOCKED / NOT_STARTED`**；`sqlite-linear`、`lancedb-embedded`、`qdrant-client-local` 均未选择或批准。
 
 V12 必须永久失败封口；不得原地修复、补审、恢复、重跑、重判或复用 root、nonce、source、manifest、inventory、digest 或其他 artifact。任何修复只能在全新 V13 身份中另行提出、授权和审计。
+
+## 7. 2026-09-10 后续状态
+
+上段关于 V13 的表述记录了本报告形成时唯一允许的后继方向，并不构成 V13 授权。其后提出的 V13 草案最终在
+未 binding、未建根、未 source freeze、未获授权且从未执行的状态下永久停止；见
+[`m8-v13-disposition-20260910.md`](m8-v13-disposition-20260910.md)。同日闭合的八项 M8 Decision 也不修复、恢复或
+重判 V12。任何后续实证必须使用全新协议身份，不得复用 V12 或 V13。

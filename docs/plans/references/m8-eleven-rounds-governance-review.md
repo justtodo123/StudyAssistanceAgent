@@ -4,7 +4,8 @@
 > 适用范围：`docs/plans/m8-specialized-storage-plan.md` 中 `sa.m8.admission-evidence.v1` 至 `.v11` 的准入治理过程
 > 地位：**辅助复盘，不是计划依据，也不构成任何阶段授权**。最终依据是 [`docs/PLAN.md`](../../PLAN.md) 与
 > [`docs/plans/m8-specialized-storage-plan.md`](../m8-specialized-storage-plan.md)。
-> 结论只针对 V1–V11 已记录的失败处置；V12 仅作为当前后继状态附注，不计入本复盘的十一轮结论。
+> 结论只针对 V1–V11 已记录的失败处置；V12 仅作为报告形成时的后继状态附注，不计入本复盘的十一轮结论。
+> 文中的 Decision `OPEN` 均是截至 2026-09-09 本报告形成时的历史状态；2026-09-10 后续状态见第 6.1 节。
 
 ## 1. 背景与总览
 
@@ -15,10 +16,10 @@ admission-protocol** 推进，各轮均有独立 experiment ID 及不同程度�
 `INVALID/GATE_FAILED` 等复合历史标签。因此，下文按各轮实际记录描述，不将这些共性或概括性模式视为统一授权、
 统一审计或严格唯一终态，也不构成任何阶段授权。
 
-**总体状态（截至本报告）**：V1–V12 全部以失败终态关闭；V11 已处置为
+**总体状态（截至本报告形成时）**：V1–V12 全部以失败终态关闭；V11 已处置为
 `PRE_SOURCE_PROVENANCE_INVALID`。后继 V12 完成阶段 1 source freeze 后，独立静态审计于
 `2026-09-09T12:12:34Z` 判定 `FAIL`，V12 已以 `INDEPENDENT_STATIC_AUDIT_FAILED` 永久封口且不可复用。
-M8 始终保持 `BLOCKED / NOT_STARTED`，八项 Decision 全部 `OPEN`，无后端选择、无准入、无生产授权。
+本报告形成时 M8 始终保持 `BLOCKED / NOT_STARTED`，八项 Decision 全部 `OPEN`，无后端选择、无准入、无生产授权。
 
 失败性质呈现清晰的三阶段演进：
 
@@ -159,7 +160,7 @@ reparse/link。六个 source 随后重新实现并 source freeze。但独立静�
 
 ## 6. 结论
 
-- **12 轮全部未通过准入**（V1–V12），M8 仍 `BLOCKED / NOT_STARTED`，八项 Decision 保持 `OPEN`。
+- **12 轮全部未通过准入**（V1–V12）；截至本报告形成时，M8 仍 `BLOCKED / NOT_STARTED`，八项 Decision 保持 `OPEN`。
 - 后继轮次通常会**在设计层尝试修正上一轮已识别的根因**，但逐轮结果包含“部分”克服及新增缺陷，不能概括为
   每轮均已完整克服。
 - 执行或证据层持续暴露更深层的新错误，错误由“数值/结果”逐步上升到“过程纪律与源码完整性”，说明治理在
@@ -168,19 +169,26 @@ reparse/link。六个 source 随后重新实现并 source freeze。但独立静�
   判定 `FAIL`（四项机械门禁证据缺陷），V12 亦已永久封口且不可复用；无 preflight 或执行授权，任何后继实验
   须由负责人另行书面授权。
 
+## 6.1 2026-09-10 后续状态
+
+2026-09-10 后续治理快照将 M8 八项 Decision 逐项闭合为 `RESOLVED`，但 M8 仍为
+`BLOCKED / NOT_STARTED`；未选择后端，未批准 admission，未授权生产实现。V12 的最终状态仍为
+`INDEPENDENT_STATIC_AUDIT_FAILED`，V13 则为
+`SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`。本节仅说明后续状态，不改写本报告形成时的历史事实。
+
 ## 7. 引用来源
 
 - [`docs/plans/m8-specialized-storage-plan.md`](../m8-specialized-storage-plan.md)（§3.10–§3.21.20 各轮冻结与处置）
-- [`docs/plans/m8-v7-admission-protocol.md`](../m8-v7-admission-protocol.md)
-- [`docs/plans/m8-v8-admission-protocol.md`](../m8-v8-admission-protocol.md)
-- [`docs/plans/m8-v9-admission-protocol.md`](../m8-v9-admission-protocol.md)
-- [`docs/plans/m8-v10-admission-protocol.md`](../m8-v10-admission-protocol.md)
-- [`docs/plans/m8-v11-admission-protocol.md`](../m8-v11-admission-protocol.md)
-- [`docs/plans/m8-v12-admission-protocol.md`](../m8-v12-admission-protocol.md)
+- [`docs/plans/references/m8-v7-admission-protocol.md`](m8-v7-admission-protocol.md)
+- [`docs/plans/references/m8-v8-admission-protocol.md`](m8-v8-admission-protocol.md)
+- [`docs/plans/references/m8-v9-admission-protocol.md`](m8-v9-admission-protocol.md)
+- [`docs/plans/references/m8-v10-admission-protocol.md`](m8-v10-admission-protocol.md)
+- [`docs/plans/references/m8-v11-admission-protocol.md`](m8-v11-admission-protocol.md)
+- [`docs/plans/references/m8-v12-admission-protocol.md`](m8-v12-admission-protocol.md)
 - `docs/plans/references/` 下 V7–V12 authorization 记录（V7–V11 历史授权均已消费/失效；V12 仅阶段 1
   授权已消费）
 
 ---
 
-> 说明：本报告的逐轮结论仅覆盖 V1–V11。V12 当前状态仅用于避免把历史复盘误读为现行授权；其独立审计与任何
-> 后续处置以主计划及 V12 专属记录为准。
+> 说明：本报告的逐轮结论仅覆盖 V1–V11。V12 截至本报告形成时的后继状态仅用于避免把历史复盘误读为
+> 现行授权；其独立审计与任何后续处置以主计划及 V12 专属记录为准。2026-09-10 后续状态见第 6.1 节。

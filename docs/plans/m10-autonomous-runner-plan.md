@@ -14,6 +14,21 @@ manifest 和 MCP 最小对外面。状态机继续作为正式默认与无 LLM f
 本阶段不承诺分布式 exactly-once；通过能力授权、幂等键、EffectLedger、事务边界、reconcile 和补偿定义可验证的
 副作用语义。设定未闭合前不得添加自主执行开关、写工具、MCP server、schema migration 或发布配置。
 
+### 1.1 10K/100K 长任务边界
+
+M10 必须支持 M8 100K capacity 和拟议 M11 10K 真实数据带来的长任务，但不把向量数据库变成模型可直接操作的工具：
+
+- ingestion、parser、embedding、index build/rebuild、incremental sync、evaluation 必须作为有界异步 job；
+- job 必须有稳定 identity、scope、input manifest digest、resource budget、progress、checkpoint、cancel 和 terminal state；
+- checkpoint/resume 不得重复发布 generation、重复写领域状态或跳过授权/删除复核；
+- EffectLedger 记录 proposed/authorized/pending/applied/failed/compensated，批量子任务必须使用幂等键；
+- Runner 和模型不得直接执行 LanceDB/Qdrant/SQLite 原生命令，只能调用受授权领域服务；
+- index candidate 构建不得阻塞正式学习会话；只有完整校验和原子发布后才可见；
+- 本地进程退出、断电、磁盘不足、取消与未来云端 worker 重试必须进入冻结 crash/recovery matrix；
+- 资源预算至少覆盖 wall-clock、CPU、RSS、磁盘临时空间、并发、外部 AI token/cost（若启用）和保留期。
+
+本节不批准 M11 数据扩展、M12 云部署、后台 worker 或任何生产长任务。
+
 ## 2. 前置证据与继承不变量
 
 | Prerequisite ID | 当前状态 | 准入所需证据 |
@@ -68,13 +83,16 @@ manifest 和 MCP 最小对外面。状态机继续作为正式默认与无 LLM f
 
 1. 冻结 authority、capability 和 EffectLedger schema，先实现拒绝路径；
 2. 为单一受控写工具实现 idempotency、checkpoint 和逐 crash point 恢复；
-3. 建立 reconcile/人工介入和不可补偿失败处理，再扩大写工具集合；
-4. 接入默认关闭的可选 Runner，并保持状态机路径与数据兼容；
-5. 在冻结 Agent 任务集达标后，分阶段交付 manifest 和最小 MCP surface。
+3. 建立通用异步 job envelope、资源预算、进度、取消和 terminal state，并先用无生产发布的合成长任务验证；
+4. 为 ingestion/embedding/reindex 定义 manifest-bound checkpoint 与 generation publication 门禁；
+5. 建立 reconcile/人工介入和不可补偿失败处理，再扩大写工具集合；
+6. 接入默认关闭的可选 Runner，并保持状态机路径与数据兼容；
+7. 在冻结 Agent 任务集达标后，分阶段交付 manifest 和最小 MCP surface。
 
 拟新增 `tests/M10/` 覆盖 authorization、checkpoint、idempotency、effect ledger、recovery、offline default、rollout、
 manifest/MCP conformance；真实 provider 或 transport smoke 必须显式启用且不阻断默认离线 CI。退出条件包括零越权、
-重放不重复副作用、crash matrix 达标、状态机默认可回滚、旧 session 恢复、默认 90 题不退化及任务评测达到批准阈值。
+重放不重复副作用、10K/100K 合成长任务在取消/崩溃/磁盘不足下不产生半发布 generation、crash matrix 达标、
+状态机默认可回滚、旧 session 恢复、默认 90 题不退化及任务评测达到批准阈值。
 
 ## 6. 撤销与发布边界
 

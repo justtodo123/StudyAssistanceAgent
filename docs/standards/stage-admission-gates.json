@@ -300,14 +300,14 @@
       "delivery_status": "NOT_STARTED",
       "prerequisites": [{"id": "M8-M7-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m7-source-lifecycle-plan.md", "docs/baselines.md"]}],
       "mandatory_decisions": [
-        {"id": "M8-CONTROL-SCHEMA", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M8-MIGRATION", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M8-LANCEDB-CRITERIA", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M8-QDRANT-CRITERIA", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M8-BACKEND-PARITY", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M8-FALLBACK", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M8-DEPENDENCY-PACKAGING", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M8-BENCHMARK", "status": "OPEN", "value": null, "evidence": []}
+        {"id": "M8-CONTROL-SCHEMA", "status": "RESOLVED", "value": "SQLITE_M7_AUTHORITATIVE_CONTROL_PLANE__REBUILDABLE_SPECIALIZED_DATA_PLANE", "evidence": ["docs/plans/references/m8-decision-closure-v1.md", "docs/plans/references/m8-m12-scope-decision-v1.md"]},
+        {"id": "M8-MIGRATION", "status": "RESOLVED", "value": "FROZEN_EXPORT__ISOLATED_BUILD__VALIDATE__SHADOW_READ__MANUAL_CUTOVER", "evidence": ["docs/plans/references/m8-decision-closure-v1.md", "docs/plans/references/m8-m12-scope-decision-v1.md"]},
+        {"id": "M8-LANCEDB-CRITERIA", "status": "RESOLVED", "value": "PRIMARY_LOCAL_SPECIALIZED_CANDIDATE__OPT_IN_ONLY_AFTER_ALL_HARD_GATES", "evidence": ["docs/plans/references/m8-decision-closure-v1.md", "docs/plans/references/m8-m12-scope-decision-v1.md"]},
+        {"id": "M8-QDRANT-CRITERIA", "status": "RESOLVED", "value": "NOT_A_LOCAL_DEFAULT__CLOUD_OR_SERVICE_TRIGGERED_CANDIDATE_ONLY", "evidence": ["docs/plans/references/m8-decision-closure-v1.md", "docs/plans/references/m8-m12-scope-decision-v1.md"]},
+        {"id": "M8-BACKEND-PARITY", "status": "RESOLVED", "value": "ZERO_TOLERANCE_IDENTITY_AUTH_LIFECYCLE__FROZEN_SCORE_ORDER_TOLERANCE", "evidence": ["docs/plans/references/m8-decision-closure-v1.md", "docs/plans/references/m8-m12-scope-decision-v1.md"]},
+        {"id": "M8-FALLBACK", "status": "RESOLVED", "value": "DEFAULT_PACK_SQLITE_BM25_FALLBACK__USER_SOURCE_FAIL_CLOSED", "evidence": ["docs/plans/references/m8-decision-closure-v1.md", "docs/plans/references/m8-m12-scope-decision-v1.md"]},
+        {"id": "M8-DEPENDENCY-PACKAGING", "status": "RESOLVED", "value": "ISOLATED_OPTIONAL_EXTRAS__NO_MANDATORY_SERVICE_OR_NETWORK", "evidence": ["docs/plans/references/m8-decision-closure-v1.md", "docs/plans/references/m8-m12-scope-decision-v1.md"]},
+        {"id": "M8-BENCHMARK", "status": "RESOLVED", "value": "1K_CORRECTNESS__10K_SINGLE_USER__100K_CAPACITY_FILTERED__OPTIONAL_CONCURRENCY", "evidence": ["docs/plans/references/m8-decision-closure-v1.md", "docs/plans/references/m8-m12-scope-decision-v1.md"]}
       ],
       "approval": {"approved_by": null, "approved_at": null, "approval_reference": null, "plan_revision": null, "decision_set_version": null}
     },
@@ -354,6 +354,58 @@
         {"id": "M10-MANIFEST", "status": "OPEN", "value": null, "evidence": []},
         {"id": "M10-OFFLINE-DEFAULT", "status": "OPEN", "value": null, "evidence": []},
         {"id": "M10-ROLLOUT", "status": "OPEN", "value": null, "evidence": []}
+      ],
+      "approval": {"approved_by": null, "approved_at": null, "approval_reference": null, "plan_revision": null, "decision_set_version": null}
+    },
+    {
+      "stage": "M11",
+      "plan": "docs/plans/m11-data-scaling-plan.md",
+      "admission_status": "BLOCKED",
+      "delivery_status": "NOT_STARTED",
+      "prerequisites": [
+        {"id": "M11-M8-EXIT", "status": "OPEN", "evidence": []},
+        {"id": "M11-M9-EXIT", "status": "OPEN", "evidence": []},
+        {"id": "M11-M10-EXIT", "status": "OPEN", "evidence": []}
+      ],
+      "mandatory_decisions": [
+        {"id": "M11-SCALE-GATES", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M11-SOURCE-ALLOWLIST", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M11-PARSER-QUALITY", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M11-CHUNK-POLICY", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M11-LICENSE-PROVENANCE", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M11-QUALITY-EVALUATION", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M11-RETRIEVAL-EVALUATION", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M11-PUBLICATION", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M11-INCREMENTAL-SYNC", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M11-PRIVACY-RETENTION", "status": "OPEN", "value": null, "evidence": []}
+      ],
+      "approval": {"approved_by": null, "approved_at": null, "approval_reference": null, "plan_revision": null, "decision_set_version": null}
+    },
+    {
+      "stage": "M12",
+      "plan": "docs/plans/m12-cloud-deployment-plan.md",
+      "admission_status": "BLOCKED",
+      "delivery_status": "NOT_STARTED",
+      "prerequisites": [
+        {"id": "M12-M8-EXIT", "status": "OPEN", "evidence": []},
+        {"id": "M12-M9-EXIT", "status": "OPEN", "evidence": []},
+        {"id": "M12-M10-EXIT", "status": "OPEN", "evidence": []},
+        {"id": "M12-M11-EXIT", "status": "OPEN", "evidence": []}
+      ],
+      "mandatory_decisions": [
+        {"id": "M12-SERVER-BASELINE", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-DEPLOYMENT-PROFILE", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-IDENTITY-AUTH", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-CONTROL-PLANE", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-VECTOR-DATA-PLANE", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-INGESTION-WORKER", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-STORAGE-BACKUP", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-PRIVACY-RESIDENCY", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-OBSERVABILITY", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-SECURITY-HARDENING", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-COST-CAPACITY", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-LOCAL-CLOUD-COMPAT", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M12-ROLLOUT-ROLLBACK", "status": "OPEN", "value": null, "evidence": []}
       ],
       "approval": {"approved_by": null, "approved_at": null, "approval_reference": null, "plan_revision": null, "decision_set_version": null}
     }

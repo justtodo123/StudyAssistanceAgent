@@ -2,7 +2,7 @@
 
 授权日期：2026-09-08
 授权对象：`sa.m8.admission-evidence.v7` / `precommit-v7`
-授权协议：`docs/plans/m8-v7-admission-protocol.md`（独立静态审阅 §7 已 `PASS`）
+授权协议：`docs/plans/references/m8-v7-admission-protocol.md`（独立静态审阅 §7 已 `PASS`）
 文档状态：**待签范围记录；V7 执行尝试已 `INVALID`，处置见主 M8 计划 §3.21.13**
 授权人（负责人）：____________
 

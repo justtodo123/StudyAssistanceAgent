@@ -14,7 +14,7 @@
 - marker UTC：`2026-09-09T09:42:37Z`
 - V11 disposition digest：`d9dda09590956d185c96fcd828ce9daea2288b545f82887f0ec28c91ad07b64d`
 
-本授权只允许按 [`m8-v12-admission-protocol.md`](../m8-v12-admission-protocol.md) 的不可颠倒顺序完成阶段 1。
+本授权只允许按 [`m8-v12-admission-protocol.md`](m8-v12-admission-protocol.md) 的不可颠倒顺序完成阶段 1。
 marker 初始 allowlist 必须在第一次写入时完整覆盖九个文件；marker 写入后、任何 source 写入前，必须立即完成 UTF-8
 无 BOM、无 CR、恰好一个末尾 LF、canonical-byte equality、self-digest、根仍仅含 marker 且无任何 link/reparse 的
 只读验证。任一失败立即停止，V12 不得修复后继续。
@@ -33,7 +33,7 @@ marker 初始 allowlist 必须在第一次写入时完整覆盖九个文件；ma
 full、benchmark、后端选择、Decision 关闭、M8 admission、生产实现、commit、merge 或 push。独立审计必须由未参与
 V12 authoring/repair/execution 的独立会话完成；独立 `PASS` 后仍须分别取得 preflight 与执行授权。
 
-M8 保持 `BLOCKED / NOT_STARTED`，八项 Decision 保持 `OPEN`。
+本授权形成时，M8 保持 `BLOCKED / NOT_STARTED`，八项 Decision 保持 `OPEN`。
 
 ## 4. 授权消费结果
 
@@ -53,5 +53,6 @@ M8 保持 `BLOCKED / NOT_STARTED`，八项 Decision 保持 `OPEN`。
 
 本授权至此终止：不得补充 V12 audit record、execution gate、release、preflight、venv、依赖或运行产物，不得
 修复、恢复、重跑、重判或复用 V12 root、nonce、source、manifest、inventory、digest 或其他 artifact。任何后续
-V13 必须另建身份、协议、根、证据链并取得新的书面授权；本记录不构成 V13 协议、授权或开工。M8 继续保持
-`BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。
+V13 必须另建身份、协议、根、证据链并取得新的书面授权；本记录不构成 V13 协议、授权或开工。本授权终止时，
+M8 继续保持 `BLOCKED / NOT_STARTED`，八项 Decision 继续为 `OPEN`。2026-09-10 后续状态以现行主计划和治理快照为准；
+后来的 Decision closure 不恢复或重新授权本 V12 身份。

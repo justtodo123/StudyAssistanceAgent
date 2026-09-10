@@ -2,7 +2,7 @@
 
 授权日期：2026-09-08
 授权对象：`sa.m8.admission-evidence.v8` / `precommit-v8`
-授权协议：`docs/plans/m8-v8-admission-protocol.md`（独立静态审阅 §8 已 `PASS`）
+授权协议：`docs/plans/references/m8-v8-admission-protocol.md`（独立静态审阅 §8 已 `PASS`）
 文档状态：**历史授权已消费并失效；V8 执行已 `INVALID`，不再允许任何执行**
 授权人（负责人）：用户于 2026-09-08 会话明确授权（历史记录）
 

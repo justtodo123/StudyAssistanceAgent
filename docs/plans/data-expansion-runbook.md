@@ -1,15 +1,15 @@
 # 数据扩展运行手册
 
 > 状态：DRAFT / FUTURE REFERENCE / NON-AUTHORITATIVE
-> 仅保留为 M7 候选数据扩展运行手册；不构成 M7 准入、生产实施授权、验收通过或负责人批准。
+> 作为 M7 数据生命周期后的候选扩展运行手册，并作为 M11 计划的非权威执行参考；不构成数据扩展准入、生产实施授权、验收通过或负责人批准。
 > 当前 M7 基础设施范围为 `ADMITTED / COMPLETE`，原 `implementation_start=AUTHORIZED` 与 2026-09-06 独立完成批准均已登记；
 > 但本手册仍未获数据扩展执行授权。十二项强制决策、技术证据或完成批准均不因本文产生语料批准，Network 语料也不在批准范围内；
 > 最终状态以 [`docs/PLAN.md`](../PLAN.md) 和阶段准入门禁为准。
 > 进入任何数据扩展阶段前仍须取得明确范围授权并完成文末 Gate 0。Gate 0 只核验单个 Source 的合规与发布条件，
 > 不能替代 M7 阶段准入或人工批准。
 > 适用项目：StudyAssistanceAgent
-> 候选目标规模：首批 3,000 chunks，第二阶段 10,000 chunks
-> 最后核验日期：2026-08-27
+> 候选目标规模：首批 3,000 真实 approved chunks，M11 正式退出目标 10,000；30K/100K 为后续扩展 Gate
+> 最后核验日期：2026-09-10
 
 ## 1. 目的与边界
 
@@ -21,7 +21,8 @@
 - Source / Document / Chunk 身份与 manifest；
 - 清洗、转换、去重、切块、审核和发布流程；
 - 许可证、署名、删除、同步和验收要求；
-- 3k/10k 数据扩展顺序与停止条件。
+- 当前基线 → 3K → 10K 数据扩展顺序与停止条件，以及 30K/100K 后续 Gate；
+- M8 的 100K synthetic capacity 与 M11 真实 production data 的证据分离。
 
 本文不授权绕过网站条款、登录、验证码、付费墙、robots 策略或访问频率限制。即使来源出现在白名单中，每次首次下载或许可证发生变化时仍须执行 Gate 0。
 
@@ -841,7 +842,24 @@ get_fingerprints(source_id)
 - benchmark 当前 SQLite；未来专业服务后端仅在 M8 独立决策与批准后讨论。Milvus Lite 仅为历史调查中的非权威提及，
   未选定、未批准、未接入，也不构成实现方向。
 
-10k 阶段不得通过抓取博客或题库快速补量。
+10k 阶段不得通过抓取博客或题库快速补量。10K 是拟议 M11 的正式退出目标；只有数据质量、检索质量、
+incremental publication、Planner 输入预算和 Runner 长任务恢复全部通过，并取得负责人独立完成批准后才能声明完成。
+
+---
+
+## 12.1 30K / 100K 后续扩展 Gate
+
+30K 和 100K 不是 M11 完成前置，也不得因 M8 的 100K synthetic capacity PASS 自动启动。达到 10K 后，只有以下条件
+同时成立才可逐级提出新范围：
+
+- 真实用户需求和课程覆盖证明扩展有产品价值；
+- 许可清晰、可维护的 approved 来源足以支撑扩展，且领域分布不会被单一大型来源垄断；
+- parser、去重、人工抽样、query/gold 和删除传播成本在批准预算内；
+- M8 数据面和 M10 job runner 在目标规模下仍满足资源与恢复门槛；
+- 每级使用全新冻结的真实质量 workload 和负责人批准，不得从 10K 直接跳到 100K。
+
+`100K-capacity` 可以使用固定 synthetic/半合成 fixture 验证存储、filter、lifecycle 和资源；`100K-production` 必须由
+真实 approved documents 构成。两者的报告、终态和结论不得混用。
 
 ---
 

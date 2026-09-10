@@ -1,12 +1,12 @@
 # 阶段准入门禁
 
-> 适用阶段：M6a、M6b、M7、M8、M9、M10
+> 适用阶段：M6a、M6b、M7、M8、M9、M10、M11、M12
 > 状态权威：[`docs/PLAN.md`](../PLAN.md)
 > 机器可读登记：[`stage-admission-gates.json`](stage-admission-gates.json)
 
 ## 1. 目的
 
-M6a–M10 涉及 Source 身份、索引生命周期、外部模型、专业存储、学习计划和写副作用。
+M6a–M12 涉及 Source 身份、索引生命周期、外部模型、专业存储、学习计划、写副作用、真实数据规模化和可选云部署。
 在这些设定未澄清前直接实现，会把待决定事项固化为不兼容的代码、数据或部署依赖。
 因此，本规则把“设定澄清完成、CI 一致性门禁通过并取得人工批准”设为生产实施前的准入门禁。该门禁降低误实施风险，但仓库内可修改的文档和 CI 检查本身不是外部不可篡改的安全边界；如需强化不可绕过性，应另行配置分支保护、CODEOWNERS 和必需检查。
 
@@ -39,8 +39,10 @@ M6b 的前置证据、八项决策、保护基线与独立批准也已闭合；�
 `implementation_start=AUTHORIZED`；技术退出证据完成后，justtodo123 于 2026-09-06 另行明确批准
 `M7 COMPLETE`，因此当前为 `ADMITTED / COMPLETE`。该完成批准沿用 `m7-infrastructure-only-v1`，不扩大原
 scope：Network 文档晋升/语料治理闭环、任何 corpus 自动批准、M8 专业存储和 Milvus 后端选择仍明确排除。
-M8–M10 仍为 `BLOCKED / NOT_STARTED`；其中各自的 M7-exit 前置已满足，但阶段专属强制决策和人工准入批准
-仍未闭合。M6a-P0 crawler 本身只构成前置证据，不单独批准阶段。
+M8–M12 仍为 `BLOCKED / NOT_STARTED`。M8 的八项 Decision 已于 2026-09-10 逐项批准并 `RESOLVED`，但后端选择、
+新实证协议、阶段 admission 和开工授权仍未闭合；M9/M10 的 M7-exit 前置已满足但仍等待阶段专属 Decision 与上游
+退出；M11/M12 是新登记的拟议阶段，全部 Decision、前置和批准保持开放。M6a-P0 crawler 本身只构成前置证据，不单独
+批准阶段。
 
 ## 3. 决策完成标准
 

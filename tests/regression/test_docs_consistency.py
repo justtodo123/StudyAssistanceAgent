@@ -23,8 +23,8 @@ class TestProjectStatusConsistency:
         assert "M6a-P0 crawler 已收口" in root
         assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in plan
         assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in root
-        assert "M8–M10" in root
-        assert "M6–M10" in plan
+        assert "M8–M12" in root
+        assert "M6–M12" in plan
         for text in (root, plan):
             assert "BLOCKED / NOT_STARTED" in text
         assert "ADMITTED / COMPLETE" in root
@@ -33,7 +33,7 @@ class TestProjectStatusConsistency:
         assert "独立人工完成批准" in root
         assert "M8–M10 的事实型" in root
         assert "M7 退出前置已满足" in root
-        assert "M8–M10 自身仍为 `BLOCKED / NOT_STARTED`" in root
+        assert "M8–M12 仍为 `BLOCKED / NOT_STARTED`" in root
         assert "M0–M5 MVP 可用。" in root
         assert "M10" in root and "自主 Runner" in root
         assert "课程笔记创建" not in root
@@ -116,7 +116,16 @@ class TestVersionSemantics:
 
 
 class TestStageAdmissionConsistency:
-    EXPECTED_STAGES = ("M6a", "M6b", "M7", "M8", "M9", "M10")
+    EXPECTED_STAGES = (
+        "M6a",
+        "M6b",
+        "M7",
+        "M8",
+        "M9",
+        "M10",
+        "M11",
+        "M12",
+    )
     APPROVAL_FIELDS = (
         "approved_by",
         "approved_at",
@@ -416,10 +425,127 @@ class TestStageAdmissionConsistency:
             }
             assert all(value is None for value in stage["approval"].values())
 
-        assert all(
-            decision["status"] == "OPEN"
-            for decision in stages["M8"]["mandatory_decisions"]
+        m8 = stages["M8"]
+        expected_m8_decisions = {
+            "M8-CONTROL-SCHEMA": (
+                "SQLITE_M7_AUTHORITATIVE_CONTROL_PLANE__"
+                "REBUILDABLE_SPECIALIZED_DATA_PLANE"
+            ),
+            "M8-MIGRATION": (
+                "FROZEN_EXPORT__ISOLATED_BUILD__VALIDATE__"
+                "SHADOW_READ__MANUAL_CUTOVER"
+            ),
+            "M8-LANCEDB-CRITERIA": (
+                "PRIMARY_LOCAL_SPECIALIZED_CANDIDATE__"
+                "OPT_IN_ONLY_AFTER_ALL_HARD_GATES"
+            ),
+            "M8-QDRANT-CRITERIA": (
+                "NOT_A_LOCAL_DEFAULT__"
+                "CLOUD_OR_SERVICE_TRIGGERED_CANDIDATE_ONLY"
+            ),
+            "M8-BACKEND-PARITY": (
+                "ZERO_TOLERANCE_IDENTITY_AUTH_LIFECYCLE__"
+                "FROZEN_SCORE_ORDER_TOLERANCE"
+            ),
+            "M8-FALLBACK": (
+                "DEFAULT_PACK_SQLITE_BM25_FALLBACK__"
+                "USER_SOURCE_FAIL_CLOSED"
+            ),
+            "M8-DEPENDENCY-PACKAGING": (
+                "ISOLATED_OPTIONAL_EXTRAS__NO_MANDATORY_SERVICE_OR_NETWORK"
+            ),
+            "M8-BENCHMARK": (
+                "1K_CORRECTNESS__10K_SINGLE_USER__100K_CAPACITY_FILTERED__"
+                "OPTIONAL_CONCURRENCY"
+            ),
+        }
+        actual_m8_decisions = {
+            decision["id"]: decision
+            for decision in m8["mandatory_decisions"]
+        }
+        assert set(actual_m8_decisions) == set(expected_m8_decisions)
+        for decision_id, expected_value in expected_m8_decisions.items():
+            decision = actual_m8_decisions[decision_id]
+            assert decision["status"] == "RESOLVED"
+            assert decision["value"] == expected_value
+            assert decision["evidence"]
+
+        assert m8["admission_status"] == "BLOCKED"
+        assert m8["delivery_status"] == "NOT_STARTED"
+        assert all(value is None for value in m8["approval"].values())
+        assert m8.get("implementation_start") is None
+
+    def test_m11_and_m12_contracts_and_historical_boundaries(self, repo_root):
+        stages = {
+            stage["stage"]: stage
+            for stage in _load_admission_registry(repo_root)["stages"]
+        }
+
+        assert {
+            item["id"] for item in stages["M11"]["prerequisites"]
+        } == {
+            "M11-M8-EXIT",
+            "M11-M9-EXIT",
+            "M11-M10-EXIT",
+        }
+        assert {
+            item["id"] for item in stages["M11"]["mandatory_decisions"]
+        } == {
+            "M11-SCALE-GATES",
+            "M11-SOURCE-ALLOWLIST",
+            "M11-PARSER-QUALITY",
+            "M11-CHUNK-POLICY",
+            "M11-LICENSE-PROVENANCE",
+            "M11-QUALITY-EVALUATION",
+            "M11-RETRIEVAL-EVALUATION",
+            "M11-PUBLICATION",
+            "M11-INCREMENTAL-SYNC",
+            "M11-PRIVACY-RETENTION",
+        }
+
+        assert {
+            item["id"] for item in stages["M12"]["prerequisites"]
+        } == {
+            "M12-M8-EXIT",
+            "M12-M9-EXIT",
+            "M12-M10-EXIT",
+            "M12-M11-EXIT",
+        }
+        assert {
+            item["id"] for item in stages["M12"]["mandatory_decisions"]
+        } == {
+            "M12-SERVER-BASELINE",
+            "M12-DEPLOYMENT-PROFILE",
+            "M12-IDENTITY-AUTH",
+            "M12-CONTROL-PLANE",
+            "M12-VECTOR-DATA-PLANE",
+            "M12-INGESTION-WORKER",
+            "M12-STORAGE-BACKUP",
+            "M12-PRIVACY-RESIDENCY",
+            "M12-OBSERVABILITY",
+            "M12-SECURITY-HARDENING",
+            "M12-COST-CAPACITY",
+            "M12-LOCAL-CLOUD-COMPAT",
+            "M12-ROLLOUT-ROLLBACK",
+        }
+
+        v12 = _read(
+            repo_root,
+            "docs/plans/references/m8-v12-disposition-20260909.md",
         )
+        v13 = _read(
+            repo_root,
+            "docs/plans/references/m8-v13-disposition-20260910.md",
+        )
+        v13_audit = _read(
+            repo_root,
+            "docs/plans/references/m8-v13-protocol-text-audit-20260910.md",
+        )
+        assert "INDEPENDENT_STATIC_AUDIT_FAILED" in v12
+        assert "SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED" in v13
+        assert "PASS_AFTER_REVISION / DRAFT_NOT_AUTHORIZED" in v13_audit
+        assert "从未产生 repository binding" in v13_audit
+        assert "任何后续 M8 实证必须使用全新协议身份" in v13_audit
 
     def test_authority_and_navigation_match_registry_state(self, repo_root):
         registry = _load_admission_registry(repo_root)
@@ -454,6 +580,8 @@ class TestStageAdmissionConsistency:
             "m8-specialized-storage-plan.md",
             "m9-goal-driven-planning-plan.md",
             "m10-autonomous-runner-plan.md",
+            "m11-data-scaling-plan.md",
+            "m12-cloud-deployment-plan.md",
         ):
             assert filename in docs
             assert filename in plans

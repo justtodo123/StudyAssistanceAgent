@@ -5,13 +5,13 @@
 > 状态图例：⬜ 未开始 ｜ 🔄 进行中 ｜ ✅ 完成
 > **当前阶段**：M6a、M6b、M7 均为 `ADMITTED / COMPLETE`；M7 基础设施范围已获批，生产开工门禁为
 > `AUTHORIZED`，并于 2026-09-06 在独立人工完成批准后成为 `ADMITTED / COMPLETE`；M8–M10 的事实型
-> M7 退出前置已满足，但 M8–M10 自身仍为 `BLOCKED / NOT_STARTED`。
+> M7 退出前置已满足，但 M8–M12 自身仍为 `BLOCKED / NOT_STARTED`。
 > 2026-08-31 P0 治理冻结复测已完成：默认 OS/DS/CO 90 题保持可信默认包政策，Network candidate 不进入默认索引；
 > M7 基础设施准入不关闭 Network P0，也不批准任何 Network 文档。
 > 里程碑、准入与退出方向以**本文**为准。
 > **准入门禁**：[`docs/standards/stage-admission-gates.md`](standards/stage-admission-gates.md)；机器登记见
 > [`stage-admission-gates.json`](standards/stage-admission-gates.json)。计划或登记表单独变更均不能批准阶段。
-> `docs/plans/references/` 只辅助决策，不是最终依据。
+> `docs/plans/references/` 存放辅助分析与限定范围的历史治理记录；它们不具阶段权威，不能产生新授权。
 > 数据源门禁、embedding/索引参数、错误码、生成分层与延迟分位数见
 > [`docs/standards/runtime-contracts.md`](standards/runtime-contracts.md)。
 > **M6 拆分说明**：M6 按“前置收口 → 契约收敛 → 兼容骨架 → 只读 Agent 预览”推进。M6b 不接管正式
@@ -120,7 +120,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 ### M5：学习 Agent 会话化与可交付演示（已完成）
 > **执行计划**：`docs/plans/m5-agent-session-delivery-plan.md`
 > **收口**：Level 1（M5a/M5b）与 Level 2（M5c/M5d/M5e）均已完成，作为 harness 的最小实现冻结。
-> 2026-08-20 起产品定位升级为通用学习 Agent harness，后续阶段见 M6–M10。
+> 2026-08-20 起产品定位升级为通用学习 Agent harness，后续阶段见 M6–M12。
 - ✅ M5a：统一三课 90 题离线评测入口，支持汇总指标和 JSON 报告（2026-08-18 历史基线：OS 1.000、DS 0.929、CO 1.000）。
 - ✅ M5b：实现服务端学习会话状态机，编排 QA、Quiz、答案评估和 Review-log（`POST/GET /api/v1/study-sessions`）。
 - ✅ M5c：使用 SQLite 持久化会话、答题记录、掌握度和复习历史（`platform/.cache/learning_state.sqlite3`，兼容读取 `review_history.json`）。
@@ -130,8 +130,8 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 - **完整退出条件**：✅ 会话可跨重启恢复；工作台可完成学习闭环；离线 CI 与一键启动已落地；阶段测试、回归和平台测试保持通过。
 - **收口结论**：M5 作为 MVP 关闭。默认学习闭环与离线交付不再回退；通用运行时与可插拔数据源改由 M6 起按路线图建设。
 
-### M6–M10：通用学习 Agent Harness（M6a/M6b/M7 已完成，M8–M10 仍阻断）
-> **最终依据**：本节（M6–M10）。辅助分析见 `docs/plans/references/`，冲突时以本文为准。
+### M6–M12：通用学习 Agent Harness 与规模化落地（M6a/M6b/M7 已完成，M8–M12 仍阻断）
+> **最终依据**：本节（M6–M12）。辅助分析见 `docs/plans/references/`，冲突时以本文为准。
 > **统一门禁**：[`stage-admission-gates.md`](standards/stage-admission-gates.md) 定义决策、准入、撤销与禁止事项；
 > [`stage-admission-gates.json`](standards/stage-admission-gates.json) 只用于机器检查，不能单独批准阶段。
 > **保护基线**：M0–M5 回归必须持续全绿；默认自动发现 OS/DS/CO 三课 90 题，Network 30 题仍为显式扩展集。
@@ -143,9 +143,11 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | M6a | `ADMITTED` | `COMPLETE` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制决策与保护基线已闭合；justtodo123 于 2026-08-25 批准开工，M6a-1 与 M6a-2 自动化门禁已通过，M6a-4 已完成收口 |
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
 | M7 | `ADMITTED` | `COMPLETE` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策、保护基线、Source lifecycle/delete/isolation/fallback、冻结 1k/3k BGE 与五格式 100×20 parser/normalized/lifecycle 证据已闭合。原 2026-08-31 准入与开工授权保持不变；justtodo123 于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内独立批准 `M7 COMPLETE`。技术证据本身不产生批准；M6b preview、Quiz、Review Plan 与 study-sessions 仍不含用户源 |
-| M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | V8–V12 已封口；V12 独立静态审计 `FAIL`，永久不可复用；决策、选择和批准仍 `OPEN` |
+| M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | 八项 Decision 已于 2026-09-10 逐项批准并 `RESOLVED`；local-first 100K capacity 目标已冻结；新实证协议、后端选择和阶段 admission 仍未授权 |
 | M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT=SATISFIED`；仍等待 M8 退出，计划/mastery 权威设定与独立批准仍 `OPEN` |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | `M10-M7-EXIT=SATISFIED`；仍等待 M8/M9，写授权、恢复、rollout 与独立批准仍 `OPEN` |
+| M11 | `BLOCKED` | `NOT_STARTED` | [`m11-data-scaling-plan.md`](plans/m11-data-scaling-plan.md) | 拟议真实数据规模化阶段；正式退出目标为 10K approved chunks，3K 为先行 Gate，全部 Decision 与批准 `OPEN` |
+| M12 | `BLOCKED` | `NOT_STARTED` | [`m12-cloud-deployment-plan.md`](plans/m12-cloud-deployment-plan.md) | 拟议可选云端单用户部署；本地离线仍为默认，服务器 baseline、十三项 Decision 与批准全部 `OPEN` |
 
 阶段只有在所有强制 Decision 为 `RESOLVED`、前置/保护证据有效、兼容不变量确认且用户或项目负责人填写批准
 记录后，才能由本文同步改为 `ADMITTED`。批准范围只能缩小边界，不能批准被排除的数据或下游阶段；若登记独立
@@ -155,8 +157,9 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 **依赖顺序**：M6b 与 M7 都只依赖 M6a 退出证据，彼此不互为前置。M7 已完成 Source Registry、
 source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline fail-closed、Search/QA overlay 与冻结技术验收，
 并于 2026-09-06 取得独立完成批准。因此 M8/M9/M10 的事实型 M7 退出前置均为 `SATISFIED`；这不批准任何下游阶段。
-M8 仍须闭合自身决策、后端选择、依赖、迁移、parity、fallback、benchmark 与人工批准；M9 仍依赖 M8，M10 仍依赖
-M8–M9，且都不以 M6b 为写路径或 Source 生命周期前置。
+M8 的八项政策 Decision 已闭合，但仍须完成新实证协议、后端选择和人工 admission；M9 仍依赖 M8，M10 仍依赖
+M8–M9；M11 拟依赖 M8–M10 的真实退出并交付 10K approved chunks；M12 拟依赖 M8–M11 并交付可选云端单用户
+profile。所有阶段都不以 M6b 为写路径或 Source 生命周期前置。
 
 - ✅ **M6a-P0 crawler 前置收口**：`tests/M6_crawler` 使用独立 marker `m6_crawler`；离线测试 mock HTTP；
   CI job `crawler-offline` 安装 `tools/crawler/requirements.txt` 并跑 `-m "m6_crawler and not online"`。
@@ -212,25 +215,40 @@ M8–M9，且都不以 M6b 为写路径或 Source 生命周期前置。
   内部服务边界；用户源读后 operation-lock 复核是有界进程内保护，不是跨进程 read lease。Network 文档晋升、P0 语料
   闭环、任何 corpus 自动批准、M8 专业存储和 Milvus 后端选择仍在批准范围外。
 - ⬜ **M8 专业化存储**：准备计划见
-  [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md)；`M8-M7-EXIT` 已满足，但 M8 自身决策与批准
-  仍未闭合。V8 执行根已 `INVALID`，V9 已 `PRE_FREEZE_STATIC_AUDIT_FAILED`，V10 已
+  [`m8-specialized-storage-plan.md`](plans/m8-specialized-storage-plan.md)；`M8-M7-EXIT` 已满足，负责人及独立批准人
+  `justtodo123` 于 2026-09-10 对八项 Decision 逐项明确批准并全部 `RESOLVED`；该批准不等于阶段 admission。V8 执行根已 `INVALID`，V9 已 `PRE_FREEZE_STATIC_AUDIT_FAILED`，V10 已
   `PRE_SOURCE_GOVERNANCE_INVALID`，V11 已 `PRE_SOURCE_PROVENANCE_INVALID`；四者的 experiment/protocol
   身份、根、source 与 artifact 均不得修复、恢复、补审、重跑或复用。V12 已取得仅限阶段 1 的书面授权，完成全新
   随机根、九文件初始 allowlist、marker 即时字节验证、六个 source 重写、source freeze、manifest 与 inventory，
   但独立静态审计于 `2026-09-09T12:12:34Z` 判定 `FAIL`；V12 以 `INDEPENDENT_STATIC_AUDIT_FAILED` 永久封口且
-  不可复用，从未进入 preflight 或执行阶段。任何后继实验须由负责人另行书面授权并从全新身份开始。Milvus、
-  LanceDB、Qdrant 均未选定或获批，不能在依赖、迁移、parity、fallback 和选择阈值闭合前成为默认；八项 Decision
-  继续为 `OPEN`。
+  不可复用，从未进入 preflight 或执行阶段。任何后继实验须由负责人另行书面授权并从全新身份开始。当前 M8 已
+  冻结为 local-first 可扩展检索数据面：SQLite/M7 是控制面权威，SQLite linear 是 oracle/fallback，LanceDB 为
+  10K–100K 单机第一评估候选，Qdrant 仅为云端/服务化条件候选，Milvus 当前不采用；尚未选择或批准任何专业后端。
+  `100K` 只表示 synthetic/半合成容量与生命周期证据，不表示 100K 真实语料。V13 的历史协议文本审计曾在
+  2026-09-10 修订后得到 `PASS_AFTER_REVISION / DRAFT_NOT_AUTHORIZED`；该结果只评价当时的文本设计，从未产生
+  repository binding、建根、source freeze、独立静态审计 PASS 或执行授权。八项批准记录见
+  [`m8-decision-closure-v1.md`](plans/references/m8-decision-closure-v1.md)，范围决策见
+  [`m8-m12-scope-decision-v1.md`](plans/references/m8-m12-scope-decision-v1.md)。V13 已因不适配新 100K 目标处置为
+  [`SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`](plans/references/m8-v13-disposition-20260910.md)，不得
+  填充占位符、binding、修订、建根、授权、执行或复用；后续实证须使用全新协议身份，重新冻结
+  `1K correctness / 10K single-user / 100K capacity+filter`，并按 `S → A → G → E` 分离书面授权。
 - ⬜ **M9 目标驱动计划**：准备计划见
   [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md)；planner/mastery schema、唯一写入权威、
   偏差重规划、外部 AI 隐私/fallback 和评测阈值未闭合前保持阻断。
 - ⬜ **M10 完整自主 Runner 与 Harness 对外**：准备计划见
   [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md)；在 M7–M9 退出后仍须先闭合写授权、
   checkpoint、幂等、EffectLedger、恢复、Agent 评测、manifest、MCP 和 rollout。状态机继续作为正式默认和
-  无 LLM 降级路径。
+  无 LLM 降级路径；10K/100K ingestion、embedding 和 reindex 长任务必须异步、可取消、可恢复且不产生半发布 generation。
+- ⬜ **M11 真实数据规模化**：准备计划见
+  [`m11-data-scaling-plan.md`](plans/m11-data-scaling-plan.md)；正式退出目标为 10K 个许可清晰、来源可追溯、质量可验证的
+  approved chunks。3K 为先行 Gate；30K/100K 为后续扩展 Gate，不阻塞 M11 完成。100K synthetic capacity 不能冒充
+  真实数据质量证据。
+- ⬜ **M12 可选云端单用户部署**：准备计划见
+  [`m12-cloud-deployment-plan.md`](plans/m12-cloud-deployment-plan.md)；本地离线 profile 永久保留且仍是默认。云端仅为
+  显式 opt-in 单用户部署，须闭合服务器、安全、身份、备份、成本、数据驻留和 rollback Decision；多租户和百万级不在范围。
 
-**总退出方向**：用户能自定义知识源，在百/千/万级数据上按目标学习并看到计划执行情况；无外部 AI 时仍可
-运行。M6b 只验证隔离的只读工具调用，完整自主 Runner 到 M10 才作为与教学状态机正交的可选执行器落地。
+**总退出方向**：用户能自定义知识源，在 1K/10K/100K 分层容量下按目标学习并看到计划执行情况；M11 交付 10K
+高质量真实数据，M12 提供可选云端单用户部署；无外部 AI、无云端和无专业依赖时仍可运行。M6b 只验证隔离的只读工具调用，完整自主 Runner 到 M10 才作为与教学状态机正交的可选执行器落地。
 
 ## 四、风险与缓解
 
@@ -255,7 +273,7 @@ M8–M9，且都不以 M6b 为写路径或 Source 生命周期前置。
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.17（不是产品发布版本）· 更新：2026-09-09（V8–V11 已按各自失败处置
-永久封口且不可复用；V12 亦已因独立静态审计 `FAIL` 以 `INDEPENDENT_STATIC_AUDIT_FAILED` 永久封口；
-M8/M9/M10 仍为 `BLOCKED / NOT_STARTED`，后端选择仍 `OPEN`）·
+*创建：2026-08-10 · PLAN 文档修订：v2.19（不是产品发布版本）· 更新：2026-09-10（V8–V12 已按各自失败处置
+永久封口且不可复用；V13 已处置为 `SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`；M8 八项 Decision 已
+`RESOLVED`，但 M8–M12 均仍为 `BLOCKED / NOT_STARTED`，后端选择和阶段批准未完成）·
 维护：每次会话开工查看本文档*

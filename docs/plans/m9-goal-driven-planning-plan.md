@@ -13,6 +13,20 @@ M9 规划基于 Goal、目标日期、用户等级、掌握度与授权 Source s
 本阶段不实现写工具自主循环、checkpoint/EffectLedger 或 MCP；这些属于 M10。计划文件存在不批准外部 AI 接入、
 新 API、schema migration 或正式状态路径修改。
 
+### 1.1 10K/100K 规模感知边界
+
+M9 必须在 M8 的 100K capacity 能力上保持输入有界，但不把 100K chunks 全量送入 Planner：
+
+- Planner 输入只允许 Goal、约束、课程/topic graph、Source 摘要、版本、授权 scope 和 mastery snapshot；
+- 原始 chunk 正文只能通过受限检索按需获取，受 top-k、token、来源数、时间和成本预算控制；
+- 禁止为生成计划扫描、拼接或注入全部 10K/100K chunks；
+- stale、deleted、未发布或越权 Source 不得进入目录摘要、计划 grounding 或后续检索；
+- PlanTask 优先引用稳定 topic/source identity；引用 chunk 时必须绑定 revision/generation，索引重建不得无故改变计划身份；
+- embedding profile 或 SQLite/LanceDB 数据面切换不得改变 mastery 和计划状态语义；
+- 无专业后端、无网络或无外部 AI 时，确定性目录/规则路径仍须可运行。
+
+本节不批准 100K 真实数据、外部 AI 或专业后端；真实 10K 数据属于拟议 M11，云端 profile 属于拟议 M12。
+
 ## 2. 前置证据与继承不变量
 
 | Prerequisite ID | 当前状态 | 准入所需证据 |
@@ -63,13 +77,15 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 
 1. 先冻结 planner input、plan、mastery 和 progress event schema；
 2. 以确定性规则生成最小计划并验证现有 API/SQLite 兼容；
-3. 接入只读 mastery snapshot 和授权 Source 摘要，不复制领域写入；
-4. 实现偏差事件与版本化重规划，再增加可选外部 AI adapter；
-5. 在冻结任务集上比较确定性与 AI 路径，达标后才扩大 rollout。
+3. 接入只读 mastery snapshot、topic graph 和授权 Source 摘要，不复制领域写入，并验证输入规模不随 chunk 总量线性增长；
+4. 接入按需受限检索，冻结 top-k/token/source/time 预算和 stale/deleted Source 拒绝行为；
+5. 实现偏差事件与版本化重规划，再增加可选外部 AI adapter；
+6. 在冻结任务集上比较确定性与 AI 路径，并在 1K/10K/100K capacity 元数据规模下验证计划延迟与输入预算，达标后才扩大 rollout。
 
 拟新增 `tests/M9/` 覆盖 schema、authority、deviation/replan、provider privacy/failure、fallback 和兼容；评测必须验证
 source grounding 与先修关系，而非只检查 JSON 可解析。退出条件包括正式 mastery 只有一个写入权威、计划可重放、
-默认学习闭环与 90 题不退化、无 LLM 路径可运行，以及冻结评测达标。
+Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入、默认学习闭环与 90 题不退化、无 LLM 路径可
+运行，以及冻结评测达标。
 
 ## 6. 撤销与后续边界
 

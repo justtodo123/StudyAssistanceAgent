@@ -5,7 +5,7 @@
 - protocol：`precommit-v8`
 - 起草依据：`docs/plans/m8-specialized-storage-plan.md` §3.20 人工校准、§3.21 `precommit-v6` 已审阅设计、§3.21.11 `v6` 磁盘预算归因分析、§3.21.12 `v7` 磁盘预算修正公式（草案）、§3.21.13 `v7` 执行处置（`INVALID`）、`precommit-v7` 协议文本
 - 起草日期：2026-09-08
-- 本文件保留执行前协议文本；`references/m8-v8-authorization-20260908.md` 是已消费并失效的历史授权，不再允许任何 V8 执行。
+- 本文件保留执行前协议文本；`m8-v8-authorization-20260908.md` 是已消费并失效的历史授权，不再允许任何 V8 执行。
 - **不可执行声明**：本文件正文（含 §4 磁盘预算、§5 冻结执行顺序等历史可操作步骤）均为已以 `INVALID`
   永久封口的 V8 历史设计文本，仅供治理与审计追溯；已被 V8 处置（§3.21.15）`superseded`。任何组织或个人
   不得据此创建根、建 venv、安装依赖、执行 preflight、smoke、full 或 benchmark，不得复用其任何产物。
@@ -160,7 +160,7 @@ publication 或统计结果；可复用的只有本计划中公开冻结的协�
 
 ## 7. 边界声明
 
-本协议文件本身不构成执行授权。历史独立授权见 `references/m8-v8-authorization-20260908.md`，曾明确指向
+本协议文件本身不构成执行授权。历史独立授权见 `m8-v8-authorization-20260908.md`，曾明确指向
 `sa.m8.admission-evidence.v8` / `precommit-v8`、精确 PyPI 版本、唯一新临时根目录、仅合成数据、仅 scaled
 smoke、生产与服务边界、`PACKAGE_FOOTPRINT_CAP = 1073741824` bytes、`WORK_RESERVE_MIB = 1536` 以及审计后的
 完整清理要求。该授权已因 §9 处置而消费并失效；不得再进入 §5 任一步骤，即使已有局部产物或
