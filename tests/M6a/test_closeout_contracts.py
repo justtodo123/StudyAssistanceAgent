@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
-from urllib.parse import unquote
+
+from tests.utils.markdown_links import assert_local_markdown_references
 
 import pytest
 
@@ -48,15 +48,6 @@ FORBIDDEN_API_PREFIXES = (
 )
 
 
-def _local_markdown_links(text: str) -> list[str]:
-    links: list[str] = []
-    for raw_link in re.findall(r"\[[^]]*\]\(([^)]+)\)", text):
-        link = raw_link.strip().split(maxsplit=1)[0].strip("<>\"")
-        if not link or link.startswith(("#", "http://", "https://", "mailto:")):
-            continue
-        links.append(unquote(link.split("#", 1)[0]))
-    return links
-
 
 def test_openapi_public_paths_remain_exact(test_client) -> None:
     document = test_client.get("/openapi.json").json()
@@ -93,15 +84,9 @@ def test_documented_routes_match_openapi_contract(repo_root: Path) -> None:
 
 
 def test_closeout_documents_have_resolvable_links(repo_root: Path) -> None:
-    missing: list[str] = []
     for relative in LINK_DOCUMENTS:
         document = repo_root / relative
-        text = document.read_text(encoding="utf-8")
-        for link in _local_markdown_links(text):
-            target = (document.parent / link).resolve()
-            if not target.exists():
-                missing.append(f"{relative} -> {link}")
-    assert missing == []
+        assert_local_markdown_references(document, repo_root)
 
 
 def test_workbench_and_health_remain_available(test_client) -> None:

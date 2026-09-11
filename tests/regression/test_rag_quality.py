@@ -46,7 +46,7 @@ def _compute_recall(
     for q, rel_files in test_set.items():
         if not rel_files:
             continue
-        results, _ = service.recall(q, top_k=k)
+        results, _ = service.recall(q, top_k=k, use_vector=False)
         hit_files = {r.file for r in results} & set(rel_files)
         recalls.append(len(hit_files) / len(rel_files))
     return sum(recalls) / len(recalls) if recalls else 0.0

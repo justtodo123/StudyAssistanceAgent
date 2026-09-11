@@ -143,19 +143,21 @@ tests/
 │   └── test_privacy.py     # 无宿主绝对路径、不解析/不索引
 │
 ├── regression/             # 跨阶段回归套件
-│   ├── conftest.py         # 回归专用 fixtures
+│   ├── conftest.py         # 回归专用 fixtures（离线 BM25-only，恢复 vector 全局状态）
 │   ├── test_api_contract.py      # API 契约稳定性
-│   ├── test_rag_quality.py       # RAG 质量回归
+│   ├── test_rag_quality.py       # RAG 质量回归（显式 BM25-only）
 │   ├── test_data_integrity.py    # 数据完整性
 │   ├── test_runtime_contracts.py # 错误码、分位数、入库门禁、生成分层
 │   ├── test_sse_contract.py      # SSE 帧序、结束标记与路径隐私
+│   ├── test_path_privacy.py      # API/SSE/日志及治理文档路径隐私
 │   ├── test_ci_contract.py       # 结构化解析 offline/platform/RAG/crawler CI 门禁
-│   ├── test_docs_consistency.py  # 跨文档耐久事实与可演进的 M6a–M10 准入状态机一致性
+│   ├── test_docs_consistency.py  # 跨文档耐久事实、M6a–M12 状态与 M8 历史边界
 │   ├── test_document_governance.py # Network/Interview 文档身份、来源、许可与 fail-closed 入库
-│   └── test_governance_contract.py # docs 导航链接与阻断期未来生产树一致性
+│   └── test_governance_contract.py # Registry 引用、docs 导航与阻断期未来生产树一致性
 │
 └── utils/                # 测试工具（非测试文件）
-    └── helpers.py        # 通用断言与辅助函数
+    ├── helpers.py        # 通用断言与辅助函数
+    └── markdown_links.py # Markdown/Registry 仓库相对引用与锚点校验
 ```
 
 ### 1.3 执行规则

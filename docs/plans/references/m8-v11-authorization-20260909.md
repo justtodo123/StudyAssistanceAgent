@@ -12,7 +12,7 @@
 ## 1. 授权范围（阶段 1，仅此四项）
 
 1. **创建 V11 根**：在 system-temp 中排他创建全新、不可预测的根
-   `C:\Users\Lenovo\AppData\Local\Temp\sa-m8-v11-679fc578a7d84e51ffc1fa0210a2be94`，创建后立即写入 canonical
+   `<system-temp>/sa-m8-v11-679fc578a7d84e51ffc1fa0210a2be94`，创建后立即写入 canonical
    `root-provenance.json`，其 `allowed_artifact_prefixes` 必须同时允许 marker 自身与全部六个未来 source 文件
    （规避 V10 违规）。
 2. **source authoring**：在根内 source-only 地生成/修复六个冻结 source 文件：

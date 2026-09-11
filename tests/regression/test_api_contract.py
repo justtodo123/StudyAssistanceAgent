@@ -35,7 +35,7 @@ class TestSearchEndpoint:
     def test_returns_results(self, test_client):
         resp = test_client.post(
             "/api/v1/search",
-            json={"question": "进程调度", "top_k": 3},
+            json={"question": "进程调度", "top_k": 3, "use_vector": False},
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -45,7 +45,7 @@ class TestSearchEndpoint:
     def test_course_filter(self, test_client):
         resp = test_client.post(
             "/api/v1/search",
-            json={"question": "排序", "course": "ds", "top_k": 3},
+            json={"question": "排序", "course": "ds", "top_k": 3, "use_vector": False},
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -55,7 +55,7 @@ class TestSearchEndpoint:
     def test_empty_query_handled(self, test_client):
         resp = test_client.post(
             "/api/v1/search",
-            json={"question": "", "top_k": 3},
+            json={"question": "", "top_k": 3, "use_vector": False},
         )
         # 不应 500
         assert resp.status_code in (200, 400, 422)
@@ -67,7 +67,7 @@ class TestQaEndpoint:
     def test_returns_answer_and_sources(self, test_client):
         resp = test_client.post(
             "/api/v1/qa",
-            json={"question": "什么是死锁", "course": "os", "use_llm": False},
+            json={"question": "什么是死锁", "course": "os", "use_vector": False, "use_llm": False},
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -78,7 +78,7 @@ class TestQaEndpoint:
     def test_sources_have_file_field(self, test_client):
         resp = test_client.post(
             "/api/v1/qa",
-            json={"question": "快速排序", "course": "ds", "use_llm": False},
+            json={"question": "快速排序", "course": "ds", "use_vector": False, "use_llm": False},
         )
         data = resp.json()
         for s in data["sources"]:

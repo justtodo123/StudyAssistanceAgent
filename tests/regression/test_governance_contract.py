@@ -4,16 +4,26 @@ from __future__ import annotations
 
 import json
 import re
+
 from pathlib import Path
-from urllib.parse import unquote
+
+import pytest
+
+from tests.utils.markdown_links import (
+    assert_local_markdown_references,
+    assert_local_markdown_target,
+)
 
 
 NAVIGATION_DOCS = (
     "docs/README.md",
     "docs/plans/README.md",
+    "docs/plans/references/README.md",
     "docs/prds/README.md",
     "docs/standards/stage-admission-gates.md",
 )
+
+LEGACY_COMPLETE_STAGES = {"M6a", "M6b"}
 
 STAGE_PRODUCTION_SURFACES = {
     "M6a": {
@@ -81,6 +91,26 @@ STAGE_PRODUCTION_SURFACES = {
         "api_paths": ("/api/v1/autonomous-runs",),
         "requirements": ("openai",),
     },
+    "M11": {
+        "paths": (
+            "platform/app/corpus_pipeline.py",
+            "platform/app/data_scaling.py",
+            "tests/M11",
+        ),
+        "identifiers": ("SA_DATA_SCALING_ENABLED", "ApprovedCorpusPipeline"),
+        "api_paths": ("/api/v1/corpus-publications",),
+        "requirements": ("scrapy", "trafilatura"),
+    },
+    "M12": {
+        "paths": (
+            "platform/app/cloud_profile.py",
+            "platform/app/ingestion_worker.py",
+            "tests/M12",
+        ),
+        "identifiers": ("SA_CLOUD_PROFILE", "CloudDeploymentProfile"),
+        "api_paths": ("/api/v1/cloud-profile",),
+        "requirements": ("boto3", "celery", "psycopg", "redis"),
+    },
 }
 
 # HTTP surfaces that remain future until a later increment maps them.
@@ -92,19 +122,78 @@ def _load_registry(repo_root: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _local_markdown_links(text: str):
-    for raw_link in re.findall(r"\[[^]]*\]\(([^)]+)\)", text):
-        link = raw_link.strip().split(maxsplit=1)[0].strip("<>\"")
-        if not link or link.startswith(("#", "http://", "https://", "mailto:")):
-            continue
-        yield unquote(link.split("#", 1)[0])
+_CANDIDATE_DIGEST = re.compile(r"candidate-evidence-digest:[0-9a-f]{64}")
+_EVALUATION_DIGEST = re.compile(r"evaluation-report-sha256:[0-9a-f]{64}")
+
+
+def _assert_registry_reference(reference: str, repo_root: Path) -> None:
+    """Validate the closed allowlist for machine-registry references."""
+    assert isinstance(reference, str) and reference.strip() == reference
+    if _CANDIDATE_DIGEST.fullmatch(reference):
+        return
+    if _EVALUATION_DIGEST.fullmatch(reference):
+        return
+    if reference.startswith("User instruction:"):
+        assert reference.removeprefix("User instruction:").strip()
+        return
+    assert_local_markdown_target(reference, repo_root, repo_root)
+
+
+def _registry_references(registry: dict):
+    for stage in registry["stages"]:
+        for prerequisite in stage["prerequisites"]:
+            yield from prerequisite.get("evidence", [])
+        for decision in stage["mandatory_decisions"]:
+            yield from decision.get("evidence", [])
+        approval_reference = stage["approval"].get("approval_reference")
+        if approval_reference is not None:
+            yield approval_reference
+        implementation_start = stage.get("implementation_start")
+        if implementation_start is not None:
+            reference = implementation_start.get("authorization_reference")
+            if reference is not None:
+                yield reference
+        completion = stage.get("completion_approval")
+        if completion is not None:
+            yield from completion.get("evidence", [])
+            yield completion["approval_reference"]
+
+
+def test_registry_references_use_closed_portable_allowlist(repo_root):
+    for reference in _registry_references(_load_registry(repo_root)):
+        _assert_registry_reference(reference, repo_root)
+
+
+@pytest.mark.parametrize(
+    "reference",
+    (
+        r"C:\Users\student\evidence.md",
+        "/tmp/evidence.md",
+        "../outside.md",
+        "docs/does-not-exist.md",
+        "docs/PLAN.md#missing-anchor",
+        "tests/M6a#anchor-on-directory",
+        "candidate-evidence-digest:not-a-sha256",
+        "evaluation-report-sha256:ABCDEF",
+        "User instruction:   ",
+        "unknown-evidence-format:abc",
+    ),
+)
+def test_registry_reference_allowlist_rejects_invalid_forms(repo_root, reference):
+    with pytest.raises(AssertionError):
+        _assert_registry_reference(reference, repo_root)
+
 
 
 
 def _production_started(stage: dict) -> bool:
     start_gate = stage.get("implementation_start")
     delivery_status = stage["delivery_status"]
-    legacy_complete = delivery_status == "COMPLETE" and start_gate is None
+    legacy_complete = (
+        stage.get("stage") in LEGACY_COMPLETE_STAGES
+        and delivery_status == "COMPLETE"
+        and start_gate is None
+    )
     explicitly_authorized = (
         start_gate is not None
         and start_gate.get("status") == "AUTHORIZED"
@@ -136,6 +225,14 @@ def test_production_start_requires_explicit_authorization_for_active_delivery():
     )
     assert _production_started(
         {
+            "stage": "M6a",
+            "admission_status": "ADMITTED",
+            "delivery_status": "COMPLETE",
+        }
+    )
+    assert not _production_started(
+        {
+            "stage": "M7",
             "admission_status": "ADMITTED",
             "delivery_status": "COMPLETE",
         }
@@ -174,28 +271,25 @@ def test_complete_active_stage_requires_scoped_completion_approval(repo_root):
     }
 
     for stage in stages.values():
-        if (
-            stage["delivery_status"] == "COMPLETE"
-            and stage.get("implementation_start") is not None
-        ):
-            approval = stage.get("completion_approval")
-            assert approval is not None
-            assert approval["approved_by"]
-            assert approval["approved_at"]
-            assert approval["approval_reference"]
-            assert approval["evidence"]
-            scope = stage.get("approval_scope")
-            if scope is not None:
-                assert approval["approval_scope"] == scope["scope_id"]
+        if stage["delivery_status"] != "COMPLETE":
+            continue
+        if stage["stage"] in LEGACY_COMPLETE_STAGES:
+            continue
+        approval = stage.get("completion_approval")
+        assert approval is not None
+        assert approval["approved_by"]
+        assert approval["approved_at"]
+        assert approval["approval_reference"]
+        assert approval["evidence"]
+        scope = stage.get("approval_scope")
+        if scope is not None:
+            assert approval["approval_scope"] == scope["scope_id"]
 
 class TestGovernanceNavigation:
     def test_navigation_links_resolve(self, repo_root):
         for relative_path in NAVIGATION_DOCS:
             document = repo_root / relative_path
-            text = document.read_text(encoding="utf-8")
-            for link in _local_markdown_links(text):
-                target = (document.parent / link).resolve()
-                assert target.exists(), f"{relative_path}: broken link {link}"
+            assert_local_markdown_references(document, repo_root)
 
 
 class TestBlockedStageProductionTree:

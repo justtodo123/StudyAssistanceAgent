@@ -120,7 +120,12 @@
   - `100k-capacity`：固定 seed synthetic/半合成容量、资源、恢复；
   - `100k-filtered`：owner/source/generation/snapshot/tombstone 分布与 filter；
   - `100k-concurrent`：仅负责人确认需要判断服务化时才执行。
-  固定 corpus/seed/query/gold/top-k/filter/profile/environment；至少记录 Recall@3/5、MRR、no-hit、identity/filter correctness、p50/p95/p99、build/rebuild/incremental/reopen、RSS、磁盘、删除传播、recovery 和 fallback。硬门槛失败即候选不采用；benchmark 只形成决策输入，不自动选后端。
+  这里批准的是评测政策、规模层、指标类别与 hard-gate 原则，不是已经可执行的 active execution protocol。
+  固定 corpus/seed/query/gold/top-k/filter/profile/environment 只是协议必须冻结的字段类别；未来运行前还必须由全新、
+  独立协议具体冻结候选、样本数、warmup/measured、容差、数值门槛和报告 schema，且不得观察结果后修改。至少记录
+  Recall@3/5、MRR、no-hit、identity/filter correctness、p50/p95/p99、build/rebuild/incremental/reopen、RSS、磁盘、
+  删除传播、recovery 和 fallback。硬门槛失败即候选不采用；benchmark 只形成决策输入，不自动选后端。历史 V1–V13
+  的数值或方法只能作为不可复用的历史参考，不能替代上述未来协议冻结。
 - **默认值与覆盖**：100K synthetic 不能声称真实语料质量；M11 的 10K production 必须使用独立真实数据 Gate。
 - **复核条件**：目标规模、硬件、embedding profile、并发需求、候选后端或真实语料分布变化。
 - **撤销条件**：阈值看结果后修改；库存/摘要/环境不可重现；synthetic 冒充生产质量；网络/路径/cleanup/terminal 证据不可验证。

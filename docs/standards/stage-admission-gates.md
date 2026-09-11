@@ -39,10 +39,12 @@ M6b 的前置证据、八项决策、保护基线与独立批准也已闭合；�
 `implementation_start=AUTHORIZED`；技术退出证据完成后，justtodo123 于 2026-09-06 另行明确批准
 `M7 COMPLETE`，因此当前为 `ADMITTED / COMPLETE`。该完成批准沿用 `m7-infrastructure-only-v1`，不扩大原
 scope：Network 文档晋升/语料治理闭环、任何 corpus 自动批准、M8 专业存储和 Milvus 后端选择仍明确排除。
-M8–M12 仍为 `BLOCKED / NOT_STARTED`。M8 的八项 Decision 已于 2026-09-10 逐项批准并 `RESOLVED`，但后端选择、
-新实证协议、阶段 admission 和开工授权仍未闭合；M9/M10 的 M7-exit 前置已满足但仍等待阶段专属 Decision 与上游
-退出；M11/M12 是新登记的拟议阶段，全部 Decision、前置和批准保持开放。M6a-P0 crawler 本身只构成前置证据，不单独
-批准阶段。
+M8–M12 仍为 `BLOCKED / NOT_STARTED`。M8 的八项 Decision 已于 2026-09-10 逐项批准并 `RESOLVED`，但这只关闭
+评测政策、规模层、指标类别和 hard-gate 原则；后端选择、阶段 admission、开工授权以及任何 active execution protocol
+仍未闭合。未来实证必须在看到结果前由全新、独立协议冻结具体 corpus、seed、query/gold、环境、候选、样本数、容差、
+数值门槛和报告字段，历史 V1–V13 数值或方法不能替代该冻结。M9/M10 的 M7-exit 前置已满足但仍等待阶段专属
+Decision 与上游退出；M11/M12 是新登记的拟议阶段，全部 Decision、前置和批准保持开放。M6a-P0 crawler 本身只构成
+前置证据，不单独批准阶段。
 
 ## 3. 决策完成标准
 
@@ -82,6 +84,10 @@ M8–M12 仍为 `BLOCKED / NOT_STARTED`。M8 的八项 Decision 已于 2026-09-1
 `NOT_STARTED` 进入 `IN_PROGRESS`，不改变准入结论。交付改为 `COMPLETE` 时，必须在技术退出证据之外登记独立的
 `completion_approval`，至少记录批准人、日期、批准引用、适用 scope 和证据；该记录不得覆盖原准入批准，也不得
 扩大既有 `approval_scope`。测试或 benchmark 全绿本身不能自动生成完成批准。
+
+本字段引入前已经关闭的历史阶段仅有 `M6a` 和 `M6b`。它们可按迁移例外保持既有 `COMPLETE` 事实，但不补造、
+不追溯推定 `completion_approval`，且该例外不可转移到 `M7` 或任何后续阶段；`M7` 及以后所有 `COMPLETE` 阶段都必须
+具有完整且与批准 scope 一致的独立完成批准。
 
 Agent 不得自行批准准入或生产开工。任何强制决策、前置证据或兼容不变量发生实质变化后，准入必须改为
 `REVOKED`；在重新澄清和批准前不得继续生产实施。

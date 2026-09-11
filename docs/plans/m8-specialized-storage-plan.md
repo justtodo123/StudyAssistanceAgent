@@ -1077,8 +1077,10 @@ quick smoke 只能作为开发反馈，必须显式标记非冻结证据，不�
 
 ### 8.3 已批准的阈值类别与后续冻结要求
 
-`M8-BENCHMARK` 已于 2026-09-10 `RESOLVED`，批准了规模层、指标类别与 hard-gate 原则；具体数值阈值仍必须在
-任何实证运行前由独立协议冻结，不能在看到结果后修改。至少覆盖以下类别：
+`M8-BENCHMARK` 已于 2026-09-10 `RESOLVED`，仅批准规模层、指标类别与 hard-gate 原则，并未产生可执行的 active
+execution protocol。任何实证运行前，必须由全新且独立的协议冻结具体 corpus、seed、query/gold、环境、候选、样本数、
+warmup/measured、容差、数值阈值和报告 schema，不能在看到结果后修改；历史 V1–V13 的数值或方法只能作为历史参考，
+不能替代该冻结。至少覆盖以下类别：
 
 1. hard correctness：未授权、stale generation、tombstone、wrong identity 结果必须为零；
 2. quality：Recall@1/3/5、identity-set parity 与 SQLite baseline 非劣性；

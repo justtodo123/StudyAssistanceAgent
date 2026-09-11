@@ -9,7 +9,7 @@
 ## 1. 精确授权对象
 
 - 唯一随机临时根：
-  `C:\Users\Lenovo\AppData\Local\Temp\sa-m8-v12-9fd8842953bd49b6924428a8461a5b1c`
+  `<system-temp>/sa-m8-v12-9fd8842953bd49b6924428a8461a5b1c`
 - nonce：`8c866b27e5a14df3bfc48f085e6435f2`
 - marker UTC：`2026-09-09T09:42:37Z`
 - V11 disposition digest：`d9dda09590956d185c96fcd828ce9daea2288b545f82887f0ec28c91ad07b64d`

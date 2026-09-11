@@ -9,6 +9,30 @@ from typing import Any
 
 
 _WINDOWS_PATH = re.compile(r"(?<![A-Za-z0-9+.-])[A-Za-z]:[\\/]")
+_TEMP_HOST_PATH = re.compile(
+    r"C:[\\/]Users[\\/][^\\/\s`]+[\\/]AppData[\\/]Local[\\/]Temp[\\/]",
+    re.IGNORECASE,
+)
+_EXTERNAL_SOURCE_ROOT = re.compile(
+    r"D:[\\/]+111_Others_Subjects",
+    re.IGNORECASE,
+)
+_EXTERNAL_POLICY_WORDS = (
+    "外部",
+    "原始资料",
+    "只读",
+    "映射",
+    "没有",
+    "禁止",
+    "严禁",
+    "不得",
+    "不读取",
+    "不复制",
+    "不扫描",
+    "默认扫描",
+    "列出",
+    "--root",
+)
 
 
 def _contains_host_path(value: Any, roots: tuple[Path, ...]) -> bool:
@@ -60,6 +84,57 @@ def _data_events(body: str) -> list[str]:
         if data_lines:
             events.append("\n".join(data_lines))
     return events
+
+
+def test_governance_documents_reject_host_temp_paths_and_limit_external_root(
+    repo_root,
+):
+    documents = [repo_root / "README.md", repo_root / "docs" / "PLAN.md"]
+    documents.extend((repo_root / "docs").rglob("*.md"))
+    violations: list[str] = []
+
+    for document in documents:
+        text = document.read_text(encoding="utf-8")
+        if _TEMP_HOST_PATH.search(text):
+            violations.append(f"{document.relative_to(repo_root)}: host temp path")
+        lines = text.splitlines()
+        for line_number, line in enumerate(lines, start=1):
+            context = " ".join(
+                lines[max(0, line_number - 2):min(len(lines), line_number + 1)]
+            )
+            for match in _WINDOWS_PATH.finditer(line):
+                candidate = line[match.start():]
+                if _EXTERNAL_SOURCE_ROOT.match(candidate):
+                    if not any(word in context for word in _EXTERNAL_POLICY_WORDS):
+                        violations.append(
+                            f"{document.relative_to(repo_root)}:{line_number}: "
+                            "external root outside policy context"
+                        )
+                    continue
+                violations.append(
+                    f"{document.relative_to(repo_root)}:{line_number}: "
+                    "host absolute path"
+                )
+
+    assert violations == []
+
+
+def test_redacted_m8_records_preserve_experiment_root_basename(repo_root):
+    expected = {
+        "docs/plans/references/m8-v11-authorization-20260909.md": (
+            "<system-temp>/sa-m8-v11-679fc578a7d84e51ffc1fa0210a2be94"
+        ),
+        "docs/plans/references/m8-v12-authorization-20260909.md": (
+            "<system-temp>/sa-m8-v12-9fd8842953bd49b6924428a8461a5b1c"
+        ),
+        "docs/plans/references/m8-v12-independent-static-audit-20260909.md": (
+            "<system-temp>/sa-m8-v12-9fd8842953bd49b6924428a8461a5b1c"
+        ),
+    }
+    for relative_path, redacted_root in expected.items():
+        text = (repo_root / relative_path).read_text(encoding="utf-8")
+        assert redacted_root in text
+        assert not _TEMP_HOST_PATH.search(text)
 
 
 class TestPathPrivacy:

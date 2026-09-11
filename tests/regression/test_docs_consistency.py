@@ -529,6 +529,68 @@ class TestStageAdmissionConsistency:
             "M12-ROLLOUT-ROLLBACK",
         }
 
+        for stage_name in ("M11", "M12"):
+            stage = stages[stage_name]
+            assert stage["admission_status"] == "BLOCKED"
+            assert stage["delivery_status"] == "NOT_STARTED"
+            assert stage.get("implementation_start") is None
+            assert stage.get("completion_approval") is None
+            assert all(value is None for value in stage["approval"].values())
+            for item in stage["prerequisites"]:
+                assert item["status"] == "OPEN"
+                assert item.get("evidence", []) == []
+            for decision in stage["mandatory_decisions"]:
+                assert decision["status"] == "OPEN"
+                assert decision["value"] is None
+                assert decision.get("evidence", []) == []
+
+        m8_plan = _read(repo_root, "docs/plans/m8-specialized-storage-plan.md")
+        assert "active\nexecution protocol" in m8_plan
+        assert "corpus" in m8_plan
+
+        rounds = _read(
+            repo_root,
+            "docs/plans/references/m8-eleven-rounds-governance-review.md",
+        )
+        v7_protocol = _read(repo_root, "docs/plans/references/m8-v7-admission-protocol.md")
+        v7_auth = _read(repo_root, "docs/plans/references/m8-v7-authorization-20260908.md")
+        assert "V6 | `precommit-v6` | `ABORTED`" in rounds
+        assert "DISK_PREFLIGHT_FAILED" in rounds
+        assert "package_footprint_cap" in v7_protocol
+        assert "实测+64 MiB" in v7_protocol
+        assert "V7 | `precommit-v7` | `INVALID`" in rounds
+        assert "probe 通过" in rounds
+        assert "____________" in v7_auth
+        assert "授权人" in v7_auth or "authorizer" in v7_auth.lower()
+
+        assert "v6 因磁盘预算 `DISK_PREFLIGHT_FAILED` 以 `ABORTED`" in v7_protocol
+        assert "证据无效" in v7_protocol
+        assert "不得复用其 harness" in v7_protocol
+
+        historical_failures = {
+            "m8-v8-admission-protocol.md": ("`INVALID`", "不得继续或复用"),
+            "m8-v9-admission-protocol.md": (
+                "PRE_FREEZE_STATIC_AUDIT_FAILED",
+                "永久冻结且不可复用",
+            ),
+            "m8-v10-admission-protocol.md": (
+                "PRE_SOURCE_GOVERNANCE_INVALID",
+                "根不可复用",
+            ),
+            "m8-v11-admission-protocol.md": (
+                "PRE_SOURCE_PROVENANCE_INVALID",
+                "永久不可复用",
+            ),
+            "m8-v12-admission-protocol.md": (
+                "INDEPENDENT_STATIC_AUDIT_FAILED",
+                "永久不可复用",
+            ),
+        }
+        for filename, required_phrases in historical_failures.items():
+            text = _read(repo_root, f"docs/plans/references/{filename}")
+            for phrase in required_phrases:
+                assert phrase in text
+
         v12 = _read(
             repo_root,
             "docs/plans/references/m8-v12-disposition-20260909.md",

@@ -12,7 +12,7 @@
 - experiment ID：`sa.m8.admission-evidence.v12`
 - protocol：`precommit-v12`
 - 审计目标：冻结根 `sa-m8-v12-9fd8842953bd49b6924428a8461a5b1c`
-  （`C:\Users\Lenovo\AppData\Local\Temp\sa-m8-v12-9fd8842953bd49b6924428a8461a5b1c`）
+  （`<system-temp>/sa-m8-v12-9fd8842953bd49b6924428a8461a5b1c`）
 - 审计类型：独立静态只读审计
 - 审计 UTC：`2026-09-09T11:32:50Z`
 - 冻结 UTC（作者侧）：`2026-09-09T10:21:13Z`
