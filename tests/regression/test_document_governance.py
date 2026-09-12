@@ -42,8 +42,10 @@ REVIEW_STATUSES = {"approved", "review"}
 INGEST_STATUSES = {"approved", "candidate", "rejected"}
 REGISTRATION_METHODS = {"legacy_course_index", "repository_commit"}
 LICENSE_STATUSES = {"approved", "unresolved"}
+# Canonical LF bytes, pinned by the .gitattributes rule on MAPPING_PATH so the
+# digest is checkout-independent.
 EXPECTED_MAPPING_SHA256 = (
-    "d1bb072da917154a95705c7386b432aeba16af46c08a4fb76cd7d5c419a96fbe"
+    "a8b9a1a949d053740943b877bcbcfd6369f73b1cc2a7457ac0bfb8df2531e652"
 )
 WINDOWS_ABSOLUTE_PATH = re.compile(r"(?i)^[a-z]:[/\\]")
 FRONTMATTER = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.DOTALL)
