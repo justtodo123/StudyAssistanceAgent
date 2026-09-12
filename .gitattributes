@@ -1,0 +1,5 @@
+# Pin LF for the frozen governance mapping so its bytes — and therefore the
+# SHA-256 pinned in tests/regression/test_document_governance.py, docs/baselines.md
+# and docs/plans/m7-p0-corpus-governance-report.md — are identical on every
+# platform. Without this, core.autocrlf produces CRLF on Windows and LF on Linux.
+docs/reference/document-mapping.json text eol=lf

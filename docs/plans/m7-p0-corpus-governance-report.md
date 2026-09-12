@@ -4,7 +4,7 @@
 > 范围：既有 `knowledge/network/` 与 `knowledge/interview/` 正文的文档级治理；不包含 M7 runtime 实现，
 > 也不因 M7 基础设施已准入而自动闭合。
 > 映射：[`document-mapping.json`](../reference/document-mapping.json)
-> SHA-256：`d1bb072da917154a95705c7386b432aeba16af46c08a4fb76cd7d5c419a96fbe`
+> SHA-256（LF 基准，见 `.gitattributes`）：`a8b9a1a949d053740943b877bcbcfd6369f73b1cc2a7457ac0bfb8df2531e652`
 
 ## 1. 结论
 

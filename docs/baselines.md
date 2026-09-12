@@ -582,7 +582,7 @@ Network/Interview 文档级身份、来源、许可与 fail-closed 入库声明�
   这是 31 篇文档显式 `candidate`、不进入索引的预期 fail-closed 结果，不是默认 OS/DS/CO 质量回归。
 - 完整根级 `tests/`：554 collected；553 passed；1 skipped。根级与 `platform/tests/` 合并：594 collected；
   593 passed；1 skipped。`platform/tests/` 受保护功能套件为 40 passed；唯一 skip 是显式 online crawler smoke。
-- mapping SHA-256 仍为 `d1bb072da917154a95705c7386b432aeba16af46c08a4fb76cd7d5c419a96fbe`；`git diff --check` 通过。
+- mapping SHA-256 已按 LF 基准重新冻结为 `a8b9a1a949d053740943b877bcbcfd6369f73b1cc2a7457ac0bfb8df2531e652`（`.gitattributes` 固定 `text eol=lf`，消除 Windows CRLF 检出与 Linux LF 检出的平台差异）；`git diff --check` 通过。
 
 本节只冻结当前治理验证结果，不代表 Network 来源/许可证已闭环，不代表 M7 admission，也不替代独立人工复核。
 
