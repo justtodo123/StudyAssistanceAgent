@@ -24,6 +24,19 @@ docs/
 │   │   ├── stage-advancement-analysis.md
 │   │   ├── m8-m12-scope-decision-v1.md # M8–M12 规模化范围决策；已批准
 │   │   ├── m8-decision-closure-v1.md # 八项 Decision 批准记录；全部 RESOLVED
+│   │   ├── m8-active-execution-protocol-draft.md # 现行 draft-0.5；P0 PASS（只接受技术文字）；未绑定/未授权
+│   │   ├── m8-active-execution-protocol-draft-0.5-authorization-20260912.md # draft-0.5 定点修订授权；已消费
+│   │   ├── m8-active-execution-protocol-draft-0.5-review-20260913.md # draft-0.5 P0 PASS 记录
+│   │   ├── m8-active-execution-protocol-draft-0.5-returned.md # 被审 draft-0.5 精确原文；171830 bytes
+│   │   ├── m8-active-execution-protocol-draft-0.4-authorization-20260912.md # draft-0.4 文本修订授权；已消费
+│   │   ├── m8-active-execution-protocol-draft-0.4-review-20260912.md # draft-0.4 P0 退回记录
+│   │   ├── m8-active-execution-protocol-draft-0.4-returned.md # 被退回的 draft-0.4 精确历史原文
+│   │   ├── m8-active-execution-protocol-draft-0.3-returned.md # 被退回的 draft-0.3 精确历史原文
+│   │   ├── m8-active-execution-protocol-draft-0.3-review-20260912.md # draft-0.3 P0 退回记录
+│   │   ├── m8-active-execution-protocol-draft-0.1-returned.md # 被退回的 draft-0.1 精确历史原文
+│   │   ├── m8-active-execution-protocol-draft-0.1-review-20260911.md # draft-0.1 P0 退回记录
+│   │   ├── m8-active-execution-protocol-draft-0.2-returned.md # 被退回的 draft-0.2 精确历史原文
+│   │   ├── m8-active-execution-protocol-draft-0.2-review-20260911.md # draft-0.2 P0 退回记录
 │   │   ├── m8-v7-admission-protocol.md # V7 历史前置协议；尝试已 INVALID
 │   │   ├── m8-v8-admission-protocol.md # V8 历史前置协议；执行已 INVALID
 │   │   ├── m8-v9-admission-protocol.md # V9 PRE_FREEZE_STATIC_AUDIT_FAILED
@@ -136,6 +149,21 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
   [plans/references/m8-v12-disposition-20260909.md](plans/references/m8-v12-disposition-20260909.md)；V12 已封口且不可复用，
   未取得 preflight 或执行授权。V13 历史文本审计的 `PASS_AFTER_REVISION` 从未产生 binding 或执行授权；V13 已
   `SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`，不得恢复。未来 M8 实证必须使用全新协议身份。
+  2026-09-11 新增的
+  [active execution protocol 草案](plans/references/m8-active-execution-protocol-draft.md) 在 `draft-0.1`–`draft-0.3`
+  先后退回后，已由负责人于 2026-09-12 通过
+  [独立授权记录](plans/references/m8-active-execution-protocol-draft-0.4-authorization-20260912.md) 主动发起 `draft-0.4`
+  文本修订，同日经独立 P0 技术审查以 3 项新增阻断缺陷退回（`draft-0.3` 审查记录见
+  [`m8-active-execution-protocol-draft-0.3-review-20260912.md`](plans/references/m8-active-execution-protocol-draft-0.3-review-20260912.md)，
+  `draft-0.4` 审查记录见
+  [`m8-active-execution-protocol-draft-0.4-review-20260912.md`](plans/references/m8-active-execution-protocol-draft-0.4-review-20260912.md)）。
+  负责人随后另行发起定点修订 `draft-0.5`（授权记录见
+  [`m8-active-execution-protocol-draft-0.5-authorization-20260912.md`](plans/references/m8-active-execution-protocol-draft-0.5-authorization-20260912.md)），
+  仅处理该 3 项阻断缺陷；2026-09-13 经未参与起草的 independent reviewer 完成 P0 技术审查并取得
+  `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`（4 项缺陷机械闭合，72 行映射表逐字节未变），审查记录见
+  [`m8-active-execution-protocol-draft-0.5-review-20260913.md`](plans/references/m8-active-execution-protocol-draft-0.5-review-20260913.md)。
+  该 PASS 只表示技术文字被接受：现行草案仍为未绑定、未授权且从未执行的 protocol blob，不创建实验身份、
+  binding 或根，也不安装依赖、运行 benchmark、改变 M8 registry、准入 M8 或选择 LanceDB，且不自动产生 `draft-0.6`。
 
 ### reference/ — 外部资料索引
 
@@ -179,4 +207,6 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-10（M8 八项 Decision 已 RESOLVED；M8–M12 仍阻断；V8–V12 已失败封口；V13 已永久停止且从未执行）·维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-09-13（M8 active execution protocol `draft-0.5` 已取得
+`PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`，只接受技术文字且仍未绑定；M8 与 M9–M12 仍阻断）·
+维护：随项目演进同步更新*

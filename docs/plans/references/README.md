@@ -25,6 +25,19 @@
 | [`recruitment-driven-feasibility.md`](recruitment-driven-feasibility.md) | 以招聘要求为唯一标准的可行性分析与阶段更新建议 | 辅助调查 |
 | [`m8-m12-scope-decision-v1.md`](m8-m12-scope-decision-v1.md) | M8–M12 规模化范围决策 | `APPROVED / SCOPE_FROZEN`；不等于阶段 admission |
 | [`m8-decision-closure-v1.md`](m8-decision-closure-v1.md) | M8 八项 Decision 批准记录 | `APPROVED / EIGHT_DECISIONS_RESOLVED`；不选择后端或授权实现 |
+| [`m8-active-execution-protocol-draft.md`](m8-active-execution-protocol-draft.md) | M8 active execution protocol `draft-0.5` | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED` |
+| [`m8-active-execution-protocol-draft-0.5-authorization-20260912.md`](m8-active-execution-protocol-draft-0.5-authorization-20260912.md) | `draft-0.5` 修订授权 | 已授权并已消费的文本修订；不解除任何执行禁令 |
+| [`m8-active-execution-protocol-draft-0.5-review-20260913.md`](m8-active-execution-protocol-draft-0.5-review-20260913.md) | `draft-0.5` P0 技术审查 | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；不产生执行、准入或后端权限 |
+| [`m8-active-execution-protocol-draft-0.5-returned.md`](m8-active-execution-protocol-draft-0.5-returned.md) | 被审的 `draft-0.5` 原文（171830 bytes） | 历史追溯；被审字节 `ac907b83…b9fbc9`；不得 binding 或授权 |
+| [`m8-active-execution-protocol-draft-0.4-authorization-20260912.md`](m8-active-execution-protocol-draft-0.4-authorization-20260912.md) | `draft-0.4` 修订授权 | 已消费文本修订；不解除任何执行禁令 |
+| [`m8-active-execution-protocol-draft-0.4-review-20260912.md`](m8-active-execution-protocol-draft-0.4-review-20260912.md) | `draft-0.4` P0 技术审查 | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED`；3 项新增阻断缺陷 |
+| [`m8-active-execution-protocol-draft-0.4-returned.md`](m8-active-execution-protocol-draft-0.4-returned.md) | 被退回的 `draft-0.4` 原文 | 历史追溯；不得 binding 或授权 |
+| [`m8-active-execution-protocol-draft-0.3-review-20260912.md`](m8-active-execution-protocol-draft-0.3-review-20260912.md) | `draft-0.3` P0 技术审查 | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED` |
+| [`m8-active-execution-protocol-draft-0.3-returned.md`](m8-active-execution-protocol-draft-0.3-returned.md) | 被退回的 `draft-0.3` 原文 | 历史追溯；不得 binding 或授权 |
+| [`m8-active-execution-protocol-draft-0.2-review-20260911.md`](m8-active-execution-protocol-draft-0.2-review-20260911.md) | `draft-0.2` P0 技术审查 | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED` |
+| [`m8-active-execution-protocol-draft-0.2-returned.md`](m8-active-execution-protocol-draft-0.2-returned.md) | 被退回的 `draft-0.2` 原文 | 历史追溯；不得 binding 或授权 |
+| [`m8-active-execution-protocol-draft-0.1-review-20260911.md`](m8-active-execution-protocol-draft-0.1-review-20260911.md) | `draft-0.1` P0 技术审查 | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED` |
+| [`m8-active-execution-protocol-draft-0.1-returned.md`](m8-active-execution-protocol-draft-0.1-returned.md) | 被退回的 `draft-0.1` 原文 | 历史追溯；不得 binding 或授权 |
 | [`m8-v7-admission-protocol.md`](m8-v7-admission-protocol.md) | V7 静态冻结协议 | 历史前置产物；执行尝试已 `INVALID` |
 | [`m8-v8-admission-protocol.md`](m8-v8-admission-protocol.md) | V8 历史冻结协议 | 历史前置产物；执行根已 `INVALID` |
 | [`m8-v9-admission-protocol.md`](m8-v9-admission-protocol.md) | V9 历史失败协议 | `PRE_FREEZE_STATIC_AUDIT_FAILED`；不可复用 |
@@ -52,6 +65,23 @@ V12 独立静态审计最终为 `FAIL`，其授权仅覆盖已完成的阶段 1�
 freeze、独立静态审计 PASS 或执行授权；V13 已由处置记录永久标记为
 `SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`，不得恢复、修订、binding、建根、授权或执行。
 后续 M8 实证只能使用全新协议身份并重新取得分阶段书面授权。
+2026-09-11 active execution protocol `draft-0.1` 与 `draft-0.2` 经 P0 技术审查先后退回；2026-09-12 `draft-0.3`
+也经独立 P0 技术审查退回（12 项 schema/状态/证据闭合缺陷），其精确字节已封存为
+[`m8-active-execution-protocol-draft-0.3-returned.md`](m8-active-execution-protocol-draft-0.3-returned.md)，只作历史追溯。
+2026-09-12 负责人主动发起 `draft-0.4` 修订，并以独立记录
+[`m8-active-execution-protocol-draft-0.4-authorization-20260912.md`](m8-active-execution-protocol-draft-0.4-authorization-20260912.md)
+明确授权仅进行文本修订；该版本随后于同日经独立 P0 技术审查退回（3 项新增 schema/状态/证据闭合缺陷），当前状态为
+`RETURNED_FOR_REVISION / P0_NOT_ACCEPTED / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED`。该授权只解除“不得创建
+`draft-0.4`”这一针对未经发起修订的禁令，不创建 experiment/protocol
+执行身份，不建立 binding，不得据此创建实验根、安装依赖、生成输入、执行 benchmark、改变 M8 registry、准入 M8
+或选择 LanceDB/任何后端。`draft-0.4` 已退回；2026-09-12 负责人另行主动发起 `draft-0.5` 定点修订，仅处理该 3 项
+阻断缺陷，2026-09-13 经未参与起草的 independent reviewer 完成 P0 技术审查并取得
+`PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`（4 项缺陷全部机械闭合，72 行映射表逐字节未变），审查记录见
+[`m8-active-execution-protocol-draft-0.5-review-20260913.md`](m8-active-execution-protocol-draft-0.5-review-20260913.md)，
+被审精确字节见
+[`m8-active-execution-protocol-draft-0.5-returned.md`](m8-active-execution-protocol-draft-0.5-returned.md)。该 P0 接受
+只表示技术文字被接受：`draft-0.5` 仍为未绑定、未授权、从未执行的 protocol blob，不产生任何执行权限，也不自动
+产生 `draft-0.6`；后续修订仍须负责人另行发起。
 
 招聘对照原文：[`docs/interview/StudyAssistanceAgent_requirement.md`](../../interview/StudyAssistanceAgent_requirement.md)。
 该原文同样不是计划依据。

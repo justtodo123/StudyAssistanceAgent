@@ -371,7 +371,7 @@ pytest tests/M0_M2/ -v         # 基线回归
 | `test_ci_contract.py` | 结构化解析 workflow 的 job/env/step，验证平台基线、非 slow 回归、完整 RAG 门禁与 crawler 隔离 | CI 变更 |
 | `test_docs_consistency.py` | 当前/历史基线、默认评测范围、可演进准入状态组合、Decision/Prerequisite ID、批准逻辑与 M6b/M7 sibling 关系 | 文档/路线图/准入变更 |
 | `test_governance_contract.py` | docs 导航链接；全部未来阶段未准入时，拒绝受限生产路径、runtime 标识和未来专属依赖 | 文档导航/阻断期生产树变更 |
-| `test_path_privacy.py` | `/health` 逻辑 Source 标识、Search/QA/SSE/OpenAPI/日志无宿主路径泄露 | API、配置或可观测性变更 |
+| `test_path_privacy.py` | `/health` 逻辑 Source 标识、Search/QA/SSE/OpenAPI/日志无宿主路径泄露；治理文档严格扫描（不可变 `docs/plans/references/*-returned.md` 历史归档除外） | API、配置、可观测性或治理测试契约变更 |
 
 ### 阶段 5：M4 — 课程知识库规模补齐（已完成并进入 master）
 

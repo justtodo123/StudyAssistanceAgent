@@ -75,6 +75,19 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | [`references/recruitment-driven-feasibility.md`](references/recruitment-driven-feasibility.md) | 招聘驱动可行性分析 | 辅助决策；结论已反映在 PLAN.md 的 M6a/M6b 拆分中 |
 | [`references/m8-m12-scope-decision-v1.md`](references/m8-m12-scope-decision-v1.md) | M8–M12 规模化范围决策 | `APPROVED / SCOPE_FROZEN`；不等于阶段 admission |
 | [`references/m8-decision-closure-v1.md`](references/m8-decision-closure-v1.md) | M8 八项 Decision 批准记录 | `APPROVED / EIGHT_DECISIONS_RESOLVED`；不选择后端或授权实现 |
+| [`references/m8-active-execution-protocol-draft.md`](references/m8-active-execution-protocol-draft.md) | M8 active execution protocol `draft-0.5` | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED` |
+| [`references/m8-active-execution-protocol-draft-0.5-authorization-20260912.md`](references/m8-active-execution-protocol-draft-0.5-authorization-20260912.md) | `draft-0.5` 修订授权记录 | 已授权并消费的文本修订；不解除执行、建根或后端选择禁令 |
+| [`references/m8-active-execution-protocol-draft-0.5-review-20260913.md`](references/m8-active-execution-protocol-draft-0.5-review-20260913.md) | `draft-0.5` P0 技术审查 | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；只接受技术文字 |
+| [`references/m8-active-execution-protocol-draft-0.5-returned.md`](references/m8-active-execution-protocol-draft-0.5-returned.md) | 被审的 `draft-0.5` 原文 | 171830 bytes；`ac907b83…b9fbc9`；不得 binding 或授权 |
+| [`references/m8-active-execution-protocol-draft-0.4-authorization-20260912.md`](references/m8-active-execution-protocol-draft-0.4-authorization-20260912.md) | `draft-0.4` 修订授权记录 | 已消费文本修订；不解除执行、建根或后端选择禁令 |
+| [`references/m8-active-execution-protocol-draft-0.4-review-20260912.md`](references/m8-active-execution-protocol-draft-0.4-review-20260912.md) | `draft-0.4` P0 技术审查 | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED`；3 项新增阻断缺陷 |
+| [`references/m8-active-execution-protocol-draft-0.4-returned.md`](references/m8-active-execution-protocol-draft-0.4-returned.md) | 被退回的 `draft-0.4` 原文 | 历史追溯；不得 binding 或授权 |
+| [`references/m8-active-execution-protocol-draft-0.3-review-20260912.md`](references/m8-active-execution-protocol-draft-0.3-review-20260912.md) | `draft-0.3` P0 技术审查 | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED` |
+| [`references/m8-active-execution-protocol-draft-0.3-returned.md`](references/m8-active-execution-protocol-draft-0.3-returned.md) | 被退回的 `draft-0.3` 原文 | 历史追溯；不得 binding 或授权 |
+| [`references/m8-active-execution-protocol-draft-0.2-review-20260911.md`](references/m8-active-execution-protocol-draft-0.2-review-20260911.md) | `draft-0.2` P0 技术审查 | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED` |
+| [`references/m8-active-execution-protocol-draft-0.2-returned.md`](references/m8-active-execution-protocol-draft-0.2-returned.md) | 被退回的 `draft-0.2` 原文 | 历史追溯；不得 binding 或授权 |
+| [`references/m8-active-execution-protocol-draft-0.1-review-20260911.md`](references/m8-active-execution-protocol-draft-0.1-review-20260911.md) | `draft-0.1` P0 技术审查 | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED` |
+| [`references/m8-active-execution-protocol-draft-0.1-returned.md`](references/m8-active-execution-protocol-draft-0.1-returned.md) | 被退回的 `draft-0.1` 原文 | 历史追溯；不得 binding 或授权 |
 | [`references/m8-v7-admission-protocol.md`](references/m8-v7-admission-protocol.md) | V7 静态冻结协议 | 历史前置产物；执行尝试已 `INVALID` |
 | [`references/m8-v8-admission-protocol.md`](references/m8-v8-admission-protocol.md) | V8 历史冻结协议 | 历史前置产物；执行根已 `INVALID` |
 | [`references/m8-v9-admission-protocol.md`](references/m8-v9-admission-protocol.md) | V9 历史失败协议 | `PRE_FREEZE_STATIC_AUDIT_FAILED`；不可复用 |
@@ -101,5 +114,10 @@ V8–V11 记录均不得授权其对应身份或后继。V12 独立静态审计�
 `PASS_AFTER_REVISION / DRAFT_NOT_AUTHORIZED` 只评价当时文本设计，从未产生 binding、建根或执行授权；V13 已
 `SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`，不得恢复、修订、binding 或执行。任何后续 M8
 实证必须使用全新协议身份并重新完成分阶段书面授权。
+当前全新草案见 `m8-active-execution-protocol-draft.md`（`draft-0.5`）；2026-09-12 负责人另行主动发起该定点修订，
+2026-09-13 经未参与起草的 independent reviewer 完成 P0 技术审查并取得
+`PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`，4 项缺陷全部机械闭合且 72 行映射表逐字节未变。该 P0 接受只表示
+技术文字被接受：草案仍无 experiment/protocol 执行身份或 repository binding，保持未绑定、未授权、从未执行，不得据此
+建根、安装依赖、生成输入、执行 benchmark、选择后端或改变 M8 状态，也不自动产生 `draft-0.6`。
 
 > 后续由 `review-plan` Skill 生成的个人复习计划，继续使用 `{plan_name}-plan.md` 命名，避免与项目执行计划、调查材料混淆。
