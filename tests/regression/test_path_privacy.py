@@ -17,6 +17,8 @@ _EXTERNAL_SOURCE_ROOT = re.compile(
     r"D:[\\/]+111_Others_Subjects",
     re.IGNORECASE,
 )
+_RETURNED_ARCHIVE_PARENT = Path("docs") / "plans" / "references"
+_RETURNED_ARCHIVE_SUFFIX = "-returned.md"
 _EXTERNAL_POLICY_WORDS = (
     "外部",
     "原始资料",
@@ -33,6 +35,18 @@ _EXTERNAL_POLICY_WORDS = (
     "列出",
     "--root",
 )
+
+
+def _is_immutable_returned_archive(document: Path, repo_root: Path) -> bool:
+    """Return whether document is a frozen returned protocol archive."""
+    try:
+        relative = document.relative_to(repo_root)
+    except ValueError:
+        return False
+    return (
+        relative.parent == _RETURNED_ARCHIVE_PARENT
+        and document.name.endswith(_RETURNED_ARCHIVE_SUFFIX)
+    )
 
 
 def _contains_host_path(value: Any, roots: tuple[Path, ...]) -> bool:
@@ -91,6 +105,12 @@ def test_governance_documents_reject_host_temp_paths_and_limit_external_root(
 ):
     documents = [repo_root / "README.md", repo_root / "docs" / "PLAN.md"]
     documents.extend((repo_root / "docs").rglob("*.md"))
+    documents = list(dict.fromkeys(documents))
+    documents = [
+        document
+        for document in documents
+        if not _is_immutable_returned_archive(document, repo_root)
+    ]
     violations: list[str] = []
 
     for document in documents:
@@ -117,6 +137,38 @@ def test_governance_documents_reject_host_temp_paths_and_limit_external_root(
                 )
 
     assert violations == []
+
+
+def test_immutable_returned_archives_are_excluded_from_host_path_scan(repo_root):
+    archive_dir = repo_root / _RETURNED_ARCHIVE_PARENT
+    expected_archives = {
+        archive_dir / "m8-active-execution-protocol-draft-0.1-returned.md",
+        archive_dir / "m8-active-execution-protocol-draft-0.2-returned.md",
+        archive_dir / "m8-active-execution-protocol-draft-0.3-returned.md",
+    }
+    assert all(path.is_file() for path in expected_archives)
+    assert set(archive_dir.glob("*-returned.md")) == expected_archives
+    assert all(
+        _is_immutable_returned_archive(path, repo_root)
+        for path in expected_archives
+    )
+
+    assert not _is_immutable_returned_archive(
+        repo_root / "docs/plans/references/m8-active-execution-protocol-draft.md",
+        repo_root,
+    )
+    assert not _is_immutable_returned_archive(
+        repo_root / "docs/plans/references/m8-active-execution-protocol-draft-0.1-review-20260911.md",
+        repo_root,
+    )
+    assert not _is_immutable_returned_archive(
+        repo_root / "docs/plans/references/README.md",
+        repo_root,
+    )
+    assert not _is_immutable_returned_archive(
+        repo_root / "docs/foo-returned.md",
+        repo_root,
+    )
 
 
 def test_redacted_m8_records_preserve_experiment_root_basename(repo_root):
