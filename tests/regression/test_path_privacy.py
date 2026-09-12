@@ -145,6 +145,8 @@ def test_immutable_returned_archives_are_excluded_from_host_path_scan(repo_root)
         archive_dir / "m8-active-execution-protocol-draft-0.1-returned.md",
         archive_dir / "m8-active-execution-protocol-draft-0.2-returned.md",
         archive_dir / "m8-active-execution-protocol-draft-0.3-returned.md",
+        archive_dir / "m8-active-execution-protocol-draft-0.4-returned.md",
+        archive_dir / "m8-active-execution-protocol-draft-0.5-returned.md",
     }
     assert all(path.is_file() for path in expected_archives)
     assert set(archive_dir.glob("*-returned.md")) == expected_archives
