@@ -143,7 +143,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | M6a | `ADMITTED` | `COMPLETE` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制决策与保护基线已闭合；justtodo123 于 2026-08-25 批准开工，M6a-1 与 M6a-2 自动化门禁已通过，M6a-4 已完成收口 |
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
 | M7 | `ADMITTED` | `COMPLETE` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策、保护基线、Source lifecycle/delete/isolation/fallback、冻结 1k/3k BGE 与五格式 100×20 parser/normalized/lifecycle 证据已闭合。原 2026-08-31 准入与开工授权保持不变；justtodo123 于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内独立批准 `M7 COMPLETE`。技术证据本身不产生批准；M6b preview、Quiz、Review Plan 与 study-sessions 仍不含用户源 |
-| M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | 八项 Decision 已于 2026-09-10 逐项批准并 `RESOLVED`；local-first 100K capacity 目标已冻结；新实证协议、后端选择和阶段 admission 仍未授权 |
+| M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | 八项 Decision 已于 2026-09-10 逐项批准并 `RESOLVED`；local-first 100K capacity 目标已冻结；active execution protocol `draft-0.1`、`draft-0.2` 与 `draft-0.3` 已先后经 P0 技术审查退回；实验身份、binding、独立审阅、执行、后端选择和阶段 admission 均未授权 |
 | M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT=SATISFIED`；仍等待 M8 退出，计划/mastery 权威设定与独立批准仍 `OPEN` |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | `M10-M7-EXIT=SATISFIED`；仍等待 M8/M9，写授权、恢复、rollout 与独立批准仍 `OPEN` |
 | M11 | `BLOCKED` | `NOT_STARTED` | [`m11-data-scaling-plan.md`](plans/m11-data-scaling-plan.md) | 拟议真实数据规模化阶段；正式退出目标为 10K approved chunks，3K 为先行 Gate，全部 Decision 与批准 `OPEN` |
@@ -273,7 +273,8 @@ profile。所有阶段都不以 M6b 为写路径或 Source 生命周期前置。
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.19（不是产品发布版本）· 更新：2026-09-10（V8–V12 已按各自失败处置
+*创建：2026-08-10 · PLAN 文档修订：v2.20（不是产品发布版本）· 更新：2026-09-11（V8–V12 已按各自失败处置
 永久封口且不可复用；V13 已处置为 `SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`；M8 八项 Decision 已
-`RESOLVED`，但 M8–M12 均仍为 `BLOCKED / NOT_STARTED`，后端选择和阶段批准未完成）·
+`RESOLVED`，active execution protocol `draft-0.1`、`draft-0.2` 与 `draft-0.3` 已先后经 P0 技术审查退回；M8–M12 均仍为
+`BLOCKED / NOT_STARTED`，协议接受、独立审阅、执行、后端选择和阶段批准未完成）·
 维护：每次会话开工查看本文档*

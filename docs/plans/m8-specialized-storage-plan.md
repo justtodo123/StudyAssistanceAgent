@@ -4,6 +4,7 @@
 > 前置：`M8-M7-EXIT=SATISFIED`；M8 八项 Decision 已于 2026-09-10 逐项批准并 `RESOLVED`，阶段 admission 仍未批准
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
+> 当前协议准备：[`references/m8-active-execution-protocol-draft.md`](references/m8-active-execution-protocol-draft.md)
 
 ## 1. Context、范围与非目标
 
@@ -1098,8 +1099,10 @@ M7 的冻结门槛只作为方法和 baseline 参考，不能自动成为 M8 的
 - [x] `M8-M7-EXIT=SATISFIED`，证据可追溯至 M7 计划、baseline 和 `docs/PLAN.md`；
 - [x] 八项强制决策全部 `RESOLVED`；负责人 `justtodo123` 于 2026-09-10 逐项批准，见 `m8-decision-closure-v1.md`；
 - [ ] control/data-plane parity、migration/cutover/rollback 和 fallback 具有可执行的后续测试方案；
-- [ ] benchmark workload、环境、样本协议和数值阈值已冻结；
-- [ ] `docs/PLAN.md`、本计划和 registry 一致；
+- [x] active execution protocol `draft-0.1`、`draft-0.2` 与 `draft-0.3` 已先后经独立 P0 技术审查退回；`draft-0.3` 精确字节已封存，未创建 `draft-0.4`；
+- [ ] 草案已由负责人接受、建立全新身份与 binding，并通过独立静态审阅；
+- [ ] 执行所需 wheel/input digest 已在另行授权的准备阶段冻结；
+- [x] `docs/PLAN.md`、本计划和 registry 一致；
 - [ ] 用户或项目负责人填写批准记录，并独立授权生产开工。
 
 | 批准字段 | 当前值 |
@@ -1129,6 +1132,20 @@ M7 的冻结门槛只作为方法和 baseline 参考，不能自动成为 M8 的
 
 完成本轮后，M8 仍为 `BLOCKED / NOT_STARTED`；本计划只提供可供人工审阅和后续决策定稿的设计，
 不构成能力交付、后端选择、准入或开工授权。
+
+2026-09-11 已形成
+[`m8-active-execution-protocol-draft.md`](references/m8-active-execution-protocol-draft.md)。`draft-0.1`、`draft-0.2` 与 `draft-0.3`
+已先后经独立 P0 技术审查退回；`draft-0.2` 审查记录见
+[`m8-active-execution-protocol-draft-0.2-review-20260911.md`](references/m8-active-execution-protocol-draft-0.2-review-20260911.md)，
+`draft-0.3` 审查记录见
+[`m8-active-execution-protocol-draft-0.3-review-20260912.md`](references/m8-active-execution-protocol-draft-0.3-review-20260912.md)，
+精确被审字节见
+[`m8-active-execution-protocol-draft-0.3-returned.md`](references/m8-active-execution-protocol-draft-0.3-returned.md)。现行 canonical
+文件仍为 `draft-0.3`，状态为 `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED / UNBOUND / NOT_AUTHORIZED /
+NEVER_EXECUTED`；不得自动创建 `draft-0.4`。它不分配 experiment/protocol 执行身份，不建立 binding，
+不创建根，不安装依赖，不执行 benchmark。
+即使未来新修订的 P0 接受，也仍须分别决定 P1–P9/P7A、全新身份、binding、独立静态审阅、隔离准备、执行、证据发布、
+M8 admission 与 backend selection。
 
 ## 11. 撤销与后续边界
 
