@@ -21,21 +21,26 @@
 协议正文的任何字节变化都会改变 `protocol_blob_sha256`。按协议头部声明，绑定旧摘要的 P0/P1/P2 记录
 **全部失效**，必须在新摘要上重新形成。
 
-因此每启动一次独立修订，就要付出一次完整重走的成本。当前实测的失效范围（§5.1）为：
+因此每启动一次独立修订，就要付出一次完整重走的成本。当前实测的失效范围（详见 §5.1/§5.2）为：
 
-| 绑定 `162c9047…` 的现有记录 | 数量 |
-| --- | --- |
-| `external-gates/p0/…draft09…-r01.json` | 1 |
-| `external-gates/p0/…draft09…-r02.json` | 1 |
-| `external-gates/p1/…draft09…-r02.json` | 1 |
-| `external-gates/p1/…（旧版）.json` | 1 |
-| `external-artifacts/identity/…draft09…json` | 1 |
-| **合计** | **5** |
+| 记录集 | 绑定摘要 | 失效成因 | 数量 |
+| --- | --- | --- | --- |
+| `external-gates/p0/…draft09…-r01.json` | `162c9047…` | A/B/C/D 均致失效 | 1 |
+| `external-gates/p0/…draft09…-r02.json` | `162c9047…` | 同上 | 1 |
+| `external-gates/p1/…draft09…-r02.json` | `162c9047…` | 同上 | 1 |
+| `external-gates/p1/…（旧版）.json` | `162c9047…` | 同上 | 1 |
+| `external-artifacts/identity/…draft09…json` | `162c9047…` | 同上 | 1 |
+| `external-gates/p0/…draft05…-r01.json` | `ac907b83…` | **仅 D1b 致失效** | 1 |
+| `external-gates/p1/…draft05….json` | `ac907b83…` | **仅 D1b 致失效** | 1 |
+| `external-artifacts/identity/…draft05….json` | `ac907b83…` | **仅 D1b 致失效** | 1 |
+| **合计** | | | **8** |
+
+即：只做 A/B/C 或只做 D1a → 失效 5 条；若做 D1b（一并锁定两份协议）→ 失效 **8 条**。
 
 四项缺陷若分四次修订，则需四次重走；合并为一次，只需一次。**本提案据此建议合并**，但不替负责人作此决定。
 
 尤其注意 **D 与 A/B/C 天然同属一次修订**：D 会把工作区协议字节从 `162c9047…` 变为 `6ccebc47…`，
-这本身就会使全部 5 条记录失效；若不同时处理，就会在“刚重算完记录”之后立刻再因行尾重算一次。
+这本身就会使 draft-0.9 的记录失效；若不同时处理，就会在“刚重算完记录”之后立刻再因行尾重算一次。
 
 ## 1. 缺陷 A：P2 在任何卷上都必然 fail closed（**阻断级**）
 
@@ -135,7 +140,7 @@ python tools/m8_verify_protocol_inconsistencies.py
 | 方案 | 内容 | 评价 |
 | --- | --- | --- |
 | C1 | 按协议重排那 13 个值为字典序 | 改动纯机械，但会使"历史版本清单"呈 `v1, v10, v11…` 形态，**语义上反直觉** |
-| C2 | 为该字段换一个能表达数字序的 comparator | **推荐方向**。需注意**不可直接改动 `order=value` 的定义**——该 comparator 在全协议中被 **27 处**字段使用（`grep -c "order=value"` 可复验），改定义会波及全协议 |
+| C2 | 为该字段换一个能表达数字序的 comparator | **推荐方向**。需注意**不可直接改动 `order=value` 的定义**——该 comparator 在全协议中被 **29 个字段**使用（分布于 27 行；`grep -o "order=value" | wc -l` 可复验），改定义会波及全协议 |
 | C3 | 维持现状、不修 | 不推荐。矛盾留在协议内，会在下一个 P1 记录上重现 |
 
 **C2 的两种具体做法**（需协议作者择一）：
@@ -162,6 +167,19 @@ python tools/m8_verify_protocol_inconsistencies.py
 涉及记录：`p0/…-r01.json`、`p0/…-r02.json`、`p1/…-r02.json`、`p1/…（旧版）.json`、
 `external-artifacts/identity/…draft09…json`。
 
+**同类缺陷也存在于 `draft-0.5` 协议**（起草过程中一并核实）：
+
+| 项 | `m8-active-execution-protocol-draft.md` |
+| --- | --- |
+| 行尾保护 | `text: unspecified`、`eol: unspecified`（同样未受保护） |
+| 工作区（CRLF） | `ac907b83f11d9d8827798ba2ee19ec8b203c5560ecdff0137d619ddefcb9fbc9`，171830 bytes |
+| 仓库（LF） | `4ab35a66b2786cc1c0f18338b46c739ec8d88b9f375d02ffaaf2ba4b13d9cf71`，170550 bytes |
+| 差值 | 1280 bytes = 1280 个 CRLF |
+| 记录绑定值 | `ac907b83…`（**同样是工作区 CRLF 摘要**），涉及 3 条记录 |
+
+即：**若把两份协议都锁定为 LF，总失效面为 8 条记录（而非 5 条）**；若只锁定 `draft-0.9`，则为 5 条。
+该取舍见下述 D1a/D1b。
+
 ### 结论
 
 协议摘要 **`162c9047…` 是在 Windows + `core.autocrlf=true` 的检出条件下得到的**，而仓库内存储的是 LF 版
@@ -169,6 +187,9 @@ python tools/m8_verify_protocol_inconsistencies.py
 
 > **在任何 LF 检出环境（如 Linux、或 `autocrlf=false` 的机器）上克隆该仓库，协议摘要会是 `6ccebc47…`，
 > 与全部 5 条 draft-0.9 记录不符，这些记录会因此全部失效。**
+>
+> `draft-0.5` 同样如此（摘要会从 `ac907b83…` 变为 `4ab35a66…`，涉及其 3 条记录）。
+> 换言之，**当前仓库内全部 8 条外部门禁记录的摘要，都只在 Windows + `autocrlf=true` 的检出条件下成立。**
 
 这与 2026-09-13 已修复的门禁 JSON 行尾缺陷**同源**（参见提交 `ec749cb`），但影响面更大：
 已修复的是门禁 JSON 与 identity 工件，**协议本体作为整条链的摘要根，尚未修复**。
@@ -179,7 +200,8 @@ python tools/m8_verify_protocol_inconsistencies.py
 
 | 方案 | 内容 | 评价 |
 | --- | --- | --- |
-| D1 | 把协议 `.md` 纳入 `.gitattributes` 的 LF 锁定（如 `docs/plans/references/*.md text eol=lf`），并在 LF 口径上重算 `reviewed_protocol_sha256`，重新形成全部记录 | **推荐方向**。与已采用的修复同构，使链根在各平台可复现 |
+| D1a | **只锁定 `draft-0.9`**：为 `m8-active-execution-protocol-draft-0.9.md` 单列 LF 规则，在 LF 口径上重算 `reviewed_protocol_sha256`，重新形成其 5 条记录 | **推荐**。与已采用的修复（`ec749cb`）同构，代价最小；`draft-0.5` 作为已冻结历史保持原状 |
+| D1b | **一并锁定两份协议**（如 `docs/plans/references/*.md text eol=lf`），重算全部 8 条记录 | 彻底固定链根，但 `draft-0.5` 是已冻结的历史版本，重算其记录等于**改动历史门禁记录**，与“历史不得就地改写”的纪律张力较大 |
 | D2 | 维持现状，不修 | 不推荐。链根摘要继续依赖检出环境，任何非 Windows 验证者都会得出“记录失效”的结论 |
 | D3 | 只修协议、不动记录 | 不可行。锁定 LF 后工作区字节变为 `6ccebc47…`，与全部 5 条记录的 `162c9047…` 不符，必须重算记录 |
 
@@ -200,9 +222,34 @@ python tools/m8_verify_protocol_inconsistencies.py
 
 **历史记录不删除**：按仓库惯例，旧记录以 `-r01`/`-r02` 后缀并行保留，字节不动（配套校验器断言历史字节未变）。
 
-### 5.2 不受影响的记录
+### 5.2 `draft-0.5` 记录：不因 A/B/C 失效，但**因 D 而失效**
 
-`draft-0.5` 的两条记录绑定 `ac907b83…`，**不因本次修订失效**。它们在协议修订后仍保持其在自身摘要下的状态。
+起初本条写作“`draft-0.5` 的两条记录不因本次修订失效”（且条数本身也少算，实为三条），**该判断不完整**，现更正如下。
+
+须区分两种失效成因：
+
+| 成因 | 对 `draft-0.5`（绑定 `ac907b83…`）的影响 |
+| --- | --- |
+| 缺陷 A/B/C 的修订（改动 `draft-0.9` 正文） | **不影响**。`draft-0.5` 绑定的是另一份协议文件（`m8-active-execution-protocol-draft.md`） |
+| 缺陷 D 的修复（将协议 `.md` 锁定 LF） | **会使其失效**。因为 `ac907b83…` 同样是**工作区 CRLF 摘要** |
+
+实测证据：
+
+| 项 | `draft-0.5` 协议（`m8-active-execution-protocol-draft.md`） |
+| --- | --- |
+| 工作区（CRLF） | `ac907b83f11d9d8827798ba2ee19ec8b203c5560ecdff0137d619ddefcb9fbc9`，171830 bytes |
+| 仓库（LF） | `4ab35a66b2786cc1c0f18338b46c739ec8d88b9f375d02ffaaf2ba4b13d9cf71`，170550 bytes |
+| 差值 | 1280 bytes，恰为 1280 个 CRLF 行尾 |
+| 记录绑定值 | `ac907b83…`（即**工作区 CRLF 摘要**） |
+
+因此：**`draft-0.5` 的三条记录（`external-gates/p0/…draft05…`、`p1/…draft05…`、
+`external-artifacts/identity/…draft05…`）在 `draft-0.5` 协议被锁定为 LF 后同样失效。**
+
+若 D 的锁定范围写作 `docs/plans/references/*.md`（包含两份协议），则本次修订的**总失效面为 8 条记录**，
+而非五条。这一点应在上报前明确，因为它显著改变了修订的代价。
+
+可选做法：D1 只锁定 `draft-0.9`（最小面），或一并锁定两份协议（彻底固定，但 `draft-0.5` 记录也需重算）。
+该取舍列在 §4 的 D1a/D1b，由负责人裁定。
 
 ### 5.3 需要重新履行的治理动作
 
@@ -215,7 +262,7 @@ python tools/m8_verify_protocol_inconsistencies.py
 
 ## 6. 建议的执行顺序（供负责人裁定）
 
-1. 负责人审阅本提案，对 A/B/C/D 各自选定方案（A 建议 A1；B 建议 B1；C 建议 C2a；D 建议 D1）
+1. 负责人审阅本提案，对 A/B/C/D 各自选定方案（A 建议 A1；B 建议 B1；C 建议 C2a；D 建议 **D1a**）
    - **D 应优先于 A/B/C 定案**：它决定协议在哪个行尾口径上被固定，而 A/B/C 的修订文本还要在此基础上落地并摘要
 2. 起草**授权记录**（独立落盘），明确批准哪一项、按哪个方案
 3. 按授权执行协议正文修订（正文改动本身应可机械复算，并归档旧版字节）
