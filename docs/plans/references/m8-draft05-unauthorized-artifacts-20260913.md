@@ -1,9 +1,12 @@
 # M8 `draft-0.5` 未授权实验目录取证与处置记录
 
-> **状态：`UNAUTHORIZED_ARTIFACTS_FOUND / INVESTIGATION_RECORDED / CLEANUP_PENDING_AUTHORIZATION`**
+> **状态：`UNAUTHORIZED_ARTIFACTS_FOUND / INVESTIGATION_RECORDED / CLEANUP_COMPLETE`**
 >
-> 本文件记载一次**未经授权创建**的实验目录结构的发现、取证与处置决定。它**不是**门禁记录，**不构成**任何授权，
+> 本文件记载一次**未经授权创建**的实验目录结构的发现、取证与处置结果。它**不是**门禁记录，**不构成**任何授权，
 > **不改变**任何既有记录的状态。它唯一的作用是把一件与既有记录相冲突的事实如实固定下来。
+>
+> 处置已于 2026-09-13 完成：经负责人明确授权，7 个空目录已按“先子后父”顺序删除，删除后已复验 E 盘无残留。
+> **注意：清理不抹除“曾未经授权创建”这一已发生事实**——这正是本记录继续存在的原因。
 
 ## 1. 摘要
 
@@ -55,7 +58,7 @@ root-relative 打开，read-only，未创建/修改任何对象）：
 | 既有记载 | 出处 | 与事实的冲突 |
 | --- | --- | --- |
 | `draft-0.5` 为 `UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED` | `README.md` 表格；`m8-active-execution-protocol-draft-0.5-*` 记录 | 磁盘上确有 `draft-0.5` 命名的目录树，故"从未执行"不准确 |
-| 清理必须达成 `residual-zero`，且 `root_exists=false` | 协议 §6.4；`TECH_GATE_ID=residual-zero` | 当前 `root_exists=true`（7 个空目录），不满足 |
+| 清理必须达成 `residual-zero`，且 `root_exists=false` | 协议 §6.4；`TECH_GATE_ID=residual-zero` | 发现时 `root_exists=true`（7 个空目录），不满足；已于 2026-09-13 清理（见 §5.1） |
 
 **需精确区分的一点**：这 7 个目录**全部为空**，因此**没有产生任何证据工件**，也不构成 benchmark 执行、source 生成、
 preflight 或依赖安装。它与"执行过实验"不是一回事；它是**目录骨架被创建**这一事实。本记录不把它扩大解释为执行，
@@ -78,10 +81,20 @@ preflight 或依赖安装。它与"执行过实验"不是一回事；它是**目
 
 | 步骤 | 内容 | 状态 |
 | --- | --- | --- |
-| 1 | 取证并落盘本记录 | **已完成** |
-| 2 | 经负责人授权后删除这 7 个空目录 | **待授权** |
-| 3 | 删除后复验 `E:` 卷已无 `sa-m8-active-draft05-*` 残留 | **待执行** |
-| 4 | 在 README 更新 `draft-0.5` 状态说明 | **待执行** |
+| 1 | 取证并落盘本记录 | **已完成**（提交 `7da48b4`） |
+| 2 | 经负责人授权后删除这 7 个空目录 | **已完成**（2026-09-13，负责人明确授权） |
+| 3 | 删除后复验 `E:` 卷已无 `sa-m8-active-draft05-*` 残留 | **已完成**（见 §5.1） |
+| 4 | 在 README 更新状态说明 | **已完成** |
+
+### 5.1 清理执行与复验（逐字记载）
+
+- 删除方式：`rmdir`（只能删除空目录，不使用 `-rf`/`-f`/`--force`）；删除前先复验文件数为 `0`。
+- 删除顺序：先 5 个子目录（`package`、`normal-receipt`、`nonpublication-receipt`、`abort-receipt`、`failure-receipt`），
+  再 `sa-m8-active-draft05-evidence`，最后 `sa-m8-active-draft05-parent`。全部返回成功。
+- 复验结果：`E:` 卷根目录当前仅剩 `System Volume Information`；以 `sa-m8-active-draft05*` 为模式的检索命中数为 `0`。
+- 未发生任何数据丢失：删除前文件数为 `0`，无可丢失内容。
+
+清理**不改变**本记录对“未经授权创建”这一事实的认定，也不使该事实变得无害；它只使 `residual-zero` 在本项上成立。
 
 处置原则：**先记录，后清理**。不静默删除，因为"曾经存在未经授权的目录"本身就是需要留痕的治理事实；
 清理也不改变"创建未经授权"这一已发生事实。
@@ -90,8 +103,7 @@ preflight 或依赖安装。它与"执行过实验"不是一回事；它是**目
 
 - 这 7 个目录**不是** `draft-0.9` 的实验根。`draft-0.9` 的 P2 将冻结**新的** experiment parent binding，
   与本组目录无关。
-- 但它们构成 `residual-zero` 意义上需要清除的残留。在 `draft-0.9` 链推进到涉及清理的门禁（P7A/abort cleanup）
-  之前，本组残留应已处置完毕，否则 `residual-zero` 无法成立。
+- 它们曾构成 `residual-zero` 意义上需要清除的残留；**该项已于 2026-09-13 清除完毕**（见 §5.1），`E:` 卷现无残留。
 - 本次发现**不使**任何既有记录失效，也**不改变** `draft-0.5` 的 `UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED`
   地位；它补充的是"该未授权版本曾产生目录骨架"这一事实。
 

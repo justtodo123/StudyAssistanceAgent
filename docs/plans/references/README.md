@@ -43,7 +43,7 @@
 | [`m8-active-execution-protocol-draft-0.9-review-20260913.md`](m8-active-execution-protocol-draft-0.9-review-20260913.md) | `draft-0.9` P0 技术审查（AI 机械核验） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；A/B/C/D 全闭合；`AI_ASSISTED_MECHANICAL_REVIEW`，非人类独立审查 |
 | [`m8-draft09-p1-materials-20260913.md`](m8-draft09-p1-materials-20260913.md) | `draft-0.9` P0/identity/P1 材料说明 | `MATERIALS_PREPARED / P0_PENDING_INDEPENDENT_REVIEW / NOT_AUTHORIZED`；**不构成任何授权** |
 | [`m8-draft09-p0-r02-reviewer-worksheet-20260913.md`](m8-draft09-p0-r02-reviewer-worksheet-20260913.md) | `draft-0.9` P0 `-r02` 独立复核工作单 | `REVIEW_WORKSHEET`；**不是门禁记录、不预置结论、不构成授权**；供未参与本轮起草与核验的 reviewer 使用 |
-| [`m8-draft05-unauthorized-artifacts-20260913.md`](m8-draft05-unauthorized-artifacts-20260913.md) | `draft-0.5` 未授权实验目录取证与处置 | `UNAUTHORIZED_ARTIFACTS_FOUND`；E 盘 7 个空目录（0 文件），与 `NEVER_EXECUTED` 记载冲突；**待授权清理** |
+| [`m8-draft05-unauthorized-artifacts-20260913.md`](m8-draft05-unauthorized-artifacts-20260913.md) | `draft-0.5` 未授权实验目录取证与处置 | `UNAUTHORIZED_ARTIFACTS_FOUND / CLEANUP_COMPLETE`；E 盘 7 个空目录（0 文件）与 `NEVER_EXECUTED` 冲突，已授权删除并复验无残留 |
 | [`external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json`](external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json) | `draft-0.9` P0 门禁记录 `-r02`（机器可读） | **`P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`**；由未参与起草与核验的独立 reviewer 接受；仅技术文字 |
 | [`external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json`](external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json) | `draft-0.9` P1 门禁记录 `-r02`（机器可读） | **`AUTHORIZED`**；前驱为 P0 `-r02`；仅授权创建 identity |
 | [`external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json`](external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json) | `draft-0.9` experiment identity（机器可读） | 已授权创建（P1 `-r02`）；不构成 binding 或执行授权 |
@@ -111,9 +111,11 @@ nonpublication-receipt / abort-receipt / failure-receipt 五个子目录），�
 取证与处置记录见
 [`m8-draft05-unauthorized-artifacts-20260913.md`](m8-draft05-unauthorized-artifacts-20260913.md)（`file_id` 已由
 `tools/m8_parent_binding_validator.py` 以 read-only 方式核实，与未跟踪文件 `.p2-parent-identities-run.json` 逐字段相等）。
-处置原则为**先记录、后清理**：该组目录构成 `residual-zero` 意义上需清除的残留，须经负责人明确授权后删除并复验；
-在 `draft-0.9` 推进到涉及清理的门禁（P7A / abort cleanup）之前应已处置完毕。本次发现**不使**任何既有记录失效，
-也**不改变** `draft-0.5` 的 `UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED` 地位。
+处置原则为**先记录、后清理**：该组目录曾构成 `residual-zero` 意义上需清除的残留。**清理已于 2026-09-13 完成**：
+经负责人明确授权，7 个空目录按“先子后父”顺序以 `rmdir` 删除（不使用强制参数），删除后复验 `E:` 卷仅剩
+`System Volume Information`、无 `sa-m8-active-draft05*` 残留，且删除前文件数为 `0`，无数据丢失。本次发现**不使**任何
+既有记录失效，也**不改变** `draft-0.5` 的 `UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED` 地位；清理也不抹除
+“曾未经授权创建目录”这一已发生事实。
 2026-09-13 补充记载：`draft-0.6`、`draft-0.7`、`draft-0.8` 三版正文（174214 / 175826 / 180033 bytes）在形成时
 **均无事先授权，也无授权、审查或 returned 字节记录落盘**，属未经负责人事先发起的自行续版，其缺陷清单只能从
 修订脚本头注释推定。三版均经事后补正定为 **`UNBOUND / NEVER_AUTHORIZED / NEVER_EXECUTED`**，正文只作历史追溯，
