@@ -41,6 +41,10 @@
 | [`m8-active-execution-protocol-draft-0.9.md`](m8-active-execution-protocol-draft-0.9.md) | `draft-0.9` 正文（182575 bytes） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED`；不得 binding 或执行 |
 | [`m8-active-execution-protocol-draft-0.9-authorization-20260913.md`](m8-active-execution-protocol-draft-0.9-authorization-20260913.md) | `draft-0.9` 修订授权 | 已发起并消费的文本修订；不产生执行、准入或后端权限 |
 | [`m8-active-execution-protocol-draft-0.9-review-20260913.md`](m8-active-execution-protocol-draft-0.9-review-20260913.md) | `draft-0.9` P0 技术审查（AI 机械核验） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；A/B/C/D 全闭合；`AI_ASSISTED_MECHANICAL_REVIEW`，非人类独立审查 |
+| [`m8-draft09-p1-materials-20260913.md`](m8-draft09-p1-materials-20260913.md) | `draft-0.9` P0/identity/P1 材料说明 | `MATERIALS_PREPARED / P0_PENDING_INDEPENDENT_REVIEW / NOT_AUTHORIZED`；**不构成任何授权** |
+| [`external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json`](external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json) | `draft-0.9` P0 门禁记录（机器可读） | **`P0_NOT_ACCEPTED`**；`independence.satisfied=false`，同一主体自查，实质独立性未成立；待人类 reviewer 复核 |
+| [`external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543.json`](external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543.json) | `draft-0.9` P1 门禁记录（机器可读） | **`NOT_AUTHORIZED`**；前驱 P0 未成立，门禁边未满足；`allowed_next_action=stop` |
+| [`external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json`](external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json) | `draft-0.9` experiment identity（机器可读） | 已备好但**未激活**；其存在本身不构成授权 |
 | [`m8-active-execution-protocol-draft-0.4-authorization-20260912.md`](m8-active-execution-protocol-draft-0.4-authorization-20260912.md) | `draft-0.4` 修订授权 | 已消费文本修订；不解除任何执行禁令 |
 | [`m8-active-execution-protocol-draft-0.4-review-20260912.md`](m8-active-execution-protocol-draft-0.4-review-20260912.md) | `draft-0.4` P0 技术审查 | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED`；3 项新增阻断缺陷 |
 | [`m8-active-execution-protocol-draft-0.4-returned.md`](m8-active-execution-protocol-draft-0.4-returned.md) | 被退回的 `draft-0.4` 原文 | 历史追溯；不得 binding 或授权 |
@@ -113,6 +117,15 @@ freeze、独立静态审计 PASS 或执行授权；V13 已由处置记录永久�
 [`m8-active-execution-protocol-draft-0.9-review-20260913.md`](m8-active-execution-protocol-draft-0.9-review-20260913.md)；
 该审查标记为 `AI_ASSISTED_MECHANICAL_REVIEW`，**非人类独立 reviewer 审查**，不构成技术认可之外任何授权，
 也不自动产生 `draft-0.10`。
+2026-09-13 另为 `draft-0.9` 准备 P0/identity/P1 机器可读材料，说明见
+[`m8-draft09-p1-materials-20260913.md`](m8-draft09-p1-materials-20260913.md)。该材料集**不包含任何已成立的门禁**：
+draft-0.9 的 P0 技术文字机械核验虽可复现，但核验者与起草者为同一主体，**实质性独立性未成立**，故 P0 记录以
+`P0_NOT_ACCEPTED` / `independence.satisfied=false` / `allowed_next_action=stop` 落盘，其唯一后继 P1 随之落为
+`NOT_AUTHORIZED` / `stop`；identity 工件已备好但未激活。该材料集曾在首次落盘时误以
+`P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY` / `satisfied=true` / P1 `AUTHORIZED` 形式记为已成立，经独立性审阅
+认定属**不可验证的自我证明**，已按“待复核”语义整改（experiment identity 字节未变，仍为 `5ba25bd8…`）。P0 门禁
+须由**未参与本轮起草与审查的审查者**另行建立（可另发 `-r02`），在此之前 P1 不得重新签发。该材料不产生 identity
+激活、binding、建根、依赖获取、source 生成、preflight、执行、证据发布、M8 准入或后端选择中的任何一项。
 
 招聘对照原文：[`docs/interview/StudyAssistanceAgent_requirement.md`](../../interview/StudyAssistanceAgent_requirement.md)。
 该原文同样不是计划依据。

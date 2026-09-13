@@ -104,13 +104,18 @@ ck("P0: review_kind exact",
    p0p["payload"]["review_kind"] == "P0_TECHNICAL_SCOPE_REVIEW")
 ck("P0: finding_ids is empty array",
    p0p["payload"]["finding_ids"] == [])
-ck("P0: decision accepted-only",
-   p0p["decision"] == "P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY")
-ck("P0: allowed_next_action == request-p1",
-   p0p["allowed_next_action"] == "request-p1")
-ck("P0: independence required+satisfied (P0 requires true/true)",
-   p0p["independence"]["required"] is True
-   and p0p["independence"]["satisfied"] is True)
+ck("P0: decision == P0_NOT_ACCEPTED (gate NOT discharged)",
+   p0p["decision"] == "P0_NOT_ACCEPTED", p0p["decision"])
+ck("P0: allowed_next_action == stop (must not auto-advance to P1)",
+   p0p["allowed_next_action"] == "stop", p0p["allowed_next_action"])
+ck("P0: independence.required is True (protocol requires it at P0)",
+   p0p["independence"]["required"] is True)
+ck("P0: independence.satisfied is FALSE (same actor drafted and reviewed)",
+   p0p["independence"]["satisfied"] is False,
+   str(p0p["independence"]["satisfied"]))
+ck("P0: independence basis discloses pending human reviewer",
+   "SUBSTANTIVE INDEPENDENCE IS NOT ESTABLISHED" in p0p["independence"]["basis"]
+   and "pending a human reviewer" in p0p["independence"]["basis"])
 ck("P0: operations == [review]", p0p["scope"]["operations"] == ["review"])
 ck("P0: write_targets empty (P0-P3 have none)",
    p0p["scope"]["write_targets"] == [])
@@ -122,8 +127,12 @@ ck("P0: record_id matches ID grammar",
    bool(RE_ID.match(p0p["record_id"])), p0p["record_id"])
 ck("P0: timestamp matches TS grammar",
    bool(RE_TS.match(p0p["timestamp"])), p0p["timestamp"])
-ck("P0: actor role == independent-reviewer",
+ck("P0: actor role == independent-reviewer (only enum member for a P0 review)",
    p0p["actor"]["role"] == "independent-reviewer")
+ck("P0: actor name is labelled mechanical, not passed off as the human reviewer",
+   "mechanical" in p0p["actor"]["name"]
+   and p0p["actor"]["name"] != "m8-independent-reviewer-01",
+   p0p["actor"]["name"])
 ck("P0: decision in GATE_DECISION enum", p0p["decision"] in GATE_DECISIONS)
 ck("P0: next action in NEXT_ACTION enum",
    p0p["allowed_next_action"] in NEXT_ACTIONS)
@@ -168,16 +177,27 @@ ck("P1: predecessor record_id equals P0 record_id",
    pred["record_id"] == p0p["record_id"], pred["record_id"])
 ck("P1: predecessor record_sha256 equals P0 file digest",
    pred["record_sha256"] == hashlib.sha256(P0.read_bytes()).hexdigest())
-ck("P1: predecessor expected_decision equals P0 actual decision",
-   pred["expected_decision"] == p0p["decision"])
-ck("P1: predecessor expected_next_action equals P0 actual action",
-   pred["expected_next_action"] == p0p["allowed_next_action"])
-ck("P1: decision == AUTHORIZED", p1p["decision"] == "AUTHORIZED")
-ck("P1: allowed_next_action == request-p2",
-   p1p["allowed_next_action"] == "request-p2")
-ck("P1: independence required=false,satisfied=false (owner-only step)",
-   p1p["independence"]["required"] is False
-   and p1p["independence"]["satisfied"] is False)
+ck("P1: predecessor expected_decision is the accepted-only decision",
+   pred["expected_decision"] == "P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY")
+ck("P1: predecessor expected_next_action is request-p1",
+   pred["expected_next_action"] == "request-p1")
+ck("P1: predecessor edge is NOT satisfied by the actual P0 record",
+   pred["expected_decision"] != p0p["decision"],
+   f"expected={pred['expected_decision']} actual={p0p['decision']}")
+ck("P1: decision == NOT_AUTHORIZED (predecessor P0 not accepted)",
+   p1p["decision"] == "NOT_AUTHORIZED", p1p["decision"])
+ck("P1: allowed_next_action == stop",
+   p1p["allowed_next_action"] == "stop", p1p["allowed_next_action"])
+ck("P1: reason states P1 is not authorized",
+   "P1 IS NOT AUTHORIZED" in p1p["reason"])
+ck("P1: reason states it grants nothing",
+   "This record grants nothing" in p1p["reason"])
+ck("P1: independence required=false (owner-only step, not the blocker)",
+   p1p["independence"]["required"] is False)
+ck("P1: independence.satisfied is False",
+   p1p["independence"]["satisfied"] is False)
+ck("P1: independence basis names the P0 rejection as the reason",
+   "P0_NOT_ACCEPTED" in p1p["independence"]["basis"])
 ck("P1: operations == [identity]", p1p["scope"]["operations"] == ["identity"])
 ck("P1: write_targets empty (P1 admin artifact is not a TARGET)",
    p1p["scope"]["write_targets"] == [])
@@ -208,10 +228,15 @@ ck("P1: logical_name follows external-gates/p1/<record_id>.json",
    p1["logical_name"] == f"external-gates/p1/{p1p['record_id']}.json")
 
 # ------------------------------------------------------- disclosure checks --
-ck("DISCLOSURE: P0 independence basis states it is a programmatic review",
-   "programmatic mechanical review" in p0p["independence"]["basis"])
-ck("DISCLOSURE: P1 reason grants identity only, not execution",
-   "authorizes identity creation only" in p1p["reason"])
+ck("DISCLOSURE: P0 reason states the gate is not discharged",
+   "THE DRAFT-0.9 P0 GATE IS NOT DISCHARGED" in p0p["reason"])
+ck("DISCLOSURE: P0 reason preserves technical findings without accepting",
+   "they are NOT an " in p0p["reason"])
+ck("DISCLOSURE: P0 independence basis warns against treating it as accepted",
+   "Do NOT treat this record as an accepted P0" in p0p["independence"]["basis"])
+ck("CHAIN: no gate in this material set claims execution authority",
+   p0p["decision"] == "P0_NOT_ACCEPTED"
+   and p1p["decision"] == "NOT_AUTHORIZED")
 
 # ------------------------------------------------------------------ report --
 print("=" * 78)
