@@ -42,6 +42,7 @@
 | [`m8-active-execution-protocol-draft-0.9-authorization-20260913.md`](m8-active-execution-protocol-draft-0.9-authorization-20260913.md) | `draft-0.9` 修订授权 | 已发起并消费的文本修订；不产生执行、准入或后端权限 |
 | [`m8-active-execution-protocol-draft-0.9-review-20260913.md`](m8-active-execution-protocol-draft-0.9-review-20260913.md) | `draft-0.9` P0 技术审查（AI 机械核验） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；A/B/C/D 全闭合；`AI_ASSISTED_MECHANICAL_REVIEW`，非人类独立审查 |
 | [`m8-draft09-p1-materials-20260913.md`](m8-draft09-p1-materials-20260913.md) | `draft-0.9` P0/identity/P1 材料说明 | `MATERIALS_PREPARED / P0_PENDING_INDEPENDENT_REVIEW / NOT_AUTHORIZED`；**不构成任何授权** |
+| [`m8-draft09-p0-r02-reviewer-worksheet-20260913.md`](m8-draft09-p0-r02-reviewer-worksheet-20260913.md) | `draft-0.9` P0 `-r02` 独立复核工作单 | `REVIEW_WORKSHEET`；**不是门禁记录、不预置结论、不构成授权**；供未参与本轮起草与核验的 reviewer 使用 |
 | [`external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json`](external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json) | `draft-0.9` P0 门禁记录（机器可读） | **`P0_NOT_ACCEPTED`**；`independence.satisfied=false`，同一主体自查，实质独立性未成立；待人类 reviewer 复核 |
 | [`external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543.json`](external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543.json) | `draft-0.9` P1 门禁记录（机器可读） | **`NOT_AUTHORIZED`**；前驱 P0 未成立，门禁边未满足；`allowed_next_action=stop` |
 | [`external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json`](external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json) | `draft-0.9` experiment identity（机器可读） | 已备好但**未激活**；其存在本身不构成授权 |
@@ -126,6 +127,12 @@ draft-0.9 的 P0 技术文字机械核验虽可复现，但核验者与起草者
 认定属**不可验证的自我证明**，已按“待复核”语义整改（experiment identity 字节未变，仍为 `5ba25bd8…`）。P0 门禁
 须由**未参与本轮起草与审查的审查者**另行建立（可另发 `-r02`），在此之前 P1 不得重新签发。该材料不产生 identity
 激活、binding、建根、依赖获取、source 生成、preflight、执行、证据发布、M8 准入或后端选择中的任何一项。
+为降低上述独立复核的成本，已形成一份 `-r02` 复核工作单
+[`m8-draft09-p0-r02-reviewer-worksheet-20260913.md`](m8-draft09-p0-r02-reviewer-worksheet-20260913.md)：它列出待审对象
+的精确字节与双口径摘要（登记值 `162c9047…` 对应**工作区 CRLF**；仓库 LF 归一化为 `6ccebc47…`，差 1366 字节
+恰为 1366 个 CRLF）、逐项可复跑的核验清单及其已核实行号，并显式声明本工作单由起草方编写、**不是独立证据**，
+不预置结论。复核者对 draft-0.9 技术文字是否闭合、行尾登记惯例是否可接受、以及是否接受该 P0 的判断，
+只能由其签署的 `-r02` 记录承载；在 `-r02` 落盘前，M8 仍为 `BLOCKED / NOT_STARTED`。
 
 招聘对照原文：[`docs/interview/StudyAssistanceAgent_requirement.md`](../../interview/StudyAssistanceAgent_requirement.md)。
 该原文同样不是计划依据。
