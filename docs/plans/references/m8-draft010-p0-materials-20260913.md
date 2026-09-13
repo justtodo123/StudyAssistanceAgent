@@ -7,6 +7,10 @@
   [`m8-active-execution-protocol-draft-0.10-authorization-20260913.md`](m8-active-execution-protocol-draft-0.10-authorization-20260913.md)
   与协议修订提案 [`m8-protocol-revision-proposal-20260913.md`](m8-protocol-revision-proposal-20260913.md)
 - 材料状态：`MATERIALS_PREPARED / P0_PENDING_INDEPENDENT_REVIEW / NOT_AUTHORIZED`
+- **后续更新（2026-09-13）**：本材料作为输入被使用后，独立 reviewer `justtodo123` 已于 2026-09-13 完成 P0 审查并接受 `draft-0.10` 的技术口径，见 P0 记录
+  [`external-gates/p0/p0-m8-active-execution-draft010-20260913-r01.json`](external-gates/p0/p0-m8-active-execution-draft010-20260913-r01.json)
+  （`P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY` / `request-p1`）。
+  **本说明本身未被改写为审查记录**，仍保持 `MATERIALS_PREPARED` 状态，其"不预置结论"的声明在事后仍成立。
 
 ## 0. 治理事实声明（必读）
 
@@ -166,3 +170,24 @@ reviewer 可产出以下任一结果，均须以独立记录落盘、**不改写
 `p0-m8-active-execution-draft010-20260913-r01.json`（首次即 `-r01`，因 `draft-0.10` 尚无 P0 记录）。
 
 **本说明不指定 reviewer 的决定，也不建议其倾向。**
+
+## 7. 实际结果（事后补记）
+
+本节于 2026-09-13 审查完成后追加，用途仅为状态追溯；它**不修改**上文 §0–§6 的任何内容，也不使本说明变成审查记录。
+
+| 项 | 结果 |
+| --- | --- |
+| reviewer | `justtodo123`，角色 `independent-reviewer` |
+| 决定 | `P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY` |
+| 后继动作 | `request-p1` |
+| 记录 | `external-gates/p0/p0-m8-active-execution-draft010-20260913-r01.json`（5653 bytes） |
+| 记录摘要 | `ba2d86a8eda734eafa463d1e9aeb2aa9137082ab5fe8df85621f3e408e3b4b82` |
+| 记录校验 | `tools/m8_validate_p0_draft010.py`，全部通过 |
+| 实测依据 | `tools/m8_run_p0_review_checks.py`，55 项字节事实 |
+
+**独立性问题恰好由本次流程本身回答**：起草方（AI 助手）只做了实测并起草记录文本，未参与 `decision`、
+`allowed_next_action`、`actor` 与 `independence` 四个字段的确定；这四项由负责人裁定。
+
+**一处需如实记录的建造细节**：首版记录的 `reason` 达 4803 字符，超出协议 `UTF8[1,4096]` 上限，属**格式无效**。
+该版本从未提交（生成脚本的"无前驱"守卫拦住重建，git 显示为未跟踪），已删除并重新生成至 3900 字符。
+当前记录的 `reason` 长度 3900，在限内。

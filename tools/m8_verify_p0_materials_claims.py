@@ -16,6 +16,7 @@ A PASS here means the materials are accurate about draft-0.10, not that
 draft-0.10 is acceptable.
 """
 import hashlib
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -165,10 +166,27 @@ chk("draft-0.5 未受保护", "text: unspecified" in out5, out5.strip())
 # ------------------------------------------------------------ record binding --
 recs = sorted((REF / "external-gates").rglob("*.json")) + sorted(
     (REF / "external-artifacts").rglob("*.json"))
-d09 = sum(1 for p in recs if "162c9047" in p.read_text(encoding="utf-8"))
-d05 = sum(1 for p in recs if "ac907b83" in p.read_text(encoding="utf-8"))
-chk("5 条记录仍绑 162c9047…", d09 == 5, str(d09))
-chk("3 条记录仍绑 ac907b83…", d05 == 3, str(d05))
+def bound_digest(path):
+    """The digest a record actually binds, read from the field, not the text.
+
+    A record's reason may narrate a digest without binding it: the draft-0.10 P0
+    record cites 162c9047... while explaining that the draft-0.9 records still
+    pin it. Counting occurrences by substring conflates citation with binding
+    and made the count come out at six. The bound digest is the value of
+    payload.reviewed_protocol_sha256.
+    """
+    try:
+        return json.loads(open(path, encoding="utf-8").read())["payload"]["reviewed_protocol_sha256"]
+    except Exception:
+        return ""
+
+
+d09 = sum(1 for p in recs if bound_digest(p).startswith("162c9047"))
+d05 = sum(1 for p in recs if bound_digest(p).startswith("ac907b83"))
+chk("5 条记录仍绑 162c9047…（待重算）", d09 == 5, str(d09))
+chk("3 条记录仍绑 ac907b83…（不在范围）", d05 == 3, str(d05))
+d10 = sum(1 for p in recs if bound_digest(p).startswith("b5bc5088"))
+chk("1 条记录绑定 draft-0.10 当前摘要", d10 == 1, str(d10))
 
 # ------------------------------------------- materials must not pre-decide --
 for phrase in ("P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY", "P0_NOT_ACCEPTED"):

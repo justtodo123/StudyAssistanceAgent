@@ -6,6 +6,7 @@ Read-only; prints findings and exits non-zero on any mismatch.
 """
 import glob
 import hashlib
+import json
 import re
 import subprocess
 
@@ -51,8 +52,23 @@ chk("第 817 行 26..26 基数", "26..26" in line(817))
 recs = sorted(glob.glob("docs/plans/references/external-gates/*/*.json")) + sorted(
     glob.glob("docs/plans/references/external-artifacts/identity/*.json")
 )
-d09 = sum(1 for p in recs if "162c9047" in open(p, encoding="utf-8").read())
-d05 = sum(1 for p in recs if "ac907b83" in open(p, encoding="utf-8").read())
+def bound_digest(path):
+    """The digest a record actually binds, read from the field, not the text.
+
+    A record's reason may narrate a digest without binding it: the draft-0.10 P0
+    record cites 162c9047... while explaining that the draft-0.9 records still
+    pin it. Counting occurrences by substring conflates citation with binding
+    and made the count come out at six. The bound digest is the value of
+    payload.reviewed_protocol_sha256.
+    """
+    try:
+        return json.loads(open(path, encoding="utf-8").read())["payload"]["reviewed_protocol_sha256"]
+    except Exception:
+        return ""
+
+
+d09 = sum(1 for p in recs if bound_digest(p).startswith("162c9047"))
+d05 = sum(1 for p in recs if bound_digest(p).startswith("ac907b83"))
 chk("5 条 draft-0.9 记录绑定 162c9047…", d09 == 5, str(d09))
 chk("3 条 draft-0.5 记录绑定 ac907b83…", d05 == 3, str(d05))
 chk("D1a 只影响 draft-0.9（5 条）", d09 == 5)

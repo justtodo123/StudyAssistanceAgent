@@ -1,6 +1,7 @@
 """Verify every factual claim made in m8-protocol-revision-proposal-20260913.md."""
 import glob
 import hashlib
+import json
 import subprocess
 
 ok = True
@@ -46,8 +47,23 @@ chk("draft-0.5 差值 = 1280 = CR 数", wn5 - rn5 == 1280, str(wn5 - rn5))
 recs = sorted(glob.glob("docs/plans/references/external-gates/*/*.json")) + sorted(
     glob.glob("docs/plans/references/external-artifacts/identity/*.json")
 )
-d09 = sum(1 for p in recs if "162c9047" in open(p, encoding="utf-8").read())
-d05 = sum(1 for p in recs if "ac907b83" in open(p, encoding="utf-8").read())
+def bound_digest(path):
+    """The digest a record actually binds, read from the field, not the text.
+
+    A record's reason may narrate a digest without binding it: the draft-0.10 P0
+    record cites 162c9047... while explaining that the draft-0.9 records still
+    pin it. Counting occurrences by substring conflates citation with binding
+    and made the count come out at six. The bound digest is the value of
+    payload.reviewed_protocol_sha256.
+    """
+    try:
+        return json.loads(open(path, encoding="utf-8").read())["payload"]["reviewed_protocol_sha256"]
+    except Exception:
+        return ""
+
+
+d09 = sum(1 for p in recs if bound_digest(p).startswith("162c9047"))
+d05 = sum(1 for p in recs if bound_digest(p).startswith("ac907b83"))
 chk("绑定 162c9047 的记录 = 5 条", d09 == 5, str(d09))
 chk("绑定 ac907b83 的记录 = 3 条", d05 == 3, str(d05))
 chk("合计 8 条", d09 + d05 == 8, str(d09 + d05))
