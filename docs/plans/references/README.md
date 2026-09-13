@@ -44,6 +44,7 @@
 | [`m8-draft09-p1-materials-20260913.md`](m8-draft09-p1-materials-20260913.md) | `draft-0.9` P0/identity/P1 材料说明 | `MATERIALS_PREPARED / P0_PENDING_INDEPENDENT_REVIEW / NOT_AUTHORIZED`；**不构成任何授权** |
 | [`m8-draft09-p0-r02-reviewer-worksheet-20260913.md`](m8-draft09-p0-r02-reviewer-worksheet-20260913.md) | `draft-0.9` P0 `-r02` 独立复核工作单 | `REVIEW_WORKSHEET`；**不是门禁记录、不预置结论、不构成授权**；供未参与本轮起草与核验的 reviewer 使用 |
 | [`m8-draft05-unauthorized-artifacts-20260913.md`](m8-draft05-unauthorized-artifacts-20260913.md) | `draft-0.5` 未授权实验目录取证与处置 | `UNAUTHORIZED_ARTIFACTS_FOUND / CLEANUP_COMPLETE`；E 盘 7 个空目录（0 文件）与 `NEVER_EXECUTED` 冲突，已授权删除并复验无残留 |
+| [`m8-draft09-p2-sguard-blocker-20260913.md`](m8-draft09-p2-sguard-blocker-20260913.md) | `draft-0.9` P2 阻断事实（本机 `sguard`） | `P2_BLOCKED_ON_THIS_MACHINE`；实测 D 盘目录普遍暴露 `:sguard:$DATA`，本机无可通过 P2 的卷；**不构成授权** |
 | [`external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json`](external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json) | `draft-0.9` P0 门禁记录 `-r02`（机器可读） | **`P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`**；由未参与起草与核验的独立 reviewer 接受；仅技术文字 |
 | [`external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json`](external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json) | `draft-0.9` P1 门禁记录 `-r02`（机器可读） | **`AUTHORIZED`**；前驱为 P0 `-r02`；仅授权创建 identity |
 | [`external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json`](external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json) | `draft-0.9` experiment identity（机器可读） | 已授权创建（P1 `-r02`）；不构成 binding 或执行授权 |
@@ -157,6 +158,14 @@ decision 为 `P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`，`independence={require
 满足（与 draft-0.5 先例同构）。其唯一后继
 [`p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json`](external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json)
 随之取得 `AUTHORIZED / request-p2`；identity 工件（字节仍为 `5ba25bd8…`）已获授权创建。
+但**P2（binding）未能生成**：准备 P2 材料时实测发现，本机 `D:` 卷上的目录普遍暴露 `:sguard:$DATA`
+系统保留流（以 `NtQueryInformationFile(FileStreamInformation)` 于三个不同层级目录分别检出），而按 §7 与 §2.1
+的规则，未列入 allowlist 的 named stream 一律 fail closed——**本机不存在任何可通过 P2 的卷**，与协议头部第 6—7 行
+自述的情形一致。关键约束在于 `allowed_system_streams` 属 `sa.m8.child-allowlist.v1.payload`、即 **P5** 的产物，
+P2 时该 allowlist **尚不存在**，故 P2 校验只能 fail closed；这是链的前置关系，不是可绕过的技术障碍。
+因此 **P2 未生成**，`draft-0.9` 链停在 P1 `AUTHORIZED / request-p2`，Sguard 阻断评估见
+[`m8-draft09-p2-sguard-blocker-20260913.md`](m8-draft09-p2-sguard-blocker-20260913.md)。该发现不使任何既有记录失效，
+也不授权任何后续动作；如何处置（协议修订 / 换卷或换机 / 由负责人定 P2 是否可先行冻结）应另行决定。
 **推进方式为并行落盘，非就地改写**：`-r01`、旧 P1 与 identity 三者字节均**未变动**，旧 P1 保持 `NOT_AUTHORIZED`
 并靠 `record_id` 的 `-r01`/`-r02` 后缀与新版区分。两版共存的 `record_id` 版本化做法是本次为保全历史而采用，
 协议本身未规定多版本共存方式，已记入材料说明 §7 建议后续修订澄清。该接受**仅限技术文字**：不授权 binding、
