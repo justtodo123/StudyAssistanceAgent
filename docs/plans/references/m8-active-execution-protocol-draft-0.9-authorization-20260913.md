@@ -5,7 +5,9 @@
 - 负责人：`justtodo123`（用户于当前会话明确发起本次修订动作）
 - 上游依据：`draft-0.8` 的 P0 技术审查退回所识别的机械缺陷，见修订脚本
   [`apply_draft09_revision.py`](../../../../../../D:/面试实习/apply_draft09_revision.py) 头注释与本记录 §1 清单
-- 修订后状态：授权时 **`DRAFTED / PENDING_P0_REVIEW`**；截至本记录形成时，独立 P0 技术审查尚未完成
+- 修订后状态：授权时 **`DRAFTED / PENDING_P0_REVIEW`**；2026-09-13 经独立进程机械核验后为
+  **`PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`**（`AI_ASSISTED_MECHANICAL_REVIEW`，非人类独立审查），
+  审查记录见 [`m8-active-execution-protocol-draft-0.9-review-20260913.md`](m8-active-execution-protocol-draft-0.9-review-20260913.md)
 
 ## 0. 治理事实声明（必读）
 
@@ -50,6 +52,12 @@
 `draft-0.9` 进入 `DRAFTED / PENDING_P0_REVIEW`：草案已写出，等待未参与起草的独立 reviewer 完成 P0 技术口径
 审查。审查结论只能由该独立审查产生，不能由本记录或起草方预先写入。本授权**不**预先宣告 `PASS`，也**不**保证
 审查必然通过。
+
+本记录写定后，该机械核验已于 2026-09-13 完成，结论为 `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`：
+A/B/C 三项阻断缺陷与 D 项两处清理全部机械闭合，整条链的保留不变量全部成立，72 行映射表逐字节未变。该结论由
+独立进程 `tools/m8_draft_reviewer.py` 得出，标记为 `AI_ASSISTED_MECHANICAL_REVIEW`，**不是**人类独立 reviewer
+的审查。本授权随之消费完毕：授权范围只覆盖已完成的 `draft-0.9` 文本修订，不自动产生 `draft-0.10`，也不构成
+任何执行权限。
 
 ## 3. 修订边界（冻结字节不变量）
 

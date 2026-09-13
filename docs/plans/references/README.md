@@ -38,8 +38,9 @@
 | [`m8-active-execution-protocol-draft-0.8.md`](m8-active-execution-protocol-draft-0.8.md) | `draft-0.8` 正文（180033 bytes） | **`UNBOUND / NEVER_AUTHORIZED / NEVER_EXECUTED`**；未授权先修订，不得 binding 或授权 |
 | [`m8-active-execution-protocol-draft-0.8-authorization-20260913.md`](m8-active-execution-protocol-draft-0.8-authorization-20260913.md) | `draft-0.8` 修订**事后补正**记录 | `RETROACTIVE_CORRECTION / NOT_A_PRIOR_AUTHORIZATION`；**不是**授权，不赋予正当性 |
 | [`m8-active-execution-protocol-draft-0.8-review-20260913.md`](m8-active-execution-protocol-draft-0.8-review-20260913.md) | `draft-0.8` P0 技术审查（AI 机械核验） | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED`；3 项残留阻断 + 2 项非阻断；`AI_ASSISTED_MECHANICAL_REVIEW` |
-| [`m8-active-execution-protocol-draft-0.9.md`](m8-active-execution-protocol-draft-0.9.md) | `draft-0.9` 正文（182575 bytes） | `DRAFTED / PENDING_P0_REVIEW / UNBOUND / NOT_AUTHORIZED`；不得 binding 或执行 |
-| [`m8-active-execution-protocol-draft-0.9-authorization-20260913.md`](m8-active-execution-protocol-draft-0.9-authorization-20260913.md) | `draft-0.9` 修订授权 | 已发起文本修订；不产生执行、准入或后端权限 |
+| [`m8-active-execution-protocol-draft-0.9.md`](m8-active-execution-protocol-draft-0.9.md) | `draft-0.9` 正文（182575 bytes） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED`；不得 binding 或执行 |
+| [`m8-active-execution-protocol-draft-0.9-authorization-20260913.md`](m8-active-execution-protocol-draft-0.9-authorization-20260913.md) | `draft-0.9` 修订授权 | 已发起并消费的文本修订；不产生执行、准入或后端权限 |
+| [`m8-active-execution-protocol-draft-0.9-review-20260913.md`](m8-active-execution-protocol-draft-0.9-review-20260913.md) | `draft-0.9` P0 技术审查（AI 机械核验） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；A/B/C/D 全闭合；`AI_ASSISTED_MECHANICAL_REVIEW`，非人类独立审查 |
 | [`m8-active-execution-protocol-draft-0.4-authorization-20260912.md`](m8-active-execution-protocol-draft-0.4-authorization-20260912.md) | `draft-0.4` 修订授权 | 已消费文本修订；不解除任何执行禁令 |
 | [`m8-active-execution-protocol-draft-0.4-review-20260912.md`](m8-active-execution-protocol-draft-0.4-review-20260912.md) | `draft-0.4` P0 技术审查 | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED`；3 项新增阻断缺陷 |
 | [`m8-active-execution-protocol-draft-0.4-returned.md`](m8-active-execution-protocol-draft-0.4-returned.md) | 被退回的 `draft-0.4` 原文 | 历史追溯；不得 binding 或授权 |
@@ -106,7 +107,12 @@ freeze、独立静态审计 PASS 或执行授权；V13 已由处置记录永久�
 2026-09-13 负责人另行主动发起 `draft-0.9` 定点修订，处理 `draft-0.8` 的三项推定阻断缺陷（A scope 固化、B `stream_scope`
 标量、C `stream_query_source` 来源冲突）及两项装饰/不可达清理（D），授权记录见
 [`m8-active-execution-protocol-draft-0.9-authorization-20260913.md`](m8-active-execution-protocol-draft-0.9-authorization-20260913.md)；
-该版现为 `DRAFTED / PENDING_P0_REVIEW`，尚**未**取得独立 P0 结论，不产生任何执行、准入或后端权限。
+该版于 2026-09-13 经独立进程 `tools/m8_draft_reviewer.py` 机械核验后取得
+`PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`（A/B/C 三项阻断缺陷与 D 项两处清理全部闭合，整条链的保留
+不变量成立，72 行表逐字节未变），审查记录见
+[`m8-active-execution-protocol-draft-0.9-review-20260913.md`](m8-active-execution-protocol-draft-0.9-review-20260913.md)；
+该审查标记为 `AI_ASSISTED_MECHANICAL_REVIEW`，**非人类独立 reviewer 审查**，不构成技术认可之外任何授权，
+也不自动产生 `draft-0.10`。
 
 招聘对照原文：[`docs/interview/StudyAssistanceAgent_requirement.md`](../../interview/StudyAssistanceAgent_requirement.md)。
 该原文同样不是计划依据。

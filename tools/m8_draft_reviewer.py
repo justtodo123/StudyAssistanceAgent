@@ -32,6 +32,11 @@ REF = Path(r"D:\Git Demo\StudyAssistanceAgent\docs\plans\references")
 EXPECTED_BYTES = {"0.5": 171830, "0.6": 174214, "0.7": 175826,
                   "0.8": 180033, "0.9": 182575}
 
+# The 0.9 review is a tip-of-chain review: it verifies that every repair the
+# draft claims actually holds and that the retained invariants of the whole
+# chain survive. It is deliberately NOT phrased as a residual hunt because no
+# successor draft exists to define a residual set.
+
 
 def blob(v: str) -> Path:
     if v == "0.5":
@@ -144,6 +149,15 @@ def review_07() -> tuple[list[tuple[str, bool]], list[tuple[str, bool]]]:
     return fixed, residual
 
 
+def body_only(v: str) -> str:
+    """Protocol body with the '> ' revision-changelog header lines removed.
+
+    Revision prose must never satisfy or violate a schema assertion, so every
+    field-level check below runs against this view.
+    """
+    return "\n".join(l for l in norm(read(v)).split("\n") if not l.startswith(">"))
+
+
 def review_08() -> tuple[list[tuple[str, bool]], list[tuple[str, bool]]]:
     t = read("0.8")
     fixed = [
@@ -175,6 +189,55 @@ def review_08() -> tuple[list[tuple[str, bool]], list[tuple[str, bool]]]:
     return fixed, residual
 
 
+def review_09() -> tuple[list[tuple[str, bool]], list[tuple[str, bool]]]:
+    t = body_only("0.9")
+    fixed = [
+        ("0.8 defect A repaired: STREAM_SCOPE is per-open, decided by the "
+         "object each open actually obtains",
+         has(t, "per-open") and has(t, "`STREAM_SCOPE` 是 **per-open** 的")),
+        ("0.8 defect A repaired: profile no longer carries opens_volume_root",
+         not has(t, "opens_volume_root")),
+        ("0.8 defect A repaired: walk freezes the volume-root identity up front",
+         has(t, "必须先打开并冻结起始卷根 handle")),
+        ("0.8 defect B repaired: stream_scope_per_open replaces the scalar "
+         "derived-from-profile field",
+         has(t, 'stream_scope_per_open:"required"')
+         and not has(t, 'stream_scope:oneOf[literal["derived-from-profile"]')),
+        ("0.8 defect C repaired: stream_query_source admits only "
+         "opened-file-handle",
+         bool(re.search(
+             r'stream_query_source:oneOf\[literal\["not-applicable"\],'
+             r'\{information_class:"FileStreamInformation",api:"NtQueryInformationFile",'
+             r'handle_source:"opened-file-handle"\}\]', t))),
+        ("0.8 defect D repaired: decorative allowed_system_streams_closed gone "
+         "from schema",
+         not has(t, "allowed_system_streams_closed")),
+        ("0.8 defect D repaired: unreachable stream_reverify enum gone",
+         not has(t, "stream_reverify:enum[")
+         and has(t, 'stream_reverify:"required"')),
+    ]
+    # Nothing downstream has repaired 0.9 yet, so there is no residual class to
+    # check; instead the retained invariants of the whole chain are re-verified.
+    residual = [
+        ("RETAINED: scope enum remains three-valued",
+         has(t, "`STREAM_SCOPE`：`enum[file,directory,volume-root]`")),
+        ("RETAINED: SYSTEM_RESERVED_STREAM defined exactly once",
+         t.count("`SYSTEM_RESERVED_STREAM`：闭合枚举") == 1),
+        ("RETAINED: allowlist cardinality is the derived 3..3 constant",
+         has(t, "};3..3;order=key(scope);unique=key(scope)>")),
+        ("RETAINED: observation is consumed in section 7",
+         has(t, "并按该行的 `observation` 判定")),
+        ("RETAINED: FileStreamInformation query is the stream source",
+         has(t, 'information_class:"FileStreamInformation"')),
+        ("RETAINED: interposition ADS carve-out kept",
+         has(t, "is not an alternate data stream for the")),
+        ("RETAINED: volume-root identity compared over four FILE_IDENTITY "
+         "fields via FileIdInformation",
+         has(t, "`NtQueryInformationFile(FileIdInformation)`")),
+    ]
+    return fixed, residual
+
+
 def main() -> int:
     print("=" * 76)
     print("M8 draft reviewer - mechanical P0 technical review")
@@ -187,7 +250,8 @@ def main() -> int:
     verdicts: dict[str, str] = {}
     for v, fn, prev in (("0.6", review_06, "0.5"),
                         ("0.7", review_07, "0.6"),
-                        ("0.8", review_08, "0.7")):
+                        ("0.8", review_08, "0.7"),
+                        ("0.9", review_09, "0.8")):
         fixed, residual = fn()
         raw = blob(v).read_bytes()
         rows = status_map_rows(v)
@@ -214,9 +278,14 @@ def main() -> int:
         for n, ok in fixed:
             print(("    OK   " if ok else "    FAIL ") + n)
 
-        print("  [residual defects still present]")
+        label = ("[retained invariants (must all hold)]" if v == "0.9"
+                 else "[residual defects still present]")
+        print("  " + label)
         for n, ok in residual:
-            print(("    PRESENT " if ok else "    ABSENT  ") + n)
+            if v == "0.9":
+                print(("    HOLDS   " if ok else "    BROKEN  ") + n)
+            else:
+                print(("    PRESENT " if ok else "    ABSENT  ") + n)
 
         blocking = [n for n, ok in residual if ok and "blocking" in n]
         all_fixed = all(ok for _, ok in fixed)
@@ -224,16 +293,20 @@ def main() -> int:
 
         if not ident_ok:
             verdict = "INVALID"
+        elif v == "0.9":
+            # 0.9 is the tip of the chain: it is PASS only if every claimed
+            # repair holds AND every retained invariant still holds.
+            retained_ok = all(ok for _, ok in residual)
+            verdict = ("PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY"
+                       if all_fixed and retained_ok else "NEEDS_ATTENTION")
         elif all_fixed and not blocking:
             verdict = "PASS"
-        elif all_fixed and blocking:
-            verdict = "RETURNED_FOR_REVISION"
         else:
             verdict = "RETURNED_FOR_REVISION"
         verdicts[v] = verdict
 
     print("\n" + "=" * 76)
-    for v in ("0.6", "0.7", "0.8"):
+    for v in ("0.6", "0.7", "0.8", "0.9"):
         print(f"draft-{v}: {verdicts[v]}")
     print("=" * 76)
     return 0
