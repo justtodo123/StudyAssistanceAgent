@@ -41,6 +41,15 @@
 | [`m8-active-execution-protocol-draft-0.9.md`](m8-active-execution-protocol-draft-0.9.md) | `draft-0.9` 正文（182575 bytes） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED`；不得 binding 或执行 |
 | [`m8-active-execution-protocol-draft-0.9-authorization-20260913.md`](m8-active-execution-protocol-draft-0.9-authorization-20260913.md) | `draft-0.9` 修订授权 | 已发起并消费的文本修订；不产生执行、准入或后端权限 |
 | [`m8-active-execution-protocol-draft-0.9-review-20260913.md`](m8-active-execution-protocol-draft-0.9-review-20260913.md) | `draft-0.9` P0 技术审查（AI 机械核验） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；A/B/C/D 全闭合；`AI_ASSISTED_MECHANICAL_REVIEW`，非人类独立审查 |
+| [`m8-draft09-p1-materials-20260913.md`](m8-draft09-p1-materials-20260913.md) | `draft-0.9` P0/identity/P1 材料说明 | `MATERIALS_PREPARED / P0_PENDING_INDEPENDENT_REVIEW / NOT_AUTHORIZED`；**不构成任何授权** |
+| [`m8-draft09-p0-r02-reviewer-worksheet-20260913.md`](m8-draft09-p0-r02-reviewer-worksheet-20260913.md) | `draft-0.9` P0 `-r02` 独立复核工作单 | `REVIEW_WORKSHEET`；**不是门禁记录、不预置结论、不构成授权**；供未参与本轮起草与核验的 reviewer 使用 |
+| [`m8-draft05-unauthorized-artifacts-20260913.md`](m8-draft05-unauthorized-artifacts-20260913.md) | `draft-0.5` 未授权实验目录取证与处置 | `UNAUTHORIZED_ARTIFACTS_FOUND / CLEANUP_COMPLETE`；E 盘 7 个空目录（0 文件）与 `NEVER_EXECUTED` 冲突，已授权删除并复验无残留 |
+| [`m8-draft09-p2-sguard-blocker-20260913.md`](m8-draft09-p2-sguard-blocker-20260913.md) | `draft-0.9` P2 阻断事实（工作区卷 `sguard`） | `P2_BLOCKED_ON_WORKSPACE_VOLUME`；实测 `D:` 卷目录稳定暴露 `:sguard:$DATA`，`C:` 卷目录（6 个）均通过复验；**不构成授权**；含 2026-09-13 范围更正 |
+| [`external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json`](external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json) | `draft-0.9` P0 门禁记录 `-r02`（机器可读） | **`P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`**；由未参与起草与核验的独立 reviewer 接受；仅技术文字 |
+| [`external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json`](external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json) | `draft-0.9` P1 门禁记录 `-r02`（机器可读） | **`AUTHORIZED`**；前驱为 P0 `-r02`；仅授权创建 identity |
+| [`external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json`](external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json) | `draft-0.9` experiment identity（机器可读） | 已授权创建（P1 `-r02`）；不构成 binding 或执行授权 |
+| [`external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json`](external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json) | `draft-0.9` P0 门禁记录 `-r01`（历史，字节未动） | **`P0_NOT_ACCEPTED`**；`independence.satisfied=false`，同一主体不能自证独立性 |
+| [`external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543.json`](external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543.json) | `draft-0.9` P1 门禁记录（旧，历史，字节未动） | **`NOT_AUTHORIZED`**；其前驱为 `-r01`；已被 `-r02` 取代但未删除 |
 | [`m8-active-execution-protocol-draft-0.4-authorization-20260912.md`](m8-active-execution-protocol-draft-0.4-authorization-20260912.md) | `draft-0.4` 修订授权 | 已消费文本修订；不解除任何执行禁令 |
 | [`m8-active-execution-protocol-draft-0.4-review-20260912.md`](m8-active-execution-protocol-draft-0.4-review-20260912.md) | `draft-0.4` P0 技术审查 | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED`；3 项新增阻断缺陷 |
 | [`m8-active-execution-protocol-draft-0.4-returned.md`](m8-active-execution-protocol-draft-0.4-returned.md) | 被退回的 `draft-0.4` 原文 | 历史追溯；不得 binding 或授权 |
@@ -94,6 +103,20 @@ freeze、独立静态审计 PASS 或执行授权；V13 已由处置记录永久�
 [`m8-active-execution-protocol-draft-0.5-returned.md`](m8-active-execution-protocol-draft-0.5-returned.md)。该 P0 接受
 只表示技术文字被接受：`draft-0.5` 仍为未绑定、未授权、从未执行的 protocol blob，不产生任何执行权限，也不自动
 产生 `draft-0.6`；后续修订仍须负责人另行发起。
+2026-09-13 另发现并记载一项**未授权制品事实**：在推进 `draft-0.9` P2 前期工作时，于 `E:` 卷发现
+`E:\sa-m8-active-draft05-parent` 与 `E:\sa-m8-active-draft05-evidence\`（含 package / normal-receipt /
+nonpublication-receipt / abort-receipt / failure-receipt 五个子目录），共 **7 个目录、0 个文件**，创建时间为
+2026-09-13 13:20:13。既有记录将 `draft-0.5` 记为 `UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED`，与磁盘上存在实体
+目录结构**不一致**；仓库内**无任何文件引用**这两个路径，也不存在创建脚本或对应授权记录，据现有证据判断为
+**未经负责人事先发起而创建**。全部目录为空，故未产生任何证据工件，也不构成执行；它只是目录骨架被创建这一事实。
+取证与处置记录见
+[`m8-draft05-unauthorized-artifacts-20260913.md`](m8-draft05-unauthorized-artifacts-20260913.md)（`file_id` 已由
+`tools/m8_parent_binding_validator.py` 以 read-only 方式核实，与未跟踪文件 `.p2-parent-identities-run.json` 逐字段相等）。
+处置原则为**先记录、后清理**：该组目录曾构成 `residual-zero` 意义上需清除的残留。**清理已于 2026-09-13 完成**：
+经负责人明确授权，7 个空目录按“先子后父”顺序以 `rmdir` 删除（不使用强制参数），删除后复验 `E:` 卷仅剩
+`System Volume Information`、无 `sa-m8-active-draft05*` 残留，且删除前文件数为 `0`，无数据丢失。本次发现**不使**任何
+既有记录失效，也**不改变** `draft-0.5` 的 `UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED` 地位；清理也不抹除
+“曾未经授权创建目录”这一已发生事实。
 2026-09-13 补充记载：`draft-0.6`、`draft-0.7`、`draft-0.8` 三版正文（174214 / 175826 / 180033 bytes）在形成时
 **均无事先授权，也无授权、审查或 returned 字节记录落盘**，属未经负责人事先发起的自行续版，其缺陷清单只能从
 修订脚本头注释推定。三版均经事后补正定为 **`UNBOUND / NEVER_AUTHORIZED / NEVER_EXECUTED`**，正文只作历史追溯，
@@ -113,6 +136,45 @@ freeze、独立静态审计 PASS 或执行授权；V13 已由处置记录永久�
 [`m8-active-execution-protocol-draft-0.9-review-20260913.md`](m8-active-execution-protocol-draft-0.9-review-20260913.md)；
 该审查标记为 `AI_ASSISTED_MECHANICAL_REVIEW`，**非人类独立 reviewer 审查**，不构成技术认可之外任何授权，
 也不自动产生 `draft-0.10`。
+2026-09-13 另为 `draft-0.9` 准备 P0/identity/P1 机器可读材料，说明见
+[`m8-draft09-p1-materials-20260913.md`](m8-draft09-p1-materials-20260913.md)。该材料集**不包含任何已成立的门禁**：
+draft-0.9 的 P0 技术文字机械核验虽可复现，但核验者与起草者为同一主体，**实质性独立性未成立**，故 P0 记录以
+`P0_NOT_ACCEPTED` / `independence.satisfied=false` / `allowed_next_action=stop` 落盘，其唯一后继 P1 随之落为
+`NOT_AUTHORIZED` / `stop`；identity 工件已备好但未激活。该材料集曾在首次落盘时误以
+`P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY` / `satisfied=true` / P1 `AUTHORIZED` 形式记为已成立，经独立性审阅
+认定属**不可验证的自我证明**，已按“待复核”语义整改（experiment identity 字节未变，仍为 `5ba25bd8…`）。P0 门禁
+须由**未参与本轮起草与审查的审查者**另行建立（可另发 `-r02`），在此之前 P1 不得重新签发。该材料不产生 identity
+激活、binding、建根、依赖获取、source 生成、preflight、执行、证据发布、M8 准入或后端选择中的任何一项。
+为降低上述独立复核的成本，已形成一份 `-r02` 复核工作单
+[`m8-draft09-p0-r02-reviewer-worksheet-20260913.md`](m8-draft09-p0-r02-reviewer-worksheet-20260913.md)：它列出待审对象
+的精确字节与双口径摘要（登记值 `162c9047…` 对应**工作区 CRLF**；仓库 LF 归一化为 `6ccebc47…`，差 1366 字节
+恰为 1366 个 CRLF）、逐项可复跑的核验清单及其已核实行号，并显式声明本工作单由起草方编写、**不是独立证据**，
+不预置结论。复核者对 draft-0.9 技术文字是否闭合、行尾登记惯例是否可接受、以及是否接受该 P0 的判断，
+只能由其签署的 `-r02` 记录承载。
+2026-09-13 后续：由**未参与 draft-0.9 起草、未编写其修订脚本、未产出 `-r01` 机械核验**的独立 reviewer
+（`justtodo123`，仓库负责人）复核后签发
+[`p0-m8-active-execution-draft09-20260913-r02.json`](external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json)，
+decision 为 `P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`，`independence={required:true,satisfied:true}` 由**主体分离**
+满足（与 draft-0.5 先例同构）。其唯一后继
+[`p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json`](external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json)
+随之取得 `AUTHORIZED / request-p2`；identity 工件（字节仍为 `5ba25bd8…`）已获授权创建。
+但**P2（binding）未能生成**：准备 P2 材料时实测发现，工作区所在的 `D:` 卷上的目录暴露 `:sguard:$DATA`
+系统保留流（以 `NtQueryInformationFile(FileStreamInformation)` 于三个不同层级目录分别检出，连续 8 次复跑均为 FAIL），
+而按 §7 与 §2.1 的规则，未列入 allowlist 的 named stream 一律 fail closed，因此 **`D:` 卷无法通过 P2**。
+**该表述曾于初次落盘时被扩大为"本机不存在任何可通过 P2 的卷"，已同日更正**：对 `C:` 卷 6 个目录复跑
+（`C:/Windows`、`C:/Users`、`C:/Program Files`、`C:/ProgramData`、`C:/Windows/System32`、`C:/Users/Public`）
+全部 PASS，`C:/Windows` 连续 8 次稳定通过；`D:` 卷同样 8 次全部 FAIL。三卷均为 NTFS，故差异是
+**卷级挂载/安全组件监视差异**（本机装有 `Kingsoft` 与 `Tencent` 组件），不是文件系统或 OS 全局特性。
+但**范围更正不等于解除阻断**：关键约束在于 `allowed_system_streams` 属 `sa.m8.child-allowlist.v1.payload`、即 **P5** 的产物，
+P2 时该 allowlist **尚不存在**，故 P2 校验只能 fail closed；这是链的前置关系，不是可绕过的技术障碍。
+即使改用 `C:` 卷，该前置关系依然存在。因此 **P2 未生成**，`draft-0.9` 链停在 P1 `AUTHORIZED / request-p2`，Sguard 阻断评估见
+[`m8-draft09-p2-sguard-blocker-20260913.md`](m8-draft09-p2-sguard-blocker-20260913.md)。该发现不使任何既有记录失效，
+也不授权任何后续动作；如何处置（协议修订 / 换卷或换机 / 由负责人定 P2 是否可先行冻结）应另行决定。
+**推进方式为并行落盘，非就地改写**：`-r01`、旧 P1 与 identity 三者字节均**未变动**，旧 P1 保持 `NOT_AUTHORIZED`
+并靠 `record_id` 的 `-r01`/`-r02` 后缀与新版区分。两版共存的 `record_id` 版本化做法是本次为保全历史而采用，
+协议本身未规定多版本共存方式，已记入材料说明 §7 建议后续修订澄清。该接受**仅限技术文字**：不授权 binding、
+建根、依赖获取、source 生成、preflight、执行、证据发布、M8 准入或后端选择；链上下一道门为 P2（binding），
+M8 仍为 `BLOCKED / NOT_STARTED`。
 
 招聘对照原文：[`docs/interview/StudyAssistanceAgent_requirement.md`](../../interview/StudyAssistanceAgent_requirement.md)。
 该原文同样不是计划依据。
