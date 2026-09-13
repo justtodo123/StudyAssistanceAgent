@@ -45,6 +45,7 @@
 | [`m8-draft09-p0-r02-reviewer-worksheet-20260913.md`](m8-draft09-p0-r02-reviewer-worksheet-20260913.md) | `draft-0.9` P0 `-r02` 独立复核工作单 | `REVIEW_WORKSHEET`；**不是门禁记录、不预置结论、不构成授权**；供未参与本轮起草与核验的 reviewer 使用 |
 | [`m8-draft05-unauthorized-artifacts-20260913.md`](m8-draft05-unauthorized-artifacts-20260913.md) | `draft-0.5` 未授权实验目录取证与处置 | `UNAUTHORIZED_ARTIFACTS_FOUND / CLEANUP_COMPLETE`；E 盘 7 个空目录（0 文件）与 `NEVER_EXECUTED` 冲突，已授权删除并复验无残留 |
 | [`m8-draft09-p2-sguard-blocker-20260913.md`](m8-draft09-p2-sguard-blocker-20260913.md) | `draft-0.9` P2 阻断事实（工作区卷 `sguard`） | `P2_BLOCKED_ON_WORKSPACE_VOLUME`；实测 `D:` 卷目录稳定暴露 `:sguard:$DATA`，`C:` 卷目录（6 个）均通过复验；**不构成授权**；含 2026-09-13 范围更正 |
+| [`m8-protocol-revision-proposal-20260913.md`](m8-protocol-revision-proposal-20260913.md) | 协议修订提案（四项遗留缺陷 A/B/C/D） | `PROPOSAL_ONLY / NOT_AN_AUTHORIZATION`；**非授权**，未经独立审查与批准前不得据以改动协议 |
 | [`external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json`](external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json) | `draft-0.9` P0 门禁记录 `-r02`（机器可读） | **`P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`**；由未参与起草与核验的独立 reviewer 接受；仅技术文字 |
 | [`external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json`](external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json) | `draft-0.9` P1 门禁记录 `-r02`（机器可读） | **`AUTHORIZED`**；前驱为 P0 `-r02`；仅授权创建 identity |
 | [`external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json`](external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json) | `draft-0.9` experiment identity（机器可读） | 已授权创建（P1 `-r02`）；不构成 binding 或执行授权 |
@@ -175,6 +176,25 @@ P2 时该 allowlist **尚不存在**，故 P2 校验只能 fail closed；这是�
 协议本身未规定多版本共存方式，已记入材料说明 §7 建议后续修订澄清。该接受**仅限技术文字**：不授权 binding、
 建根、依赖获取、source 生成、preflight、执行、证据发布、M8 准入或后端选择；链上下一道门为 P2（binding），
 M8 仍为 `BLOCKED / NOT_STARTED`。
+
+### 协议修订提案（四项遗留缺陷）
+
+[`m8-protocol-revision-proposal-20260913.md`](m8-protocol-revision-proposal-20260913.md) 将四处遗留缺陷合并为一份待裁定的
+提案，状态为 `PROPOSAL_ONLY / NOT_AN_AUTHORIZATION`：
+
+- **A（阻断级）**：P2 在任何卷上都必然 fail closed——§7 要求查 `allowed_system_streams`，而该表属 P5 产物，
+  P2 时不存在。这是阶段顺序矛盾，换卷无法解除。
+- **B**：`forbidden_history_ids` 标注为 `ID`（不允许点号），但 13 个取值均含点号；修法不唯一（改标注或改取值），
+  需按协议本意裁定。
+- **C**：`order=value` 规定按 UTF-8 bytes 排序，与实际记录采用的数字序不一致；两侧必有一侧与文本不符。
+- **D（结构级，起草提案时新发现）**：**协议本体未受行尾保护**（`text: unspecified`），
+  工作区摘要 `162c9047…`（CRLF，182575 bytes）与仓库摘要 `6ccebc47…`（LF，181209 bytes）不同，
+  而全部 5 条 draft-0.9 记录绑定的都是**前者**。因此在 LF 检出环境（Linux、或 `autocrlf=false`）下，
+  协议摘要会变为 `6ccebc47…`，**5 条记录会全部失效**。这与已修复的门禁 JSON 缺陷同源，
+  但影响面更大——它是整条链的摘要根。
+
+提案建议四项合并为一次修订（每改一次协议都要重走一遍 P0/P1；分批做会重复付费），
+并建议 **D 优先定案**，因为它决定协议在哪个行尾口径上被固定。
 
 ### 合并时暴露并修复的行尾缺陷
 
