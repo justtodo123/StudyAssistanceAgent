@@ -176,5 +176,25 @@ P2 时该 allowlist **尚不存在**，故 P2 校验只能 fail closed；这是�
 建根、依赖获取、source 生成、preflight、执行、证据发布、M8 准入或后端选择；链上下一道门为 P2（binding），
 M8 仍为 `BLOCKED / NOT_STARTED`。
 
+### 合并时暴露并修复的行尾缺陷
+
+将本分支合回 `master` 后，两套校验器立即报出 6 项失败，全部指向 "file is sa-json-c14n-v1 canonical"
+与摘要不匹配。根因**不是合并改坏了记录**，而是**从来没有任何规则锁定门禁记录的行尾**：
+
+- `git cat-file -p HEAD:<path>` 显示三个受影响的记录在**仓库内仍为纯 LF**（3719 / 3016 / 1001 字节），
+  `git status` 干净——提交内容始终正确；
+- 但 `core.autocrlf=true` 使 `checkout` 把它们写成 CRLF（各多 1 字节）；
+- `.gitattributes` 当时只为 `docs/reference/document-mapping.json` 锁定了 LF，**未覆盖门禁记录与 identity 工件**；
+- 因此同一份记录在不同平台/不同检出状态下会得到**不同字节**，而它们的摘要被写死在兄弟记录里。
+  `draft-0.5` 的记录此次未报错，只是因为那次 checkout **碰巧**没有重写它们。
+
+修复：把既有的 LF 锁定规则扩展到 `docs/plans/references/external-gates/**/*.json` 与
+`docs/plans/references/external-artifacts/**/*.json`，与 `sa-json-c14n-v1` 对 canonical JSON 的要求一致。
+验证方式是**在一个全新克隆中重建并复跑**，而非仅在本机确认：全新克隆中 8 个门禁记录的磁盘字节
+逐一等于仓库字节，165 项检查（88 + 77）全数通过。
+
+该缺陷的意义在于：门禁记录的"字节"是其证据力的载体，任何使其随环境漂移的因素都与治理前提相悖。
+修复只改 `.gitattributes`，**未改动任何记录内容、摘要或门禁状态**。
+
 招聘对照原文：[`docs/interview/StudyAssistanceAgent_requirement.md`](../../interview/StudyAssistanceAgent_requirement.md)。
 该原文同样不是计划依据。
