@@ -9,3 +9,11 @@ docs/reference/document-mapping.json text eol=lf
 # Windows only. Pinning LF keeps on-disk bytes equal to committed bytes everywhere.
 docs/plans/references/external-gates/**/*.json text eol=lf
 docs/plans/references/external-artifacts/**/*.json text eol=lf
+# The active protocol blob is the digest root of the whole gate chain: every
+# draft-0.9 record pins its SHA-256, so a CRLF checkout would make those records
+# stop verifying on any machine whose line endings differ. Pinned per file
+# rather than by wildcard, deliberately: draft-0.5 is frozen history whose
+# records pin the pre-pin bytes, and rewriting it is out of scope (decision D1a
+# of m8-active-execution-protocol-draft-0.10-authorization-20260913.md).
+docs/plans/references/m8-active-execution-protocol-draft-0.9.md text eol=lf
+docs/plans/references/m8-active-execution-protocol-draft-0.10.md text eol=lf

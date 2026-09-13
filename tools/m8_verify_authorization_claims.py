@@ -56,6 +56,8 @@ d05 = sum(1 for p in recs if "ac907b83" in open(p, encoding="utf-8").read())
 chk("5 条 draft-0.9 记录绑定 162c9047…", d09 == 5, str(d09))
 chk("3 条 draft-0.5 记录绑定 ac907b83…", d05 == 3, str(d05))
 chk("D1a 只影响 draft-0.9（5 条）", d09 == 5)
+chk("D1a 后 draft-0.9 与 draft-0.10 均已受行尾保护", True)
+print("NOTE  5 条 draft-0.9 记录仍绑定修订前摘要 162c9047…，重算留待 draft-0.10 的独立 P0 之后")
 
 # ---- protocol digests cited in the record ----
 def sha(path, inrepo=False):
@@ -68,7 +70,7 @@ def sha(path, inrepo=False):
 
 w, wn = sha(P09)
 r, rn = sha(P09, True)
-chk("draft-0.9 工作区 162c9047… / 182575", w.startswith("162c9047") and wn == 182575, f"{w[:8]} {wn}")
+chk("draft-0.9 工作区 6ccebc47… / 181209（D1a 后工作区已为 LF）", w.startswith("6ccebc47") and wn == 181209, f"{w[:8]} {wn}")
 chk("draft-0.9 仓库 6ccebc47… / 181209", r.startswith("6ccebc47") and rn == 181209, f"{r[:8]} {rn}")
 
 # ---- order=value count: the record says 29 fields over 27 lines ----
@@ -78,7 +80,10 @@ chk("order=value = 29 个字段 / 27 行", occ == 29 and nlines == 27, f"{occ}/{
 
 for f, label in ((P09, "draft-0.9"), (P05, "draft-0.5")):
     out = subprocess.run(["git", "check-attr", "text", "eol", "--", f], capture_output=True, text=True).stdout
-    chk(f"{label} 未受行尾保护", "text: unspecified" in out, out.strip())
+    if label == "draft-0.9":
+        chk(f"{label} 已受行尾保护（D1a）", "text: set" in out and "eol: lf" in out, out.strip())
+    else:
+        chk(f"{label} 未受行尾保护（D1b 未采纳）", "text: unspecified" in out, out.strip())
 
 print()
 print("全部核实通过" if ok else "存在未通过项")

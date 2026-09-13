@@ -25,11 +25,15 @@ P05 = "docs/plans/references/m8-active-execution-protocol-draft.md"
 
 w, wn = sha(P09)
 r, rn = sha(P09, True)
-chk("draft-0.9 工作区摘要 = 162c9047…", w.startswith("162c9047"), w[:16])
+# The proposal was written before D1a was applied, when the working copy was
+# CRLF (162c9047..., 182575 bytes) and the repository LF (6ccebc47..., 181209
+# bytes). D1a pinned the protocol to LF, so those two now agree. What the
+# proposal asserted about draft-0.5 must still hold, since D1b was declined.
+chk("draft-0.9 工作区摘要 = 6ccebc47…（D1a 后工作区已为 LF）", w.startswith("6ccebc47"), w[:16])
 chk("draft-0.9 仓库摘要 = 6ccebc47…", r.startswith("6ccebc47"), r[:16])
-chk("draft-0.9 工作区 182575 bytes", wn == 182575, str(wn))
+chk("draft-0.9 工作区 181209 bytes", wn == 181209, str(wn))
 chk("draft-0.9 仓库 181209 bytes", rn == 181209, str(rn))
-chk("draft-0.9 差值 = 1366 = CR 数", wn - rn == 1366, str(wn - rn))
+chk("draft-0.9 工作区字节 == 仓库字节（D1a 的直接目的）", wn == rn, f"{wn} vs {rn}")
 
 w5, wn5 = sha(P05)
 r5, rn5 = sha(P05, True)
@@ -57,9 +61,15 @@ chk("order=value 出现 29 次（= 29 个字段标注）", occurrences == 29, st
 chk("order=value 分布于 27 行", lines == 27, str(lines))
 
 # 协议文本的行尾保护状态
-for f, label in ((P09, "draft-0.9"), (P05, "draft-0.5")):
+P10 = "docs/plans/references/m8-active-execution-protocol-draft-0.10.md"
+for f, label in ((P09, "draft-0.9"), (P10, "draft-0.10"), (P05, "draft-0.5")):
     out = subprocess.run(["git", "check-attr", "text", "eol", "--", f], capture_output=True, text=True).stdout
-    chk(f"{label} 协议未受行尾保护（text: unspecified）", "text: unspecified" in out, out.strip())
+    if label == "draft-0.5":
+        # D1b was declined: draft-0.5 is frozen history and stays as it is.
+        chk(f"{label} 协议仍未受保护（D1b 已否决，属预期）", "text: unspecified" in out, out.strip())
+    else:
+        # D1a pinned these; they are the live chain root.
+        chk(f"{label} 协议已由 D1a 锁定为 LF", "eol: lf" in out, out.strip())
 
 print()
 print("全部核实通过" if ok else "存在未通过项")

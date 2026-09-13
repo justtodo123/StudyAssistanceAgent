@@ -28,6 +28,10 @@ REPO = Path(r"D:\Git Demo\StudyAssistanceAgent")
 REF = REPO / "docs" / "plans" / "references"
 
 PROTOCOL_RELPATH = "docs/plans/references/m8-active-execution-protocol-draft-0.9.md"
+# The digest these records were formed against, before D1a pinned the
+# protocol blobs to LF. Records may legitimately still bind it until they
+# are recomputed after draft-0.10 obtains an independent P0.
+PRE_PIN_DIGEST = "162c9047ddeaceda59d7da79f8dfbf45234a89e2b00fd271e72473bbc6cca5b4"
 PROTOCOL = REPO / PROTOCOL_RELPATH
 
 P0 = REF / "external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json"
@@ -110,12 +114,26 @@ for label, obj, schema in (
        obj["canonicalization_id"] == "sa-json-c14n-v1")
 
 # ------------------------------------------------------- protocol binding ---
+# Counts records still pinning the pre-pin digest, reported at the end so the
+# outstanding recomputation stays visible instead of blending into a pass.
+pre_pin_count = [0]
 for label, obj in (("P0", p0), ("P1", p1), ("identity", ident)):
     ck(f"{label}: reviewed_protocol_path is draft-0.9",
        obj["payload"]["reviewed_protocol_path"] == PROTOCOL_RELPATH)
-    ck(f"{label}: reviewed_protocol_sha256 == actual draft-0.9 digest",
-       obj["payload"]["reviewed_protocol_sha256"] == protocol_sha,
-       obj["payload"]["reviewed_protocol_sha256"])
+    # These records pin the digest the protocol had when they were formed. D1a
+    # of the draft-0.10 authorization pinned the protocol blobs to LF, moving
+    # the working-copy digest from the pre-pin 162c9047... to the LF
+    # 6ccebc47..., and the owner directed that recomputing these five records
+    # wait until draft-0.10 has an independent P0, so the recomputation happens
+    # once against the successor instead of twice. Until then the binding is
+    # expected to differ from the current digest; what must hold is that it
+    # still equals the pre-pin value, since drifting to any third value would
+    # mean the bytes moved for a reason nobody recorded.
+    bound = obj["payload"]["reviewed_protocol_sha256"]
+    ck(f"{label}: protocol binding is current or the documented pre-pin value",
+       bound in (protocol_sha, PRE_PIN_DIGEST), bound)
+    if bound == PRE_PIN_DIGEST and bound != protocol_sha:
+        pre_pin_count[0] += 1
 
 # ------------------------------------------------------------------- P0 ------
 p0p = p0["payload"]
@@ -281,3 +299,11 @@ if bad:
         print("  -", n)
     sys.exit(1)
 print("ALL CHECKS PASS")
+if pre_pin_count[0]:
+    print()
+    print(f"NOTE: {pre_pin_count[0]} record(s) still bind the pre-pin protocol digest")
+    print("      162c9047... (CRLF-era), not the current LF digest.")
+    print("      This is the state authorized by D1a of")
+    print("      m8-active-execution-protocol-draft-0.10-authorization-20260913.md:")
+    print("      recomputation waits until draft-0.10 has an independent P0, so it")
+    print("      is done once against the successor rather than twice.")
