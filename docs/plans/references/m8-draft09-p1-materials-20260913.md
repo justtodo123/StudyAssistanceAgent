@@ -1,34 +1,54 @@
 # M8 `draft-0.9` P1 阶段材料说明
 
-> **状态：`MATERIALS_PREPARED / P0_PENDING_INDEPENDENT_REVIEW / NOT_AUTHORIZED / NOT_SUBMITTED_FOR_ADMISSION`**
+> **状态：`P0_ACCEPTED_via_r02 / IDENTITY_AUTHORIZED / NOT_SUBMITTED_FOR_ADMISSION`**
 >
 > 本文件说明为 M8 active execution protocol `draft-0.9` 准备的 P0/P1 阶段材料。
 >
-> **重要：本材料集不包含任何已成立的门禁。** draft-0.9 的 P0 技术文字机械核验虽可复现，但该核验由参与起草的
-> 同一主体完成，**实质性独立性未成立**，因此 P0 记录以 `P0_NOT_ACCEPTED` / `independence.satisfied=false` 落盘，
-> 并连带使 P1 为 `NOT_AUTHORIZED`。整条链当前**不产生任何执行授权**，也不授权 identity 激活、binding、建根、
-> 依赖获取、source 生成、preflight、执行、证据发布、M8 准入或后端选择。
+> **当前：draft-0.9 的 P0 已由未参与起草与机械核验的独立 reviewer（`justtodo123`，仓库负责人）复核并接受，**
+> 记录为 `p0-m8-active-execution-draft09-20260913-r02.json`；其唯一后继 P1（`-r02`）随之取得
+> `AUTHORIZED / request-p2`。P1 只授权创建 experiment identity，**不**授权 binding、建根、依赖获取、source 生成、
+> preflight、执行、证据发布、M8 准入或后端选择；P2 起仍需另行形成记录。
 >
-> 2026-09-13 修订：本材料集原以 `P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY` / `independence.satisfied=true` /
-> P1 `AUTHORIZED` 形式落盘。经独立性审阅认定该填写为**不可验证的自我证明**，已按“待复核”语义整改：
-> P0 改为 `P0_NOT_ACCEPTED`，P1 改为 `NOT_AUTHORIZED`，两者 `allowed_next_action` 均为 `stop`。整改未变动
-> experiment identity（其字节保持 `5ba25bd8…`），仅 P0/P1 两条门禁记录及其绑定摘要相应改变。
+> **重要：接受是人的判断，不是工具的结论。** `-r01` 的机械核验可复现，但它由起草方产出，不满足独立性，因此落盘
+> 为 `P0_NOT_ACCEPTED`；`-r02` 的接受依据是**主体分离**（owner 未起草 draft-0.9、未编写其修订脚本、未产出 `-r01`
+> 的机械核验），与 draft-0.5 先例同构。
+>
+> ### 修订历史（两条记录均保留，均未删改）
+>
+> | 阶段 | 事件 |
+> | --- | --- |
+> | ① | 首次落盘误以 `P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY` / `satisfied=true` / P1 `AUTHORIZED` 记为已成立 |
+> | ② | 经独立性审阅认定属**不可验证的自我证明**，整改为 P0 `-r01` `P0_NOT_ACCEPTED`、P1 `NOT_AUTHORIZED` |
+> | ③ | 由未参与本轮的独立 reviewer 复核后签发 P0 `-r02` 接受，P1 `-r02` 随之 `AUTHORIZED` |
+>
+> ②③ 均未使用就地改写：`-r01`、旧 P1、identity 三者字节均**未变动**，而是以新 `record_id` 并行落盘。
 
 ## 1. 材料清单
 
+### 1.1 生效记录（当前链）
+
 | 材料 | 路径 | SHA-256 |
 | --- | --- | --- |
-| P0 门禁记录（**未成立，待复核**） | `docs/plans/references/external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json` | `772a76ad6fc861dcd589a2fd4dbaed0be9ed604fc5069d0cb829da355ab16c6c` |
-| experiment identity（已备好，**未激活**） | `docs/plans/references/external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json` | `5ba25bd8a7fb50d635a4b0b396f00876464028d189b61860f1961cb0913ebe1f` |
-| P1 门禁记录（**NOT_AUTHORIZED**） | `docs/plans/references/external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543.json` | `a17742af1246b6c46f001cc4a0ff2c3792dd86adaa47d770c235501f53cd0da8` |
+| **P0 门禁记录 `-r02`（已接受）** | `docs/plans/references/external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json` | `e96b392df0a64379428cc25a07c8944a85736ed05efc55d16d6ae3ec2b49ae10` |
+| experiment identity（已授权创建） | `docs/plans/references/external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json` | `5ba25bd8a7fb50d635a4b0b396f00876464028d189b61860f1961cb0913ebe1f` |
+| **P1 门禁记录 `-r02`（AUTHORIZED）** | `docs/plans/references/external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json` | `8e01a8e95f0abb48c656d10dcb80d5ba4b54b9678a65b06467fcb52181d0f40b` |
+
+### 1.2 保留为历史的记录（字节未变动）
+
+| 材料 | 路径 | SHA-256 | 地位 |
+| --- | --- | --- | --- |
+| P0 `-r01` | `docs/plans/references/external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json` | `772a76ad6fc861dcd589a2fd4dbaed0be9ed604fc5069d0cb829da355ab16c6c` | `P0_NOT_ACCEPTED`；记录同一主体不能自证独立性 |
+| P1（旧） | `docs/plans/references/external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543.json` | `a17742af1246b6c46f001cc4a0ff2c3792dd86adaa47d770c235501f53cd0da8` | `NOT_AUTHORIZED`；其前驱为 `-r01` |
 
 被绑定的协议：`docs/plans/references/m8-active-execution-protocol-draft-0.9.md`
 （182575 bytes，SHA-256 `162c9047ddeaceda59d7da79f8dfbf45234a89e2b00fd271e72473bbc6cca5b4`）
 
-生成脚本：`tools/m8_build_p1_materials.py`；独立校验脚本：`tools/m8_validate_p1_materials.py`（88 项检查全部通过）。
+生成脚本：`tools/m8_build_p1_materials.py`（`-r01` 与 identity）、`tools/m8_build_p0_r02.py`（`-r02` 与 P1 `-r02`）；
+独立校验脚本：`tools/m8_validate_p1_materials.py`（88 项）、`tools/m8_validate_p0_r02.py`（77 项），全部通过。
 
-生成脚本是**幂等**的：重复运行产出逐字节相同的三份文件，不会重新铸造 identity、不会重打时间戳、不会产生孤儿工件；
-只有显式传入 `--restamp` / `--new-identity` 才会另起一套材料集。
+两个生成脚本都是**幂等**的：重复运行产出逐字节相同的文件，不会重新铸造 identity、不会重打时间戳、不会产生孤儿
+工件，也不会改写历史记录；`m8_build_p0_r02.py` 还会在 `-r01` 不再是 `P0_NOT_ACCEPTED` 或旧 P1 不再是
+`NOT_AUTHORIZED` 时**拒绝执行**，以防在已推进的链上重复签发。
 
 ## 2. 依赖链与为何不能复用既有记录
 
@@ -39,34 +59,45 @@
 因此本轮材料是**基于 draft-0.9 摘要重新形成**的全新记录，不复用、不修订既有记录：
 
 ```
-P0 (draft-0.9, 无前驱, independence required=true/satisfied=FALSE → P0_NOT_ACCEPTED, next=stop)
- └─x identity (sa-m8-active-draft09-21aaa3818bd761b63543)    ← 边未满足，identity 未激活
-      └─x P1 (前驱 = P0, decision=NOT_AUTHORIZED, next=stop)
+P0 -r02 (draft-0.9, 无前驱, independence required=true/satisfied=TRUE
+          → P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY, next=request-p1)   [justtodo123/independent-reviewer]
+ └─> identity (sa-m8-active-draft09-21aaa3818bd761b63543)    ← 边已满足，identity 已授权创建
+      └─> P1 -r02 (前驱 = P0 -r02, decision=AUTHORIZED, next=request-p2)
 ```
 
-`└─x` 表示该门禁边**未被满足**：P0 未成立，因此不能向 P1 授予 `request-p1`；P1 随之只能为 `NOT_AUTHORIZED`。
-identity 工件已备好但其存在本身不构成授权，也不可被解释为已激活的实验身份。
+并行的历史记录（均保留、均未改写）：
+
+```
+P0 -r01 (P0_NOT_ACCEPTED, satisfied=false, next=stop)   ← 同一主体不能自证独立性
+ └─x P1（旧，前驱 = P0 -r01, NOT_AUTHORIZED, next=stop）
+```
+
+`└─x` 表示该门禁边**未被满足**。两条链并行存在于仓库中，靠 `record_id` 的 `-r01` / `-r02` 后缀区分；下游读者
+只能用 `-r02` 链。`-r02` 的接受仅覆盖**技术文字**：identity 已获授权创建，但 P1 不授权 binding、建根、依赖获取、
+source 生成、preflight、执行、证据发布、M8 准入或后端选择——P2 起仍须另行形成记录。
 
 ## 3. 关键字段取值依据
 
 | 字段 | 取值 | 依据 |
 | --- | --- | --- |
-| P0 `independence.required` | `true` | 协议：P0/P3/P5/P7 要求 true/true |
-| P0 `independence.satisfied` | **`false`** | **实质独立性未成立**：同一主体既起草又审查，协议未提供同一主体满足自身独立性要求的机制 |
-| P0 `decision` | **`P0_NOT_ACCEPTED`** | 由 `satisfied=false` 直接推出：P0 门禁未解除 |
-| P0 `allowed_next_action` | **`stop`** | 门禁未解除，不得自动推进到 P1 |
-| P0 `operations` | `[review]` | 协议：P0/P3/P5 = `[review]` |
-| P0 `write_targets` / `workloads` | `[]` | 协议：P0–P3 二者皆空 |
-| P1 `independence` | `required=false, satisfied=false` | 协议：P1 为 owner-only，无需独立审查（非本次拦截原因） |
-| P1 `decision` | **`NOT_AUTHORIZED`** | 其唯一前驱 P0 为 `P0_NOT_ACCEPTED`，门禁边未满足 |
-| P1 `allowed_next_action` | **`stop`** | 同上 |
-| P1 `operations` | `[identity]` | 协议：P1 = `[identity]` |
-| P1 `write_targets` | `[]` | 协议：P1 的 admin artifact 由 REF 表示，非 TARGET |
+| P0 `-r02` `independence.required` | `true` | 协议：P0/P3/P5/P7 要求 true/true |
+| P0 `-r02` `independence.satisfied` | **`true`** | **由主体分离满足**：`justtodo123`（owner）未起草 draft-0.9、未编写修订脚本、未产出 `-r01` 机械核验 |
+| P0 `-r02` `decision` | **`P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`** | 接受技术文字 |
+| P0 `-r02` `allowed_next_action` | **`request-p1`** | 门禁已解除 |
+| P0 `-r02` `operations` | `[review]` | 协议：P0/P3/P5 = `[review]` |
+| P0 `-r02` `write_targets` / `workloads` | `[]` | 协议：P0–P3 二者皆空 |
+| P1 `-r02` `independence` | `required=false, satisfied=false` | 协议：P1 为 owner-only，无需独立审查 |
+| P1 `-r02` `decision` | **`AUTHORIZED`** | 其唯一前驱 P0 `-r02` 已被接受，门禁边满足 |
+| P1 `-r02` `allowed_next_action` | **`request-p2`** | 同上 |
+| P1 `-r02` `operations` | `[identity]` | 协议：P1 = `[identity]` |
+| P1 `-r02` `write_targets` | `[]` | 协议：P1 的 admin artifact 由 REF 表示，非 TARGET |
 | `forbidden_history_ids` | 13 项 | 协议：`A<ID;13..13>` |
 
-P0 的 `actor.name` 记为 `m8-mechanical-self-review-draft09-01`，**刻意不沿用**人类独立 reviewer 身份
-`m8-independent-reviewer-01`。`role` 仍为 `independent-reviewer`，因为协议的角色枚举中没有“自查”成员，而本记录
-本身就是一次 P0 审查尝试；名称前缀 `mechanical-self-review` 用于避免它被误认为 P0 所需的人类独立审查。
+`-r02` 的 `actor` 记为 `justtodo123` / `independent-reviewer`。协议 `actor.role` 枚举为
+`[owner, independent-reviewer, independent-verifier]`；因状态机要求 P0 行的 actor 为 independent reviewer，且本记录
+确由未参与本轮的独立主体签署，故取 `independent-reviewer`，并在 `independence.basis` 中写明签署人是仓库负责人。
+`-r01` 的 `actor.name` 则为 `m8-mechanical-self-review-draft09-01`，**刻意不沿用**独立 reviewer 身份，以免被误认为
+P0 所需的人类独立审查。
 
 ## 4. 两处协议文本不一致（如实记录，未擅自修正）
 
@@ -88,35 +119,42 @@ P0 的 `actor.name` 记为 `m8-mechanical-self-review-draft09-01`，**刻意不�
 
 ## 5. 独立性声明（重要）
 
-- **P0：实质性独立性未成立。** 协议要求 P0 为 `independence={required:true,satisfied:true}`。draft-0.9 的起草
-  与本轮机械核验由**同一主体**完成，因此本记录**不再声明** `satisfied=true`，而是如实落盘：
-  `required=true` / `satisfied=false` / `decision=P0_NOT_ACCEPTED` / `allowed_next_action=stop`。
-  机械核验本身是**可复现**的（`tools/m8_draft_reviewer.py` 不导入任何起草脚本，全部事实从协议 blob 与
-  审查记录重新推导），但“可复现”不等于“独立”——协议未提供同一主体满足自身独立性要求的机制。
-  这与项目既往由人类独立 reviewer 签署的 P0（如 draft-0.5 的 `m8-independent-reviewer-01`）在**性质上不同**。
-- **P1：`required=false, satisfied=false`**，属 owner-only 步骤，与协议一致；但 P1 被拦下**不是因为独立性**，
-  而是因为其唯一前驱 P0 未成立，故 `decision=NOT_AUTHORIZED`。
+- **P0 `-r01`：独立性不成立，已如实落盘。** 协议要求 P0 为 `independence={required:true,satisfied:true}`；
+  draft-0.9 的起草与本轮机械核验由**同一主体**完成，因此该记录不声明 `satisfied=true`，而是
+  `required=true` / `satisfied=false` / `P0_NOT_ACCEPTED` / `stop`。机械核验本身**可复现**
+  （`tools/m8_draft_reviewer.py` 不导入任何起草脚本，事实全部从协议 blob 重新推导），但“可复现”不等于“独立”。
+- **P0 `-r02`：独立性由主体分离满足，技术文字被接受。** `justtodo123`（仓库负责人）作为**未参与 draft-0.9
+  起草、未编写其修订脚本、未产出 `-r01` 机械核验**的独立 reviewer 签署，与 draft-0.5 采用同一种安排
+  （起草方与审查方分离）。接受范围仅限**技术文字**。
+- **P1 `-r02`：`required=false, satisfied=false`**，属 owner-only 步骤，与协议一致；门禁边由
+  `-r02` 满足，故 `decision=AUTHORIZED / request-p2`。
 
-**结论：本材料集不包含已成立的 P0 门禁。** 机械核验所得的技术文字结论（A/B/C 与 D-1/D-2 闭合、保留不变量
-成立、72 行表逐字节未变）已如实保存在 P0 记录的 `reason` 字段中，供下一位审查者参考，但**不构成接受**。
-P0 门禁须由**未参与本轮起草与审查的审查者**重新建立（可另发 `-r02` 记录）；在此之前 P1 不得重新签发。
+**结论：draft-0.9 的 P0 已成立（`-r02`），P1 已取得 `AUTHORIZED / request-p2`，identity 已获授权创建。**
+但这**不代表 M8 被准入或可开始执行**：P1 只授权创建 identity，不授权 binding、建根、依赖获取、source 生成、
+preflight、执行、证据发布、M8 准入或后端选择。P2 起仍须各自另行形成满足前置条件的外部记录。
 
 ## 6. 明确未包含的事项
 
-本轮材料**不**包含、也不得被解释为包含：identity 激活、repository binding、experiment root、依赖获取/安装、
-source/corpus/query/gold 生成、preflight、benchmark 执行、证据发布、M8 registry 变更、M8 admission、后端选择、
-生产实现。特别地，**P0 与 P1 均未成立**，整条链上不存在任何可消费的授权。
+本轮材料**不**包含、也不得被解释为包含：repository binding、experiment root、依赖获取/安装、source/corpus/
+query/gold 生成、preflight、benchmark 执行、证据发布、M8 registry 变更、M8 admission、后端选择、生产实现。
+P1 授权的唯一事项是创建 experiment identity。
 
 后续门禁 P2–P9/P7A 仍须各自另行形成满足前置关系的外部记录。M8 保持 `BLOCKED / NOT_STARTED`；八项 Decision
 保持 `RESOLVED`（2026-09-10）；admission approval 字段保持为空；implementation-start 保持未授权。
 
-## 7. 下一步（待负责人决定）
+## 7. 下一步：P2（binding）
 
-P0 门禁要成立，需满足以下之一：
+P0 与 P1 已成立，链上下一道门是 **P2（binding）**，为 owner 步骤。按协议，P2 需要：
 
-1. 由**未参与 draft-0.9 起草与本轮核验**的审查者（人类，或满足项目独立性要求的其他主体）重新执行 P0 技术审查，
-   并另发 `p0-m8-active-execution-draft09-20260913-r02.json`；届时 P1 可一并按 `AUTHORIZED` 重新签发。
-2. 或负责人明确接受“同一主体的可复现机械核验足以满足 P0 独立性”这一做法，并以单独书面记录写明该判断——
-   但该做法与项目此前 draft-0.5 由未参与起草的独立 reviewer 签署的先例不一致，需显式说明理由。
+- `payload`: `{gate_id:"P2",binding_ref:REF,repository_commit:GIT_OID,oid_algorithm:enum[sha1,sha256]}`；
+- 前置：`[P1]` 的 accepting pair，即 P1 `-r02` 的 `AUTHORIZED/request-p2`；
+- `scope.operations=[binding]`、`write_targets=[]`、`workloads=[]`、`allow_network=false`；
+- 成功后进入 `BINDING_FROZEN`，然后由**非作者**的 independent reviewer 执行 P3 文本审计。
 
-在上述任一情形落实前，本材料集保持 `P0_PENDING_INDEPENDENT_REVIEW / NOT_AUTHORIZED`。
+同时需处置两项已识别事项：
+
+1. **行尾口径**：登记的 `protocol_blob_sha256` `162c9047…` 对应**工作区 CRLF** 字节；仓库 LF 字节为
+   `6ccebc47…`（181209 bytes）。两者除行尾外逐字节相同，差 1366 字节恰为 1366 个 CRLF。该惯例与 draft-0.5 先例一致，
+   已在 `-r02` 的 `reason` 中显式披露；若后续要求改登记 LF 字节，则所有记录需重新绑定。
+2. **协议空白**：P0/P1 的 `record_id` 版本化（`-r01` / `-r02` 共存）是本次为保全历史而采用的做法，协议本身只规定
+   `record_id:ID` 的字符集与路径，**未**规定同一 gate 多版本如何共存。建议后续协议修订予以明确。

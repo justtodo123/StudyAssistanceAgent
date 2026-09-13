@@ -1,9 +1,20 @@
-"""Independently validate the draft-0.9 P0 gate record, identity and P1 record.
+"""Independently validate the draft-0.9 P0 -r01 record, identity and prior P1.
+
+SCOPE NOTE. This validator covers the FIRST material set only: the P0 -r01 that
+was issued as P0_NOT_ACCEPTED, the experiment identity, and the prior P1 whose
+predecessor is -r01. It intentionally does not cover the accepted chain; that
+is the job of tools/m8_validate_p0_r02.py, which validates P0 -r02 and the
+rebuilt P1 -r02.
+
+Keeping the two validators separate mirrors the repository layout: both the
+-r01 and the -r02 records exist side by side, and each must satisfy its own
+contract rather than one contract being bent to fit both. The paths below are
+pinned to the exact filenames on purpose; a glob over *draft09* would now match
+two different P1 records with opposite decisions and silently validate the
+wrong one.
 
 This validator re-derives everything from the files themselves and from the
-protocol text; it does not import the build script. It checks the schema fields
-declared in the protocol, the P0->P1 predecessor edge, the bound protocol digest,
-the canonical JSON form, and the identity/forbidden-history disjointness.
+protocol text; it does not import the build script.
 """
 from __future__ import annotations
 
@@ -20,11 +31,22 @@ PROTOCOL_RELPATH = "docs/plans/references/m8-active-execution-protocol-draft-0.9
 PROTOCOL = REPO / PROTOCOL_RELPATH
 
 P0 = REF / "external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json"
-P1 = REF / "external-gates/p1" / next(
-    p.name for p in (REF / "external-gates/p1").glob("*draft09*.json")
+# Pinned, not globbed: there are now two draft-0.9 P1 records (the original
+# NOT_AUTHORIZED one and the -r02 AUTHORIZED one) plus two P0 records. This file
+# validates the original set only.
+P1 = REF / "external-gates/p1" / (
+    "p1-m8-active-execution-active-draft09-21aaa3818bd761b63543.json"
 )
-IDENTITY = REF / "external-artifacts/identity" / next(
-    p.name for p in (REF / "external-artifacts/identity").glob("*draft09*.json")
+IDENTITY = (
+    REF / "external-artifacts/identity"
+    / "sa-m8-active-draft09-21aaa3818bd761b63543.json"
+)
+
+# Guard: the -r02 records must exist and must NOT be what this file validates.
+R02_P0 = REF / "external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json"
+R02_P1 = (
+    REF / "external-gates/p1"
+    / "p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json"
 )
 
 # --- type regexes from protocol 2.1 -----------------------------------------
@@ -240,7 +262,9 @@ ck("CHAIN: no gate in this material set claims execution authority",
 
 # ------------------------------------------------------------------ report --
 print("=" * 78)
-print("P1 materials validation (draft-0.9)")
+print("P1 materials validation (draft-0.9, FIRST material set: P0 -r01)")
+print("  scope: P0 -r01 + identity + prior P1. The accepted -r02 chain is")
+print("  validated separately by tools/m8_validate_p0_r02.py")
 print("=" * 78)
 for name, ok, detail in results:
     line = ("OK   " if ok else "FAIL ") + name
