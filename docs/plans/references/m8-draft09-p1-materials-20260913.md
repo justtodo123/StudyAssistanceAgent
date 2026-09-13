@@ -45,6 +45,8 @@
 
 生成脚本：`tools/m8_build_p1_materials.py`（`-r01` 与 identity）、`tools/m8_build_p0_r02.py`（`-r02` 与 P1 `-r02`）；
 独立校验脚本：`tools/m8_validate_p1_materials.py`（88 项）、`tools/m8_validate_p0_r02.py`（77 项），全部通过。
+协议不一致复验脚本：`tools/m8_verify_protocol_inconsistencies.py`（16 项），从协议 blob 与门禁记录推导 §4 的
+两项发现而非直接断言；其 docstring 明确记录了它**不能**判定哪一侧应改。
 
 两个生成脚本都是**幂等**的：重复运行产出逐字节相同的文件，不会重新铸造 identity、不会重打时间戳、不会产生孤儿
 工件，也不会改写历史记录；`m8_build_p0_r02.py` 还会在 `-r01` 不再是 `P0_NOT_ACCEPTED` 或旧 P1 不再是
