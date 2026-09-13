@@ -3,3 +3,9 @@
 # and docs/plans/m7-p0-corpus-governance-report.md — are identical on every
 # platform. Without this, core.autocrlf produces CRLF on Windows and LF on Linux.
 docs/reference/document-mapping.json text eol=lf
+# M8 gate records and experiment identities are canonical JSON (sa-json-c14n-v1:
+# UTF-8 without BOM, LF terminated). Their digests are pinned inside sibling records,
+# so a CRLF checkout changes the bytes a verifier reads and breaks the chain on
+# Windows only. Pinning LF keeps on-disk bytes equal to committed bytes everywhere.
+docs/plans/references/external-gates/**/*.json text eol=lf
+docs/plans/references/external-artifacts/**/*.json text eol=lf
