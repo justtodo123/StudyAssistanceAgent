@@ -46,6 +46,7 @@
 | [`m8-draft05-unauthorized-artifacts-20260913.md`](m8-draft05-unauthorized-artifacts-20260913.md) | `draft-0.5` 未授权实验目录取证与处置 | `UNAUTHORIZED_ARTIFACTS_FOUND / CLEANUP_COMPLETE`；E 盘 7 个空目录（0 文件）与 `NEVER_EXECUTED` 冲突，已授权删除并复验无残留 |
 | [`m8-draft09-p2-sguard-blocker-20260913.md`](m8-draft09-p2-sguard-blocker-20260913.md) | `draft-0.9` P2 阻断事实（工作区卷 `sguard`） | `P2_BLOCKED_ON_WORKSPACE_VOLUME`；实测 `D:` 卷目录稳定暴露 `:sguard:$DATA`，`C:` 卷目录（6 个）均通过复验；**不构成授权**；含 2026-09-13 范围更正 |
 | [`m8-protocol-revision-proposal-20260913.md`](m8-protocol-revision-proposal-20260913.md) | 协议修订提案（四项遗留缺陷 A/B/C/D） | `PROPOSAL_ONLY / NOT_AN_AUTHORIZATION`；**非授权**，未经独立审查与批准前不得据以改动协议 |
+| [`m8-active-execution-protocol-draft-0.10-authorization-20260913.md`](m8-active-execution-protocol-draft-0.10-authorization-20260913.md) | `draft-0.10` 修订授权（A1/B1/C2a/D1a） | `AUTHORIZED / DRAFTED / PENDING_P0_REVIEW`；只授权文本修订，**不产生执行权限**，**不**预告 P0 `PASS` |
 | [`external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json`](external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json) | `draft-0.9` P0 门禁记录 `-r02`（机器可读） | **`P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`**；由未参与起草与核验的独立 reviewer 接受；仅技术文字 |
 | [`external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json`](external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json) | `draft-0.9` P1 门禁记录 `-r02`（机器可读） | **`AUTHORIZED`**；前驱为 P0 `-r02`；仅授权创建 identity |
 | [`external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json`](external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json) | `draft-0.9` experiment identity（机器可读） | 已授权创建（P1 `-r02`）；不构成 binding 或执行授权 |
@@ -198,6 +199,23 @@ M8 仍为 `BLOCKED / NOT_STARTED`。
 
 提案建议四项合并为一次修订（每改一次协议都要重走一遍 P0/P1；分批做会重复付费），
 并建议 **D 优先定案**，因为它决定协议在哪个行尾口径上被固定。
+
+### `draft-0.10` 修订授权
+
+负责人于 2026-09-13 明确指示推进 M8，据此形成
+[`m8-active-execution-protocol-draft-0.10-authorization-20260913.md`](m8-active-execution-protocol-draft-0.10-authorization-20260913.md)，
+批准提案的四项方案：
+
+| 缺陷 | 方案 | 要点 |
+| --- | --- | --- |
+| A（P2 阻断） | **A1** | 为 P2 的 `parent-binding` 定义独立、闭合、可机械复验的最小 sguard 容许规则；**不**前移 P5 allowlist，**不**豁免 P2 复验 |
+| B（类型标注） | **B1** | 第 168/346 行的标注 `ID` → `SCHEMA_ID`；只动标注，不动取值 |
+| C（排序冲突） | **C2a** | 第 168/346 行改为 `order=key(ordinal)` 的 object 数组；**不改** `order=value` 定义（29 个字段在用） |
+| D（行尾） | **D1a** | **只**锁定 `draft-0.9`/`draft-0.10` 为 LF 并重算其 5 条记录；**否决 D1b**（会重算已冻结的 `draft-0.5` 记录） |
+
+授权记录状态为 `AUTHORIZED / DRAFTED / PENDING_P0_REVIEW`，并明确声明：它**只**授权文本修订，
+**不**产生执行权限、**不**解除任何执行禁令、**不**预告 P0 会通过；`draft-0.10` 的 P0 仍须由未参与起草者
+独立审查。其全部引用（行号、基数、摘要、记录计数）由 `tools/m8_verify_authorization_claims.py`（22 项）逐项核验。
 
 ### 合并时暴露并修复的行尾缺陷
 
