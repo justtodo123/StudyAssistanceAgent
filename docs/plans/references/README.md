@@ -86,6 +86,8 @@
 | [`m8-minimal-1k-s0-reviewer-worksheet-20260914.md`](m8-minimal-1k-s0-reviewer-worksheet-20260914.md) | S0 reviewer 空白工作单 | `VERDICT_BLANK / NOT_A_DECISION` |
 | [`m8-minimal-1k-s0-independent-audit-20260914.md`](m8-minimal-1k-s0-independent-audit-20260914.md) | 最小 1K 协议独立 S0 审计 | `PROTOCOL_REJECTED / stop`；8 项 finding；S1 未授权 |
 | [`m8-minimal-1k-protocol-v2-authorization-20260914.md`](m8-minimal-1k-protocol-v2-authorization-20260914.md) | 最小协议 v2 修订授权 | 只授权闭合 `m8-s0-001`～`008`；不接受 S0、不授权执行 |
+| [`m8-minimal-1k-dry-run-protocol-v2.md`](m8-minimal-1k-dry-run-protocol-v2.md) | 最小 1K dry-run 协议 v2 | `DRAFT_FOR_INDEPENDENT_S0`；闭合 workload、observer 和 evidence lifecycle |
+| [`schemas/m8-minimal-1k-artifacts-v2.schema.json`](schemas/m8-minimal-1k-artifacts-v2.schema.json) | v2 六类 closed artifact schema | 以 `oneOf` 按 schema ID 关闭 payload、logical name、REF、actor 与 primitive fields |
 | [`external-artifacts/text-audits/p3-audit-20260914-external-reviewer-01.json`](external-artifacts/text-audits/p3-audit-20260914-external-reviewer-01.json) | canonical P3 text-audit | `REJECTED`；14 个 finding ID；绑定冻结 protocol 与 repository binding |
 | [`external-gates/p3/p3-m8-active-execution-draft011-940ecec4-r01.json`](external-gates/p3/p3-m8-active-execution-draft011-940ecec4-r01.json) | canonical P3 gate | `REJECTED / stop`；actor `external-reviewer-01`；不得 P4 |
 | [`m8-active-execution-protocol-draft-0.10-authorization-20260913.md`](m8-active-execution-protocol-draft-0.10-authorization-20260913.md) | `draft-0.10` 修订授权（A1/B1/C2a/D1a） | `AUTHORIZED / DRAFTED / P0_ACCEPTED / P1_AUTHORIZED`；只授权文本修订，P1 另行由 owner 授权创建 identity；不产生执行权限 |
