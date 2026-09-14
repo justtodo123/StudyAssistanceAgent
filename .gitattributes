@@ -17,3 +17,7 @@ docs/plans/references/external-artifacts/**/*.json text eol=lf
 # of m8-active-execution-protocol-draft-0.10-authorization-20260913.md).
 docs/plans/references/m8-active-execution-protocol-draft-0.9.md text eol=lf
 docs/plans/references/m8-active-execution-protocol-draft-0.10.md text eol=lf
+
+# draft-0.11 successor protocol: A+B+C P3-blocker revision authorized by
+# m8-active-execution-protocol-draft-0.11-authorization-20260914.md.
+docs/plans/references/m8-active-execution-protocol-draft-0.11.md text eol=lf
