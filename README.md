@@ -9,7 +9,7 @@
 M7 退出前置已满足，但 M8–M12 仍为 `BLOCKED / NOT_STARTED`；M8 八项 Decision 已于 2026-09-10 逐项批准并
 `RESOLVED`。active execution protocol `draft-0.10` 曾完成 P0/P1/P2 并到达 `BINDING_FROZEN`，但 2026-09-14
 独立 P3 文本审计发现三项阻断性 schema/治理闭合缺陷，结论为 `REJECTED / stop`（`FAILED / RETURNED`），该链保持
-冻结。Successor `draft-0.11` 已完成 P0/P1/P2 并到达 `BINDING_FROZEN`，当前等待另一主体独立 P3；未授权创建
+冻结。Successor `draft-0.11` 已完成 P0/P1/P2，但独立 P3 已 `REJECTED / stop`，失败链冻结；未授权创建
 experiment root、获取依赖、准备输入、执行、发布、选择后端或准入 M8，且从未执行。
 M8 的 V8–V12 已按不同失败处置永久封口且不可复用；V13 已
 处置为 `SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`。新路线为 M8 单机 100K capacity、M11 10K 真实 approved

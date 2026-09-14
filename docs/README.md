@@ -28,7 +28,7 @@ docs/
 │   │   ├── m8-draft010-p3-independent-text-audit-20260914.md # 独立 P3 文本审计；FAILED / RETURNED
 │   │   ├── m8-draft011-revision-proposal-20260914.md # draft-0.11 修订提案；非授权且不创建协议
 │   │   ├── m8-active-execution-protocol-draft-0.11-authorization-20260914.md # draft-0.11 A+B+C 修订授权；非 gate/执行授权
-│   │   ├── m8-active-execution-protocol-draft-0.11.md # draft-0.11 protocol blob；P2 authorized / binding frozen / P3 pending
+│   │   ├── m8-active-execution-protocol-draft-0.11.md # draft-0.11 protocol blob；P3 REJECTED / stop；从未执行
 │   │   ├── m8-draft011-revision-implementation-20260914.md # draft-0.11 实施说明与精确摘要
 │   │   ├── external-gates/p0/p0-m8-active-execution-draft011-20260914-r01.json # draft-0.11 P0 accepted-only
 │   │   ├── external-artifacts/identity/sa-m8-active-draft011-20260914-940ecec4.json # draft-0.11 全新 identity

@@ -70,7 +70,7 @@ check("one draft011 identity", list((REFS / "external-artifacts" / "identity").g
 draft011_gates = list((REFS / "external-gates").rglob("*draft011*.json"))
 p2_gates = list((REFS / "external-gates" / "p2").glob("*draft011*.json"))
 check("P0/P1 remain unique through P2", sum(path == P0 for path in draft011_gates) == 1 and sum(path == P1 for path in draft011_gates) == 1)
-check("successor lifecycle at most P2", len(p2_gates) <= 1 and all("/p0/" in path.as_posix() or "/p1/" in path.as_posix() or "/p2/" in path.as_posix() for path in draft011_gates))
+check("successor lifecycle at most P3", len(p2_gates) <= 1 and all(any(f"/{gate}/" in path.as_posix() for gate in ("p0","p1","p2","p3")) for path in draft011_gates))
 
 print("ALL PASS" if not failures else f"{len(failures)} FAIL")
 sys.exit(bool(failures))
