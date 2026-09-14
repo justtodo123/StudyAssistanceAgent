@@ -8,8 +8,9 @@
 `AUTHORIZED`，并于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准；M8–M10 的事实型
 M7 退出前置已满足，但 M8–M12 仍为 `BLOCKED / NOT_STARTED`；M8 八项 Decision 已于 2026-09-10 逐项批准并
 `RESOLVED`。active execution protocol `draft-0.10` 曾完成 P0/P1/P2 并到达 `BINDING_FROZEN`，但 2026-09-14
-独立 P3 文本审计发现三项阻断性 schema/治理闭合缺陷，结论为 `REJECTED / stop`（`FAILED / RETURNED`）。不得
-`request-p4`；未授权创建 experiment root、获取依赖、准备输入、执行、发布、选择后端或准入 M8，且从未执行。
+独立 P3 文本审计发现三项阻断性 schema/治理闭合缺陷，结论为 `REJECTED / stop`（`FAILED / RETURNED`），该链保持
+冻结。Successor `draft-0.11` 已完成独立 P0 和仅限 identity 的 owner P1，当前仍 `UNBOUND`、P2/P3 未完成；未授权
+创建 experiment root、获取依赖、准备输入、执行、发布、选择后端或准入 M8，且从未执行。
 M8 的 V8–V12 已按不同失败处置永久封口且不可复用；V13 已
 处置为 `SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`。新路线为 M8 单机 100K capacity、M11 10K 真实 approved
 chunks、M12 可选云端单用户部署；M0–M5 MVP 可用。
@@ -42,7 +43,7 @@ M7 完成不批准 Network，也不改变其 `review / candidate / unresolved` �
 | RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 2026-08-31 复测 Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 将改为目标/掌握度驱动 |
 | 用户数据源 | 自定义知识目录，真实数据当前→3K→10K，30K/100K 分级扩展 | ✅ M7 Source Registry、FTS5/vector/offline、delete/isolation 与 Search/QA 的受信任内部 principal overlay 已完成；preview/quiz/sessions 仍不含用户源。冻结技术证据通过，随后于 2026-09-06 取得独立人工完成批准，当前为 `ADMITTED / COMPLETE` |
-| 专业化存储 | SQLite/M7 控制面；M8 验证 100K capacity，LanceDB 为单机第一候选，Qdrant 为云端条件候选 | ⬜ M8（八项 Decision 已 `RESOLVED`；`draft-0.10` 独立 P3 为 `REJECTED / stop`，不得 `request-p4`；执行、后端选择与 admission 未授权） |
+| 专业化存储 | SQLite/M7 控制面；M8 验证 100K capacity，LanceDB 为单机第一候选，Qdrant 为云端条件候选 | ⬜ M8（八项 Decision 已 `RESOLVED`；`draft-0.10` P3 拒绝链冻结；`draft-0.11` 已 P0/P1、仍 `UNBOUND`；执行、后端选择与 admission 未授权） |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ⬜ M9 |
 | Harness 框架 | M6a/M6b/M7 已收口；完整 Runner、真实数据规模化与云部署未实现 | ✅ M6a/M6b/M7 `ADMITTED / COMPLETE`；M8–M12 `BLOCKED / NOT_STARTED` |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |

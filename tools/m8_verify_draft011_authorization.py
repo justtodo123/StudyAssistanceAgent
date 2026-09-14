@@ -1,4 +1,4 @@
-"""Verify the draft-0.11 authorization record without creating draft-0.11."""
+"""Verify draft-0.11 revision authorization and later gate lifecycle boundaries."""
 import hashlib,json,re,subprocess,sys
 from pathlib import Path
 ROOT=Path(r'D:\Git Demo\StudyAssistanceAgent'); R=ROOT/'docs/plans/references'; A=R/'m8-active-execution-protocol-draft-0.11-authorization-20260914.md'; P=R/'m8-draft011-revision-proposal-20260914.md'; bad=[]
@@ -12,7 +12,9 @@ if p11.exists():
  ck('draft011 stops pending independent P0','不预置 P0/P3 结论' in p11t)
 else:
  ck('pre-execution state permits no protocol bytes',True)
-ck('no draft011 gates/artifacts',not any((R/'external-gates').rglob('*draft011*')) and not any((R/'external-artifacts').rglob('*draft011*')))
+gates=list((R/'external-gates').rglob('*draft011*.json'));artifacts=list((R/'external-artifacts').rglob('*draft011*.json'));p0=[q for q in gates if '/p0/' in q.as_posix()];p1=[q for q in gates if '/p1/' in q.as_posix()];later=[q for q in gates if q not in p0+p1]
+ck('draft011 lifecycle remains within P1',len(p0)<=1 and len(p1)<=1 and not later and (not p1 or len(p0)==1),str([q.as_posix() for q in gates]))
+ck('draft011 artifacts limited to P1 identity',(not artifacts and not p1) or (len(artifacts)==1 and len(p1)==1 and '/identity/' in artifacts[0].as_posix()),str([q.as_posix() for q in artifacts]))
 expected=[('m8-active-execution-protocol-draft-0.10.md','b5bc5088'),('external-artifacts/binding/sa-m8-active-draft010-20260914-5d10f2a1-repository.json','65cc34a0'),('external-gates/p1/p1-m8-active-execution-active-draft010-5d10f2a1-r02.json','519d7837'),('external-gates/p2/p2-m8-active-execution-draft010-5d10f2a1-r01.json','1d758007')]
 for rel,prefix in expected: ck('frozen digest '+Path(rel).name,hashlib.sha256((R/rel).read_bytes()).hexdigest().startswith(prefix))
 records=list((R/'external-gates').rglob('*.json'))+list((R/'external-artifacts').rglob('*.json'));n=0

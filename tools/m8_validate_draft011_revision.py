@@ -1,8 +1,8 @@
 """Validate draft-0.11 A+B+C text and fail-closed acceptance matrix.
 
-No gate/artifact is created. Positive/negative cases exercise closed predicates
-implemented below from the protocol text; frozen unrelated sections are compared
-to draft-0.10 byte-for-byte by named anchors.
+The validator supports pre-review, post-P0 and post-P1 lifecycle states. Positive
+and negative cases exercise closed predicates implemented below from the protocol
+text; frozen unrelated sections are compared to draft-0.10 byte-for-byte.
 """
 import hashlib,re,sys
 from pathlib import Path
@@ -33,8 +33,7 @@ def block(text,start,end): return text.split(start,1)[1].split(end,1)[0]
 ck('frozen status map section',block(t,'`sa.m8.status-map.v1.payload` exact fields：','## 9. Lifecycle')==block(t10,'`sa.m8.status-map.v1.payload` exact fields：','## 9. Lifecycle'))
 ck('frozen gate order','P0→P1→P2→P3→P4→P5→P6→P7→P7A→P8→P9' in t)
 ck('version header draft011','文档版本：`draft-0.11`' in t);b=P11.read_bytes();ck('LF only',b'\r\n' not in b);ck('one terminal LF',b.endswith(b'\n') and not b.endswith(b'\n\n'));gates=list((R/'external-gates').rglob('*draft011*.json')); artifacts=list((R/'external-artifacts').rglob('*draft011*'))
-if gates:
- ck('post-review successor has only P0',len(gates)==1 and '/p0/' in gates[0].as_posix() and 'draft011' in gates[0].name,str([q.as_posix() for q in gates]))
-else:
- ck('pre-review successor has no gate',True)
-ck('no successor artifact before P1',not artifacts,str([q.as_posix() for q in artifacts]));print('ALL PASS' if not bad else f'{len(bad)} FAIL');sys.exit(bool(bad))
+p0=[q for q in gates if '/p0/' in q.as_posix()];p1=[q for q in gates if '/p1/' in q.as_posix()];later=[q for q in gates if q not in p0+p1]
+ck('successor gate lifecycle',len(p0)<=1 and len(p1)<=1 and not later and (not p1 or len(p0)==1),str([q.as_posix() for q in gates]))
+ck('successor artifact lifecycle',(not artifacts and not p1) or (len(artifacts)==1 and len(p1)==1 and '/identity/' in artifacts[0].as_posix()),str([q.as_posix() for q in artifacts]))
+print('ALL PASS' if not bad else f'{len(bad)} FAIL');sys.exit(bool(bad))
