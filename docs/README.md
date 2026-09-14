@@ -28,7 +28,7 @@ docs/
 │   │   ├── m8-draft010-p3-independent-text-audit-20260914.md # 独立 P3 文本审计；FAILED / RETURNED
 │   │   ├── m8-draft011-revision-proposal-20260914.md # draft-0.11 修订提案；非授权且不创建协议
 │   │   ├── m8-active-execution-protocol-draft-0.11-authorization-20260914.md # draft-0.11 A+B+C 修订授权；非 gate/执行授权
-│   │   ├── m8-active-execution-protocol-draft-0.11.md # draft-0.11 protocol blob；P0 accepted / P1 authorized / P2 pending
+│   │   ├── m8-active-execution-protocol-draft-0.11.md # draft-0.11 protocol blob；P2 authorized / binding frozen / P3 pending
 │   │   ├── m8-draft011-revision-implementation-20260914.md # draft-0.11 实施说明与精确摘要
 │   │   ├── external-gates/p0/p0-m8-active-execution-draft011-20260914-r01.json # draft-0.11 P0 accepted-only
 │   │   ├── external-artifacts/identity/sa-m8-active-draft011-20260914-940ecec4.json # draft-0.11 全新 identity
@@ -36,6 +36,9 @@ docs/
 │   │   ├── m8-draft011-p2-parent-environment-authorization-20260914.md # 全新 C: parent 创建与只读复验授权；非 P2
 │   │   ├── m8-draft011-p2-parent-validation-20260914.md # 新 parent 双次只读复验一致；P2 未签发
 │   │   ├── m8-draft011-p2-decision-materials-20260914.md # P2 精确候选摘要与 owner 裁定材料
+│   │   ├── external-artifacts/binding/sa-m8-active-draft011-20260914-940ecec4-parent.json # draft-0.11 parent-binding
+│   │   ├── external-artifacts/binding/sa-m8-active-draft011-20260914-940ecec4-repository.json # draft-0.11 repository-binding
+│   │   ├── external-gates/p2/p2-m8-active-execution-draft011-940ecec4-r01.json # draft-0.11 P2 AUTHORIZED/request-p3
 │   │   ├── m8-active-execution-protocol-draft.md # 历史 draft-0.5；P0 PASS 仅接受技术文字
 │   │   ├── m8-active-execution-protocol-draft-0.5-authorization-20260912.md # draft-0.5 定点修订授权；已消费
 │   │   ├── m8-active-execution-protocol-draft-0.5-review-20260913.md # draft-0.5 P0 PASS 记录

@@ -146,7 +146,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | M6a | `ADMITTED` | `COMPLETE` | [`m6a-harness-skeleton-plan.md`](plans/m6a-harness-skeleton-plan.md) | 八项强制决策与保护基线已闭合；justtodo123 于 2026-08-25 批准开工，M6a-1 与 M6a-2 自动化门禁已通过，M6a-4 已完成收口 |
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
 | M7 | `ADMITTED` | `COMPLETE` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策、保护基线、Source lifecycle/delete/isolation/fallback、冻结 1k/3k BGE 与五格式 100×20 parser/normalized/lifecycle 证据已闭合。原 2026-08-31 准入与开工授权保持不变；justtodo123 于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内独立批准 `M7 COMPLETE`。技术证据本身不产生批准；M6b preview、Quiz、Review Plan 与 study-sessions 仍不含用户源 |
-| M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | 八项 Decision 已 `RESOLVED`；`draft-0.10` 的 P3 拒绝链保持冻结；successor `draft-0.11` 已完成独立 P0 与 owner P1（仅 identity），P2 尚未完成，执行、后端选择和阶段 admission 均未授权 |
+| M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | 八项 Decision 已 `RESOLVED`；`draft-0.10` P3 拒绝链冻结；`draft-0.11` 已完成 P0/P1/P2 并到达 `BINDING_FROZEN`，等待另一主体独立 P3；执行、后端选择和 admission 未授权 |
 | M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT=SATISFIED`；仍等待 M8 退出，计划/mastery 权威设定与独立批准仍 `OPEN` |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | `M10-M7-EXIT=SATISFIED`；仍等待 M8/M9，写授权、恢复、rollout 与独立批准仍 `OPEN` |
 | M11 | `BLOCKED` | `NOT_STARTED` | [`m11-data-scaling-plan.md`](plans/m11-data-scaling-plan.md) | 拟议真实数据规模化阶段；正式退出目标为 10K approved chunks，3K 为先行 Gate，全部 Decision 与批准 `OPEN` |
@@ -255,8 +255,9 @@ profile。所有阶段都不以 M6b 为写路径或 Source 生命周期前置。
   `REJECTED / stop`（`FAILED / RETURNED`）。该链不得 `request-p4`；未创建 machine P3 gate，且未授权建根、
   依赖获取、输入准备、preflight、benchmark、证据发布、后端选择或 M8 admission。若修订协议，须形成新的
   协议版本并重新完成 P0/P1/P2，不得就地改写冻结对象。Successor `draft-0.11` 已由独立 reviewer `justtodo123`
-  完成 P0 技术文字接受，并由 owner `justtodo123` 授权 P1、创建全新 canonical identity；该 P1 仅允许 identity，当前
-  仍 `UNBOUND`，P2/P3 未完成，未授权建根、依赖、输入、执行、发布、后端选择或 M8 admission。
+  完成 P0 技术文字接受，并由 owner `justtodo123` 完成 P1/P2；全新 identity、parent-binding 与 repository-binding 已
+  冻结，当前为 `P2_AUTHORIZED / BINDING_FROZEN`。P3 仍须由不是 `ai-assistant` 或 `justtodo123` 的另一主体独立完成；
+  未授权建根、依赖、输入、执行、发布、后端选择或 M8 admission。
 - ⬜ **M9 目标驱动计划**：准备计划见
   [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md)；planner/mastery schema、唯一写入权威、
   偏差重规划、外部 AI 隐私/fallback 和评测阈值未闭合前保持阻断。
@@ -299,6 +300,6 @@ profile。所有阶段都不以 M6b 为写路径或 Source 生命周期前置。
 ---
 
 *创建：2026-08-10 · PLAN 文档修订：v2.24（不是产品发布版本）· 更新：2026-09-14（M8 八项 Decision 已
-`RESOLVED`；`draft-0.10` 的 P3 拒绝链保持冻结；successor `draft-0.11` 已完成独立 P0 与仅限 identity 的 owner P1，
-当前仍 `UNBOUND`，P2/P3、执行、后端选择与阶段批准均未完成，M8 保持 `BLOCKED / NOT_STARTED`）·
+`RESOLVED`；`draft-0.10` 的 P3 拒绝链保持冻结；successor `draft-0.11` 已完成 P0/P1/P2 并到达
+`BINDING_FROZEN`，等待另一主体独立 P3；执行、后端选择与阶段批准均未完成，M8 保持 `BLOCKED / NOT_STARTED`）·
 维护：每次会话开工查看本文档*

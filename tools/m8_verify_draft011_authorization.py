@@ -12,9 +12,10 @@ if p11.exists():
  ck('draft011 stops pending independent P0','不预置 P0/P3 结论' in p11t)
 else:
  ck('pre-execution state permits no protocol bytes',True)
-gates=list((R/'external-gates').rglob('*draft011*.json'));artifacts=list((R/'external-artifacts').rglob('*draft011*.json'));p0=[q for q in gates if '/p0/' in q.as_posix()];p1=[q for q in gates if '/p1/' in q.as_posix()];later=[q for q in gates if q not in p0+p1]
-ck('draft011 lifecycle remains within P1',len(p0)<=1 and len(p1)<=1 and not later and (not p1 or len(p0)==1),str([q.as_posix() for q in gates]))
-ck('draft011 artifacts limited to P1 identity',(not artifacts and not p1) or (len(artifacts)==1 and len(p1)==1 and '/identity/' in artifacts[0].as_posix()),str([q.as_posix() for q in artifacts]))
+gates=list((R/'external-gates').rglob('*draft011*.json'));artifacts=list((R/'external-artifacts').rglob('*draft011*.json'));p0=[q for q in gates if '/p0/' in q.as_posix()];p1=[q for q in gates if '/p1/' in q.as_posix()];p2=[q for q in gates if '/p2/' in q.as_posix()];later=[q for q in gates if q not in p0+p1+p2]
+ck('draft011 lifecycle remains within P2',len(p0)<=1 and len(p1)<=1 and len(p2)<=1 and not later and (not p1 or len(p0)==1) and (not p2 or len(p1)==1),str([q.as_posix() for q in gates]))
+identity=[q for q in artifacts if '/identity/' in q.as_posix()];bindings=[q for q in artifacts if '/binding/' in q.as_posix()]
+ck('draft011 artifacts limited through P2',(not artifacts and not p1) or (len(identity)==1 and ((not p2 and not bindings) or (len(p2)==1 and len(bindings)==2)) and len(artifacts)==len(identity)+len(bindings)),str([q.as_posix() for q in artifacts]))
 expected=[('m8-active-execution-protocol-draft-0.10.md','b5bc5088'),('external-artifacts/binding/sa-m8-active-draft010-20260914-5d10f2a1-repository.json','65cc34a0'),('external-gates/p1/p1-m8-active-execution-active-draft010-5d10f2a1-r02.json','519d7837'),('external-gates/p2/p2-m8-active-execution-draft010-5d10f2a1-r01.json','1d758007')]
 for rel,prefix in expected: ck('frozen digest '+Path(rel).name,hashlib.sha256((R/rel).read_bytes()).hexdigest().startswith(prefix))
 records=list((R/'external-gates').rglob('*.json'))+list((R/'external-artifacts').rglob('*.json'));n=0
