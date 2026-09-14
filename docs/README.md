@@ -24,7 +24,9 @@ docs/
 │   │   ├── stage-advancement-analysis.md
 │   │   ├── m8-m12-scope-decision-v1.md # M8–M12 规模化范围决策；已批准
 │   │   ├── m8-decision-closure-v1.md # 八项 Decision 批准记录；全部 RESOLVED
-│   │   ├── m8-active-execution-protocol-draft.md # 现行 draft-0.5；P0 PASS（只接受技术文字）；未绑定/未授权
+│   │   ├── m8-active-execution-protocol-draft-0.10.md # draft-0.10 冻结正文；P3 REJECTED / stop；从未执行
+│   │   ├── m8-draft010-p3-independent-text-audit-20260914.md # 独立 P3 文本审计；FAILED / RETURNED
+│   │   ├── m8-active-execution-protocol-draft.md # 历史 draft-0.5；P0 PASS 仅接受技术文字
 │   │   ├── m8-active-execution-protocol-draft-0.5-authorization-20260912.md # draft-0.5 定点修订授权；已消费
 │   │   ├── m8-active-execution-protocol-draft-0.5-review-20260913.md # draft-0.5 P0 PASS 记录
 │   │   ├── m8-active-execution-protocol-draft-0.5-returned.md # 被审 draft-0.5 精确原文；171830 bytes
@@ -119,7 +121,8 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
   2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准，当前为 `ADMITTED / COMPLETE`。
   Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline
   fail-closed 与 Search/QA 内部可信 principal overlay 已完成；技术证据本身不产生批准。M8/M9/M10 的事实型
-  M7 退出前置已满足；M8 八项 Decision 已 `RESOLVED`，但 M8–M12 阶段仍阻断，Network/Milvus/后端选择均未获批。
+  M7 退出前置已满足；M8 八项 Decision 已 `RESOLVED`，但 `draft-0.10` 独立 P3 已 `REJECTED / stop`，不得
+  `request-p4`；M8–M12 阶段仍阻断，Network/Milvus/后端选择均未获批。
 - M7–M12 准入准备计划：
   [plans/m7-source-lifecycle-plan.md](plans/m7-source-lifecycle-plan.md)、
   [plans/m8-specialized-storage-plan.md](plans/m8-specialized-storage-plan.md)、
@@ -162,8 +165,11 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
   仅处理该 3 项阻断缺陷；2026-09-13 经未参与起草的 independent reviewer 完成 P0 技术审查并取得
   `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`（4 项缺陷机械闭合，72 行映射表逐字节未变），审查记录见
   [`m8-active-execution-protocol-draft-0.5-review-20260913.md`](plans/references/m8-active-execution-protocol-draft-0.5-review-20260913.md)。
-  该 PASS 只表示技术文字被接受：现行草案仍为未绑定、未授权且从未执行的 protocol blob，不创建实验身份、
-  binding 或根，也不安装依赖、运行 benchmark、改变 M8 registry、准入 M8 或选择 LanceDB，且不自动产生 `draft-0.6`。
+  该 PASS 只表示 `draft-0.5` 的历史技术文字被接受，并未创建实验身份、binding、根或执行权限。后续
+  `draft-0.10` 曾完成 P0/P1/P2 并到达 `BINDING_FROZEN`，但 2026-09-14 独立 P3 因三项阻断缺陷判定
+  `REJECTED / stop`（`FAILED / RETURNED`）。该冻结链不得 `request-p4`；未创建 machine P3 gate，也未授权建根、
+  依赖、输入、benchmark、发布、后端选择或 M8 admission。任何修订须使用新版本并重新完成 P0/P1/P2，不得就地
+  修改冻结的 `draft-0.10` 或 binding。
 
 ### reference/ — 外部资料索引
 
@@ -207,6 +213,6 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-13（M8 active execution protocol `draft-0.5` 已取得
-`PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`，只接受技术文字且仍未绑定；M8 与 M9–M12 仍阻断）·
+*创建：2026-08-11 · 更新：2026-09-14（M8 active execution protocol `draft-0.10` 曾到达
+`BINDING_FROZEN`，但独立 P3 文本审计为 `REJECTED / stop`；不得 `request-p4`，M8 与 M9–M12 仍阻断）·
 维护：随项目演进同步更新*

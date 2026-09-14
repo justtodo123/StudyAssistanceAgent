@@ -25,7 +25,8 @@
 - M6b 与 M7 都以 M6a 退出证据为共同必要前置，彼此不互为前置；M7 已取得基础设施 scope admission、
   独立生产开工授权与 2026-09-06 独立人工完成批准，当前为 `ADMITTED / COMPLETE`。M8/M9/M10 的事实型
   M7 退出前置已满足；M8 八项 Decision 已 `RESOLVED`，但 M8–M12 仍须分别闭合剩余前置、阶段 Decision 与批准，
-  当前均保持阻断
+  当前均保持阻断；`draft-0.10` 曾完成 P0/P1/P2 并到达 `BINDING_FROZEN`，但 2026-09-14 独立 P3 文本审计
+  因三项阻断缺陷判定 `REJECTED / stop`，不得 `request-p4`。
 - 不把 `references/` 中的分析或历史治理记录当作执行计划、阶段批准或验收真源
 - 跨阶段运行时契约见 [`docs/standards/runtime-contracts.md`](../standards/runtime-contracts.md)
 - M6a–M12 准入政策见 [`docs/standards/stage-admission-gates.md`](../standards/stage-admission-gates.md)，机器登记见
@@ -47,7 +48,8 @@
 M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻结技术证据与 correctness 收口已完成，
 并于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准，现为
 `ADMITTED / COMPLETE`；技术证据本身不产生该批准。M8/M9/M10 的事实型 M7 退出前置已满足；M8 八项 Decision
-已 `RESOLVED`，但 M8–M12 均因剩余前置、阶段 Decision 或批准未闭合而保持 `BLOCKED / NOT_STARTED`。最终状态以
+已 `RESOLVED`，但 `draft-0.10` 独立 P3 已 `REJECTED / stop`，不得 `request-p4`；M8–M12 均因剩余前置、
+阶段 Decision 或批准未闭合而保持 `BLOCKED / NOT_STARTED`。最终状态以
 [`docs/PLAN.md`](../PLAN.md) 为准。
 
 | 文件 | 类型 | 状态 |
@@ -75,8 +77,10 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | [`references/recruitment-driven-feasibility.md`](references/recruitment-driven-feasibility.md) | 招聘驱动可行性分析 | 辅助决策；结论已反映在 PLAN.md 的 M6a/M6b 拆分中 |
 | [`references/m8-m12-scope-decision-v1.md`](references/m8-m12-scope-decision-v1.md) | M8–M12 规模化范围决策 | `APPROVED / SCOPE_FROZEN`；不等于阶段 admission |
 | [`references/m8-decision-closure-v1.md`](references/m8-decision-closure-v1.md) | M8 八项 Decision 批准记录 | `APPROVED / EIGHT_DECISIONS_RESOLVED`；不选择后端或授权实现 |
-| [`references/m8-active-execution-protocol-draft.md`](references/m8-active-execution-protocol-draft.md) | M8 active execution protocol `draft-0.5` | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED` |
-| [`references/m8-active-execution-protocol-draft-0.5-authorization-20260912.md`](references/m8-active-execution-protocol-draft-0.5-authorization-20260912.md) | `draft-0.5` 修订授权记录 | 已授权并消费的文本修订；不解除执行、建根或后端选择禁令 |
+| [`references/m8-active-execution-protocol-draft-0.10.md`](references/m8-active-execution-protocol-draft-0.10.md) | M8 active execution protocol `draft-0.10` | 曾到达 `BINDING_FROZEN`；独立 P3 文本审计 `REJECTED / stop`；不得 `request-p4`，从未执行 |
+| [`references/m8-draft010-p3-independent-text-audit-20260914.md`](references/m8-draft010-p3-independent-text-audit-20260914.md) | `draft-0.10` 独立 P3 文本审计 | `REJECTED / stop`（`FAILED / RETURNED`）；三项阻断缺陷；不得 `request-p4` |
+| [`references/m8-active-execution-protocol-draft.md`](references/m8-active-execution-protocol-draft.md) | 历史 M8 active execution protocol `draft-0.5` | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED` |
+| [`references/m8-active-execution-protocol-draft-0.5-authorization-20260912.md`](references/m8-active-execution-protocol-draft-0.5-authorization-20260912.md) | `draft-0.5` 修订授权记录 | 已授权并消费的历史文本修订；不解除执行、建根或后端选择禁令 |
 | [`references/m8-active-execution-protocol-draft-0.5-review-20260913.md`](references/m8-active-execution-protocol-draft-0.5-review-20260913.md) | `draft-0.5` P0 技术审查 | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；只接受技术文字 |
 | [`references/m8-active-execution-protocol-draft-0.5-returned.md`](references/m8-active-execution-protocol-draft-0.5-returned.md) | 被审的 `draft-0.5` 原文 | 171830 bytes；`ac907b83…b9fbc9`；不得 binding 或授权 |
 | [`references/m8-active-execution-protocol-draft-0.4-authorization-20260912.md`](references/m8-active-execution-protocol-draft-0.4-authorization-20260912.md) | `draft-0.4` 修订授权记录 | 已消费文本修订；不解除执行、建根或后端选择禁令 |
@@ -114,10 +118,9 @@ V8–V11 记录均不得授权其对应身份或后继。V12 独立静态审计�
 `PASS_AFTER_REVISION / DRAFT_NOT_AUTHORIZED` 只评价当时文本设计，从未产生 binding、建根或执行授权；V13 已
 `SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`，不得恢复、修订、binding 或执行。任何后续 M8
 实证必须使用全新协议身份并重新完成分阶段书面授权。
-当前全新草案见 `m8-active-execution-protocol-draft.md`（`draft-0.5`）；2026-09-12 负责人另行主动发起该定点修订，
-2026-09-13 经未参与起草的 independent reviewer 完成 P0 技术审查并取得
-`PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`，4 项缺陷全部机械闭合且 72 行映射表逐字节未变。该 P0 接受只表示
-技术文字被接受：草案仍无 experiment/protocol 执行身份或 repository binding，保持未绑定、未授权、从未执行，不得据此
-建根、安装依赖、生成输入、执行 benchmark、选择后端或改变 M8 状态，也不自动产生 `draft-0.6`。
+`draft-0.5` 的历史 P0 只接受技术文字，且从未产生 binding 或执行授权。后续 `draft-0.10` 曾完成 P0/P1/P2 并到达
+`BINDING_FROZEN`，但 2026-09-14 独立 P3 因三项阻断缺陷判定 `REJECTED / stop`（`FAILED / RETURNED`）。该冻结链
+不得 `request-p4`，未创建 machine P3 gate，也未授权建根、依赖、输入、benchmark、发布、后端选择或 M8 admission。
+如需修订，必须形成新的协议版本并重新完成 P0/P1/P2；不得就地修改冻结的 `draft-0.10` 或 binding。
 
 > 后续由 `review-plan` Skill 生成的个人复习计划，继续使用 `{plan_name}-plan.md` 命名，避免与项目执行计划、调查材料混淆。
