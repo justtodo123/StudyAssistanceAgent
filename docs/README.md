@@ -33,6 +33,7 @@ docs/
 │   │   ├── external-gates/p0/p0-m8-active-execution-draft011-20260914-r01.json # draft-0.11 P0 accepted-only
 │   │   ├── external-artifacts/identity/sa-m8-active-draft011-20260914-940ecec4.json # draft-0.11 全新 identity
 │   │   ├── external-gates/p1/p1-m8-active-execution-draft011-940ecec4-r01.json # draft-0.11 P1 AUTHORIZED/request-p2
+│   │   ├── m8-draft011-p2-parent-environment-authorization-20260914.md # 全新 C: parent 创建与只读复验授权；非 P2
 │   │   ├── m8-active-execution-protocol-draft.md # 历史 draft-0.5；P0 PASS 仅接受技术文字
 │   │   ├── m8-active-execution-protocol-draft-0.5-authorization-20260912.md # draft-0.5 定点修订授权；已消费
 │   │   ├── m8-active-execution-protocol-draft-0.5-review-20260913.md # draft-0.5 P0 PASS 记录
