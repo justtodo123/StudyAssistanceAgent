@@ -11,6 +11,9 @@ tools/
 ├── start_local.py         # 一键启动工作台并做 /health 检查
 ├── source_inventory.py    # 外部资料只读盘点（不复制、不解析全文、不建索引）
 ├── m8_prepare_p2_draft011.py # 校验并在仓库外生成 draft-0.11 P2 binding 候选；不签发 P2
+├── m8_generate_minimal_1k_v3_fixtures.py # 生成 v3 validator 微型持久 fixture；不是 1K evidence
+├── m8_validate_minimal_1k_graph_v3.py # 读取真实 artifact directory，校验跨文件证据图
+├── m8_test_minimal_1k_graph_v3.py # 重放 5 个持久图与 fail-closed mutation 矩阵
 ├── run_m7_benchmark.py    # M7 1k/3k disposable source-local hash smoke（不构成 exit）
 ├── run_m7_frozen_benchmark.py # M7-3 冻结 1k/3k BGE 协议（20+200 查询，FULL 独立进程 5+20）
 ├── profile_m7_search.py   # M7 3k search stage profile（非正式 exit 证据）
@@ -117,6 +120,24 @@ crawler 提供 fetch、clean、convert、dedup 和 pipeline 能力，依赖单�
   在线 smoke 仅 `workflow_dispatch` + `crawler_online_smoke=true`；
 - crawler 的存在不代表 M7 的持久化源注册、同步、删除传播或多源隔离完成；这些能力后来在 M7 基础设施范围内完成，crawler 仍不自动注册 Source。
 
+
+## M8 v3 实现级 graph validator
+
+v3 把跨 artifact 的 REF 解析、摘要/字节/JSONL 计数复算、observer ledger 聚合和 S0→S3 authority 映射交给读取真实目录的实现级 validator。仓库内 fixture 只测试 validator，不导入 LanceDB、不生成真实 1K 输入，也不构成 S1/S2。
+
+```bash
+# 重建 5 个持久微型图
+python tools/m8_generate_minimal_1k_v3_fixtures.py
+
+# 校验单个成功或合法失败图
+python tools/m8_validate_minimal_1k_graph_v3.py \
+  docs/plans/references/fixtures/m8-minimal-1k-v3/success
+
+# 重放 5 个图及 fail-closed mutation 矩阵
+python tools/m8_test_minimal_1k_graph_v3.py
+```
+
+协议见 [`m8-minimal-1k-dry-run-protocol-v3.md`](../docs/plans/references/m8-minimal-1k-dry-run-protocol-v3.md)。独立 S0 接受和 owner S1 授权前，禁止创建真实实验环境、安装 LanceDB 或执行 1K dry-run。
 
 ## m8_prepare_p2_draft011.py — draft-0.11 P2 binding 候选准备
 

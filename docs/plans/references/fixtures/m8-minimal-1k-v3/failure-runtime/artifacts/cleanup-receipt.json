@@ -1,0 +1,1 @@
+{"canonicalization_id":"sa-json-c14n-v1","logical_name":"minimal-1k/sa-m8-v3-fixture-failure-runtime/cleanup-receipt.json","payload":{"after_count":0,"experiment_id":"sa-m8-v3-fixture-failure-runtime","failure_code":"none","status":"CLEANED","temporary_root_exists":false},"schema_id":"sa.m8.minimal.cleanup-receipt.v3","schema_version":3}

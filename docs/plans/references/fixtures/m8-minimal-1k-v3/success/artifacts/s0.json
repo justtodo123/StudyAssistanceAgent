@@ -1,0 +1,1 @@
+{"canonicalization_id":"sa-json-c14n-v1","logical_name":"minimal-1k/sa-m8-v3-fixture-success/s0.json","payload":{"actor_role":"independent-reviewer","allowed_next_action":"request-s1","decision":"PROTOCOL_ACCEPTED","experiment_id":"sa-m8-v3-fixture-success","gate_id":"S0","read_refs":[]},"schema_id":"sa.m8.minimal.decision-record.v3","schema_version":3}
