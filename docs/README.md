@@ -26,6 +26,7 @@ docs/
 │   │   ├── m8-decision-closure-v1.md # 八项 Decision 批准记录；全部 RESOLVED
 │   │   ├── m8-active-execution-protocol-draft-0.10.md # draft-0.10 冻结正文；P3 REJECTED / stop；从未执行
 │   │   ├── m8-draft010-p3-independent-text-audit-20260914.md # 独立 P3 文本审计；FAILED / RETURNED
+│   │   ├── m8-draft011-revision-proposal-20260914.md # draft-0.11 修订提案；非授权且不创建协议
 │   │   ├── m8-active-execution-protocol-draft.md # 历史 draft-0.5；P0 PASS 仅接受技术文字
 │   │   ├── m8-active-execution-protocol-draft-0.5-authorization-20260912.md # draft-0.5 定点修订授权；已消费
 │   │   ├── m8-active-execution-protocol-draft-0.5-review-20260913.md # draft-0.5 P0 PASS 记录
