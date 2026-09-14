@@ -1,0 +1,12 @@
+import hashlib,json,re,subprocess,sys
+from pathlib import Path
+R=Path(r'D:\Git Demo\StudyAssistanceAgent\docs\plans\references'); bad=[]
+def ck(s,c,d=''): print(('PASS ' if c else 'FAIL ')+s+((' :: '+d) if not c else '')); bad.append(s) if not c else None
+def load(p): return json.loads(p.read_text(encoding='utf8'))
+def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
+def canon(p): return p.read_bytes()==(json.dumps(load(p),ensure_ascii=False,sort_keys=True,separators=(',',':'))+'\n').encode()
+i=R/'external-artifacts/identity/sa-m8-active-draft010-20260914-5d10f2a1-r02.json'; p=R/'external-gates/p1/p1-m8-active-execution-active-draft010-5d10f2a1-r02.json'; p0=R/'external-gates/p0/p0-m8-active-execution-draft010-20260913-r01.json'; x=load(i)['payload']; y=load(p)['payload']; arr=x['forbidden_history_ids']
+ck('identity canonical',canon(i)); ck('P1 canonical',canon(p)); ck('identity nonce HEX64',bool(re.fullmatch(r'[0-9a-f]{64}',x['identity_nonce']))); ck('identity 13 objects',len(arr)==13 and all(set(o)=={'id','ordinal'} for o in arr)); ck('identity ordinal 0..12',[o['ordinal'] for o in arr]==list(range(13))); ck('identity IDs unique',len({o['id'] for o in arr})==13); ck('identity IDs are SCHEMA_ID',all(re.fullmatch(r'[a-z0-9][a-z0-9.-]{0,127}',o['id']) for o in arr)); ck('P1 same ordered objects',y['payload']['forbidden_history_ids']==arr); ck('P1 identity ref hash',y['payload']['identity_ref']['sha256']==sha(i)); ck('P1 identity logical name',y['payload']['identity_ref']['logical_name']==load(i)['logical_name']); ck('P1 predecessor P0 hash',y['predecessors'][0]['record_sha256']==sha(p0)); ck('P1 AUTHORIZED/request-p2',y['decision']=='AUTHORIZED' and y['allowed_next_action']=='request-p2'); ck('P1 identity-only scope',y['scope']['operations']==['identity'] and y['scope']['allow_network'] is False and y['scope']['allow_production_write'] is False); ck('protocol current',x['reviewed_protocol_sha256'].startswith('b5bc5088') and y['reviewed_protocol_sha256']==x['reviewed_protocol_sha256']); oldi=R/'external-artifacts/identity/sa-m8-active-draft010-20260914-5d10f2a1.json'; oldp=R/'external-gates/p1/p1-m8-active-execution-active-draft010-5d10f2a1.json'; root=R.parent.parent.parent
+for q in (oldi,oldp):
+ rel=q.relative_to(root).as_posix(); repo=subprocess.run(['git','cat-file','-p','HEAD:'+rel],cwd=root,capture_output=True).stdout; ck('old bytes unchanged '+q.name,q.read_bytes()==repo)
+print('ALL PASS' if not bad else f'{len(bad)} FAIL');sys.exit(bool(bad))
