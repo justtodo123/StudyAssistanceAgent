@@ -186,7 +186,7 @@ d05 = sum(1 for p in recs if bound_digest(p).startswith("ac907b83"))
 chk("5 条记录仍绑 162c9047…（待重算）", d09 == 5, str(d09))
 chk("3 条记录仍绑 ac907b83…（不在范围）", d05 == 3, str(d05))
 d10 = sum(1 for p in recs if bound_digest(p).startswith("b5bc5088"))
-chk("1 条记录绑定 draft-0.10 当前摘要", d10 == 1, str(d10))
+chk("3 条记录绑定 draft-0.10 当前摘要（P0、P1、identity）", d10 == 3, str(d10))
 
 # ------------------------------------------- materials must not pre-decide --
 for phrase in ("P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY", "P0_NOT_ACCEPTED"):

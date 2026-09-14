@@ -38,9 +38,11 @@
 | [`m8-active-execution-protocol-draft-0.8.md`](m8-active-execution-protocol-draft-0.8.md) | `draft-0.8` 正文（180033 bytes） | **`UNBOUND / NEVER_AUTHORIZED / NEVER_EXECUTED`**；未授权先修订，不得 binding 或授权 |
 | [`m8-active-execution-protocol-draft-0.8-authorization-20260913.md`](m8-active-execution-protocol-draft-0.8-authorization-20260913.md) | `draft-0.8` 修订**事后补正**记录 | `RETROACTIVE_CORRECTION / NOT_A_PRIOR_AUTHORIZATION`；**不是**授权，不赋予正当性 |
 | [`m8-active-execution-protocol-draft-0.8-review-20260913.md`](m8-active-execution-protocol-draft-0.8-review-20260913.md) | `draft-0.8` P0 技术审查（AI 机械核验） | `RETURNED_FOR_REVISION / P0_NOT_ACCEPTED`；3 项残留阻断 + 2 项非阻断；`AI_ASSISTED_MECHANICAL_REVIEW` |
-| [`m8-active-execution-protocol-draft-0.9.md`](m8-active-execution-protocol-draft-0.9.md) | `draft-0.9` 正文（181209 bytes，纯 LF） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED`；不得 binding 或执行；2026-09-13 依 D1a 改为 LF 后摘要由 `162c9047…` 变为 `6ccebc47…`，**5 条既有记录仍绑前者，重算留待 `draft-0.10` 取得独立 P0 之后** |
+| [`m8-active-execution-protocol-draft-0.9.md`](m8-active-execution-protocol-draft-0.9.md) | `draft-0.9` 正文（181209 bytes，纯 LF） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED`；不得 binding 或执行；2026-09-13 依 D1a 改为 LF 后摘要由 `162c9047…` 变为 `6ccebc47…`；5 条旧记录已以 `-r03` 并行重算，旧字节未动 |
 | [`m8-active-execution-protocol-draft-0.10.md`](m8-active-execution-protocol-draft-0.10.md) | `draft-0.10` 正文（186129 bytes，纯 LF） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED`；依授权记录落地 A1/B1/C2a/D1a 四项文本修订；**P0 已由独立 reviewer 接受（仅技术文字）**，仍不得 binding 或执行 |
 | [`external-gates/p0/p0-m8-active-execution-draft010-20260913-r01.json`](external-gates/p0/p0-m8-active-execution-draft010-20260913-r01.json) | `draft-0.10` P0 门禁记录（机器可读） | **`P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`** / `request-p1`；由未参与起草的独立 reviewer `justtodo123` 接受；仅技术文字，不产生执行权限 |
+| [`external-gates/p1/p1-m8-active-execution-active-draft010-5d10f2a1.json`](external-gates/p1/p1-m8-active-execution-active-draft010-5d10f2a1.json) | `draft-0.10` P1 门禁记录（机器可读） | **`AUTHORIZED`** / `request-p2`；owner `justtodo123`；仅授权创建一个新的 experiment identity，不授权 binding、依赖、执行、发布或准入 |
+| [`external-artifacts/identity/sa-m8-active-draft010-20260914-5d10f2a1.json`](external-artifacts/identity/sa-m8-active-draft010-20260914-5d10f2a1.json) | `draft-0.10` experiment identity（机器可读） | 由 P1 授权创建；绑定 `draft-0.10` 当前摘要；不构成 repository binding 或执行授权 |
 | [`m8-active-execution-protocol-draft-0.9-authorization-20260913.md`](m8-active-execution-protocol-draft-0.9-authorization-20260913.md) | `draft-0.9` 修订授权 | 已发起并消费的文本修订；不产生执行、准入或后端权限 |
 | [`m8-active-execution-protocol-draft-0.9-review-20260913.md`](m8-active-execution-protocol-draft-0.9-review-20260913.md) | `draft-0.9` P0 技术审查（AI 机械核验） | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；A/B/C/D 全闭合；`AI_ASSISTED_MECHANICAL_REVIEW`，非人类独立审查 |
 | [`m8-draft09-p1-materials-20260913.md`](m8-draft09-p1-materials-20260913.md) | `draft-0.9` P0/identity/P1 材料说明 | `MATERIALS_PREPARED / P0_PENDING_INDEPENDENT_REVIEW / NOT_AUTHORIZED`；**不构成任何授权** |
@@ -48,9 +50,9 @@
 | [`m8-draft05-unauthorized-artifacts-20260913.md`](m8-draft05-unauthorized-artifacts-20260913.md) | `draft-0.5` 未授权实验目录取证与处置 | `UNAUTHORIZED_ARTIFACTS_FOUND / CLEANUP_COMPLETE`；E 盘 7 个空目录（0 文件）与 `NEVER_EXECUTED` 冲突，已授权删除并复验无残留 |
 | [`m8-draft09-p2-sguard-blocker-20260913.md`](m8-draft09-p2-sguard-blocker-20260913.md) | `draft-0.9` P2 阻断事实（工作区卷 `sguard`） | `P2_BLOCKED_ON_WORKSPACE_VOLUME`；实测 `D:` 卷目录稳定暴露 `:sguard:$DATA`，`C:` 卷目录（6 个）均通过复验；**不构成授权**；含 2026-09-13 范围更正 |
 | [`m8-protocol-revision-proposal-20260913.md`](m8-protocol-revision-proposal-20260913.md) | 协议修订提案（四项遗留缺陷 A/B/C/D） | `PROPOSAL_ONLY / NOT_AN_AUTHORIZATION`；**非授权**，未经独立审查与批准前不得据以改动协议 |
-| [`m8-active-execution-protocol-draft-0.10-authorization-20260913.md`](m8-active-execution-protocol-draft-0.10-authorization-20260913.md) | `draft-0.10` 修订授权（A1/B1/C2a/D1a） | `AUTHORIZED / DRAFTED / PENDING_P0_REVIEW`；只授权文本修订，**不产生执行权限**，**不**预告 P0 `PASS` |
+| [`m8-active-execution-protocol-draft-0.10-authorization-20260913.md`](m8-active-execution-protocol-draft-0.10-authorization-20260913.md) | `draft-0.10` 修订授权（A1/B1/C2a/D1a） | `AUTHORIZED / DRAFTED / P0_ACCEPTED / P1_AUTHORIZED`；只授权文本修订，P1 另行由 owner 授权创建 identity；不产生执行权限 |
 | [`m8-draft010-p0-materials-20260913.md`](m8-draft010-p0-materials-20260913.md) | `draft-0.10` P0 材料说明 | `MATERIALS_PREPARED / P0_PENDING_INDEPENDENT_REVIEW / NOT_AUTHORIZED`；**不预置结论、不构成任何授权**；由起草方编写，受众为被指定的独立 reviewer `justtodo123` |
-| [`m8-draft010-p0-reviewer-worksheet-20260913.md`](m8-draft010-p0-reviewer-worksheet-20260913.md) | `draft-0.10` P0 独立复核工作单 | `REVIEW_WORKSHEET`；**不是门禁记录、不预置结论、不构成授权**；含留空裁定表，供 reviewer 逐项自测后自行裁定 |
+| [`m8-draft010-p0-reviewer-worksheet-20260913.md`](m8-draft010-p0-reviewer-worksheet-20260913.md) | `draft-0.10` P0 独立复核工作单 | `REVIEW_WORKSHEET`；**不是门禁记录、不预置结论、不构成授权**；含留空裁定表，供 reviewer 逐项自测后自行裁定；结果已由独立 reviewer 另行记录 |
 | [`external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json`](external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json) | `draft-0.9` P0 门禁记录 `-r02`（机器可读） | **`P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`**；由未参与起草与核验的独立 reviewer 接受；仅技术文字 |
 | [`external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json`](external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json) | `draft-0.9` P1 门禁记录 `-r02`（机器可读） | **`AUTHORIZED`**；前驱为 P0 `-r02`；仅授权创建 identity |
 | [`external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json`](external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json) | `draft-0.9` experiment identity（机器可读） | 已授权创建（P1 `-r02`）；不构成 binding 或执行授权 |
@@ -217,7 +219,7 @@ M8 仍为 `BLOCKED / NOT_STARTED`。
 | C（排序冲突） | **C2a** | 第 168/346 行改为 `order=key(ordinal)` 的 object 数组；**不改** `order=value` 定义（29 个字段在用） |
 | D（行尾） | **D1a** | **只**锁定 `draft-0.9`/`draft-0.10` 为 LF 并重算其 5 条记录；**否决 D1b**（会重算已冻结的 `draft-0.5` 记录） |
 
-授权记录状态为 `AUTHORIZED / DRAFTED / PENDING_P0_REVIEW`，并明确声明：它**只**授权文本修订，
+历史修订授权记录状态为 `AUTHORIZED / DRAFTED / PENDING_P0_REVIEW`，并明确声明：它**只**授权文本修订，
 **不**产生执行权限、**不**解除任何执行禁令、**不**预告 P0 会通过；`draft-0.10` 的 P0 仍须由未参与起草者
 独立审查。其全部引用（行号、基数、摘要、记录计数）由 `tools/m8_verify_authorization_claims.py`（22 项）逐项核验。
 
