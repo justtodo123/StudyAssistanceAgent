@@ -32,4 +32,9 @@ for name,needle in [('ID','- `ID`：'),('SCHEMA_ID','- `SCHEMA_ID`：'),('TECH_G
 def block(text,start,end): return text.split(start,1)[1].split(end,1)[0]
 ck('frozen status map section',block(t,'`sa.m8.status-map.v1.payload` exact fields：','## 9. Lifecycle')==block(t10,'`sa.m8.status-map.v1.payload` exact fields：','## 9. Lifecycle'))
 ck('frozen gate order','P0→P1→P2→P3→P4→P5→P6→P7→P7A→P8→P9' in t)
-ck('version header draft011','文档版本：`draft-0.11`' in t);b=P11.read_bytes();ck('LF only',b'\r\n' not in b);ck('one terminal LF',b.endswith(b'\n') and not b.endswith(b'\n\n'));ck('no successor gate/artifact',not any((R/'external-gates').rglob('*draft011*')) and not any((R/'external-artifacts').rglob('*draft011*')));print('ALL PASS' if not bad else f'{len(bad)} FAIL');sys.exit(bool(bad))
+ck('version header draft011','文档版本：`draft-0.11`' in t);b=P11.read_bytes();ck('LF only',b'\r\n' not in b);ck('one terminal LF',b.endswith(b'\n') and not b.endswith(b'\n\n'));gates=list((R/'external-gates').rglob('*draft011*.json')); artifacts=list((R/'external-artifacts').rglob('*draft011*'))
+if gates:
+ ck('post-review successor has only P0',len(gates)==1 and '/p0/' in gates[0].as_posix() and 'draft011' in gates[0].name,str([q.as_posix() for q in gates]))
+else:
+ ck('pre-review successor has no gate',True)
+ck('no successor artifact before P1',not artifacts,str([q.as_posix() for q in artifacts]));print('ALL PASS' if not bad else f'{len(bad)} FAIL');sys.exit(bool(bad))
