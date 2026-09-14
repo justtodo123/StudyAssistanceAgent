@@ -10,6 +10,7 @@ tools/
 ├── run_evaluation.py      # ★ 统一 RAG 评测入口
 ├── start_local.py         # 一键启动工作台并做 /health 检查
 ├── source_inventory.py    # 外部资料只读盘点（不复制、不解析全文、不建索引）
+├── m8_prepare_p2_draft011.py # 校验并在仓库外生成 draft-0.11 P2 binding 候选；不签发 P2
 ├── run_m7_benchmark.py    # M7 1k/3k disposable source-local hash smoke（不构成 exit）
 ├── run_m7_frozen_benchmark.py # M7-3 冻结 1k/3k BGE 协议（20+200 查询，FULL 独立进程 5+20）
 ├── profile_m7_search.py   # M7 3k search stage profile（非正式 exit 证据）
@@ -116,6 +117,20 @@ crawler 提供 fetch、clean、convert、dedup 和 pipeline 能力，依赖单�
   在线 smoke 仅 `workflow_dispatch` + `crawler_online_smoke=true`；
 - crawler 的存在不代表 M7 的持久化源注册、同步、删除传播或多源隔离完成；这些能力后来在 M7 基础设施范围内完成，crawler 仍不自动注册 Source。
 
+
+## m8_prepare_p2_draft011.py — draft-0.11 P2 binding 候选准备
+
+读取已提交的 protocol、P1、identity 及最新 parent 只读测量，在仓库外生成 candidate-only parent/repository
+binding。脚本要求仓库干净，验证摘要、P1 前驱、物理身份形状及五种 publication purpose；不会在
+`docs/plans/references` 下写 canonical binding 或 P2 gate。
+
+```bash
+python tools/m8_prepare_p2_draft011.py \
+  "D:/面试实习/draft011-parent-validation-final.json" \
+  "D:/面试实习/draft011-p2-candidates"
+```
+
+输出仅供 owner 作 P2 决策前核验；不得把仓库外候选当作已冻结 binding 或 `AUTHORIZED / request-p3`。
 
 ## source_inventory.py — 外部资料只读盘点
 
