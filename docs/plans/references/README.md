@@ -98,6 +98,9 @@
 | [`m8-minimal-1k-v3-s0-review-materials-20260914.md`](m8-minimal-1k-v3-s0-review-materials-20260914.md) | v3 独立 S0 审查材料 | 冻结 object commit、五个对象摘要与 fixture-tree-v1；不预置 reviewer 或 verdict |
 | [`m8-minimal-1k-v3-s0-reviewer-worksheet-20260914.md`](m8-minimal-1k-v3-s0-reviewer-worksheet-20260914.md) | v3 独立 S0 reviewer 工作单 | `VERDICT_BLANK / NOT_A_DECISION`；由独立 reviewer 自行填写 |
 | [`m8-minimal-1k-v3-s0-independent-audit-20260915.md`](m8-minimal-1k-v3-s0-independent-audit-20260915.md) | v3 独立 S0 审查裁定 | `PROTOCOL_REJECTED / stop`；fixture-tree 摘要不匹配，JSONL canonicalization 未机械强制 |
+| [`m8-minimal-1k-v3-fixture-tree-correction-20260915-r01.md`](m8-minimal-1k-v3-fixture-tree-correction-20260915-r01.md) | v3 fixture-tree 摘要并行更正记录 | 两条独立读取路径证明 reviewer tree 与 reviewed commit 一致；旧材料摘要记录错误，旧拒绝不改写 |
+| [`m8-minimal-1k-v3-s0-review-materials-20260915-r01.md`](m8-minimal-1k-v3-s0-review-materials-20260915-r01.md) | v3 JSONL 修订后独立 S0 复审材料 r01 | reviewed object `1ccefe1...`；5 个持久图 + 20 个 fail-closed mutation；不授权 S1 |
+| [`m8-minimal-1k-v3-s0-reviewer-worksheet-20260915-r01.md`](m8-minimal-1k-v3-s0-reviewer-worksheet-20260915-r01.md) | v3 独立 S0 复审工作单 r01 | `VERDICT_BLANK / NOT_A_DECISION`；聚焦两个 v3 finding 与新增 fail-open |
 | [`external-artifacts/text-audits/p3-audit-20260914-external-reviewer-01.json`](external-artifacts/text-audits/p3-audit-20260914-external-reviewer-01.json) | canonical P3 text-audit | `REJECTED`；14 个 finding ID；绑定冻结 protocol 与 repository binding |
 | [`external-gates/p3/p3-m8-active-execution-draft011-940ecec4-r01.json`](external-gates/p3/p3-m8-active-execution-draft011-940ecec4-r01.json) | canonical P3 gate | `REJECTED / stop`；actor `external-reviewer-01`；不得 P4 |
 | [`m8-active-execution-protocol-draft-0.10-authorization-20260913.md`](m8-active-execution-protocol-draft-0.10-authorization-20260913.md) | `draft-0.10` 修订授权（A1/B1/C2a/D1a） | `AUTHORIZED / DRAFTED / P0_ACCEPTED / P1_AUTHORIZED`；只授权文本修订，P1 另行由 owner 授权创建 identity；不产生执行权限 |
