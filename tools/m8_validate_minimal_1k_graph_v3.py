@@ -142,7 +142,11 @@ class Validator:
             data = path.read_bytes()
             self.check(item.get("sha256") == sha(data), f"manifest: digest {item.get('path')}")
             self.check(item.get("byte_count") == len(data), f"manifest: bytes {item.get('path')}")
-            count = jsonl_count(data) if path.suffix == ".jsonl" else item.get("record_count")
+            try:
+                count = jsonl_count(data) if path.suffix == ".jsonl" else item.get("record_count")
+            except Exception as exc:
+                self.errors.append(f"manifest: invalid JSONL {item.get('path')}: {exc}")
+                continue
             self.check(item.get("record_count") == count, f"manifest: records {item.get('path')}")
 
     def validate_events_and_run(self) -> bool:
