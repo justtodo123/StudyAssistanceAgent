@@ -105,6 +105,7 @@
 | [`m8-minimal-1k-v3-s0-review-materials-20260915-r02.md`](m8-minimal-1k-v3-s0-review-materials-20260915-r02.md) | v3 独立 S0 复审材料 r02 | 修复 observer ledger 非空与最终 LF；reviewed object `df78c11...`；不授权 S1 |
 | [`m8-minimal-1k-v3-s0-reviewer-worksheet-20260915-r02.md`](m8-minimal-1k-v3-s0-reviewer-worksheet-20260915-r02.md) | v3 独立 S0 复审工作单 r02 | `VERDICT_BLANK / NOT_A_DECISION`；聚焦 r01 observer finding 与回归验证 |
 | [`m8-minimal-1k-v3-s0-rereview-audit-20260915-r02.md`](m8-minimal-1k-v3-s0-rereview-audit-20260915-r02.md) | v3 独立 S0 复审裁定 r02 | `PROTOCOL_REJECTED / stop`；validator 摘要冻结错误，新增 harness mutation 未同步证据链 |
+| [`m8-reviewer-fixer-two-stage-decision-20260915.md`](m8-reviewer-fixer-two-stage-decision-20260915.md) | M8 Reviewer-Fixer 双阶段审查模式决定 | 下一轮起 Reviewer A 可批量修复并自查但不得终审；Reviewer B 只读独立裁定；不签发 S1 |
 | [`external-artifacts/text-audits/p3-audit-20260914-external-reviewer-01.json`](external-artifacts/text-audits/p3-audit-20260914-external-reviewer-01.json) | canonical P3 text-audit | `REJECTED`；14 个 finding ID；绑定冻结 protocol 与 repository binding |
 | [`external-gates/p3/p3-m8-active-execution-draft011-940ecec4-r01.json`](external-gates/p3/p3-m8-active-execution-draft011-940ecec4-r01.json) | canonical P3 gate | `REJECTED / stop`；actor `external-reviewer-01`；不得 P4 |
 | [`m8-active-execution-protocol-draft-0.10-authorization-20260913.md`](m8-active-execution-protocol-draft-0.10-authorization-20260913.md) | `draft-0.10` 修订授权（A1/B1/C2a/D1a） | `AUTHORIZED / DRAFTED / P0_ACCEPTED / P1_AUTHORIZED`；只授权文本修订，P1 另行由 owner 授权创建 identity；不产生执行权限 |
