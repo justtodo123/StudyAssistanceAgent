@@ -70,6 +70,8 @@ def main() -> int:
         ("observer-summary", mutate_json("artifacts/run-report.json", lambda o: o["payload"]["observers"]["network"].__setitem__("event_count", 99))),
         ("event-sequence", lambda root: (root / "events/network.jsonl").write_bytes(b'{"detail":"none","kind":"observer-start","sequence":1,"status":"PASS"}\n{"detail":"none","kind":"observer-stop","sequence":2,"status":"PASS"}\n')),
         ("noncanonical-event", lambda root: (root / "events/network.jsonl").write_bytes(b'{"status":"PASS","sequence":0,"kind":"observer-start","detail":"none"}\n{"detail":"none","kind":"observer-stop","sequence":1,"status":"PASS"}\n')),
+        ("missing-final-lf", lambda root: (root / "events/network.jsonl").write_bytes((root / "events/network.jsonl").read_bytes().rstrip(b"\n"))),
+        ("empty-observer", lambda root: (root / "events/network.jsonl").write_bytes(b"")),
         ("noncanonical-input", lambda root: (root / "input/chunks.jsonl").write_bytes(b'{"chunk_id": "m8-v3-00000", "owner_id":"owner-00","source_id":"source-00","text":"synthetic chunk 00000"}\n{"chunk_id":"m8-v3-00001","owner_id":"owner-00","source_id":"source-00","text":"synthetic chunk 00001"}\n')),
         ("failure-as-success", mutate_json("artifacts/s2.json", lambda o: (o["payload"].__setitem__("decision", "EVIDENCE_READY"), o["payload"].__setitem__("allowed_next_action", "request-s3")))),
         ("missing-artifact", lambda root: (root / "artifacts/s3.json").rename(root / "s3.missing")),

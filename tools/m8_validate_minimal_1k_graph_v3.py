@@ -181,6 +181,7 @@ class Validator:
             self.check(summary.get("sha256") == sha(data), f"observer {name}: digest")
             self.check(summary.get("byte_count") == len(data), f"observer {name}: bytes")
             try:
+                self.check(bool(data) and data.endswith(b"\n"), f"observer {name}: JSONL must be non-empty and LF terminated")
                 events = []
                 for line in data.splitlines():
                     item = json.loads(line)
