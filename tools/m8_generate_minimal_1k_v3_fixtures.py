@@ -79,9 +79,9 @@ def graph(name: str, failure: str | None) -> None:
 
     members = []
     for filename, records, body in [
-        ("chunks.jsonl", 2, b'{"chunk_id":"fixture-000"}\n{"chunk_id":"fixture-001"}\n'),
-        ("queries.jsonl", 2, b'{"query_id":"fixture-q00"}\n{"query_id":"fixture-q01"}\n'),
-        ("gold.jsonl", 2, b'{"query_id":"fixture-q00","gold":["fixture-000"]}\n{"query_id":"fixture-q01","gold":[]}\n'),
+        ("chunks.jsonl", 2, canonical({"chunk_id":"fixture-000"}) + canonical({"chunk_id":"fixture-001"})),
+        ("queries.jsonl", 2, canonical({"query_id":"fixture-q00"}) + canonical({"query_id":"fixture-q01"})),
+        ("gold.jsonl", 2, canonical({"query_id":"fixture-q00","gold":["fixture-000"]}) + canonical({"query_id":"fixture-q01","gold":[]})),
     ]:
         target = graph_dir / "input" / filename
         target.parent.mkdir(parents=True, exist_ok=True)

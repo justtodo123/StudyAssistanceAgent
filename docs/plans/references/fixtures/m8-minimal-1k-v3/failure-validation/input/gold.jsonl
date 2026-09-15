@@ -1,2 +1,2 @@
-{"query_id":"fixture-q00","gold":["fixture-000"]}
-{"query_id":"fixture-q01","gold":[]}
+{"gold":["fixture-000"],"query_id":"fixture-q00"}
+{"gold":[],"query_id":"fixture-q01"}

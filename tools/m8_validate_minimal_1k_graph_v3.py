@@ -49,7 +49,9 @@ def jsonl_count(data: bytes) -> int:
         raise ValueError("JSONL must be non-empty and LF terminated")
     lines = data.splitlines()
     for line in lines:
-        json.loads(line)
+        obj = json.loads(line)
+        if line + b"\n" != canonical(obj):
+            raise ValueError("JSONL line is not canonical JSON")
     return len(lines)
 
 
@@ -175,7 +177,11 @@ class Validator:
             self.check(summary.get("sha256") == sha(data), f"observer {name}: digest")
             self.check(summary.get("byte_count") == len(data), f"observer {name}: bytes")
             try:
-                events = [json.loads(line) for line in data.splitlines()]
+                events = []
+                for line in data.splitlines():
+                    item = json.loads(line)
+                    self.check(line + b"\n" == canonical(item), f"observer {name}: non-canonical JSONL line")
+                    events.append(item)
             except Exception as exc:
                 self.errors.append(f"observer {name}: invalid JSONL {exc}")
                 continue

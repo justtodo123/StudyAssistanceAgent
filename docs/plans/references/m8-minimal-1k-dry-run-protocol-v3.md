@@ -137,7 +137,7 @@ S0 package 至少包含 `success`、`failure-cleanup`、`failure-observer`、`fa
 schema 错配、logical name 错、digest/count 错、非法 gate actor/decision/action、S2 缺 PASS validation/cleanup authority、
 observer summary 与 ledger 不一致、非法 event sequence/kind、失败事实伪装为成功、未知或缺失 artifact、路径 escape。
 
-当前冻结测试 harness 包含 5 个持久图和 18 个 fail-closed mutation；数量本身不是通过条件，独立 S0 应核对每个 mutation 对应的阻断类别与实际拒绝输出。
+当前修订测试 harness 包含 5 个持久图和 20 个 fail-closed mutation；其中新增 non-canonical event JSONL 与 input JSONL 两类负例。数量本身不是通过条件，独立 S0 应核对每个 mutation 对应的阻断类别与实际拒绝输出。
 
 负例副本不是治理记录，可在验证结束后由测试 harness 自行回收；冻结的 v1/v2 和 v3 正式材料不得改写。
 
