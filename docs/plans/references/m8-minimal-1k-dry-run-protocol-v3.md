@@ -18,8 +18,10 @@ S0 接受前不得创建真实 identity、实验根、venv、依赖环境或 1K 
 
 ## 2. 验证职责分层
 
-- JSON Schema：`schemas/m8-minimal-1k-artifacts-v3.schema.json`，只定义 envelope、REF、member 和 observer summary 的
-  字段形状、局部枚举及 closed primitive；它不声称能读取引用目标。
+- JSON Schema：`schemas/m8-minimal-1k-artifacts-v3.schema.json`，以 Draft 2020-12 声明 envelope、REF、member 和 observer
+  summary 的字段形状、局部枚举及 closed primitive。当前 graph validator 不调用通用 JSON Schema engine，而是机械读取 schema
+  的 envelope 声明，并由自身显式实现所有 role-specific primitive、payload 和跨文件检查；`$defs` 是发布给其他 Draft 2020-12
+  消费者的声明，不得把其存在表述为 validator 已执行完整 schema evaluation。
 - Graph validator：`tools/m8_validate_minimal_1k_graph_v3.py`，必须读取调用方指定的持久 artifact directory，解析真实文件，
   复算摘要、字节数、JSONL 记录数、事件聚合、角色映射和 gate authority。
 - Fixture generator：`tools/m8_generate_minimal_1k_v3_fixtures.py`，只生成微型 synthetic validator fixtures；不导入
@@ -79,7 +81,7 @@ SHA-256、CPython 精确版本、NumPy/LanceDB/PyArrow/psutil 精确版本、whe
 directory 的 canonical Windows 路径和 parent identity、observer 配置文件 bytes、允许写入根集合及 production/repository
 pre-inventory digest。
 
-Identity 的核心 workload 常量固定为：1000 chunks、512 dimensions、`float32` little-endian、L2、seed `20260914`、
+Identity 的核心 workload 常量固定为：1000 chunks、512 dimensions、`dtype=float32`、`byte_order=little-endian`、L2、seed `20260914`、
 `top_k=[1,3,5]`、两个固定 backend 和 generator `sa-m8-synthetic-unit-v3`。S0 fixture identity 只覆盖这些核心常量；它不能
 代替未来 S1 对机器环境与绝对路径的冻结。
 
@@ -117,8 +119,10 @@ Identity 的核心 workload 常量固定为：1000 chunks、512 dimensions、`fl
 
 ## 9. 成功图与合法失败图
 
-完整成功图要求：两个 backend status PASS、四类 observer PASS、cleanup `CLEANED`、validation 四项 check 全 true、最终
-validation `PASS`、S2 evidence ready、S3 accept。
+完整成功图要求：两个 backend status PASS，且每个 backend result 的 `input_manifest_sha256` 都等于 validator 从实际
+input-manifest bytes 复算的 SHA-256；四类 observer PASS、cleanup `CLEANED`、validation 四项 check 全 true、最终
+validation `PASS`、S2 evidence ready、S3 accept。`same_input` 只有在 input-manifest REF 完整匹配实际 bytes 且两个 backend
+都显式绑定该同一摘要时才为 true；任一 backend 缺失、错型或绑定其他摘要均为 false。
 
 合法失败图必须保留相同的完整九 artifact 集合和可解析引用，但按事实闭合：
 
@@ -137,7 +141,11 @@ S0 package 至少包含 `success`、`failure-cleanup`、`failure-observer`、`fa
 schema 错配、logical name 错、digest/count 错、非法 gate actor/decision/action、S2 缺 PASS validation/cleanup authority、
 observer summary 与 ledger 不一致、非法 event sequence/kind、失败事实伪装为成功、未知或缺失 artifact、路径 escape。
 
-当前修订测试 harness 包含 5 个持久图和 20 个 fail-closed mutation；其中新增 non-canonical event JSONL 与 input JSONL 两类负例。数量本身不是通过条件，独立 S0 应核对每个 mutation 对应的阻断类别与实际拒绝输出。
+当前修订测试 harness 包含 5 个持久图、22 个 fail-closed mutation 和 2 个独立 observer 边界敏感性证明；其中
+missing-final-LF 与 empty-observer 在重密封摘要及下游 REF 后，正式 validator 必须精确命中相应 final-LF 或 nonempty
+约束；empty-observer 还会精确命中独立的 summary minimum 与 lifecycle 约束。两项 mutation 均不得由 stale digest/REF
+错误替代；byte_count/event_count minimum 仅允许作为 empty-observer 的预定义独立因果错误。不得以其他错误
+冒充通过。数量本身不是通过条件，独立 S0 应核对每个 mutation 对应的阻断类别与实际拒绝输出。
 
 负例副本不是治理记录，可在验证结束后由测试 harness 自行回收；冻结的 v1/v2 和 v3 正式材料不得改写。
 

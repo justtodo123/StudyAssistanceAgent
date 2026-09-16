@@ -13,7 +13,9 @@ tools/
 ├── m8_prepare_p2_draft011.py # 校验并在仓库外生成 draft-0.11 P2 binding 候选；不签发 P2
 ├── m8_generate_minimal_1k_v3_fixtures.py # 生成 v3 validator 微型持久 fixture；不是 1K evidence
 ├── m8_validate_minimal_1k_graph_v3.py # 读取真实 artifact directory，校验跨文件证据图
-├── m8_test_minimal_1k_graph_v3.py # 重放 5 个持久图与 fail-closed mutation 矩阵
+├── m8_test_minimal_1k_graph_v3.py # 在临时目录重放 5 个图、重密封 mutation 与敏感性证明
+├── m8_freeze_minimal_1k_v3_review.py # 从明确 commit 的 Git object bytes 生成 canonical 冻结摘要
+├── m8_test_freeze_minimal_1k_v3_review.py # 冻结工具确定性、输入拒绝和 worktree divergence 自测
 ├── run_m7_benchmark.py    # M7 1k/3k disposable source-local hash smoke（不构成 exit）
 ├── run_m7_frozen_benchmark.py # M7-3 冻结 1k/3k BGE 协议（20+200 查询，FULL 独立进程 5+20）
 ├── profile_m7_search.py   # M7 3k search stage profile（非正式 exit 证据）
@@ -126,16 +128,47 @@ crawler 提供 fetch、clean、convert、dedup 和 pipeline 能力，依赖单�
 v3 把跨 artifact 的 REF 解析、摘要/字节/JSONL 计数复算、observer ledger 聚合和 S0→S3 authority 映射交给读取真实目录的实现级 validator。仓库内 fixture 只测试 validator，不导入 LanceDB、不生成真实 1K 输入，也不构成 S1/S2。
 
 ```bash
-# 重建 5 个持久微型图
-python tools/m8_generate_minimal_1k_v3_fixtures.py
+# 在明确的 disposable 空目录生成 5 个微型图，不改 committed fixture
+python tools/m8_generate_minimal_1k_v3_fixtures.py --output-root <empty-output-dir>
+
+# 仅在明确选择时，经临时 staging 后刷新 committed fixture
+python tools/m8_generate_minimal_1k_v3_fixtures.py --replace-tracked
 
 # 校验单个成功或合法失败图
 python tools/m8_validate_minimal_1k_graph_v3.py \
   docs/plans/references/fixtures/m8-minimal-1k-v3/success
 
-# 重放 5 个图及 fail-closed mutation 矩阵
+# 在 disposable tree 重放 5 个图、22 个 fail-closed mutation 和边界敏感性证明
 python tools/m8_test_minimal_1k_graph_v3.py
+
+# 对明确仓库中的完整 commit SHA，从 Git objects 生成确定性 canonical freeze
+python tools/m8_freeze_minimal_1k_v3_review.py \
+  --commit <full-40-hex-commit> \
+  --repo <absolute-repository-path> \
+  --output <freeze.json>
+
+# 非标准 Git 安装可显式提供经检查的绝对 executable；可选比较工作区 bytes
+python tools/m8_freeze_minimal_1k_v3_review.py \
+  --commit <full-40-hex-commit> \
+  --repo <absolute-repository-path> \
+  --git-executable <absolute-git-executable> \
+  --compare-worktree \
+  --output <freeze.json>
+python tools/m8_test_freeze_minimal_1k_v3_review.py
 ```
+
+freeze 工具拒绝相对仓库、缩写/不存在/非 commit 对象、不可信 Git executable、缺失或非 blob path、路径逃逸和重复逻辑路径。
+Git stdout/stderr 采用流式固定上限；单个 Git blob、累计 99-file bytes、worktree file 与 fixture traversal 也有固定 safety bound；
+超限时受控失败且不发布 partial artifact。每个 `cat-file` 返回值还会按 Git blob framing 独立重算 SHA-1 并绑定 `ls-tree` OID；
+worktree comparison 禁用仓库本地 `core.fsmonitor`，且 freeze output 必须位于被检查仓库之外，避免发布动作使 `MATCH` 立即失效。
+摘要中的 `source_commit` 固定为调用方选择的完整 commit；排序 inventory 固定包含 9 个非 fixture 文件和 90 个 fixture 文件，
+合计 99 个 candidate path。工具逐文件输出 SHA-256、bytes、LF 与 Git blob OID，并按 `fixture-tree-v1` 输出 fixture tree 摘要。
+`worktree_comparison.status` 在未请求比较时为 `NOT_REQUESTED`，完整仓库 HEAD、clean status 与 99 个 candidate path
+都一致时为 `MATCH`；否则为 `DIVERGENT`。除具体 candidate path 外，`divergent_paths` 可包含
+`<repository-head>`（当前 HEAD 不是 source commit）或 `<repository-status>`（仓库存在任何 tracked/untracked 状态）。
+该 repository-wide 比较不会覆盖或替代 Git object 摘要；指定 `--output` 时，divergence 返回非零且不发布或覆盖目标文件。
+发布的 Draft 2020-12 schema 提供通用 envelope/局部定义；当前 graph validator 读取其中的 envelope 声明，并自行机械执行
+role-specific primitive 与跨文件检查，不宣称调用了通用 JSON Schema engine。
 
 协议见 [`m8-minimal-1k-dry-run-protocol-v3.md`](../docs/plans/references/m8-minimal-1k-dry-run-protocol-v3.md)。独立 S0 接受和 owner S1 授权前，禁止创建真实实验环境、安装 LanceDB 或执行 1K dry-run。
 

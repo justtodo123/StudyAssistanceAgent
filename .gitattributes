@@ -21,3 +21,14 @@ docs/plans/references/m8-active-execution-protocol-draft-0.10.md text eol=lf
 # draft-0.11 successor protocol: A+B+C P3-blocker revision authorized by
 # m8-active-execution-protocol-draft-0.11-authorization-20260914.md.
 docs/plans/references/m8-active-execution-protocol-draft-0.11.md text eol=lf
+
+# M8 v3 validator fixtures and review-freeze tooling hash exact bytes. Keep the
+# candidate and generated evidence stable across Windows and POSIX checkouts.
+docs/plans/references/m8-minimal-1k-dry-run-protocol-v3.md text eol=lf
+docs/plans/references/schemas/m8-minimal-1k-artifacts-v3.schema.json text eol=lf
+.gitattributes text eol=lf
+docs/plans/references/fixtures/m8-minimal-1k-v3/**/*.json text eol=lf
+docs/plans/references/fixtures/m8-minimal-1k-v3/**/*.jsonl text eol=lf
+docs/plans/references/fixtures/m8-minimal-1k-v3/**/vectors.bin -text
+tools/m8_*minimal_1k*v3*.py text eol=lf
+tools/README.md text eol=lf

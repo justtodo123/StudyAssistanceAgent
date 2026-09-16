@@ -1,1 +1,366 @@
-{"$id":"sa.m8.minimal.artifacts.v3","$schema":"https://json-schema.org/draft/2020-12/schema","$defs":{"artifact_ref":{"additionalProperties":false,"properties":{"byte_count":{"minimum":1,"type":"integer"},"logical_name":{"pattern":"^minimal-1k/[a-z0-9-]+/(identity|input-manifest|run-report|validation-report|cleanup-receipt|s0|s1|s2|s3)\\.json$","type":"string"},"role":{"enum":["identity","input-manifest","run-report","validation-report","cleanup-receipt","s0","s1","s2","s3"]},"schema_id":{"pattern":"^sa\\.m8\\.minimal\\.[a-z-]+\\.v3$","type":"string"},"sha256":{"pattern":"^[0-9a-f]{64}$","type":"string"}},"required":["logical_name","role","schema_id","sha256","byte_count"],"type":"object"},"event_summary":{"additionalProperties":false,"properties":{"byte_count":{"minimum":1,"type":"integer"},"event_count":{"minimum":2,"type":"integer"},"path":{"pattern":"^events/(network|write|process|redaction)\\.jsonl$","type":"string"},"sha256":{"pattern":"^[0-9a-f]{64}$","type":"string"},"status":{"enum":["PASS","FAIL"]}},"required":["path","sha256","byte_count","event_count","status"],"type":"object"},"member":{"additionalProperties":false,"properties":{"byte_count":{"minimum":1,"type":"integer"},"path":{"pattern":"^input/(chunks\\.jsonl|vectors\\.bin|queries\\.jsonl|gold\\.jsonl)$","type":"string"},"record_count":{"minimum":1,"type":"integer"},"sha256":{"pattern":"^[0-9a-f]{64}$","type":"string"}},"required":["path","sha256","byte_count","record_count"],"type":"object"}},"additionalProperties":false,"properties":{"canonicalization_id":{"const":"sa-json-c14n-v1"},"logical_name":{"pattern":"^minimal-1k/[a-z0-9-]+/(identity|input-manifest|run-report|validation-report|cleanup-receipt|s0|s1|s2|s3)\\.json$","type":"string"},"payload":{"type":"object"},"schema_id":{"enum":["sa.m8.minimal.experiment-identity.v3","sa.m8.minimal.input-manifest.v3","sa.m8.minimal.run-report.v3","sa.m8.minimal.validation-report.v3","sa.m8.minimal.cleanup-receipt.v3","sa.m8.minimal.decision-record.v3"]},"schema_version":{"const":3}},"required":["canonicalization_id","logical_name","payload","schema_id","schema_version"],"type":"object"}
+{
+  "$id": "sa.m8.minimal.artifacts.v3",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "artifact_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logical_name", "role", "schema_id", "sha256", "byte_count"],
+      "properties": {
+        "logical_name": {"$ref": "#/$defs/logical_name"},
+        "role": {"enum": ["identity", "input-manifest", "run-report", "validation-report", "cleanup-receipt", "s0", "s1", "s2", "s3"]},
+        "schema_id": {"$ref": "#/$defs/schema_id"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "byte_count": {"type": "integer", "minimum": 1}
+      },
+      "allOf": [
+        {"$ref": "#/$defs/identity_ref_branch"},
+        {"$ref": "#/$defs/input_manifest_ref_branch"},
+        {"$ref": "#/$defs/run_report_ref_branch"},
+        {"$ref": "#/$defs/validation_report_ref_branch"},
+        {"$ref": "#/$defs/cleanup_receipt_ref_branch"},
+        {"$ref": "#/$defs/s0_ref_branch"},
+        {"$ref": "#/$defs/s1_ref_branch"},
+        {"$ref": "#/$defs/s2_ref_branch"},
+        {"$ref": "#/$defs/s3_ref_branch"}
+      ]
+    },
+    "backend_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["backend", "input_manifest_sha256", "mode", "status"],
+      "properties": {
+        "backend": {"enum": ["sqlite-linear-exact", "lancedb-embedded-exact-flat"]},
+        "input_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "mode": {"enum": ["linear-exact", "embedded-exact-flat-no-ann"]},
+        "status": {"enum": ["PASS", "FAIL"]}
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cleanup", "observer", "runtime", "same_input"],
+      "properties": {
+        "cleanup": {"type": "boolean"},
+        "observer": {"type": "boolean"},
+        "runtime": {"type": "boolean"},
+        "same_input": {"type": "boolean"}
+      }
+    },
+    "cleanup_receipt_branch": {
+      "if": {"required": ["logical_name"], "properties": {"logical_name": {"pattern": "/cleanup-receipt\\.json$"}}},
+      "then": {"properties": {"schema_id": {"const": "sa.m8.minimal.cleanup-receipt.v3"}, "payload": {"$ref": "#/$defs/cleanup_receipt_payload"}}}
+    },
+    "cleanup_receipt_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["after_count", "experiment_id", "failure_code", "status", "temporary_root_exists"],
+      "properties": {
+        "after_count": {"type": "integer", "minimum": 0},
+        "experiment_id": {"$ref": "#/$defs/experiment_id"},
+        "failure_code": {"type": "string", "minLength": 1},
+        "status": {"enum": ["CLEANED", "FAIL"]},
+        "temporary_root_exists": {"type": "boolean"}
+      },
+      "allOf": [
+        {
+          "if": {"required": ["status"], "properties": {"status": {"const": "CLEANED"}}},
+          "then": {"properties": {"after_count": {"const": 0}, "failure_code": {"const": "none"}, "temporary_root_exists": {"const": false}}},
+          "else": {"properties": {"after_count": {"minimum": 1}, "failure_code": {"not": {"const": "none"}}, "temporary_root_exists": {"const": true}}}
+        }
+      ]
+    },
+    "cleanup_receipt_ref_branch": {
+      "if": {"required": ["role"], "properties": {"role": {"const": "cleanup-receipt"}}},
+      "then": {"properties": {"logical_name": {"pattern": "/cleanup-receipt\\.json$"}, "schema_id": {"const": "sa.m8.minimal.cleanup-receipt.v3"}}}
+    },
+    "decision_pair_s0": {
+      "if": {"required": ["decision"], "properties": {"decision": {"const": "PROTOCOL_ACCEPTED"}}},
+      "then": {"properties": {"allowed_next_action": {"const": "request-s1"}}},
+      "else": {"properties": {"decision": {"const": "PROTOCOL_REJECTED"}, "allowed_next_action": {"const": "stop"}}}
+    },
+    "decision_pair_s1": {
+      "if": {"required": ["decision"], "properties": {"decision": {"const": "DRY_RUN_AUTHORIZED"}}},
+      "then": {"properties": {"allowed_next_action": {"const": "run-s2"}}},
+      "else": {"properties": {"decision": {"const": "NOT_AUTHORIZED"}, "allowed_next_action": {"const": "stop"}}}
+    },
+    "decision_pair_s2": {
+      "if": {"required": ["decision"], "properties": {"decision": {"const": "EVIDENCE_READY"}}},
+      "then": {"properties": {"allowed_next_action": {"const": "request-s3"}}},
+      "else": {"properties": {"decision": {"const": "DRY_RUN_FAILED"}, "allowed_next_action": {"const": "stop"}}}
+    },
+    "decision_pair_s3": {
+      "if": {"required": ["decision"], "properties": {"decision": {"const": "ACCEPT_1K_EVIDENCE"}}},
+      "then": {"properties": {"allowed_next_action": {"const": "stop"}}},
+      "else": {"properties": {"decision": {"const": "REJECT_1K_EVIDENCE"}, "allowed_next_action": {"const": "stop"}}}
+    },
+    "event_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "byte_count", "event_count", "status"],
+      "properties": {
+        "path": {"pattern": "^events/(network|write|process|redaction)\\.jsonl$", "type": "string"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "byte_count": {"type": "integer", "minimum": 1},
+        "event_count": {"type": "integer", "minimum": 2},
+        "status": {"enum": ["PASS", "FAIL"]}
+      }
+    },
+    "experiment_id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+    "gate_payload_base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actor_role", "allowed_next_action", "decision", "experiment_id", "gate_id", "read_refs"],
+      "properties": {
+        "actor_role": {"type": "string"},
+        "allowed_next_action": {"type": "string"},
+        "decision": {"type": "string"},
+        "experiment_id": {"$ref": "#/$defs/experiment_id"},
+        "gate_id": {"enum": ["S0", "S1", "S2", "S3"]},
+        "read_refs": {"type": "array"}
+      }
+    },
+    "identity_branch": {
+      "if": {"required": ["logical_name"], "properties": {"logical_name": {"pattern": "/identity\\.json$"}}},
+      "then": {"properties": {"schema_id": {"const": "sa.m8.minimal.experiment-identity.v3"}, "payload": {"$ref": "#/$defs/identity_payload"}}}
+    },
+    "identity_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["backends", "byte_order", "chunk_count", "dimension", "dtype", "experiment_id", "generator_algorithm", "normalization", "protocol_sha256", "seed", "synthetic_only", "top_k"],
+      "properties": {
+        "backends": {"type": "array", "prefixItems": [{"const": "sqlite-linear-exact"}, {"const": "lancedb-embedded-exact-flat"}], "items": false, "minItems": 2, "maxItems": 2},
+        "byte_order": {"const": "little-endian"},
+        "chunk_count": {"const": 1000},
+        "dimension": {"const": 512},
+        "dtype": {"const": "float32"},
+        "experiment_id": {"$ref": "#/$defs/experiment_id"},
+        "generator_algorithm": {"const": "sa-m8-synthetic-unit-v3"},
+        "normalization": {"const": "l2"},
+        "protocol_sha256": {"$ref": "#/$defs/sha256"},
+        "seed": {"const": 20260914},
+        "synthetic_only": {"const": true},
+        "top_k": {"type": "array", "prefixItems": [{"const": 1}, {"const": 3}, {"const": 5}], "items": false, "minItems": 3, "maxItems": 3}
+      }
+    },
+    "identity_ref_branch": {
+      "if": {"required": ["role"], "properties": {"role": {"const": "identity"}}},
+      "then": {"properties": {"logical_name": {"pattern": "/identity\\.json$"}, "schema_id": {"const": "sa.m8.minimal.experiment-identity.v3"}}}
+    },
+    "input_manifest_branch": {
+      "if": {"required": ["logical_name"], "properties": {"logical_name": {"pattern": "/input-manifest\\.json$"}}},
+      "then": {"properties": {"schema_id": {"const": "sa.m8.minimal.input-manifest.v3"}, "payload": {"$ref": "#/$defs/input_manifest_payload"}}}
+    },
+    "input_manifest_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["experiment_id", "identity_ref", "members", "synthetic_fixture_only"],
+      "properties": {
+        "experiment_id": {"$ref": "#/$defs/experiment_id"},
+        "identity_ref": {"allOf": [{"$ref": "#/$defs/artifact_ref"}, {"properties": {"role": {"const": "identity"}}}]},
+        "members": {
+          "type": "array",
+          "prefixItems": [
+            {"allOf": [{"$ref": "#/$defs/member"}, {"properties": {"path": {"const": "input/chunks.jsonl"}}}]},
+            {"allOf": [{"$ref": "#/$defs/member"}, {"properties": {"path": {"const": "input/gold.jsonl"}}}]},
+            {"allOf": [{"$ref": "#/$defs/member"}, {"properties": {"path": {"const": "input/queries.jsonl"}}}]},
+            {"allOf": [{"$ref": "#/$defs/member"}, {"properties": {"path": {"const": "input/vectors.bin"}}}]}
+          ],
+          "items": false,
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "synthetic_fixture_only": {"type": "boolean"}
+      }
+    },
+    "input_manifest_ref_branch": {
+      "if": {"required": ["role"], "properties": {"role": {"const": "input-manifest"}}},
+      "then": {"properties": {"logical_name": {"pattern": "/input-manifest\\.json$"}, "schema_id": {"const": "sa.m8.minimal.input-manifest.v3"}}}
+    },
+    "logical_name": {"type": "string", "pattern": "^minimal-1k/[a-z0-9-]+/(identity|input-manifest|run-report|validation-report|cleanup-receipt|s0|s1|s2|s3)\\.json$"},
+    "member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "byte_count", "record_count"],
+      "properties": {
+        "path": {"enum": ["input/chunks.jsonl", "input/gold.jsonl", "input/queries.jsonl", "input/vectors.bin"]},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "byte_count": {"type": "integer", "minimum": 1},
+        "record_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "observers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["network", "write", "process", "redaction"],
+      "properties": {
+        "network": {"allOf": [{"$ref": "#/$defs/event_summary"}, {"properties": {"path": {"const": "events/network.jsonl"}}}]},
+        "write": {"allOf": [{"$ref": "#/$defs/event_summary"}, {"properties": {"path": {"const": "events/write.jsonl"}}}]},
+        "process": {"allOf": [{"$ref": "#/$defs/event_summary"}, {"properties": {"path": {"const": "events/process.jsonl"}}}]},
+        "redaction": {"allOf": [{"$ref": "#/$defs/event_summary"}, {"properties": {"path": {"const": "events/redaction.jsonl"}}}]}
+      }
+    },
+    "run_report_branch": {
+      "if": {"required": ["logical_name"], "properties": {"logical_name": {"pattern": "/run-report\\.json$"}}},
+      "then": {"properties": {"schema_id": {"const": "sa.m8.minimal.run-report.v3"}, "payload": {"$ref": "#/$defs/run_report_payload"}}}
+    },
+    "run_report_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["backend_results", "experiment_id", "input_manifest_ref", "observers", "runtime_errors", "status"],
+      "properties": {
+        "backend_results": {
+          "type": "array",
+          "prefixItems": [
+            {"allOf": [{"$ref": "#/$defs/backend_result"}, {"properties": {"backend": {"const": "sqlite-linear-exact"}, "mode": {"const": "linear-exact"}}}]},
+            {"allOf": [{"$ref": "#/$defs/backend_result"}, {"properties": {"backend": {"const": "lancedb-embedded-exact-flat"}, "mode": {"const": "embedded-exact-flat-no-ann"}}}]}
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "experiment_id": {"$ref": "#/$defs/experiment_id"},
+        "input_manifest_ref": {"allOf": [{"$ref": "#/$defs/artifact_ref"}, {"properties": {"role": {"const": "input-manifest"}}}]},
+        "observers": {"$ref": "#/$defs/observers"},
+        "runtime_errors": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "status": {"enum": ["PASS", "FAIL"]}
+      },
+      "allOf": [
+        {
+          "if": {"required": ["status"], "properties": {"status": {"const": "PASS"}}},
+          "then": {
+            "properties": {
+              "backend_results": {"prefixItems": [{"properties": {"status": {"const": "PASS"}}}, {"properties": {"status": {"const": "PASS"}}}]},
+              "runtime_errors": {"maxItems": 0}
+            }
+          },
+          "else": {
+            "properties": {
+              "backend_results": {"contains": {"required": ["status"], "properties": {"status": {"const": "FAIL"}}}, "minContains": 1},
+              "runtime_errors": {"minItems": 1}
+            }
+          }
+        }
+      ]
+    },
+    "run_report_ref_branch": {
+      "if": {"required": ["role"], "properties": {"role": {"const": "run-report"}}},
+      "then": {"properties": {"logical_name": {"pattern": "/run-report\\.json$"}, "schema_id": {"const": "sa.m8.minimal.run-report.v3"}}}
+    },
+    "s0_branch": {
+      "if": {"required": ["logical_name"], "properties": {"logical_name": {"pattern": "/s0\\.json$"}}},
+      "then": {"properties": {"schema_id": {"const": "sa.m8.minimal.decision-record.v3"}, "payload": {"$ref": "#/$defs/s0_payload"}}}
+    },
+    "s0_payload": {
+      "allOf": [
+        {"$ref": "#/$defs/gate_payload_base"},
+        {"properties": {"actor_role": {"const": "independent-reviewer"}, "gate_id": {"const": "S0"}, "read_refs": {"maxItems": 0}}},
+        {"$ref": "#/$defs/decision_pair_s0"}
+      ]
+    },
+    "s0_ref_branch": {
+      "if": {"required": ["role"], "properties": {"role": {"const": "s0"}}},
+      "then": {"properties": {"logical_name": {"pattern": "/s0\\.json$"}, "schema_id": {"const": "sa.m8.minimal.decision-record.v3"}}}
+    },
+    "s1_branch": {
+      "if": {"required": ["logical_name"], "properties": {"logical_name": {"pattern": "/s1\\.json$"}}},
+      "then": {"properties": {"schema_id": {"const": "sa.m8.minimal.decision-record.v3"}, "payload": {"$ref": "#/$defs/s1_payload"}}}
+    },
+    "s1_payload": {
+      "allOf": [
+        {"$ref": "#/$defs/gate_payload_base"},
+        {"properties": {"actor_role": {"const": "owner"}, "gate_id": {"const": "S1"}, "read_refs": {"prefixItems": [{"allOf": [{"$ref": "#/$defs/artifact_ref"}, {"properties": {"role": {"const": "s0"}}}]}], "items": false, "minItems": 1, "maxItems": 1}}},
+        {"$ref": "#/$defs/decision_pair_s1"}
+      ]
+    },
+    "s1_ref_branch": {
+      "if": {"required": ["role"], "properties": {"role": {"const": "s1"}}},
+      "then": {"properties": {"logical_name": {"pattern": "/s1\\.json$"}, "schema_id": {"const": "sa.m8.minimal.decision-record.v3"}}}
+    },
+    "s2_branch": {
+      "if": {"required": ["logical_name"], "properties": {"logical_name": {"pattern": "/s2\\.json$"}}},
+      "then": {"properties": {"schema_id": {"const": "sa.m8.minimal.decision-record.v3"}, "payload": {"$ref": "#/$defs/s2_payload"}}}
+    },
+    "s2_payload": {
+      "allOf": [
+        {"$ref": "#/$defs/gate_payload_base"},
+        {"properties": {"actor_role": {"const": "executor"}, "gate_id": {"const": "S2"}, "read_refs": {"prefixItems": [
+          {"allOf": [{"$ref": "#/$defs/artifact_ref"}, {"properties": {"role": {"const": "s1"}}}]},
+          {"allOf": [{"$ref": "#/$defs/artifact_ref"}, {"properties": {"role": {"const": "run-report"}}}]},
+          {"allOf": [{"$ref": "#/$defs/artifact_ref"}, {"properties": {"role": {"const": "cleanup-receipt"}}}]},
+          {"allOf": [{"$ref": "#/$defs/artifact_ref"}, {"properties": {"role": {"const": "validation-report"}}}]}
+        ], "items": false, "minItems": 4, "maxItems": 4}}},
+        {"$ref": "#/$defs/decision_pair_s2"}
+      ]
+    },
+    "s2_ref_branch": {
+      "if": {"required": ["role"], "properties": {"role": {"const": "s2"}}},
+      "then": {"properties": {"logical_name": {"pattern": "/s2\\.json$"}, "schema_id": {"const": "sa.m8.minimal.decision-record.v3"}}}
+    },
+    "s3_branch": {
+      "if": {"required": ["logical_name"], "properties": {"logical_name": {"pattern": "/s3\\.json$"}}},
+      "then": {"properties": {"schema_id": {"const": "sa.m8.minimal.decision-record.v3"}, "payload": {"$ref": "#/$defs/s3_payload"}}}
+    },
+    "s3_payload": {
+      "allOf": [
+        {"$ref": "#/$defs/gate_payload_base"},
+        {"properties": {"actor_role": {"const": "independent-reviewer"}, "gate_id": {"const": "S3"}, "read_refs": {"prefixItems": [{"allOf": [{"$ref": "#/$defs/artifact_ref"}, {"properties": {"role": {"const": "s2"}}}]}], "items": false, "minItems": 1, "maxItems": 1}}},
+        {"$ref": "#/$defs/decision_pair_s3"}
+      ]
+    },
+    "s3_ref_branch": {
+      "if": {"required": ["role"], "properties": {"role": {"const": "s3"}}},
+      "then": {"properties": {"logical_name": {"pattern": "/s3\\.json$"}, "schema_id": {"const": "sa.m8.minimal.decision-record.v3"}}}
+    },
+    "schema_id": {"enum": ["sa.m8.minimal.experiment-identity.v3", "sa.m8.minimal.input-manifest.v3", "sa.m8.minimal.run-report.v3", "sa.m8.minimal.validation-report.v3", "sa.m8.minimal.cleanup-receipt.v3", "sa.m8.minimal.decision-record.v3"]},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "validation_report_branch": {
+      "if": {"required": ["logical_name"], "properties": {"logical_name": {"pattern": "/validation-report\\.json$"}}},
+      "then": {"properties": {"schema_id": {"const": "sa.m8.minimal.validation-report.v3"}, "payload": {"$ref": "#/$defs/validation_report_payload"}}}
+    },
+    "validation_report_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checks", "cleanup_receipt_ref", "experiment_id", "run_report_ref", "verdict"],
+      "properties": {
+        "checks": {"$ref": "#/$defs/checks"},
+        "cleanup_receipt_ref": {"allOf": [{"$ref": "#/$defs/artifact_ref"}, {"properties": {"role": {"const": "cleanup-receipt"}}}]},
+        "experiment_id": {"$ref": "#/$defs/experiment_id"},
+        "run_report_ref": {"allOf": [{"$ref": "#/$defs/artifact_ref"}, {"properties": {"role": {"const": "run-report"}}}]},
+        "verdict": {"enum": ["PASS", "FAIL"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"checks": {"properties": {"cleanup": {"const": true}, "observer": {"const": true}, "runtime": {"const": true}, "same_input": {"const": true}}}}},
+          "then": {"properties": {"verdict": {"const": "PASS"}}},
+          "else": {"properties": {"verdict": {"const": "FAIL"}}}
+        }
+      ]
+    },
+    "validation_report_ref_branch": {
+      "if": {"required": ["role"], "properties": {"role": {"const": "validation-report"}}},
+      "then": {"properties": {"logical_name": {"pattern": "/validation-report\\.json$"}, "schema_id": {"const": "sa.m8.minimal.validation-report.v3"}}}
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["canonicalization_id", "logical_name", "payload", "schema_id", "schema_version"],
+  "properties": {
+    "canonicalization_id": {"const": "sa-json-c14n-v1"},
+    "logical_name": {"type": "string", "pattern": "^minimal-1k/[a-z0-9-]+/(identity|input-manifest|run-report|validation-report|cleanup-receipt|s0|s1|s2|s3)\\.json$"},
+    "payload": {"type": "object"},
+    "schema_id": {"enum": ["sa.m8.minimal.experiment-identity.v3", "sa.m8.minimal.input-manifest.v3", "sa.m8.minimal.run-report.v3", "sa.m8.minimal.validation-report.v3", "sa.m8.minimal.cleanup-receipt.v3", "sa.m8.minimal.decision-record.v3"]},
+    "schema_version": {"const": 3}
+  },
+  "allOf": [
+    {"$ref": "#/$defs/identity_branch"},
+    {"$ref": "#/$defs/input_manifest_branch"},
+    {"$ref": "#/$defs/run_report_branch"},
+    {"$ref": "#/$defs/validation_report_branch"},
+    {"$ref": "#/$defs/cleanup_receipt_branch"},
+    {"$ref": "#/$defs/s0_branch"},
+    {"$ref": "#/$defs/s1_branch"},
+    {"$ref": "#/$defs/s2_branch"},
+    {"$ref": "#/$defs/s3_branch"}
+  ]
+}

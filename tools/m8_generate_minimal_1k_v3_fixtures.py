@@ -6,19 +6,31 @@ do not use LanceDB, and confer no S1/S2 authority.
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
+import shutil
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "docs/plans/references/fixtures/m8-minimal-1k-v3"
+DEFAULT_OUT = ROOT / "docs/plans/references/fixtures/m8-minimal-1k-v3"
 PROTOCOL = ROOT / "docs/plans/references/m8-minimal-1k-dry-run-protocol-v3.md"
 CANON = "sa-json-c14n-v1"
 SCHEMA_VERSION = 3
 
 
 def canonical(obj: object) -> bytes:
-    return (json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+    return (
+        json.dumps(
+            obj,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+        + "\n"
+    ).encode("utf-8")
 
 
 def digest(data: bytes) -> str:
@@ -55,18 +67,24 @@ def event(kind: str, sequence: int, status: str = "PASS", detail: str = "none") 
     return {"detail": detail, "kind": kind, "sequence": sequence, "status": status}
 
 
-def graph(name: str, failure: str | None) -> None:
+def graph(
+    output_root: Path,
+    name: str,
+    failure: str | None,
+    protocol_bytes: bytes,
+) -> None:
     exp = f"sa-m8-v3-fixture-{name}"
-    graph_dir = OUT / name
+    graph_dir = output_root / name
     evidence = graph_dir / "artifacts"
     event_dir = graph_dir / "events"
-    protocol_sha = digest(PROTOCOL.read_bytes()) if PROTOCOL.exists() else "0" * 64
+    protocol_sha = digest(protocol_bytes)
 
     identity = envelope(exp, "identity", "sa.m8.minimal.experiment-identity.v3", {
         "backends": ["sqlite-linear-exact", "lancedb-embedded-exact-flat"],
         "chunk_count": 1000,
         "dimension": 512,
         "dtype": "float32",
+        "byte_order": "little-endian",
         "experiment_id": exp,
         "generator_algorithm": "sa-m8-synthetic-unit-v3",
         "normalization": "l2",
@@ -78,18 +96,48 @@ def graph(name: str, failure: str | None) -> None:
     write_json(evidence / "identity.json", identity)
 
     members = []
-    for filename, records, body in [
-        ("chunks.jsonl", 2, canonical({"chunk_id":"fixture-000"}) + canonical({"chunk_id":"fixture-001"})),
-        ("queries.jsonl", 2, canonical({"query_id":"fixture-q00"}) + canonical({"query_id":"fixture-q01"})),
-        ("gold.jsonl", 2, canonical({"query_id":"fixture-q00","gold":["fixture-000"]}) + canonical({"query_id":"fixture-q01","gold":[]})),
-    ]:
+    fixture_inputs = [
+        (
+            "chunks.jsonl",
+            2,
+            canonical({"chunk_id": "fixture-000"})
+            + canonical({"chunk_id": "fixture-001"}),
+        ),
+        (
+            "queries.jsonl",
+            2,
+            canonical({"query_id": "fixture-q00"})
+            + canonical({"query_id": "fixture-q01"}),
+        ),
+        (
+            "gold.jsonl",
+            2,
+            canonical({"query_id": "fixture-q00", "gold": ["fixture-000"]})
+            + canonical({"query_id": "fixture-q01", "gold": []}),
+        ),
+    ]
+    for filename, records, body in fixture_inputs:
         target = graph_dir / "input" / filename
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(body)
-        members.append({"byte_count": len(body), "path": f"input/{filename}", "record_count": records, "sha256": digest(body)})
+        members.append(
+            {
+                "byte_count": len(body),
+                "path": f"input/{filename}",
+                "record_count": records,
+                "sha256": digest(body),
+            }
+        )
     vectors = b"M8-V3-FIXTURE-VECTORS-NOT-REAL-1K\n"
     (graph_dir / "input/vectors.bin").write_bytes(vectors)
-    members.append({"byte_count": len(vectors), "path": "input/vectors.bin", "record_count": 2, "sha256": digest(vectors)})
+    members.append(
+        {
+            "byte_count": len(vectors),
+            "path": "input/vectors.bin",
+            "record_count": 2,
+            "sha256": digest(vectors),
+        }
+    )
 
     manifest = envelope(exp, "input-manifest", "sa.m8.minimal.input-manifest.v3", {
         "experiment_id": exp,
@@ -125,8 +173,22 @@ def graph(name: str, failure: str | None) -> None:
     runtime_status = "FAIL" if failure == "runtime" else "PASS"
     run = envelope(exp, "run-report", "sa.m8.minimal.run-report.v3", {
         "backend_results": [
-            {"backend": "sqlite-linear-exact", "mode": "linear-exact", "status": runtime_status},
-            {"backend": "lancedb-embedded-exact-flat", "mode": "embedded-exact-flat-no-ann", "status": runtime_status},
+            {
+                "backend": "sqlite-linear-exact",
+                "input_manifest_sha256": (
+                    "f" * 64
+                    if failure == "validation"
+                    else digest(canonical(manifest))
+                ),
+                "mode": "linear-exact",
+                "status": runtime_status,
+            },
+            {
+                "backend": "lancedb-embedded-exact-flat",
+                "input_manifest_sha256": digest(canonical(manifest)),
+                "mode": "embedded-exact-flat-no-ann",
+                "status": runtime_status,
+            },
         ],
         "experiment_id": exp,
         "input_manifest_ref": ref_for("input-manifest", manifest),
@@ -164,23 +226,32 @@ def graph(name: str, failure: str | None) -> None:
     })
     write_json(evidence / "validation-report.json", validation)
 
-    gates = {}
     s0 = envelope(exp, "s0", "sa.m8.minimal.decision-record.v3", {
         "actor_role": "independent-reviewer", "allowed_next_action": "request-s1",
         "decision": "PROTOCOL_ACCEPTED", "experiment_id": exp, "gate_id": "S0", "read_refs": []})
-    write_json(evidence / "s0.json", s0); gates["s0"] = s0
+    write_json(evidence / "s0.json", s0)
     s1 = envelope(exp, "s1", "sa.m8.minimal.decision-record.v3", {
         "actor_role": "owner", "allowed_next_action": "run-s2", "decision": "DRY_RUN_AUTHORIZED",
         "experiment_id": exp, "gate_id": "S1", "read_refs": [ref_for("s0", s0)]})
-    write_json(evidence / "s1.json", s1); gates["s1"] = s1
+    write_json(evidence / "s1.json", s1)
     if validation_status == "PASS" and cleanup_status == "CLEANED":
         s2_decision, s2_action = "EVIDENCE_READY", "request-s3"
     else:
         s2_decision, s2_action = "DRY_RUN_FAILED", "stop"
     s2 = envelope(exp, "s2", "sa.m8.minimal.decision-record.v3", {
-        "actor_role": "executor", "allowed_next_action": s2_action, "decision": s2_decision,
-        "experiment_id": exp, "gate_id": "S2", "read_refs": [ref_for("s1", s1), ref_for("run-report", run), ref_for("cleanup-receipt", cleanup), ref_for("validation-report", validation)]})
-    write_json(evidence / "s2.json", s2); gates["s2"] = s2
+        "actor_role": "executor",
+        "allowed_next_action": s2_action,
+        "decision": s2_decision,
+        "experiment_id": exp,
+        "gate_id": "S2",
+        "read_refs": [
+            ref_for("s1", s1),
+            ref_for("run-report", run),
+            ref_for("cleanup-receipt", cleanup),
+            ref_for("validation-report", validation),
+        ],
+    })
+    write_json(evidence / "s2.json", s2)
     s3_decision = "ACCEPT_1K_EVIDENCE" if s2_decision == "EVIDENCE_READY" else "REJECT_1K_EVIDENCE"
     s3 = envelope(exp, "s3", "sa.m8.minimal.decision-record.v3", {
         "actor_role": "independent-reviewer", "allowed_next_action": "stop", "decision": s3_decision,
@@ -197,16 +268,106 @@ def graph(name: str, failure: str | None) -> None:
 
 
 def main() -> None:
-    OUT.mkdir(parents=True, exist_ok=True)
-    for name, failure in [
-        ("success", None),
-        ("failure-cleanup", "cleanup"),
-        ("failure-observer", "observer"),
-        ("failure-runtime", "runtime"),
-        ("failure-validation", "validation"),
-    ]:
-        graph(name, failure)
-    print(OUT)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output-root", type=Path, default=DEFAULT_OUT)
+    parser.add_argument(
+        "--replace-tracked",
+        action="store_true",
+        help="explicitly regenerate the committed fixture tree",
+    )
+    args = parser.parse_args()
+    output_root = args.output_root.resolve()
+    try:
+        protocol_bytes = PROTOCOL.read_bytes()
+    except OSError as exc:
+        parser.error(f"protocol is unreadable: {exc}")
+    if output_root == DEFAULT_OUT and not args.replace_tracked:
+        parser.error(
+            "default output root is tracked; use --replace-tracked explicitly"
+        )
+    if output_root != DEFAULT_OUT:
+        if output_root.exists():
+            if output_root.is_symlink() or not output_root.is_dir():
+                parser.error("output root must be an absent or empty directory")
+            if any(output_root.iterdir()):
+                parser.error("output root must be absent or empty")
+        output_root.mkdir(parents=True, exist_ok=True)
+        target_root = output_root
+        temporary_root = None
+    else:
+        if output_root.exists() and (
+            output_root.is_symlink() or not output_root.is_dir()
+        ):
+            parser.error("tracked output root must be a regular directory")
+        temporary_root = Path(
+            tempfile.mkdtemp(prefix="m8-v3-fixtures-", dir=ROOT.parent)
+        )
+        target_root = temporary_root / DEFAULT_OUT.name
+        target_root.mkdir(parents=True, exist_ok=True)
+    try:
+        for name, failure in [
+            ("success", None),
+            ("failure-cleanup", "cleanup"),
+            ("failure-observer", "observer"),
+            ("failure-runtime", "runtime"),
+            ("failure-validation", "validation"),
+        ]:
+            graph(target_root, name, failure, protocol_bytes)
+        if temporary_root is not None:
+            expected = {
+                path.relative_to(target_root).as_posix(): path
+                for path in target_root.rglob("*")
+                if path.is_file() and not path.is_symlink()
+            }
+            unexpected_staged = [
+                path
+                for path in target_root.rglob("*")
+                if path.is_symlink() or (not path.is_file() and not path.is_dir())
+            ]
+            if unexpected_staged:
+                raise RuntimeError("staged fixture tree contains non-regular members")
+            if output_root.exists():
+                existing = {
+                    path.relative_to(output_root).as_posix(): path
+                    for path in output_root.rglob("*")
+                    if path.is_file() and not path.is_symlink()
+                }
+                non_regular = [
+                    path
+                    for path in output_root.rglob("*")
+                    if path.is_symlink()
+                    or (not path.is_file() and not path.is_dir())
+                ]
+                if non_regular:
+                    parser.error(
+                        "tracked fixture tree contains non-regular members"
+                    )
+                unexpected = sorted(
+                    set(existing) - set(expected),
+                    key=lambda path: path.encode("utf-8"),
+                )
+                if unexpected:
+                    parser.error(
+                        "tracked fixture tree contains unexpected members: "
+                        + ", ".join(unexpected)
+                    )
+            publish_root = temporary_root / "published"
+            shutil.copytree(target_root, publish_root)
+            backup_root = temporary_root / "previous"
+            if output_root.exists():
+                output_root.replace(backup_root)
+            try:
+                publish_root.replace(output_root)
+            except OSError:
+                if backup_root.exists() and not output_root.exists():
+                    backup_root.replace(output_root)
+                raise
+            if backup_root.exists():
+                shutil.rmtree(backup_root)
+    finally:
+        if temporary_root is not None:
+            shutil.rmtree(temporary_root)
+    print(output_root)
 
 
 if __name__ == "__main__":
