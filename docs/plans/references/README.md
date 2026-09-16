@@ -25,6 +25,11 @@
 | [`recruitment-driven-feasibility.md`](recruitment-driven-feasibility.md) | 以招聘要求为唯一标准的可行性分析与阶段更新建议 | 辅助调查 |
 | [`m8-m12-scope-decision-v1.md`](m8-m12-scope-decision-v1.md) | M8–M12 规模化范围决策 | `APPROVED / SCOPE_FROZEN`；不等于阶段 admission |
 | [`m8-decision-closure-v1.md`](m8-decision-closure-v1.md) | M8 八项 Decision 批准记录 | `APPROVED / EIGHT_DECISIONS_RESOLVED`；不选择后端或授权实现 |
+| [`m8-minimal-1k-v3-generator-spec.md`](m8-minimal-1k-v3-generator-spec.md) | 最小 1K v3 S1 受控输入生成规格 | 受限前置规格；不构成 binding、执行、后端选择或阶段 admission |
+| [`m8-minimal-1k-v3-observer-spec.md`](m8-minimal-1k-v3-observer-spec.md) | 最小 1K v3 S1 环境观察规格 | 受限前置规格；不构成 binding、执行、后端选择或阶段 admission |
+| [`schemas/m8-minimal-1k-s1-config-v3.schema.json`](schemas/m8-minimal-1k-s1-config-v3.schema.json) | v3 S1 config 校验 schema | 受限机器可读前置契约；不产生授权 |
+| [`schemas/m8-minimal-1k-s1-gate-v3.schema.json`](schemas/m8-minimal-1k-s1-gate-v3.schema.json) | v3 S1 gate 校验 schema | 受限机器可读前置契约；不产生授权 |
+| [`templates/`](templates/) | v3 S1 模板及受控 fixture | 仅供对应前置规格使用；不构成任何阶段证据或授权 |
 | [`m8-active-execution-protocol-draft.md`](m8-active-execution-protocol-draft.md) | M8 active execution protocol `draft-0.5` | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED` |
 | [`m8-active-execution-protocol-draft-0.5-authorization-20260912.md`](m8-active-execution-protocol-draft-0.5-authorization-20260912.md) | `draft-0.5` 修订授权 | 已授权并已消费的文本修订；不解除任何执行禁令 |
 | [`m8-active-execution-protocol-draft-0.5-review-20260913.md`](m8-active-execution-protocol-draft-0.5-review-20260913.md) | `draft-0.5` P0 技术审查 | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；不产生执行、准入或后端权限 |

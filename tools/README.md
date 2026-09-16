@@ -20,6 +20,12 @@ tools/
 ├── run_m7_frozen_benchmark.py # M7-3 冻结 1k/3k BGE 协议（20+200 查询，FULL 独立进程 5+20）
 ├── profile_m7_search.py   # M7 3k search stage profile（非正式 exit 证据）
 ├── run_m7_parser_evidence.py # M7 五格式 parser/normalized/identity 冻结证据
+├── m8_generate_minimal_1k_input_v3.py # M8 v3 S1 最小 1K 受控输入生成器
+├── m8_probe_s1_environment_v3.py # M8 v3 S1 环境观察器
+├── m8_validate_s1_preflight_v3.py # M8 v3 S1 preflight 校验器
+├── m8_run_minimal_1k_v3.py # M8 v3 S1 最小 1K 编排入口
+├── m8_test_generate_minimal_1k_input_v3.py # M8 v3 S1 生成器验证脚本
+├── m8_test_s1_controls_v3.py # M8 v3 S1 控制项验证脚本
 ├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   ├── requirements.txt   # crawler 独立依赖
 │   └── fetcher/cleaner/converter/dedup/pipeline
@@ -228,6 +234,25 @@ python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 ```
 
 默认设置 `SA_USE_VECTOR=false`、`HF_HUB_OFFLINE=1`，并以 `--workers 1` 启动唯一 uvicorn worker；不要求 LLM key。演示步骤见 [docs/demo.md](../docs/demo.md)。
+
+
+## M8 v3 S1 前置工具
+
+以下脚本为最小 1K S1 前置检查提供受控输入、环境观察、preflight 校验与编排支持。其规范、schema
+和模板位于 [`docs/plans/references/`](../docs/plans/references/README.md)。这些工具和其本地验证脚本仅记录或
+检查指定的前置条件；不改变 M8 状态，不产生 experiment/protocol binding、执行授权、后端选择或阶段 admission。
+
+| 脚本 | 用途 |
+| --- | --- |
+| [`m8_generate_minimal_1k_input_v3.py`](m8_generate_minimal_1k_input_v3.py) | 按 v3 生成器规格构造最小 1K 受控输入。 |
+| [`m8_probe_s1_environment_v3.py`](m8_probe_s1_environment_v3.py) | 按 v3 观察器规格采集 S1 环境观察结果。 |
+| [`m8_validate_s1_preflight_v3.py`](m8_validate_s1_preflight_v3.py) | 根据 v3 config/gate schema 校验 S1 preflight。 |
+| [`m8_run_minimal_1k_v3.py`](m8_run_minimal_1k_v3.py) | 运行受控的最小 1K v3 S1 编排流程。 |
+| [`m8_test_generate_minimal_1k_input_v3.py`](m8_test_generate_minimal_1k_input_v3.py) | 验证生成输入的确定性和格式控制。 |
+| [`m8_test_s1_controls_v3.py`](m8_test_s1_controls_v3.py) | 验证 S1 控制项及其 fail-closed 行为。 |
+
+运行前请先阅读相应规格；可通过 `python tools/<script> --help` 查看每个工具接受的参数。工具只应在其规定的
+受控范围内使用，不能将单次通过或本地观察解释为 M8 开工、执行或退出证据。
 
 ## run_m7_parser_evidence.py — M7 五格式解析/规范化/生命周期证据
 

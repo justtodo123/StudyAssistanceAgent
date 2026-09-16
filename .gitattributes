@@ -32,3 +32,20 @@ docs/plans/references/fixtures/m8-minimal-1k-v3/**/*.jsonl text eol=lf
 docs/plans/references/fixtures/m8-minimal-1k-v3/**/vectors.bin -text
 tools/m8_*minimal_1k*v3*.py text eol=lf
 tools/README.md text eol=lf
+
+# M8 v3 S1 prerequisite material is exchanged and validated byte-for-byte across
+# platforms. Keep only this new material LF; vectors.bin is explicitly binary.
+docs/plans/references/m8-minimal-1k-v3-generator-spec.md text eol=lf
+docs/plans/references/m8-minimal-1k-v3-observer-spec.md text eol=lf
+docs/plans/references/schemas/m8-minimal-1k-s1-config-v3.schema.json text eol=lf
+docs/plans/references/schemas/m8-minimal-1k-s1-gate-v3.schema.json text eol=lf
+docs/plans/references/templates/**/*.md text eol=lf
+docs/plans/references/templates/**/*.json text eol=lf
+docs/plans/references/templates/**/*.jsonl text eol=lf
+docs/plans/references/templates/**/vectors.bin -text
+tools/m8_generate_minimal_1k_input_v3.py text eol=lf
+tools/m8_probe_s1_environment_v3.py text eol=lf
+tools/m8_run_minimal_1k_v3.py text eol=lf
+tools/m8_test_generate_minimal_1k_input_v3.py text eol=lf
+tools/m8_test_s1_controls_v3.py text eol=lf
+tools/m8_validate_s1_preflight_v3.py text eol=lf
