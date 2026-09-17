@@ -73,7 +73,9 @@ def synthetic_facts() -> dict:
         for name in sorted(preflight.FROZEN_FILE_NAMES)
     }
     observer_path = Path(__file__).with_name("m8_observe_minimal_1k_v3.py")
-    observer_data = observer_path.read_bytes()
+    observer_data = observer_path.read_bytes().replace(b"\r\n", b"\n")
+    if b"\r" in observer_data:
+        raise RuntimeError("observer implementation contains a non-CRLF carriage return")
     files["observer-implementation"]["byte_count"] = len(observer_data)
     files["observer-implementation"]["sha256"] = probe.sha256_hex(observer_data)
     return {
