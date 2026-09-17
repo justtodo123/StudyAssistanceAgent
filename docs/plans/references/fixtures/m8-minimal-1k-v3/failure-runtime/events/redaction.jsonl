@@ -1,3 +1,3 @@
-{"detail":"none","kind":"observer-start","sequence":0,"status":"PASS"}
-{"detail":"none","kind":"utf8-scan","sequence":1,"status":"PASS"}
-{"detail":"none","kind":"observer-stop","sequence":2,"status":"PASS"}
+{"detail":{"code":"none","phase":"observer-bootstrap","registry_sha256":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a","scanned_set_sha256":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"observer-start","sequence":0,"status":"PASS"}
+{"detail":{"byte_count":0,"code":"none","path":"artifacts/fixture.json","phase":"redaction-and-seal","sha256":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"utf8-scan","sequence":1,"status":"PASS"}
+{"detail":{"code":"none","phase":"observer-finalize","registry_sha256":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a","scanned_set_sha256":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"observer-stop","sequence":2,"status":"PASS"}

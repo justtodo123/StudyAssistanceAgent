@@ -9,7 +9,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
+import stat
 import tempfile
 from pathlib import Path
 
@@ -18,6 +20,36 @@ DEFAULT_OUT = ROOT / "docs/plans/references/fixtures/m8-minimal-1k-v3"
 PROTOCOL = ROOT / "docs/plans/references/m8-minimal-1k-dry-run-protocol-v3.md"
 CANON = "sa-json-c14n-v1"
 SCHEMA_VERSION = 3
+
+
+def _absolute_lexical(path: Path) -> Path:
+    """Return an absolute path without following a caller-supplied link."""
+    return Path(os.path.abspath(os.fspath(path)))
+
+
+def _has_reparse_point(file_stat: os.stat_result) -> bool:
+    reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return bool(getattr(file_stat, "st_file_attributes", 0) & reparse_flag)
+
+
+def _inspect_output_path(path: Path) -> Path:
+    """Reject links/reparse points in every existing output-path component."""
+    absolute = _absolute_lexical(path)
+    current = Path(absolute.anchor)
+    parts = absolute.parts[1:] if absolute.anchor else absolute.parts
+    for part in parts:
+        current /= part
+        try:
+            file_stat = current.lstat()
+        except FileNotFoundError:
+            break
+        except OSError as exc:
+            raise ValueError(f"output path cannot be inspected: {exc}") from exc
+        if stat.S_ISLNK(file_stat.st_mode) or _has_reparse_point(file_stat):
+            raise ValueError(
+                f"output path contains a symlink or reparse point: {current}"
+            )
+    return absolute
 
 
 def canonical(obj: object) -> bytes:
@@ -63,8 +95,123 @@ def ref_for(role: str, obj: dict) -> dict:
     }
 
 
-def event(kind: str, sequence: int, status: str = "PASS", detail: str = "none") -> dict:
-    return {"detail": detail, "kind": kind, "sequence": sequence, "status": status}
+def event(
+    observer: str,
+    kind: str,
+    sequence: int,
+    status: str = "PASS",
+    *,
+    code: str = "none",
+    phase: str | None = None,
+) -> dict:
+    digest_text = digest(b"fixture-observer-detail")
+    if observer == "network":
+        if kind in {"observer-start", "observer-stop"}:
+            detail = {
+                "api_ids": ["fixture-network-api"],
+                "code": code,
+                "phase": (
+                    "observer-bootstrap"
+                    if kind == "observer-start"
+                    else "observer-finalize"
+                ),
+                "root_process_identity": digest_text,
+            }
+        else:
+            detail = {
+                "address_family": "ipv4",
+                "code": code,
+                "local_endpoint_digest": digest_text,
+                "phase": phase or "measured",
+                "process_identity_digest": digest_text,
+                "protocol": "tcp",
+                "remote_endpoint_digest": digest_text,
+            }
+    elif observer == "write":
+        if kind in {"observer-start", "observer-stop"}:
+            detail = {
+                "allowed_root_set_sha256": digest_text,
+                "api_ids": ["fixture-write-api"],
+                "code": code,
+                "phase": (
+                    "observer-bootstrap"
+                    if kind == "observer-start"
+                    else "observer-finalize"
+                ),
+                "root_process_identity": digest_text,
+            }
+        else:
+            detail = {
+                "code": code,
+                "operation": "create",
+                "path_digest": digest_text,
+                "phase": "measured",
+                "process_identity_digest": digest_text,
+                "root_id": "temporary-root",
+            }
+    elif observer == "process":
+        if kind in {"observer-start", "observer-stop"}:
+            detail = {
+                "api_ids": ["fixture-process-api"],
+                "code": code,
+                "phase": (
+                    "observer-bootstrap"
+                    if kind == "observer-start"
+                    else "observer-finalize"
+                ),
+                "root_process_identity": digest_text,
+            }
+        elif kind == "child-count":
+            detail = {
+                "code": code,
+                "count": 0,
+                "phase": phase or "measured",
+                "tree_digest": digest_text,
+            }
+        else:
+            detail = {
+                "code": code,
+                "executable_digest": digest_text,
+                "parent_identity_digest": digest_text,
+                "phase": "measured",
+                "process_identity_digest": digest_text,
+            }
+    elif observer == "redaction":
+        if kind in {"observer-start", "observer-stop"}:
+            detail = {
+                "code": code,
+                "phase": (
+                    "observer-bootstrap"
+                    if kind == "observer-start"
+                    else "observer-finalize"
+                ),
+                "registry_sha256": digest_text,
+                "scanned_set_sha256": digest_text,
+            }
+        elif kind == "utf8-scan":
+            detail = {
+                "byte_count": 0,
+                "code": code,
+                "path": "artifacts/fixture.json",
+                "phase": "redaction-and-seal",
+                "sha256": digest_text,
+            }
+        else:
+            detail = {
+                "code": code,
+                "match_count": 1,
+                "path": "artifacts/fixture.json",
+                "pattern_id": "fixture-pattern",
+                "phase": "redaction-and-seal",
+            }
+    else:
+        raise ValueError(f"unknown observer: {observer}")
+    return {
+        "detail": detail,
+        "kind": kind,
+        "sequence": sequence,
+        "status": status,
+    }
 
 
 def graph(
@@ -112,8 +259,10 @@ def graph(
         (
             "gold.jsonl",
             2,
-            canonical({"query_id": "fixture-q00", "gold": ["fixture-000"]})
-            + canonical({"query_id": "fixture-q01", "gold": []}),
+            canonical(
+                {"gold": ["fixture-000"], "query_id": "fixture-q00"}
+            )
+            + canonical({"gold": [], "query_id": "fixture-q01"}),
         ),
     ]
     for filename, records, body in fixture_inputs:
@@ -148,13 +297,50 @@ def graph(
     write_json(evidence / "input-manifest.json", manifest)
 
     event_sets = {
-        "network": [event("observer-start", 0), event("observer-stop", 1)],
-        "write": [event("observer-start", 0), event("allowed-write", 1), event("observer-stop", 2)],
-        "process": [event("observer-start", 0), event("child-count", 1, detail="0"), event("observer-stop", 2)],
-        "redaction": [event("observer-start", 0), event("utf8-scan", 1), event("observer-stop", 2)],
+        "network": [
+            event("network", "observer-start", 0),
+            event("network", "observer-stop", 1),
+        ],
+        "write": [
+            event("write", "observer-start", 0),
+            event("write", "allowed-write", 1),
+            event("write", "observer-stop", 2),
+        ],
+        "process": [
+            event("process", "observer-start", 0),
+            *[
+                event("process", "child-count", index + 1, phase=phase)
+                for index, phase in enumerate(
+                    (
+                        "observer-bootstrap",
+                        "acquisition",
+                        "measured",
+                        "redaction-and-seal",
+                        "cleanup",
+                        "observer-finalize",
+                    )
+                )
+            ],
+            event("process", "observer-stop", 7),
+        ],
+        "redaction": [
+            event("redaction", "observer-start", 0),
+            event("redaction", "utf8-scan", 1),
+            event("redaction", "observer-stop", 2),
+        ],
     }
     if failure == "observer":
-        event_sets["network"].insert(1, event("outbound-connection", 1, "FAIL", "fixture-denied"))
+        event_sets["network"].insert(
+            1,
+            event(
+                "network",
+                "outbound-connection",
+                1,
+                "FAIL",
+                code="network-measured-outbound-observed",
+                phase="measured",
+            ),
+        )
         event_sets["network"][-1]["sequence"] = 2
     observer_summaries = {}
     for observer, events in event_sets.items():
@@ -171,6 +357,20 @@ def graph(
         }
 
     runtime_status = "FAIL" if failure == "runtime" else "PASS"
+    fixture_per_query = [
+        {
+            "query_id": "fixture-q00",
+            "top_k": {
+                "1": ["fixture-000"],
+                "3": ["fixture-000"],
+                "5": ["fixture-000"],
+            },
+        },
+        {
+            "query_id": "fixture-q01",
+            "top_k": {"1": [], "3": [], "5": []},
+        },
+    ]
     run = envelope(exp, "run-report", "sa.m8.minimal.run-report.v3", {
         "backend_results": [
             {
@@ -181,12 +381,14 @@ def graph(
                     else digest(canonical(manifest))
                 ),
                 "mode": "linear-exact",
+                "per_query": fixture_per_query,
                 "status": runtime_status,
             },
             {
                 "backend": "lancedb-embedded-exact-flat",
                 "input_manifest_sha256": digest(canonical(manifest)),
                 "mode": "embedded-exact-flat-no-ann",
+                "per_query": fixture_per_query,
                 "status": runtime_status,
             },
         ],
@@ -276,7 +478,10 @@ def main() -> None:
         help="explicitly regenerate the committed fixture tree",
     )
     args = parser.parse_args()
-    output_root = args.output_root.resolve()
+    try:
+        output_root = _inspect_output_path(args.output_root)
+    except ValueError as exc:
+        parser.error(str(exc))
     try:
         protocol_bytes = PROTOCOL.read_bytes()
     except OSError as exc:

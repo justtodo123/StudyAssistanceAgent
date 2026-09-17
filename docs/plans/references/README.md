@@ -27,9 +27,20 @@
 | [`m8-decision-closure-v1.md`](m8-decision-closure-v1.md) | M8 八项 Decision 批准记录 | `APPROVED / EIGHT_DECISIONS_RESOLVED`；不选择后端或授权实现 |
 | [`m8-minimal-1k-v3-generator-spec.md`](m8-minimal-1k-v3-generator-spec.md) | 最小 1K v3 S1 受控输入生成规格 | 受限前置规格；不构成 binding、执行、后端选择或阶段 admission |
 | [`m8-minimal-1k-v3-observer-spec.md`](m8-minimal-1k-v3-observer-spec.md) | 最小 1K v3 S1 环境观察规格 | 受限前置规格；不构成 binding、执行、后端选择或阶段 admission |
+| [`schemas/m8-minimal-1k-observer-config-v3.schema.json`](schemas/m8-minimal-1k-observer-config-v3.schema.json) | v3 closed observer config schema | 绑定 synthetic implementation、四 component、collector 参数、error registry 与 redaction registry；不产生授权 |
+| [`schemas/m8-minimal-1k-redaction-registry-v3.schema.json`](schemas/m8-minimal-1k-redaction-registry-v3.schema.json) | v3 digest-only redaction registry schema | closed matcher/binary policy 契约；不存 plaintext needle，不产生授权 |
 | [`schemas/m8-minimal-1k-s1-config-v3.schema.json`](schemas/m8-minimal-1k-s1-config-v3.schema.json) | v3 S1 config 校验 schema | 受限机器可读前置契约；不产生授权 |
 | [`schemas/m8-minimal-1k-s1-gate-v3.schema.json`](schemas/m8-minimal-1k-s1-gate-v3.schema.json) | v3 S1 gate 校验 schema | 受限机器可读前置契约；不产生授权 |
-| [`templates/`](templates/) | v3 S1 模板及受控 fixture | 仅供对应前置规格使用；不构成任何阶段证据或授权 |
+| [`templates/m8-minimal-1k-observer-config-v3.json`](templates/m8-minimal-1k-observer-config-v3.json) | v3 observer config 空白模板 | non-authorizing、non-instance；必须由未来完整 config 替代 |
+| [`templates/m8-minimal-1k-redaction-registry-v3.json`](templates/m8-minimal-1k-redaction-registry-v3.json) | v3 redaction registry 空白模板 | non-authorizing、non-instance；空 pattern/allowlist 不可用于 S1 |
+| [`templates/m8-minimal-1k-s1-config-v3.json`](templates/m8-minimal-1k-s1-config-v3.json) | v3 S1 config 空白模板 | non-authorizing、non-instance；不含真实机器身份或 root |
+| [`templates/m8-minimal-1k-s1-gate-v3.json`](templates/m8-minimal-1k-s1-gate-v3.json) | v3 S1 gate 空白模板 | non-authorizing、non-instance；不预填成功 decision/action |
+| [`templates/`](templates/) | 其余 v3 受控模板与 fixture | 仅供对应前置规格使用；不构成任何阶段证据或授权 |
+
+S1 prerequisite freeze 的 candidate closure 固定为 29 个非 fixture 路径与 5 × 18 = 90 个 graph fixture
+路径，共 119 个互异路径。该 closure 排除 historical reviewer、worksheet、external gate/artifact 和既有
+review-freeze 记录；本索引作为 candidate documentation 被摘要，不会把其链接的历史文件纳入 freeze，也不产生授权。
+
 | [`m8-active-execution-protocol-draft.md`](m8-active-execution-protocol-draft.md) | M8 active execution protocol `draft-0.5` | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED` |
 | [`m8-active-execution-protocol-draft-0.5-authorization-20260912.md`](m8-active-execution-protocol-draft-0.5-authorization-20260912.md) | `draft-0.5` 修订授权 | 已授权并已消费的文本修订；不解除任何执行禁令 |
 | [`m8-active-execution-protocol-draft-0.5-review-20260913.md`](m8-active-execution-protocol-draft-0.5-review-20260913.md) | `draft-0.5` P0 技术审查 | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；不产生执行、准入或后端权限 |

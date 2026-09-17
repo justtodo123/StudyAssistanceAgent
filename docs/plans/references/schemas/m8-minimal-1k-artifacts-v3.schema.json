@@ -25,14 +25,33 @@
         {"$ref": "#/$defs/s3_ref_branch"}
       ]
     },
+    "backend_query_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["query_id", "top_k"],
+      "properties": {
+        "query_id": {"type": "string", "minLength": 1},
+        "top_k": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["1", "3", "5"],
+          "properties": {
+            "1": {"type": "array", "items": {"type": "string", "minLength": 1}, "maxItems": 1, "uniqueItems": true},
+            "3": {"type": "array", "items": {"type": "string", "minLength": 1}, "maxItems": 3, "uniqueItems": true},
+            "5": {"type": "array", "items": {"type": "string", "minLength": 1}, "maxItems": 5, "uniqueItems": true}
+          }
+        }
+      }
+    },
     "backend_result": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["backend", "input_manifest_sha256", "mode", "status"],
+      "required": ["backend", "input_manifest_sha256", "mode", "per_query", "status"],
       "properties": {
         "backend": {"enum": ["sqlite-linear-exact", "lancedb-embedded-exact-flat"]},
         "input_manifest_sha256": {"$ref": "#/$defs/sha256"},
         "mode": {"enum": ["linear-exact", "embedded-exact-flat-no-ann"]},
+        "per_query": {"type": "array", "items": {"$ref": "#/$defs/backend_query_result"}, "minItems": 1, "maxItems": 104},
         "status": {"enum": ["PASS", "FAIL"]}
       }
     },
@@ -106,7 +125,7 @@
         "status": {"enum": ["PASS", "FAIL"]}
       }
     },
-    "experiment_id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+    "experiment_id": {"type": "string", "pattern": "^sa-m8-(?:minimal-1k-v3|v3-fixture)-[a-z0-9][a-z0-9-]*$"},
     "gate_payload_base": {
       "type": "object",
       "additionalProperties": false,

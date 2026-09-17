@@ -1,2 +1,2 @@
-{"detail":"none","kind":"observer-start","sequence":0,"status":"PASS"}
-{"detail":"none","kind":"observer-stop","sequence":1,"status":"PASS"}
+{"detail":{"api_ids":["fixture-network-api"],"code":"none","phase":"observer-bootstrap","root_process_identity":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"observer-start","sequence":0,"status":"PASS"}
+{"detail":{"api_ids":["fixture-network-api"],"code":"none","phase":"observer-finalize","root_process_identity":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"observer-stop","sequence":1,"status":"PASS"}

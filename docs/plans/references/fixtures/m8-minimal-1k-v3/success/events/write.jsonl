@@ -1,3 +1,3 @@
-{"detail":"none","kind":"observer-start","sequence":0,"status":"PASS"}
-{"detail":"none","kind":"allowed-write","sequence":1,"status":"PASS"}
-{"detail":"none","kind":"observer-stop","sequence":2,"status":"PASS"}
+{"detail":{"allowed_root_set_sha256":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a","api_ids":["fixture-write-api"],"code":"none","phase":"observer-bootstrap","root_process_identity":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"observer-start","sequence":0,"status":"PASS"}
+{"detail":{"code":"none","operation":"create","path_digest":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a","phase":"measured","process_identity_digest":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a","root_id":"temporary-root"},"kind":"allowed-write","sequence":1,"status":"PASS"}
+{"detail":{"allowed_root_set_sha256":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a","api_ids":["fixture-write-api"],"code":"none","phase":"observer-finalize","root_process_identity":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"observer-stop","sequence":2,"status":"PASS"}

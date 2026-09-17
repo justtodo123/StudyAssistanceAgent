@@ -1,0 +1,1 @@
+{"canonicalization_id":"sa-json-c14n-v1","payload":{"binary_allowlist":[],"matcher_algorithm":"sa-m8-redaction-digest-registry-v3","patterns":[],"unknown_binary_policy":"fail-closed"},"schema_id":"sa.m8.minimal.redaction-registry.v3","schema_version":3}

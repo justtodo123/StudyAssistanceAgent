@@ -10,8 +10,11 @@ study-material directories, installs dependencies, or performs network I/O.
 from __future__ import annotations
 
 import ast
+import importlib.util
 import json
+import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
@@ -34,6 +37,53 @@ DRAFT_REVIEW_PATH = (
 V13_DISPOSITION_PATH = (
     REPO_ROOT / "docs" / "plans" / "references" / "m8-v13-disposition-20260910.md"
 )
+FREEZE_TOOL_PATH = REPO_ROOT / "tools" / "m8_freeze_s1_prerequisites_v3.py"
+
+
+def _load_freeze_inventory() -> tuple[Path, ...]:
+    spec = importlib.util.spec_from_file_location("m8_freeze_s1_prerequisites_v3", FREEZE_TOOL_PATH)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("cannot load the S1 prerequisite freeze tool")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    logical_paths = getattr(module, "DEFAULT_PATHS", None)
+    fixture_graphs = getattr(module, "FIXTURE_GRAPHS", None)
+    fixture_members = getattr(module, "FIXTURE_MEMBERS", None)
+    fixture_paths = getattr(module, "FIXTURE_PATHS", None)
+    fixture_root = getattr(module, "FIXTURE_ROOT", None)
+    forbidden_parts = getattr(module, "FORBIDDEN_INVENTORY_PARTS", None)
+    non_fixture_count = getattr(module, "EXPECTED_NON_FIXTURE_FILE_COUNT", None)
+    if not isinstance(logical_paths, list) or not all(isinstance(path, str) for path in logical_paths):
+        raise RuntimeError("freeze DEFAULT_PATHS must be a list of logical path strings")
+    if not isinstance(fixture_paths, list) or not all(isinstance(path, str) for path in fixture_paths):
+        raise RuntimeError("freeze FIXTURE_PATHS must be a list of logical path strings")
+    if (
+        not isinstance(fixture_graphs, tuple)
+        or len(fixture_graphs) != 5
+        or not isinstance(fixture_members, tuple)
+        or len(fixture_members) != 18
+        or len(fixture_paths) != 90
+    ):
+        raise RuntimeError("freeze fixture closure must contain exactly 5 graphs x 18 members")
+    if (
+        fixture_root != "docs/plans/references/fixtures/m8-minimal-1k-v3/"
+        or not all(path.startswith(fixture_root) for path in fixture_paths)
+        or non_fixture_count != 29
+        or logical_paths[non_fixture_count:] != fixture_paths
+    ):
+        raise RuntimeError("freeze fixture closure has an unexpected composition")
+    if len(logical_paths) != 119 or len(set(logical_paths)) != len(logical_paths):
+        raise RuntimeError("freeze DEFAULT_PATHS must contain exactly 119 unique paths")
+    if not isinstance(forbidden_parts, tuple) or any(
+        part in f"/{path.casefold()}"
+        for path in logical_paths
+        for part in forbidden_parts
+    ):
+        raise RuntimeError("freeze DEFAULT_PATHS contains a historical review or authorization path")
+    return tuple(REPO_ROOT / Path(path) for path in logical_paths)
+
+
+S1_REQUIRED_PATHS = _load_freeze_inventory()
 
 EXPECTED_DECISIONS = {
     "M8-CONTROL-SCHEMA": "SQLITE_M7_AUTHORITATIVE_CONTROL_PLANE__REBUILDABLE_SPECIALIZED_DATA_PLANE",
@@ -93,8 +143,22 @@ def _assert_contains(text: str, *needles: str) -> None:
 
 
 def check_repository_contract() -> None:
-    """Confirm the aggregate has only the repository evidence it needs."""
-    for path in (REGISTRY_PATH, PLAN_PATH, M8_PLAN_PATH, DECISION_PATH, DRAFT_REVIEW_PATH, V13_DISPOSITION_PATH):
+    """Confirm every prerequisite contract and tool required by this aggregate exists."""
+    for path in (
+        REGISTRY_PATH,
+        PLAN_PATH,
+        M8_PLAN_PATH,
+        DECISION_PATH,
+        DRAFT_REVIEW_PATH,
+        V13_DISPOSITION_PATH,
+        *S1_REQUIRED_PATHS,
+    ):
+        if path.suffix == ".bin":
+            if not path.is_file():
+                raise CheckFailure(
+                    f"missing required repository file: {path.relative_to(REPO_ROOT)}"
+                )
+            continue
         _read(path)
 
 
@@ -122,6 +186,11 @@ def check_m8_remains_blocked() -> None:
     approval = stage.get("approval")
     if not isinstance(approval, dict) or any(value is not None for value in approval.values()):
         raise CheckFailure("M8 approval fields must remain empty")
+    plan = _read(PLAN_PATH)
+    policy = _read(REPO_ROOT / "docs" / "standards" / "stage-admission-gates.md")
+    for text, label in ((plan, "docs/PLAN.md"), (policy, "stage-admission-gates.md")):
+        if "M8" not in text or "BLOCKED / NOT_STARTED" not in text:
+            raise CheckFailure(f"{label} does not state M8 BLOCKED / NOT_STARTED")
 
 
 def check_eight_decisions() -> None:
@@ -145,8 +214,17 @@ def check_eight_decisions() -> None:
         if decision.get("value") != expected_value:
             raise CheckFailure(f"{decision_id} has an unexpected policy value")
         evidence = decision.get("evidence")
-        if not isinstance(evidence, list) or not evidence or any(not isinstance(item, str) or not item for item in evidence):
+        if not isinstance(evidence, list) or not evidence or any(
+            not isinstance(item, str) or not item for item in evidence
+        ):
             raise CheckFailure(f"{decision_id} has empty or invalid evidence")
+        grounded = False
+        for logical_name in evidence:
+            evidence_path = REPO_ROOT / Path(logical_name.split("#", 1)[0])
+            evidence_text = _read(evidence_path)
+            grounded |= decision_id in evidence_text
+        if not grounded:
+            raise CheckFailure(f"{decision_id} is not grounded in its evidence files")
 
 
 def check_protocol_is_not_authorized() -> None:
@@ -213,26 +291,173 @@ def check_policy_invariants() -> None:
         raise CheckFailure("policy text selects Milvus as an adopted backend")
 
 
-def check_no_execution_imports() -> None:
-    """Statically prove this command cannot invoke execution/network/install APIs."""
-    source = Path(__file__).read_text(encoding="utf-8")
+
+
+def _call_name(node: ast.expr) -> str | None:
+    """Return a simple dotted call name without evaluating the expression."""
+    parts: list[str] = []
+    current: ast.expr = node
+    while isinstance(current, ast.Attribute):
+        parts.append(current.attr)
+        current = current.value
+    if isinstance(current, ast.Name):
+        parts.append(current.id)
+        return ".".join(reversed(parts))
+    return None
+
+
+def _validate_execution_policy(path: Path, source: str) -> None:
+    """Fail closed on forbidden APIs and narrowly constrain subprocess use."""
     try:
-        tree = ast.parse(source, filename=str(Path(__file__)))
+        tree = ast.parse(source, filename=str(path))
     except SyntaxError as exc:
-        raise CheckFailure(f"target script is not valid Python: {exc}") from exc
-    forbidden_modules = {"subprocess", "socket", "requests", "httpx", "urllib", "pip", "venv"}
+        raise CheckFailure(f"{path}: invalid Python: {exc}") from exc
+
+    try:
+        logical_path = path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        logical_path = path.as_posix()
+    forbidden_modules = {"socket", "requests", "httpx", "urllib", "pip", "venv"}
+    subprocess_roles = {
+        "tools/m8_freeze_s1_prerequisites_v3.py": "trusted-git-wrapper",
+        "tools/m8_test_freeze_s1_prerequisites_v3.py": "bounded-test",
+        "tools/m8_test_minimal_1k_graph_v3.py": "bounded-test",
+        "tools/m8_test_observe_minimal_1k_v3.py": "bounded-test",
+        "tools/m8_test_s1_prerequisites_v3.py": "bounded-test",
+    }
+    role = subprocess_roles.get(logical_path)
+    parents: dict[ast.AST, ast.AST] = {
+        child: parent
+        for parent in ast.walk(tree)
+        for child in ast.iter_child_nodes(parent)
+    }
+
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
-            imported = {alias.name.split(".", 1)[0] for alias in node.names}
-            if imported & forbidden_modules:
-                raise CheckFailure("target imports a forbidden execution/network/install module")
+            for alias in node.names:
+                root = alias.name.split(".", 1)[0]
+                if root in forbidden_modules:
+                    raise CheckFailure(
+                        f"{logical_path}:{node.lineno}: forbidden import {root}"
+                    )
+                if root == "subprocess" and (
+                    alias.name != "subprocess" or alias.asname not in {None, "subprocess"}
+                ):
+                    raise CheckFailure(
+                        f"{logical_path}:{node.lineno}: subprocess import alias is forbidden"
+                    )
+                if root == "subprocess" and role is None:
+                    raise CheckFailure(
+                        f"{logical_path}:{node.lineno}: subprocess is not allowed for this role"
+                    )
         elif isinstance(node, ast.ImportFrom):
             root = (node.module or "").split(".", 1)[0]
             if root in forbidden_modules:
-                raise CheckFailure("target imports a forbidden execution/network/install module")
-        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-            if node.func.id in {"eval", "exec", "compile", "breakpoint"}:
-                raise CheckFailure(f"target uses forbidden dynamic call {node.func.id}()")
+                raise CheckFailure(
+                    f"{logical_path}:{node.lineno}: forbidden import {root}"
+                )
+            if root == "subprocess":
+                raise CheckFailure(
+                    f"{logical_path}:{node.lineno}: from-subprocess imports are forbidden"
+                )
+        elif isinstance(node, ast.Call):
+            call_name = _call_name(node.func)
+            if call_name in {"eval", "exec", "breakpoint", "__import__"}:
+                raise CheckFailure(
+                    f"{logical_path}:{node.lineno}: forbidden dynamic call {call_name}()"
+                )
+            if call_name not in {"subprocess.run", "subprocess.Popen"}:
+                continue
+            if role is None:
+                raise CheckFailure(
+                    f"{logical_path}:{node.lineno}: subprocess call is not allowed for this role"
+                )
+            keywords = {keyword.arg: keyword.value for keyword in node.keywords if keyword.arg}
+            shell = keywords.get("shell")
+            if isinstance(shell, ast.Constant) and shell.value is True:
+                raise CheckFailure(
+                    f"{logical_path}:{node.lineno}: shell subprocesses are forbidden"
+                )
+            if role == "bounded-test":
+                if call_name != "subprocess.run":
+                    raise CheckFailure(
+                        f"{logical_path}:{node.lineno}: test role permits subprocess.run only"
+                    )
+                timeout = keywords.get("timeout")
+                if not (
+                    isinstance(timeout, ast.Constant)
+                    and isinstance(timeout.value, (int, float))
+                    and not isinstance(timeout.value, bool)
+                    and 0 < timeout.value <= 600
+                ):
+                    raise CheckFailure(
+                        f"{logical_path}:{node.lineno}: test subprocess needs a literal timeout in (0, 600]"
+                    )
+            else:
+                if call_name != "subprocess.Popen":
+                    raise CheckFailure(
+                        f"{logical_path}:{node.lineno}: Git wrapper permits subprocess.Popen only"
+                    )
+                owner = parents.get(node)
+                enclosing_functions: list[str] = []
+                while owner is not None:
+                    if isinstance(owner, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        enclosing_functions.append(owner.name)
+                    owner = parents.get(owner)
+                if "run_git_process" not in enclosing_functions:
+                    raise CheckFailure(
+                        f"{logical_path}:{node.lineno}: Popen must remain inside run_git_process"
+                    )
+                if not {"env", "stdout", "stderr"}.issubset(keywords):
+                    raise CheckFailure(
+                        f"{logical_path}:{node.lineno}: Git Popen must close its environment and capture both streams"
+                    )
+
+
+def _safe_console_line(text: object, *, limit: int = 2400) -> None:
+    """Write one bounded line without depending on the console's Unicode coverage."""
+    rendered = str(text).replace("\r", "\\r").replace("\n", "\\n")
+    if len(rendered) > limit:
+        rendered = "..." + rendered[-limit:]
+    encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+    safe = rendered.encode(encoding, errors="backslashreplace").decode(encoding)
+    sys.stdout.write(safe + "\n")
+
+def check_no_execution_imports() -> None:
+    """Scan every frozen Python prerequisite for prohibited execution APIs."""
+    python_paths = tuple(path for path in S1_REQUIRED_PATHS if path.suffix == ".py")
+    if not python_paths:
+        raise CheckFailure("freeze inventory contains no Python prerequisites")
+    for path in python_paths:
+        _validate_execution_policy(path, _read(path))
+
+    with tempfile.TemporaryDirectory(prefix="m8-s1-policy-") as directory:
+        probe = Path(directory) / "probe.py"
+        cases = (
+            (probe, "import socket\n", "forbidden import socket"),
+            (
+                probe,
+                "import subprocess\nsubprocess.run(['git'], timeout=601)\n",
+                "subprocess is not allowed for this role",
+            ),
+            (
+                REPO_ROOT / "tools/m8_test_freeze_s1_prerequisites_v3.py",
+                "import subprocess\nsubprocess.run(['git'], timeout=601)\n",
+                "test subprocess needs a literal timeout in (0, 600]",
+            ),
+        )
+        for policy_path, source, expected in cases:
+            try:
+                _validate_execution_policy(policy_path, source)
+            except CheckFailure as exc:
+                if expected not in str(exc):
+                    raise CheckFailure(
+                        f"execution-policy regression returned the wrong error: {exc}"
+                    ) from exc
+            else:
+                raise CheckFailure(
+                    "execution-policy regression accepted prohibited prerequisite source"
+                )
 
 
 def check_tiny_mock_lifecycle() -> None:
@@ -278,9 +503,78 @@ def check_default_fallback_semantics() -> None:
         raise CheckFailure("invalid user-source mock unexpectedly became queryable")
 
 
+def _run_python_tool(path: Path) -> None:
+    """Run one hermetic prerequisite command and require a zero exit status."""
+    try:
+        completed = subprocess.run(
+            [sys.executable, str(path)],
+            cwd=REPO_ROOT,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=600,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise CheckFailure(f"timed out: {path.relative_to(REPO_ROOT)}") from exc
+    if completed.returncode != 0:
+        output = completed.stdout.decode("utf-8", errors="replace")
+        raise CheckFailure(
+            f"{path.relative_to(REPO_ROOT)} exited {completed.returncode}: "
+            f"{output[-2000:]}"
+        )
+
+
+def check_s1_tool_syntax() -> None:
+    """Compile every Builder-authored S1 Python prerequisite without executing it."""
+    for path in S1_REQUIRED_PATHS:
+        if path.suffix != ".py":
+            continue
+        try:
+            compile(_read(path), str(path), "exec")
+        except SyntaxError as exc:
+            raise CheckFailure(
+                f"syntax error in {path.relative_to(REPO_ROOT)}: {exc}"
+            ) from exc
+
+
+def check_generator_suite() -> None:
+    """Run the hermetic generator suite; formal generation remains uninvoked."""
+    _run_python_tool(REPO_ROOT / "tools" / "m8_test_generate_minimal_1k_input_v3.py")
+
+
+def check_observer_suite() -> None:
+    """Run the hermetic synthetic-only observer suite."""
+    _run_python_tool(REPO_ROOT / "tools" / "m8_test_observe_minimal_1k_v3.py")
+
+
+def check_s1_control_suite() -> None:
+    """Run schema/config, preflight, and mock-only authorization-boundary tests."""
+    _run_python_tool(REPO_ROOT / "tools" / "m8_test_s1_controls_v3.py")
+
+
+def check_s1_freeze_suite() -> None:
+    """Run the Git-object prerequisite-freeze self-test."""
+    _run_python_tool(
+        REPO_ROOT / "tools" / "m8_test_freeze_s1_prerequisites_v3.py"
+    )
+
+
+def check_existing_v3_regressions() -> None:
+    """Run existing graph, review-freeze, and historical mechanical regressions."""
+    for name in (
+        "m8_test_minimal_1k_graph_v3.py",
+        "m8_test_freeze_minimal_1k_v3_review.py",
+        "m8_validate_p1_materials.py",
+        "m8_validate_p0_r02.py",
+    ):
+        _run_python_tool(REPO_ROOT / "tools" / name)
+
+
 def checks() -> Iterable[Check]:
     return (
         Check("repository contract", check_repository_contract),
+        Check("S1 tool syntax", check_s1_tool_syntax),
         Check("M7 exit prerequisite", check_m7_exit_prerequisite),
         Check("M8 blocked/not-started state", check_m8_remains_blocked),
         Check("eight resolved policy decisions", check_eight_decisions),
@@ -290,6 +584,11 @@ def checks() -> Iterable[Check]:
         Check("no execution/network/install behavior", check_no_execution_imports),
         Check("tiny mock lifecycle and owner isolation", check_tiny_mock_lifecycle),
         Check("default fallback and user-source fail-closed", check_default_fallback_semantics),
+        Check("deterministic generator suite", check_generator_suite),
+        Check("synthetic observer suite", check_observer_suite),
+        Check("S1 contracts and authorization controls", check_s1_control_suite),
+        Check("S1 prerequisite Git-object freeze", check_s1_freeze_suite),
+        Check("existing v3 and historical regressions", check_existing_v3_regressions),
     )
 
 
@@ -298,15 +597,15 @@ def main() -> int:
     for check in checks():
         try:
             check.function()
-        except (CheckFailure, OSError, ValueError, TypeError) as exc:
+        except (CheckFailure, OSError, UnicodeError, ValueError, TypeError) as exc:
             all_passed = False
-            print(f"FAIL: {check.name} — {exc}")
+            _safe_console_line(f"FAIL: {check.name} -- {exc}")
         else:
-            print(f"PASS: {check.name}")
+            _safe_console_line(f"PASS: {check.name}")
     if all_passed:
-        print(SUCCESS_LINE)
+        _safe_console_line(SUCCESS_LINE)
         return 0
-    print("M8 v3 S1 prerequisite suite FAILED")
+    _safe_console_line("M8 v3 S1 prerequisite suite FAILED")
     return 1
 
 

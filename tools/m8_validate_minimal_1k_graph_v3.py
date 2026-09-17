@@ -7,6 +7,8 @@ fail-closed failure graph. Invalid or internally inconsistent graphs exit 1.
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import hashlib
 import json
 import os
@@ -15,14 +17,15 @@ import stat
 import sys
 import unicodedata
 from pathlib import Path, PurePosixPath
+
+import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = (
     ROOT
     / "docs/plans/references/schemas/m8-minimal-1k-artifacts-v3.schema.json"
 )
-PROTOCOL_PATH = (
-    ROOT
-    / "docs/plans/references/m8-minimal-1k-dry-run-protocol-v3.md"
+EXPECTED_PROTOCOL_SHA256 = (
+    "6efdb7b40a6382843f8ed26d3695880d9df3e155bffbbb088072d32713d95a49"
 )
 ROLE_SCHEMA = {
     "identity": "sa.m8.minimal.experiment-identity.v3",
@@ -70,7 +73,277 @@ GATE_MAP = {
     },
 }
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
-EXPERIMENT_ID = re.compile(r"^[a-z0-9-]+$")
+EXPERIMENT_ID = re.compile(
+    r"^sa-m8-(?:minimal-1k-v3|v3-fixture)-[a-z0-9][a-z0-9-]*$"
+)
+
+
+OBSERVER_PHASE_ORDER = (
+    "observer-bootstrap",
+    "acquisition",
+    "measured",
+    "redaction-and-seal",
+    "cleanup",
+    "observer-finalize",
+)
+OBSERVER_PHASES = set(OBSERVER_PHASE_ORDER)
+FORMAL_TOP_K = (1, 3, 5)
+FORMAL_NUMPY_VERSION = "2.4.6"
+FORMAL_SEED = 20260914
+FORMAL_PERTURBATION_SEED = 20260915
+FORMAL_CHUNK_COUNT = 1000
+FORMAL_DIMENSION = 512
+FORMAL_PERTURBATION_NORM = 0.001
+NORMALIZATION_TOLERANCE = 2e-6
+OBSERVER_CODE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+OBSERVER_ERROR_CODES = frozenset(
+    {
+        "collector-coverage-failed",
+        "collector-event-invalid",
+        "collector-read-failed",
+        "collector-seal-failed",
+        "collector-start-failed",
+        "collector-stop-failed",
+        "network-listener-observed",
+        "network-measured-outbound-observed",
+        "network-observation-unavailable",
+        "process-observation-unavailable",
+        "process-pid-identity-ambiguous",
+        "process-unexpected-child",
+        "redaction-binary-unknown",
+        "redaction-bytes-changed-before-seal",
+        "redaction-observation-unavailable",
+        "redaction-sensitive-match",
+        "redaction-utf8-decode-failed",
+        "write-containment-unverifiable",
+        "write-observation-unavailable",
+        "write-outside-allowed-root",
+        "write-race-detected",
+    }
+)
+OBSERVER_OPERATION = {
+    "create",
+    "modify",
+    "rename",
+    "delete",
+    "metadata-change",
+}
+OBSERVER_DETAIL_BRANCHES = {
+    "network": {
+        "lifecycle": {
+            "api_ids",
+            "code",
+            "phase",
+            "root_process_identity",
+        },
+        "outbound-connection": {
+            "address_family",
+            "code",
+            "local_endpoint_digest",
+            "phase",
+            "process_identity_digest",
+            "protocol",
+            "remote_endpoint_digest",
+        },
+    },
+    "write": {
+        "lifecycle": {
+            "allowed_root_set_sha256",
+            "api_ids",
+            "code",
+            "phase",
+            "root_process_identity",
+        },
+        "write": {
+            "code",
+            "operation",
+            "path_digest",
+            "phase",
+            "process_identity_digest",
+            "root_id",
+        },
+    },
+    "process": {
+        "lifecycle": {
+            "api_ids",
+            "code",
+            "phase",
+            "root_process_identity",
+        },
+        "child-count": {"code", "count", "phase", "tree_digest"},
+        "unexpected-child": {
+            "code",
+            "executable_digest",
+            "parent_identity_digest",
+            "phase",
+            "process_identity_digest",
+        },
+    },
+    "redaction": {
+        "lifecycle": {
+            "code",
+            "phase",
+            "registry_sha256",
+            "scanned_set_sha256",
+        },
+        "utf8-scan": {"byte_count", "code", "path", "phase", "sha256"},
+        "sensitive-match": {
+            "code",
+            "match_count",
+            "path",
+            "pattern_id",
+            "phase",
+        },
+    },
+}
+
+
+def canonical_relative_path(value: object) -> bool:
+    if not isinstance(value, str) or not value or "\\" in value:
+        return False
+    raw_parts = value.split("/")
+    if (
+        value.startswith("/")
+        or re.match(r"^[A-Za-z]:", value) is not None
+        or any(part in {"", ".", ".."} or ":" in part for part in raw_parts)
+        or tuple(raw_parts) != PurePosixPath(value).parts
+        or any(unicodedata.category(char) == "Cc" for char in value)
+    ):
+        return False
+    return True
+
+
+def observer_detail_branch(observer: str, kind: object) -> str | None:
+    if kind in {"observer-start", "observer-stop"}:
+        return "lifecycle"
+    if observer == "write" and kind in {"allowed-write", "denied-write"}:
+        return "write"
+    return kind if isinstance(kind, str) else None
+
+
+def valid_observer_detail(observer: str, kind: object, status: object, value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    branch = observer_detail_branch(observer, kind)
+    if branch is None:
+        return False
+    expected = OBSERVER_DETAIL_BRANCHES.get(observer, {}).get(branch)
+    if expected is None or set(value) != expected:
+        return False
+    code = value.get("code")
+    phase = value.get("phase")
+    if (
+        not isinstance(code, str)
+        or OBSERVER_CODE.fullmatch(code) is None
+        or phase not in OBSERVER_PHASES
+        or (status == "PASS" and code != "none")
+        or (status == "FAIL" and code not in OBSERVER_ERROR_CODES)
+    ):
+        return False
+    if branch == "lifecycle":
+        if kind == "observer-start" and phase != "observer-bootstrap":
+            return False
+        if kind == "observer-stop" and phase != "observer-finalize":
+            return False
+        if observer in {"network", "write", "process"}:
+            api_ids = value.get("api_ids")
+            if (
+                not isinstance(api_ids, list)
+                or not api_ids
+                or any(not isinstance(item, str) or not item for item in api_ids)
+                or api_ids != sorted(set(api_ids), key=lambda item: item.encode("utf-8"))
+                or not isinstance(value.get("root_process_identity"), str)
+                or HEX64.fullmatch(value["root_process_identity"]) is None
+            ):
+                return False
+        if observer == "write":
+            root_set = value.get("allowed_root_set_sha256")
+            if not isinstance(root_set, str) or HEX64.fullmatch(root_set) is None:
+                return False
+        if observer == "redaction":
+            for name in ("registry_sha256", "scanned_set_sha256"):
+                digest_value = value.get(name)
+                if not isinstance(digest_value, str) or HEX64.fullmatch(digest_value) is None:
+                    return False
+    elif branch == "outbound-connection":
+        if code == "network-listener-observed":
+            if status != "FAIL":
+                return False
+        elif phase == "measured":
+            if (
+                status != "FAIL"
+                or code != "network-measured-outbound-observed"
+            ):
+                return False
+        elif status == "PASS" and phase != "acquisition":
+            return False
+        if value.get("address_family") not in {"ipv4", "ipv6"}:
+            return False
+        if value.get("protocol") not in {"tcp", "udp"}:
+            return False
+        for name in (
+            "local_endpoint_digest",
+            "process_identity_digest",
+            "remote_endpoint_digest",
+        ):
+            digest_value = value.get(name)
+            if not isinstance(digest_value, str) or HEX64.fullmatch(digest_value) is None:
+                return False
+    elif branch == "write":
+        if value.get("operation") not in OBSERVER_OPERATION:
+            return False
+        if not isinstance(value.get("root_id"), str) or not value["root_id"]:
+            return False
+        for name in ("path_digest", "process_identity_digest"):
+            digest_value = value.get(name)
+            if not isinstance(digest_value, str) or HEX64.fullmatch(digest_value) is None:
+                return False
+    elif branch == "child-count":
+        count = value.get("count")
+        tree_digest = value.get("tree_digest")
+        if (
+            not isinstance(count, int)
+            or isinstance(count, bool)
+            or count < 0
+            or not isinstance(tree_digest, str)
+            or HEX64.fullmatch(tree_digest) is None
+        ):
+            return False
+    elif branch == "unexpected-child":
+        for name in (
+            "executable_digest",
+            "parent_identity_digest",
+            "process_identity_digest",
+        ):
+            digest_value = value.get(name)
+            if not isinstance(digest_value, str) or HEX64.fullmatch(digest_value) is None:
+                return False
+    elif branch == "utf8-scan":
+        byte_count = value.get("byte_count")
+        path_value = value.get("path")
+        digest_value = value.get("sha256")
+        if (
+            not isinstance(byte_count, int)
+            or isinstance(byte_count, bool)
+            or byte_count < 0
+            or not canonical_relative_path(path_value)
+            or not isinstance(digest_value, str)
+            or HEX64.fullmatch(digest_value) is None
+        ):
+            return False
+    elif branch == "sensitive-match":
+        match_count = value.get("match_count")
+        path_value = value.get("path")
+        if (
+            not isinstance(match_count, int)
+            or isinstance(match_count, bool)
+            or match_count < 1
+            or not canonical_relative_path(path_value)
+            or not isinstance(value.get("pattern_id"), str)
+            or not value["pattern_id"]
+        ):
+            return False
+    return True
 
 
 def reject_constant(value: str) -> None:
@@ -138,6 +411,180 @@ def jsonl_count(data: bytes) -> int:
     return len(canonical_jsonl_records(data))
 
 
+def _normalize_formal_vectors(rows: np.ndarray) -> np.ndarray:
+    """Derive canonical persisted <f4 rows without trusting generator code."""
+    if rows.dtype != np.dtype(np.float64) or not rows.flags.c_contiguous:
+        raise ValueError("formal working vectors must be C-contiguous float64")
+    if not bool(np.all(np.isfinite(rows))):
+        raise ValueError("formal working vectors must be finite")
+    norms = np.sqrt(np.sum(rows * rows, axis=1, dtype=np.float64))
+    if not bool(np.all(np.isfinite(norms))) or bool(np.any(norms == 0)):
+        raise ValueError("formal vector norms must be finite and non-zero")
+    stored = np.asarray(rows / norms[:, None], dtype="<f4", order="C")
+    if stored.dtype != np.dtype("<f4") or not stored.flags.c_contiguous:
+        raise ValueError("formal stored vectors must be C-contiguous <f4")
+    restored = stored.astype(np.float64)
+    stored_norms = np.sqrt(
+        np.sum(restored * restored, axis=1, dtype=np.float64)
+    )
+    if (
+        not bool(np.all(np.isfinite(restored)))
+        or not bool(np.all(np.isfinite(stored_norms)))
+        or bool(
+            np.any(
+                np.abs(stored_norms - 1.0) > NORMALIZATION_TOLERANCE
+            )
+        )
+    ):
+        raise ValueError("formal stored vectors exceed norm tolerance")
+    return stored
+
+
+def _formal_chunk(ordinal: int) -> dict:
+    record = {
+        "chunk_id": f"m8-s00-{ordinal:05d}",
+        "filter_label": f"label-{ordinal:05d}",
+        "generation": "generation-01",
+        "ordinal": ordinal,
+        "owner_id": "owner-00",
+        "published": True,
+        "snapshot": "snapshot-01",
+        "source_id": "source-00",
+        "tombstone": False,
+        "vector_byte_length": FORMAL_DIMENSION * 4,
+        "vector_byte_offset": ordinal * FORMAL_DIMENSION * 4,
+    }
+    if ordinal == 100:
+        record["tombstone"] = True
+    elif ordinal == 101:
+        record["published"] = False
+    elif ordinal == 102:
+        record["generation"] = "generation-mismatch"
+    elif ordinal == 103:
+        record["snapshot"] = "snapshot-mismatch"
+    return record
+
+
+def _formal_filter(ordinal: int) -> dict:
+    return {
+        "filter_label": f"label-{ordinal:05d}",
+        "generation": "generation-01",
+        "owner_id": "owner-00",
+        "published": True,
+        "snapshot": "snapshot-01",
+        "source_id": "source-00",
+        "tombstone": False,
+    }
+
+
+def _derive_formal_inputs() -> tuple[list[dict], list[dict], bytes]:
+    """Independently derive the complete deterministic formal input contract."""
+    if np.__version__ != FORMAL_NUMPY_VERSION:
+        raise ValueError(
+            "formal NumPy version must be "
+            f"{FORMAL_NUMPY_VERSION}, got {np.__version__}"
+        )
+    chunk_rng = np.random.Generator(np.random.PCG64(FORMAL_SEED))
+    raw = chunk_rng.standard_normal(
+        size=(FORMAL_CHUNK_COUNT, FORMAL_DIMENSION),
+        dtype=np.float64,
+    )
+    stored = _normalize_formal_vectors(raw)
+
+    perturb_rng = np.random.Generator(
+        np.random.PCG64(FORMAL_PERTURBATION_SEED)
+    )
+    noise = perturb_rng.standard_normal(
+        size=(25, FORMAL_DIMENSION),
+        dtype=np.float64,
+    )
+    if not noise.flags.c_contiguous or not bool(np.all(np.isfinite(noise))):
+        raise ValueError("formal perturbations must be finite C-contiguous float64")
+    noise_norms = np.sqrt(
+        np.sum(noise * noise, axis=1, dtype=np.float64)
+    )
+    if not bool(np.all(np.isfinite(noise_norms))) or bool(
+        np.any(noise_norms == 0)
+    ):
+        raise ValueError("formal perturbation norms must be finite and non-zero")
+    scaled_noise = (
+        noise / noise_norms[:, None] * FORMAL_PERTURBATION_NORM
+    )
+    perturbed = _normalize_formal_vectors(
+        np.asarray(
+            stored[25:50].astype(np.float64) + scaled_noise,
+            dtype=np.float64,
+            order="C",
+        )
+    )
+
+    def encoded(row: np.ndarray) -> str:
+        raw_row = np.asarray(row, dtype="<f4", order="C").tobytes(
+            order="C"
+        )
+        return base64.b64encode(raw_row).decode("ascii")
+
+    chunks = [_formal_chunk(ordinal) for ordinal in range(FORMAL_CHUNK_COUNT)]
+    queries: list[dict] = []
+    wildcard_filter = {key: "*" for key in _formal_filter(0)}
+    for index in range(25):
+        queries.append(
+            {
+                "filter": dict(wildcard_filter),
+                "query_id": f"m8-q-exact-{index:03d}",
+                "query_type": "exact",
+                "target_chunk_id": f"m8-s00-{index:05d}",
+                "vector_f32_le_base64": encoded(stored[index]),
+            }
+        )
+    for index in range(25):
+        ordinal = 25 + index
+        queries.append(
+            {
+                "filter": dict(wildcard_filter),
+                "query_id": f"m8-q-perturbed-{index:03d}",
+                "query_type": "perturbed",
+                "target_chunk_id": f"m8-s00-{ordinal:05d}",
+                "vector_f32_le_base64": encoded(perturbed[index]),
+            }
+        )
+    for index in range(25):
+        ordinal = 50 + index
+        queries.append(
+            {
+                "filter": _formal_filter(ordinal),
+                "query_id": f"m8-q-metadata-filter-{index:03d}",
+                "query_type": "metadata-filter",
+                "target_chunk_id": f"m8-s00-{ordinal:05d}",
+                "vector_f32_le_base64": encoded(stored[ordinal]),
+            }
+        )
+    for index in range(25):
+        ordinal = 75 + index
+        query_filter = _formal_filter(ordinal)
+        query_filter["owner_id"] = "owner-missing"
+        queries.append(
+            {
+                "filter": query_filter,
+                "query_id": f"m8-q-wrong-owner-no-hit-{index:03d}",
+                "query_type": "wrong-owner-no-hit",
+                "target_chunk_id": f"m8-s00-{ordinal:05d}",
+                "vector_f32_le_base64": encoded(stored[ordinal]),
+            }
+        )
+    for ordinal in range(100, 104):
+        queries.append(
+            {
+                "filter": _formal_filter(ordinal),
+                "query_id": f"m8-q-negative-{ordinal}",
+                "query_type": "negative-fixture",
+                "target_chunk_id": f"m8-s00-{ordinal:05d}",
+                "vector_f32_le_base64": encoded(stored[ordinal]),
+            }
+        )
+    return chunks, queries, stored.tobytes(order="C")
+
+
 class Validator:
     def __init__(self, graph_dir: Path):
         self.requested_root = graph_dir.absolute()
@@ -148,6 +595,11 @@ class Validator:
         self.paths: dict[str, Path] = {}
         self.schema: dict | None = None
         self.fixture_graph = False
+        self.chunk_records: list[dict] = []
+        self.query_records: list[dict] = []
+        self.expected_gold: list[dict] = []
+        self.formal_semantics_valid = True
+        self.manifest_inputs_parsed = False
 
     def check(self, condition: bool, message: str) -> bool:
         if not condition:
@@ -161,8 +613,15 @@ class Validator:
     def _is_reparse_point(self, path: Path) -> bool:
         try:
             file_stat = path.lstat()
-        except OSError:
-            return False
+        except OSError as exc:
+            try:
+                relative = path.relative_to(self.root).as_posix()
+            except ValueError:
+                relative = str(path)
+            self.errors.append(
+                f"graph inventory lstat failed: {relative}: {exc}"
+            )
+            return True
         reparse_attribute = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
         return bool(
             getattr(file_stat, "st_file_attributes", 0)
@@ -590,15 +1049,10 @@ class Validator:
             and HEX64.fullmatch(protocol_digest) is not None,
             "identity: protocol digest format",
         )
-        try:
-            protocol_data = PROTOCOL_PATH.read_bytes()
-        except OSError as exc:
-            self.errors.append(f"identity: protocol file unreadable: {exc}")
-        else:
-            self.check(
-                protocol_digest == sha(protocol_data),
-                "identity: protocol digest bytes",
-            )
+        self.check(
+            protocol_digest == EXPECTED_PROTOCOL_SHA256,
+            "identity: protocol digest bytes",
+        )
 
     def validate_member_schema(self, member: object, label: str) -> dict:
         value = self.mapping(member, f"{label}: member must be an object")
@@ -627,6 +1081,328 @@ class Validator:
                 f"{label}: member {field} type",
             )
         return value
+
+    def _validate_fixture_semantics(
+        self,
+        chunks: list[dict],
+        queries: list[dict],
+        persisted_gold: list[dict],
+    ) -> list[dict]:
+        chunk_ids: list[str] = []
+        chunk_ids_valid = True
+        for index, chunk in enumerate(chunks):
+            valid = (
+                set(chunk) == {"chunk_id"}
+                and isinstance(chunk.get("chunk_id"), str)
+                and bool(chunk.get("chunk_id"))
+                and chunk.get("chunk_id") not in chunk_ids
+            )
+            chunk_ids_valid &= self.check(
+                valid,
+                f"manifest: fixture chunk {index}",
+            )
+            if valid:
+                chunk_ids.append(chunk["chunk_id"])
+        self.check(chunk_ids_valid and bool(chunk_ids), "manifest: fixture chunks")
+        query_ids: list[str] = []
+        for index, query in enumerate(queries):
+            valid = (
+                set(query) == {"query_id"}
+                and isinstance(query.get("query_id"), str)
+                and bool(query.get("query_id"))
+                and query.get("query_id") not in query_ids
+            )
+            self.check(valid, f"manifest: fixture query {index}")
+            if valid:
+                query_ids.append(query["query_id"])
+        self.check(
+            len(query_ids) == len(queries) and bool(query_ids),
+            "manifest: fixture queries",
+        )
+        expected: list[dict] = []
+        seen_queries: set[str] = set()
+        for index, record in enumerate(persisted_gold):
+            query_id = record.get("query_id")
+            gold = record.get("gold")
+            valid = (
+                set(record) == {"gold", "query_id"}
+                and isinstance(query_id, str)
+                and bool(query_id)
+                and query_id not in seen_queries
+                and index < len(query_ids)
+                and query_id == query_ids[index]
+                and isinstance(gold, list)
+                and len(gold) <= max(FORMAL_TOP_K)
+                and len(gold) == len(set(gold))
+                and all(
+                    isinstance(chunk_id, str) and chunk_id in chunk_ids
+                    for chunk_id in gold
+                )
+            )
+            self.check(valid, f"manifest: fixture gold record {index}")
+            if isinstance(query_id, str):
+                seen_queries.add(query_id)
+            if (
+                valid
+                and isinstance(query_id, str)
+                and isinstance(gold, list)
+            ):
+                expected.append(
+                    {
+                        "gold_by_k": {
+                            str(k): gold[:k] for k in FORMAL_TOP_K
+                        },
+                        "query_id": query_id,
+                    }
+                )
+        self.check(
+            len(persisted_gold) == len(query_ids)
+            and len(expected) == len(query_ids),
+            "manifest: fixture gold record count",
+        )
+        return expected
+
+    def _recompute_formal_gold(
+        self,
+        chunks: list[dict],
+        queries: list[dict],
+        vector_bytes: bytes | None,
+        dimension: object,
+    ) -> list[dict]:
+        if (
+            dimension != FORMAL_DIMENSION
+            or vector_bytes is None
+            or len(chunks) != FORMAL_CHUNK_COUNT
+            or len(queries) != 104
+        ):
+            self.formal_semantics_valid = False
+            self.errors.append("manifest: formal vector metadata")
+            return []
+        try:
+            expected_chunks, expected_queries, expected_vector_bytes = (
+                _derive_formal_inputs()
+            )
+        except (ValueError, TypeError, FloatingPointError) as exc:
+            self.formal_semantics_valid = False
+            self.errors.append(f"manifest: formal derivation failed: {exc}")
+            return []
+
+        chunks_valid = True
+        for index, (chunk, expected_chunk) in enumerate(
+            zip(chunks, expected_chunks, strict=True)
+        ):
+            chunks_valid &= self.check(
+                chunk == expected_chunk,
+                f"manifest: formal chunk {index}",
+            )
+        vectors_valid = self.check(
+            vector_bytes == expected_vector_bytes,
+            "manifest: formal deterministic vectors",
+        )
+        queries_valid = True
+        for index, (query, expected_query) in enumerate(
+            zip(queries, expected_queries, strict=True)
+        ):
+            queries_valid &= self.check(
+                query == expected_query,
+                f"manifest: formal query {index}",
+            )
+        self.formal_semantics_valid = (
+            chunks_valid and vectors_valid and queries_valid
+        )
+        if not self.formal_semantics_valid:
+            return []
+
+        vectors = np.frombuffer(vector_bytes, dtype="<f4").reshape(
+            (FORMAL_CHUNK_COUNT, FORMAL_DIMENSION)
+        ).astype(np.float64)
+        expected: list[dict] = []
+        for query in queries:
+            try:
+                raw_query = base64.b64decode(
+                    query["vector_f32_le_base64"],
+                    validate=True,
+                )
+            except (ValueError, binascii.Error):
+                self.errors.append("manifest: formal query vector encoding")
+                return []
+            query_vector = np.frombuffer(raw_query, dtype="<f4").astype(
+                np.float64
+            )
+            candidates: list[tuple[float, bytes, str]] = []
+            for index, chunk in enumerate(chunks):
+                if any(
+                    value != "*" and chunk[key] != value
+                    for key, value in query["filter"].items()
+                ):
+                    continue
+                score = float(np.dot(query_vector, vectors[index]))
+                if not np.isfinite(score):
+                    self.errors.append("manifest: non-finite ranking score")
+                    return []
+                chunk_id = chunk["chunk_id"]
+                candidates.append(
+                    (score, chunk_id.encode("utf-8"), chunk_id)
+                )
+            candidates.sort(key=lambda item: (-item[0], item[1]))
+            ordered = [item[2] for item in candidates]
+            expected.append(
+                {
+                    "gold_by_k": {
+                        str(k): ordered[:k] for k in FORMAL_TOP_K
+                    },
+                    "query_id": query["query_id"],
+                }
+            )
+        return expected
+
+    def _validate_persisted_gold(
+        self,
+        persisted_gold: list[dict],
+        expected_gold: list[dict],
+    ) -> None:
+        known_chunks = {
+            chunk.get("chunk_id")
+            for chunk in self.chunk_records
+            if isinstance(chunk.get("chunk_id"), str)
+        }
+        seen_queries: set[str] = set()
+        for index, record in enumerate(persisted_gold):
+            query_id = record.get("query_id")
+            gold_by_k = record.get("gold_by_k")
+            valid = (
+                set(record) == {"gold_by_k", "query_id"}
+                and isinstance(query_id, str)
+                and bool(query_id)
+                and query_id not in seen_queries
+                and isinstance(gold_by_k, dict)
+                and set(gold_by_k) == {str(k) for k in FORMAL_TOP_K}
+            )
+            if (
+                valid
+                and isinstance(query_id, str)
+                and isinstance(gold_by_k, dict)
+            ):
+                seen_queries.add(query_id)
+                previous: list[str] = []
+                for k in FORMAL_TOP_K:
+                    values = gold_by_k[str(k)]
+                    value_valid = (
+                        isinstance(values, list)
+                        and len(values) <= k
+                        and len(values) == len(set(values))
+                        and all(
+                            isinstance(chunk_id, str)
+                            and chunk_id in known_chunks
+                            for chunk_id in values
+                        )
+                        and values[: len(previous)] == previous
+                    )
+                    valid &= value_valid
+                    previous = values if isinstance(values, list) else []
+            self.check(valid, f"manifest: gold record {index}")
+            expected = expected_gold[index] if index < len(expected_gold) else None
+            self.check(
+                record == expected,
+                f"manifest: gold recomputation {index}",
+            )
+        self.check(
+            len(persisted_gold) == len(expected_gold),
+            "manifest: gold record count",
+        )
+
+    def _validate_backend_per_query(
+        self,
+        value: dict,
+        backend_index: int,
+    ) -> bool:
+        per_query = self.sequence(
+            value.get("per_query"),
+            f"run: backend {backend_index} per_query must be an array",
+        )
+        expected_query_ids = [
+            record.get("query_id") for record in self.expected_gold
+        ]
+        expected_by_query = {
+            record.get("query_id"): record.get("gold_by_k")
+            for record in self.expected_gold
+        }
+        known_chunks = {
+            chunk.get("chunk_id")
+            for chunk in self.chunk_records
+            if isinstance(chunk.get("chunk_id"), str)
+        }
+        observed_query_ids: list[str] = []
+        comparison_count = 0
+        valid = True
+        for result_index, raw_result in enumerate(per_query):
+            result = self.mapping(
+                raw_result,
+                f"run: backend {backend_index} result {result_index} must be an object",
+            )
+            result_valid = self.check(
+                set(result) == {"query_id", "top_k"},
+                f"run: backend {backend_index} result {result_index} keys",
+            )
+            query_id = result.get("query_id")
+            top_k = result.get("top_k")
+            result_valid &= self.check(
+                isinstance(query_id, str)
+                and bool(query_id)
+                and query_id not in observed_query_ids
+                and query_id in expected_by_query,
+                f"run: backend {backend_index} result {result_index} query",
+            )
+            if isinstance(query_id, str):
+                observed_query_ids.append(query_id)
+            result_valid &= self.check(
+                isinstance(top_k, dict)
+                and set(top_k) == {str(k) for k in FORMAL_TOP_K},
+                f"run: backend {backend_index} result {result_index} top_k keys",
+            )
+            previous: list[str] = []
+            if isinstance(top_k, dict):
+                for k in FORMAL_TOP_K:
+                    values = top_k.get(str(k))
+                    values_valid = (
+                        isinstance(values, list)
+                        and len(values) <= k
+                        and len(values) == len(set(values))
+                        and all(
+                            isinstance(chunk_id, str)
+                            and chunk_id in known_chunks
+                            for chunk_id in values
+                        )
+                        and values[: len(previous)] == previous
+                    )
+                    result_valid &= self.check(
+                        values_valid,
+                        f"run: backend {backend_index} result {result_index} top_k {k}",
+                    )
+                    previous = values if isinstance(values, list) else []
+                    comparison_count += 1
+            expected = expected_by_query.get(query_id)
+            agreement_valid = top_k == expected
+            if value.get("status") == "PASS":
+                result_valid &= self.check(
+                    agreement_valid,
+                    f"run: backend {backend_index} result {result_index} agreement",
+                )
+            else:
+                result_valid &= agreement_valid
+            valid &= result_valid
+        valid &= self.check(
+            observed_query_ids == expected_query_ids,
+            f"run: backend {backend_index} exact query set/order",
+        )
+        expected_comparisons = len(expected_query_ids) * len(FORMAL_TOP_K)
+        if not self.fixture_graph:
+            expected_comparisons = 312
+        valid &= self.check(
+            comparison_count == expected_comparisons,
+            f"run: backend {backend_index} comparison count",
+        )
+        return valid
 
     def validate_manifest(self) -> None:
         raw_payload = self.objects["input-manifest"].get("payload")
@@ -673,6 +1449,8 @@ class Validator:
         )
         observed_counts: dict[str, int] = {}
         observed_bytes: dict[str, int] = {}
+        jsonl_records: dict[str, list[dict]] = {}
+        vector_bytes: bytes | None = None
         for item in values:
             relative = item.get("path")
             path = self.safe_path(relative)
@@ -698,19 +1476,24 @@ class Validator:
                 observed_bytes[relative] = len(data)
             if path.suffix == ".jsonl":
                 try:
-                    count: object = jsonl_count(data)
+                    records = canonical_jsonl_records(data)
+                    count: object = len(records)
+                    if isinstance(relative, str):
+                        jsonl_records[relative] = records
                 except (UnicodeError, ValueError, json.JSONDecodeError) as exc:
                     self.errors.append(
                         f"manifest: invalid JSONL {relative}: {exc}"
                     )
                     count = item.get("record_count")
             elif fixture_only is True:
+                vector_bytes = data
                 count = item.get("record_count")
                 self.check(
                     data == b"M8-V3-FIXTURE-VECTORS-NOT-REAL-1K\n",
                     "manifest: fixture vectors placeholder",
                 )
             else:
+                vector_bytes = data
                 identity = self.mapping(
                     self.objects["identity"].get("payload"),
                     "identity: payload must be an object",
@@ -740,7 +1523,24 @@ class Validator:
         gold = observed_counts.get("input/gold.jsonl")
         self.check(chunks == vectors, "manifest: chunk/vector count")
         self.check(queries == gold, "manifest: query/gold count")
-        if fixture_only is False:
+        required_jsonl = {
+            "input/chunks.jsonl",
+            "input/gold.jsonl",
+            "input/queries.jsonl",
+        }
+        if not required_jsonl.issubset(jsonl_records):
+            return
+        self.manifest_inputs_parsed = True
+        self.chunk_records = jsonl_records["input/chunks.jsonl"]
+        self.query_records = jsonl_records["input/queries.jsonl"]
+        persisted_gold = jsonl_records["input/gold.jsonl"]
+        if fixture_only is True:
+            expected_gold = self._validate_fixture_semantics(
+                self.chunk_records,
+                self.query_records,
+                persisted_gold,
+            )
+        else:
             identity = self.mapping(
                 self.objects["identity"].get("payload"),
                 "identity: payload must be an object",
@@ -756,6 +1556,15 @@ class Validator:
                 == chunks * dimension * 4
             )
             self.check(real_shape_valid, "manifest: real workload shape")
+            expected_gold = self._recompute_formal_gold(
+                self.chunk_records,
+                self.query_records,
+                vector_bytes,
+                dimension,
+            )
+        if fixture_only is not True:
+            self._validate_persisted_gold(persisted_gold, expected_gold)
+        self.expected_gold = expected_gold
 
     def validate_summary_schema(self, summary: object, name: str) -> dict:
         value = self.mapping(
@@ -816,6 +1625,7 @@ class Validator:
             ),
         ]
         backend_statuses = []
+        backend_agreements = []
         self.check(
             len(backend_results) == len(expected_backend_modes),
             "run: backend count",
@@ -827,7 +1637,13 @@ class Validator:
             )
             self.check(
                 set(value)
-                == {"backend", "mode", "status", "input_manifest_sha256"},
+                == {
+                    "backend",
+                    "input_manifest_sha256",
+                    "mode",
+                    "per_query",
+                    "status",
+                },
                 f"run: backend {index} keys",
             )
             self.check(
@@ -846,6 +1662,9 @@ class Validator:
                 f"run: backend {index} status",
             )
             backend_statuses.append(backend_status)
+            backend_agreements.append(
+                self._validate_backend_per_query(value, index)
+            )
         status = payload.get("status")
         self.check(status in {"PASS", "FAIL"}, "run: status")
         runtime_errors = self.sequence(
@@ -863,6 +1682,7 @@ class Validator:
             status == "PASS"
             and runtime_errors == []
             and backend_statuses == ["PASS", "PASS"]
+            and backend_agreements == [True, True]
         )
         self.check(
             (status == "PASS") == (runtime_errors == []),
@@ -887,7 +1707,7 @@ class Validator:
         self.check(set(observers) == expected_observers, "run: observer set")
         all_observers_pass = set(observers) == expected_observers
         closed_failure_kinds = {
-            "network": {"outbound-connection"},
+            "network": set(),
             "write": {"denied-write"},
             "process": {"unexpected-child"},
             "redaction": {"sensitive-match"},
@@ -971,14 +1791,25 @@ class Validator:
             )
             self.check(sequence_valid, f"observer {name}: sequence")
             event_shapes_valid = True
-            for item in events:
+            child_count_phases: list[object] = []
+            for item_index, item in enumerate(events):
+                event_sequence = item.get("sequence")
+                event_shapes_valid &= self.check(
+                    self.strict_int(event_sequence) and event_sequence == item_index,
+                    f"observer {name}: event sequence",
+                )
                 event_shapes_valid &= self.check(
                     set(item) == {"detail", "kind", "sequence", "status"},
                     f"observer {name}: event keys",
                 )
                 event_shapes_valid &= self.check(
-                    isinstance(item.get("detail"), str),
-                    f"observer {name}: event detail type",
+                    valid_observer_detail(
+                        name,
+                        item.get("kind"),
+                        item.get("status"),
+                        item.get("detail"),
+                    ),
+                    f"observer {name}: event detail",
                 )
                 event_shapes_valid &= self.check(
                     item.get("kind") in allowed_kinds[name],
@@ -993,10 +1824,25 @@ class Validator:
                     or item.get("status") == "FAIL",
                     f"observer {name}: closed event must fail",
                 )
+                if name == "process" and item.get("kind") == "child-count":
+                    detail = item.get("detail")
+                    child_count_phases.append(
+                        detail.get("phase") if isinstance(detail, dict) else None
+                    )
+            process_phase_valid = True
+            if name == "process":
+                process_phase_valid = self.check(
+                    child_count_phases == list(OBSERVER_PHASE_ORDER),
+                    "observer process: exact ordered child-count phases",
+                )
             lifecycle_valid = (
-                bool(events)
+                len(events) >= 2
                 and events[0].get("kind") == "observer-start"
                 and events[-1].get("kind") == "observer-stop"
+                and all(
+                    item.get("kind") not in {"observer-start", "observer-stop"}
+                    for item in events[1:-1]
+                )
             )
             self.check(lifecycle_valid, f"observer {name}: lifecycle")
             computed = (
@@ -1014,6 +1860,7 @@ class Validator:
                 and count_valid
                 and sequence_valid
                 and event_shapes_valid
+                and process_phase_valid
                 and lifecycle_valid
                 and aggregate_valid
                 and computed == "PASS"
@@ -1299,6 +2146,8 @@ class Validator:
         self.validate_experiment_consistency()
         self.validate_identity()
         self.validate_manifest()
+        if not self.manifest_inputs_parsed or not self.formal_semantics_valid:
+            return False
         observers_pass, run_pass, same_input_pass = (
             self.validate_events_and_run()
         )

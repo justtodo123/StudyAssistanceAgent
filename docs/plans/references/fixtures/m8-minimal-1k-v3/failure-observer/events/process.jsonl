@@ -1,3 +1,8 @@
-{"detail":"none","kind":"observer-start","sequence":0,"status":"PASS"}
-{"detail":"0","kind":"child-count","sequence":1,"status":"PASS"}
-{"detail":"none","kind":"observer-stop","sequence":2,"status":"PASS"}
+{"detail":{"api_ids":["fixture-process-api"],"code":"none","phase":"observer-bootstrap","root_process_identity":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"observer-start","sequence":0,"status":"PASS"}
+{"detail":{"code":"none","count":0,"phase":"observer-bootstrap","tree_digest":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"child-count","sequence":1,"status":"PASS"}
+{"detail":{"code":"none","count":0,"phase":"acquisition","tree_digest":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"child-count","sequence":2,"status":"PASS"}
+{"detail":{"code":"none","count":0,"phase":"measured","tree_digest":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"child-count","sequence":3,"status":"PASS"}
+{"detail":{"code":"none","count":0,"phase":"redaction-and-seal","tree_digest":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"child-count","sequence":4,"status":"PASS"}
+{"detail":{"code":"none","count":0,"phase":"cleanup","tree_digest":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"child-count","sequence":5,"status":"PASS"}
+{"detail":{"code":"none","count":0,"phase":"observer-finalize","tree_digest":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"child-count","sequence":6,"status":"PASS"}
+{"detail":{"api_ids":["fixture-process-api"],"code":"none","phase":"observer-finalize","root_process_identity":"9ccc4dc710ddfed0d57696632efa60657e98e6cea36bc89e60fb2a65bd49bd9a"},"kind":"observer-stop","sequence":7,"status":"PASS"}

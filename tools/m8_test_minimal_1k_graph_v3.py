@@ -2,6 +2,7 @@
 """Run persistent positive/failure fixtures and fail-closed mutations for M8 v3."""
 from __future__ import annotations
 
+import copy
 import difflib
 import hashlib
 import json
@@ -22,8 +23,11 @@ COMMITTED_FIXTURES = (
     / "docs/plans/references/fixtures/m8-minimal-1k-v3"
 )
 
-from m8_validate_minimal_1k_graph_v3 import reject_duplicate_pairs
-
+from m8_validate_minimal_1k_graph_v3 import (
+    Validator,
+    reject_duplicate_pairs,
+    valid_observer_detail,
+)
 
 def run(
     path: Path,
@@ -187,6 +191,75 @@ def junction_regression(
         and "traceback" not in output.lower()
     )
     return ok, output
+
+
+def fixture_generator_output_junction_regression(
+    root: Path,
+) -> tuple[bool, str]:
+    """Prove the fixture generator rejects a caller-supplied junction leaf."""
+    if os.name != "nt":
+        return True, "unsupported platform"
+    external = root / "fixture-generator-external"
+    output_link = root / "fixture-generator-output"
+    external.mkdir()
+    created = subprocess.run(
+        ["cmd.exe", "/d", "/c", "mklink", "/J", str(output_link), str(external)],
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        capture_output=True,
+        check=False,
+        timeout=30,
+    )
+    if created.returncode != 0:
+        return False, f"junction creation failed: {created.stdout}{created.stderr}"
+    result = subprocess.run(
+        [sys.executable, str(GENERATOR), "--output-root", str(output_link)],
+        cwd=ROOT,
+        text=True,
+        encoding="utf-8",
+        errors="strict",
+        capture_output=True,
+        check=False,
+        timeout=30,
+    )
+    output = result.stdout + result.stderr
+    ok = (
+        result.returncode != 0
+        and "symlink or reparse point" in output
+        and not any(external.iterdir())
+        and "traceback" not in output.lower()
+    )
+    return ok, output
+
+
+def injected_lstat_failure_regression(root: Path) -> tuple[bool, str]:
+    """Prove an inventory lstat failure is reported and fails closed."""
+    target = root / "injected-lstat-failure"
+    target.mkdir()
+    validator = Validator(target)
+    original_lstat = Path.lstat
+    root_lstat_calls = 0
+
+    def injected_lstat(self: Path) -> os.stat_result:
+        nonlocal root_lstat_calls
+        if self == validator.root:
+            root_lstat_calls += 1
+            if root_lstat_calls == 2:
+                raise OSError("injected lstat failure")
+        return original_lstat(self)
+
+    try:
+        Path.lstat = injected_lstat
+        validator.load_artifacts()
+    finally:
+        Path.lstat = original_lstat
+    expected = (
+        "graph inventory lstat failed: .: injected lstat failure",
+        "graph directory unreadable: graph root must be a regular directory",
+    )
+    ok = validator.errors == list(expected) and validator.objects == {}
+    return ok, "\n".join(validator.errors)
 
 
 def file_ref(role: str, path: Path) -> dict:
@@ -454,6 +527,350 @@ def tree_snapshot(root: Path) -> dict[str, bytes]:
     }
 
 
+def fixture_observer_event(observer: str, kind: str, sequence: int) -> dict:
+    digest_value = hashlib.sha256(b"fixture-observer-detail").hexdigest()
+    phase = (
+        "observer-bootstrap"
+        if kind == "observer-start"
+        else "observer-finalize"
+    )
+    if observer == "network":
+        detail = {
+            "api_ids": ["fixture-network-api"],
+            "code": "none",
+            "phase": phase,
+            "root_process_identity": digest_value,
+        }
+    else:
+        raise ValueError(f"unsupported test observer: {observer}")
+    return {
+        "detail": detail,
+        "kind": kind,
+        "sequence": sequence,
+        "status": "PASS",
+    }
+
+
+def observer_detail_contract_failures() -> list[str]:
+    digest_value = hashlib.sha256(b"fixture-observer-detail").hexdigest()
+    cases: list[tuple[str, str, str, str, object, bool]] = [
+        (
+            "write-valid",
+            "write",
+            "allowed-write",
+            "PASS",
+            {
+                "code": "none",
+                "operation": "create",
+                "path_digest": digest_value,
+                "phase": "measured",
+                "process_identity_digest": digest_value,
+                "root_id": "temporary-root",
+            },
+            True,
+        ),
+        (
+            "write-operation",
+            "write",
+            "allowed-write",
+            "PASS",
+            {
+                "code": "none",
+                "operation": "copy",
+                "path_digest": digest_value,
+                "phase": "measured",
+                "process_identity_digest": digest_value,
+                "root_id": "temporary-root",
+            },
+            False,
+        ),
+        (
+            "write-root",
+            "write",
+            "denied-write",
+            "FAIL",
+            {
+                "code": "write-outside-allowed-root",
+                "operation": "create",
+                "path_digest": digest_value,
+                "phase": "measured",
+                "process_identity_digest": digest_value,
+                "root_id": "",
+            },
+            False,
+        ),
+        (
+            "process-count-valid",
+            "process",
+            "child-count",
+            "PASS",
+            {
+                "code": "none",
+                "count": 0,
+                "phase": "measured",
+                "tree_digest": digest_value,
+            },
+            True,
+        ),
+        (
+            "process-count-negative",
+            "process",
+            "child-count",
+            "FAIL",
+            {
+                "code": "invalid-count",
+                "count": -1,
+                "phase": "measured",
+                "tree_digest": digest_value,
+            },
+            False,
+        ),
+        (
+            "process-count-bool",
+            "process",
+            "child-count",
+            "FAIL",
+            {
+                "code": "invalid-count",
+                "count": True,
+                "phase": "measured",
+                "tree_digest": digest_value,
+            },
+            False,
+        ),
+        (
+            "redaction-scan-valid",
+            "redaction",
+            "utf8-scan",
+            "PASS",
+            {
+                "byte_count": 0,
+                "code": "none",
+                "path": "artifacts/fixture.json",
+                "phase": "redaction-and-seal",
+                "sha256": digest_value,
+            },
+            True,
+        ),
+        (
+            "redaction-scan-absolute",
+            "redaction",
+            "utf8-scan",
+            "FAIL",
+            {
+                "byte_count": 1,
+                "code": "invalid-path",
+                "path": "/artifacts/fixture.json",
+                "phase": "redaction-and-seal",
+                "sha256": digest_value,
+            },
+            False,
+        ),
+        (
+            "redaction-scan-backslash",
+            "redaction",
+            "utf8-scan",
+            "FAIL",
+            {
+                "byte_count": 1,
+                "code": "invalid-path",
+                "path": "artifacts\\fixture.json",
+                "phase": "redaction-and-seal",
+                "sha256": digest_value,
+            },
+            False,
+        ),
+        (
+            "redaction-scan-parent",
+            "redaction",
+            "utf8-scan",
+            "FAIL",
+            {
+                "byte_count": 1,
+                "code": "invalid-path",
+                "path": "../fixture.json",
+                "phase": "redaction-and-seal",
+                "sha256": digest_value,
+            },
+            False,
+        ),
+        (
+            "redaction-match-valid",
+            "redaction",
+            "sensitive-match",
+            "FAIL",
+            {
+                "code": "redaction-sensitive-match",
+                "match_count": 1,
+                "path": "artifacts/fixture.json",
+                "pattern_id": "fixture-pattern",
+                "phase": "redaction-and-seal",
+            },
+            True,
+        ),
+        (
+            "redaction-match-count",
+            "redaction",
+            "sensitive-match",
+            "FAIL",
+            {
+                "code": "redaction-sensitive-match",
+                "match_count": 0,
+                "path": "artifacts/fixture.json",
+                "pattern_id": "fixture-pattern",
+                "phase": "redaction-and-seal",
+            },
+            False,
+        ),
+        (
+            "redaction-match-absolute",
+            "redaction",
+            "sensitive-match",
+            "FAIL",
+            {
+                "code": "redaction-sensitive-match",
+                "match_count": 1,
+                "path": "/artifacts/fixture.json",
+                "pattern_id": "fixture-pattern",
+                "phase": "redaction-and-seal",
+            },
+            False,
+        ),
+        (
+            "redaction-match-backslash",
+            "redaction",
+            "sensitive-match",
+            "FAIL",
+            {
+                "code": "redaction-sensitive-match",
+                "match_count": 1,
+                "path": "artifacts\\fixture.json",
+                "pattern_id": "fixture-pattern",
+                "phase": "redaction-and-seal",
+            },
+            False,
+        ),
+        (
+            "redaction-match-parent",
+            "redaction",
+            "sensitive-match",
+            "FAIL",
+            {
+                "code": "redaction-sensitive-match",
+                "match_count": 1,
+                "path": "../fixture.json",
+                "pattern_id": "fixture-pattern",
+                "phase": "redaction-and-seal",
+            },
+            False,
+        ),
+        (
+            "network-acquisition-pass",
+            "network",
+            "outbound-connection",
+            "PASS",
+            {
+                "address_family": "ipv4",
+                "code": "none",
+                "local_endpoint_digest": digest_value,
+                "phase": "acquisition",
+                "process_identity_digest": digest_value,
+                "protocol": "tcp",
+                "remote_endpoint_digest": digest_value,
+            },
+            True,
+        ),
+        (
+            "network-measured-pass",
+            "network",
+            "outbound-connection",
+            "PASS",
+            {
+                "address_family": "ipv4",
+                "code": "none",
+                "local_endpoint_digest": digest_value,
+                "phase": "measured",
+                "process_identity_digest": digest_value,
+                "protocol": "tcp",
+                "remote_endpoint_digest": digest_value,
+            },
+            False,
+        ),
+        (
+            "redaction-scan-dot-component",
+            "redaction",
+            "utf8-scan",
+            "PASS",
+            {
+                "byte_count": 0,
+                "code": "none",
+                "path": "artifacts/./fixture.json",
+                "phase": "redaction-and-seal",
+                "sha256": digest_value,
+            },
+            False,
+        ),
+        (
+            "redaction-scan-colon",
+            "redaction",
+            "utf8-scan",
+            "PASS",
+            {
+                "byte_count": 0,
+                "code": "none",
+                "path": "artifacts/file:stream",
+                "phase": "redaction-and-seal",
+                "sha256": digest_value,
+            },
+            False,
+        ),
+        (
+            "lifecycle-wrong-phase",
+            "network",
+            "observer-start",
+            "PASS",
+            {
+                "api_ids": ["fixture-network-api"],
+                "code": "none",
+                "phase": "measured",
+                "root_process_identity": digest_value,
+            },
+            False,
+        ),
+        (
+            "success-code-not-none",
+            "network",
+            "observer-stop",
+            "PASS",
+            {
+                "api_ids": ["fixture-network-api"],
+                "code": "collector-startup-failed",
+                "phase": "observer-finalize",
+                "root_process_identity": digest_value,
+            },
+            False,
+        ),
+        (
+            "failure-code-not-in-registry",
+            "network",
+            "observer-stop",
+            "FAIL",
+            {
+                "api_ids": ["fixture-network-api"],
+                "code": "unregistered-failure",
+                "phase": "observer-finalize",
+                "root_process_identity": digest_value,
+            },
+            False,
+        ),
+    ]
+    return [
+        name
+        for name, observer, kind, status, detail, expected in cases
+        if valid_observer_detail(observer, kind, status, detail) is not expected
+    ]
+
+
 def reseal_observer_chain(
     root: Path,
     observer: str = "network",
@@ -514,7 +931,12 @@ def reseal_observer_chain(
     )
     event_shapes_valid = all(
         set(event) == {"detail", "kind", "sequence", "status"}
-        and isinstance(event.get("detail"), str)
+        and valid_observer_detail(
+            observer,
+            event.get("kind"),
+            event.get("status"),
+            event.get("detail"),
+        )
         and event.get("kind") in allowed_kinds[observer]
         and event.get("status") in {"PASS", "FAIL"}
         and (
@@ -636,6 +1058,14 @@ def reseal_observer_chain(
 
 def main() -> int:
     failures: list[str] = []
+    detail_failures = observer_detail_contract_failures()
+    detail_contract_ok = not detail_failures
+    print(("PASS" if detail_contract_ok else "FAIL") + " observer detail contract")
+    if not detail_contract_ok:
+        failures.append(
+            "observer detail contract unexpected results: "
+            + ", ".join(detail_failures)
+        )
     expected = {
         "success": "verdict=PASS",
         "failure-cleanup": "verdict=FAIL",
@@ -654,6 +1084,7 @@ def main() -> int:
                 str(fixture_root),
             ],
             check=True,
+            timeout=30,
         )
         subprocess.run(
             [
@@ -663,6 +1094,7 @@ def main() -> int:
                 str(second_fixture_root),
             ],
             check=True,
+            timeout=30,
         )
         generated = tree_snapshot(fixture_root)
         check(
@@ -707,22 +1139,155 @@ def main() -> int:
             (root / "events/network.jsonl").write_bytes(data)
             reseal_observer_chain(root)
 
-        def mutate_event_sequence(root: Path) -> None:
+        def mutate_network_detail(
+            root: Path,
+            change: Callable[[dict], object],
+            *,
+            status: str | None = None,
+        ) -> None:
+            events = [
+                json.loads(line)
+                for line in (root / "events/network.jsonl").read_text(
+                    encoding="utf-8"
+                ).splitlines()
+            ]
+            detail = events[0]["detail"]
+            if isinstance(detail, dict):
+                changed = change(detail)
+            else:
+                changed = change({})
+            events[0]["detail"] = changed
+            if status is not None:
+                events[0]["status"] = status
             replace_network_ledger(
                 root,
-                b'{"detail":"none","kind":"observer-start",'
-                b'"sequence":1,"status":"PASS"}\n'
-                b'{"detail":"none","kind":"observer-stop",'
-                b'"sequence":2,"status":"PASS"}\n',
+                b"".join(canonical_json(event) for event in events),
+            )
+
+        def mutate_event_sequence(root: Path) -> None:
+            events = [
+                fixture_observer_event("network", "observer-start", 1),
+                fixture_observer_event("network", "observer-stop", 2),
+            ]
+            replace_network_ledger(
+                root,
+                b"".join(canonical_json(event) for event in events),
             )
 
         def mutate_noncanonical_event(root: Path) -> None:
+            events = [
+                fixture_observer_event("network", "observer-start", 0),
+                fixture_observer_event("network", "observer-stop", 1),
+            ]
+            first = json.dumps(
+                {
+                    "status": events[0]["status"],
+                    "sequence": events[0]["sequence"],
+                    "kind": events[0]["kind"],
+                    "detail": events[0]["detail"],
+                },
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=False,
+            ).encode("utf-8") + b"\n"
+            replace_network_ledger(root, first + canonical_json(events[1]))
+
+        def mutate_fixture_gold(
+            root: Path,
+            change: Callable[[list[dict]], object],
+        ) -> None:
+            path = root / "input/gold.jsonl"
+            records = [
+                json.loads(line)
+                for line in path.read_text(encoding="utf-8").splitlines()
+            ]
+            change(records)
+            path.write_bytes(b"".join(canonical_json(record) for record in records))
+            reseal_input_chain(root, "input/gold.jsonl")
+
+        def mutate_backend_results(
+            root: Path,
+            change: Callable[[list[dict]], object],
+        ) -> None:
+            path = root / "artifacts/run-report.json"
+            report = load(path)
+            change(report["payload"]["backend_results"])
+            save(path, report)
+            reseal_artifact_refs(root)
+
+        def mutate_process_events(
+            root: Path,
+            change: Callable[[list[dict]], object],
+        ) -> None:
+            path = root / "events/process.jsonl"
+            events = [
+                json.loads(line)
+                for line in path.read_text(encoding="utf-8").splitlines()
+            ]
+            change(events)
+            for sequence, event in enumerate(events):
+                event["sequence"] = sequence
+            path.write_bytes(b"".join(canonical_json(event) for event in events))
+            reseal_observer_chain(root, "process")
+
+        def measured_outbound_pass(root: Path) -> None:
+            path = root / "events/network.jsonl"
+            events = [
+                json.loads(line)
+                for line in path.read_text(encoding="utf-8").splitlines()
+            ]
+            detail = hashlib.sha256(b"measured-outbound-pass").hexdigest()
+            events.insert(
+                1,
+                {
+                    "detail": {
+                        "address_family": "ipv4",
+                        "code": "none",
+                        "local_endpoint_digest": detail,
+                        "phase": "measured",
+                        "process_identity_digest": detail,
+                        "protocol": "tcp",
+                        "remote_endpoint_digest": detail,
+                    },
+                    "kind": "outbound-connection",
+                    "sequence": 1,
+                    "status": "PASS",
+                },
+            )
+            events[-1]["sequence"] = 2
             replace_network_ledger(
                 root,
-                b'{"status":"PASS","sequence":0,"kind":"observer-start",'
-                b'"detail":"none"}\n'
-                b'{"detail":"none","kind":"observer-stop",'
-                b'"sequence":1,"status":"PASS"}\n',
+                b"".join(canonical_json(event) for event in events),
+            )
+
+        def listener_pass(root: Path) -> None:
+            path = root / "events/network.jsonl"
+            events = [
+                json.loads(line)
+                for line in path.read_text(encoding="utf-8").splitlines()
+            ]
+            detail = hashlib.sha256(b"listener-pass").hexdigest()
+            events.insert(
+                1,
+                {
+                    "detail": {
+                        "address_family": "ipv4",
+                        "code": "network-listener-observed",
+                        "local_endpoint_digest": detail,
+                        "phase": "acquisition",
+                        "process_identity_digest": detail,
+                        "protocol": "tcp",
+                        "remote_endpoint_digest": detail,
+                    },
+                    "kind": "outbound-connection",
+                    "sequence": 1,
+                    "status": "PASS",
+                },
+            )
+            events[-1]["sequence"] = 2
+            replace_network_ledger(
+                root,
+                b"".join(canonical_json(event) for event in events),
             )
 
         junction_ok, junction_detail = junction_regression(
@@ -732,6 +1297,25 @@ def main() -> int:
         print(("PASS" if junction_ok else "FAIL") + " containment directory-junction")
         if not junction_ok:
             failures.append(f"containment directory-junction: {junction_detail}")
+
+        generator_junction_ok, generator_junction_detail = (
+            fixture_generator_output_junction_regression(fixture_root / "mutations")
+        )
+        print(
+            ("PASS" if generator_junction_ok else "FAIL")
+            + " fixture-generator output junction"
+        )
+        if not generator_junction_ok:
+            failures.append(
+                "fixture-generator output junction: " + generator_junction_detail
+            )
+
+        lstat_ok, lstat_detail = injected_lstat_failure_regression(
+            fixture_root / "mutations"
+        )
+        print(("PASS" if lstat_ok else "FAIL") + " injected lstat failure")
+        if not lstat_ok:
+            failures.append("injected lstat failure: " + lstat_detail)
 
         s3_reject_target = fixture_root / "variants" / "ready-s2-s3-reject"
         shutil.copytree(fixture_root / "success", s3_reject_target)
@@ -941,10 +1525,349 @@ def main() -> int:
                 ),
             ),
             MutationSpec(
+                "invalid-formal-gold-keys",
+                lambda root: mutate_fixture_gold(
+                    root,
+                    lambda records: records[0].__setitem__("extra", True),
+                ),
+                semantic=True,
+                expected_failures=(
+                    "FAIL manifest: fixture gold record 0",
+                    "FAIL manifest: fixture gold record count",
+                    "FAIL run: backend 0 result 0 query",
+                    "FAIL run: backend 0 result 0 agreement",
+                    "FAIL run: backend 0 exact query set/order",
+                    "FAIL run: backend 0 comparison count",
+                    "FAIL run: backend 1 result 0 query",
+                    "FAIL run: backend 1 result 0 agreement",
+                    "FAIL run: backend 1 exact query set/order",
+                    "FAIL run: backend 1 comparison count",
+                    "FAIL validation: runtime check",
+                    "FAIL validation: verdict",
+                    "FAIL s2: evidence authority",
+                    "FAIL s3: evidence authority",
+                ),
+            ),
+            MutationSpec(
+                "formal-gold-id-order-mismatch",
+                lambda root: mutate_fixture_gold(
+                    root,
+                    lambda records: records.reverse(),
+                ),
+                semantic=True,
+                expected_failures=(
+                    "FAIL manifest: fixture gold record 0",
+                    "FAIL manifest: fixture gold record 1",
+                    "FAIL manifest: fixture gold record count",
+                    "FAIL run: backend 0 result 0 query",
+                    "FAIL run: backend 0 result 0 agreement",
+                    "FAIL run: backend 0 result 1 query",
+                    "FAIL run: backend 0 result 1 agreement",
+                    "FAIL run: backend 0 exact query set/order",
+                    "FAIL run: backend 0 comparison count",
+                    "FAIL run: backend 1 result 0 query",
+                    "FAIL run: backend 1 result 0 agreement",
+                    "FAIL run: backend 1 result 1 query",
+                    "FAIL run: backend 1 result 1 agreement",
+                    "FAIL run: backend 1 exact query set/order",
+                    "FAIL run: backend 1 comparison count",
+                    "FAIL validation: runtime check",
+                    "FAIL validation: verdict",
+                    "FAIL s2: evidence authority",
+                    "FAIL s3: evidence authority",
+                ),
+            ),
+            MutationSpec(
+                "backend-query-duplicate",
+                lambda root: mutate_backend_results(
+                    root,
+                    lambda results: results[0]["per_query"].__setitem__(
+                        1,
+                        copy.deepcopy(results[0]["per_query"][0]),
+                    ),
+                ),
+                semantic=True,
+                expected_failures=(
+                    "FAIL run: backend 0 result 1 query",
+                    "FAIL run: backend 0 exact query set/order",
+                    "FAIL validation: runtime check",
+                    "FAIL validation: verdict",
+                    "FAIL s2: evidence authority",
+                    "FAIL s3: evidence authority",
+                ),
+            ),
+            MutationSpec(
+                "backend-query-missing",
+                lambda root: mutate_backend_results(
+                    root,
+                    lambda results: results[0]["per_query"].pop(),
+                ),
+                semantic=True,
+                expected_failures=(
+                    "FAIL run: backend 0 exact query set/order",
+                    "FAIL run: backend 0 comparison count",
+                    "FAIL validation: runtime check",
+                    "FAIL validation: verdict",
+                    "FAIL s2: evidence authority",
+                    "FAIL s3: evidence authority",
+                ),
+            ),
+            MutationSpec(
+                "backend-query-unknown",
+                lambda root: mutate_backend_results(
+                    root,
+                    lambda results: results[0]["per_query"][1].__setitem__(
+                        "query_id", "fixture-q-unknown"
+                    ),
+                ),
+                semantic=True,
+                expected_failures=(
+                    "FAIL run: backend 0 result 1 query",
+                    "FAIL run: backend 0 result 1 agreement",
+                    "FAIL run: backend 0 exact query set/order",
+                    "FAIL validation: runtime check",
+                    "FAIL validation: verdict",
+                    "FAIL s2: evidence authority",
+                    "FAIL s3: evidence authority",
+                ),
+            ),
+            MutationSpec(
+                "backend-query-disagreement",
+                lambda root: mutate_backend_results(
+                    root,
+                    lambda results: results[0]["per_query"][0]["top_k"].__setitem__(
+                        "1", []
+                    ),
+                ),
+                semantic=True,
+                expected_failures=(
+                    "FAIL run: backend 0 result 0 agreement",
+                    "FAIL validation: runtime check",
+                    "FAIL validation: verdict",
+                    "FAIL s2: evidence authority",
+                    "FAIL s3: evidence authority",
+                ),
+            ),
+            MutationSpec(
+                "backend-query-over-k",
+                lambda root: mutate_backend_results(
+                    root,
+                    lambda results: results[0]["per_query"][1]["top_k"].__setitem__(
+                        "1", ["fixture-000", "fixture-001"]
+                    ),
+                ),
+                semantic=True,
+                expected_failures=(
+                    "FAIL run: backend 0 result 1 top_k 1",
+                    "FAIL run: backend 0 result 1 top_k 3",
+                    "FAIL run: backend 0 result 1 agreement",
+                    "FAIL validation: runtime check",
+                    "FAIL validation: verdict",
+                    "FAIL s2: evidence authority",
+                    "FAIL s3: evidence authority",
+                ),
+            ),
+            MutationSpec(
+                "backend-query-non-prefix",
+                lambda root: mutate_backend_results(
+                    root,
+                    lambda results: (
+                        results[0]["per_query"][0]["top_k"].__setitem__(
+                            "3", ["fixture-000", "fixture-001"]
+                        ),
+                        results[0]["per_query"][0]["top_k"].__setitem__(
+                            "5", ["fixture-001", "fixture-000"]
+                        ),
+                    ),
+                ),
+                semantic=True,
+                expected_failures=(
+                    "FAIL run: backend 0 result 0 top_k 5",
+                    "FAIL run: backend 0 result 0 agreement",
+                    "FAIL validation: runtime check",
+                    "FAIL validation: verdict",
+                    "FAIL s2: evidence authority",
+                    "FAIL s3: evidence authority",
+                ),
+            ),
+            MutationSpec(
+                "process-phase-missing",
+                lambda root: mutate_process_events(
+                    root,
+                    lambda events: events.pop(3),
+                ),
+                semantic=True,
+                expected_failures=(
+                    "FAIL observer process: exact ordered child-count phases",
+                    "FAIL validation: observer check",
+                    "FAIL validation: verdict",
+                    "FAIL s2: evidence authority",
+                    "FAIL s3: evidence authority",
+                ),
+            ),
+            MutationSpec(
+                "process-phase-duplicate",
+                lambda root: mutate_process_events(
+                    root,
+                    lambda events: events.insert(3, copy.deepcopy(events[2])),
+                ),
+                semantic=True,
+                expected_failures=(
+                    "FAIL observer process: exact ordered child-count phases",
+                    "FAIL validation: observer check",
+                    "FAIL validation: verdict",
+                    "FAIL s2: evidence authority",
+                    "FAIL s3: evidence authority",
+                ),
+            ),
+            MutationSpec(
+                "process-phase-reordered",
+                lambda root: mutate_process_events(
+                    root,
+                    lambda events: events.__setitem__(
+                        slice(2, 4),
+                        [events[3], events[2]],
+                    ),
+                ),
+                semantic=True,
+                expected_failures=(
+                    "FAIL observer process: exact ordered child-count phases",
+                    "FAIL validation: observer check",
+                    "FAIL validation: verdict",
+                    "FAIL s2: evidence authority",
+                    "FAIL s3: evidence authority",
+                ),
+            ),
+            MutationSpec(
+                "measured-outbound-pass",
+                measured_outbound_pass,
+                semantic=True,
+                expected_failures=(
+                    "FAIL observer network: event detail",
+                ),
+            ),
+            MutationSpec(
+                "listener-pass",
+                listener_pass,
+                semantic=True,
+                expected_failures=(
+                    "FAIL observer network: event detail",
+                ),
+            ),
+            MutationSpec(
                 "event-sequence",
                 mutate_event_sequence,
                 semantic=True,
-                expected_failures=("FAIL observer network: sequence",),
+                expected_failures=(
+                    "FAIL observer network: sequence",
+                    "FAIL observer network: event sequence",
+                    "FAIL observer network: event sequence",
+                ),
+            ),
+            MutationSpec(
+                "detail-scalar",
+                lambda root: mutate_network_detail(root, lambda _detail: "none"),
+                semantic=True,
+                expected_failures=("FAIL observer network: event detail",),
+            ),
+            MutationSpec(
+                "detail-null",
+                lambda root: mutate_network_detail(root, lambda _detail: None),
+                semantic=True,
+                expected_failures=("FAIL observer network: event detail",),
+            ),
+            MutationSpec(
+                "detail-array",
+                lambda root: mutate_network_detail(root, lambda _detail: []),
+                semantic=True,
+                expected_failures=("FAIL observer network: event detail",),
+            ),
+            MutationSpec(
+                "detail-wrong-branch",
+                lambda root: mutate_network_detail(
+                    root,
+                    lambda detail: {
+                        "address_family": "ipv4",
+                        "code": detail["code"],
+                        "local_endpoint_digest": detail["root_process_identity"],
+                        "phase": detail["phase"],
+                        "process_identity_digest": detail["root_process_identity"],
+                        "protocol": "tcp",
+                        "remote_endpoint_digest": detail["root_process_identity"],
+                    },
+                ),
+                semantic=True,
+                expected_failures=("FAIL observer network: event detail",),
+            ),
+            MutationSpec(
+                "detail-missing-key",
+                lambda root: mutate_network_detail(
+                    root,
+                    lambda detail: (
+                        detail.pop("api_ids"),
+                        detail,
+                    )[1],
+                ),
+                semantic=True,
+                expected_failures=("FAIL observer network: event detail",),
+            ),
+            MutationSpec(
+                "detail-extra-key",
+                lambda root: mutate_network_detail(
+                    root,
+                    lambda detail: (
+                        detail.__setitem__("extra", True),
+                        detail,
+                    )[1],
+                ),
+                semantic=True,
+                expected_failures=("FAIL observer network: event detail",),
+            ),
+            MutationSpec(
+                "detail-bad-code",
+                lambda root: mutate_network_detail(
+                    root,
+                    lambda detail: (
+                        detail.__setitem__("code", "Bad_Code"),
+                        detail,
+                    )[1],
+                ),
+                semantic=True,
+                expected_failures=("FAIL observer network: event detail",),
+            ),
+            MutationSpec(
+                "detail-bad-phase",
+                lambda root: mutate_network_detail(
+                    root,
+                    lambda detail: (
+                        detail.__setitem__("phase", "unknown"),
+                        detail,
+                    )[1],
+                ),
+                semantic=True,
+                expected_failures=("FAIL observer network: event detail",),
+            ),
+            MutationSpec(
+                "detail-fail-none-code",
+                lambda root: mutate_network_detail(
+                    root,
+                    lambda detail: detail,
+                    status="FAIL",
+                ),
+                semantic=True,
+                expected_failures=("FAIL observer network: event detail",),
+            ),
+            MutationSpec(
+                "detail-bad-digest",
+                lambda root: mutate_network_detail(
+                    root,
+                    lambda detail: (
+                        detail.__setitem__("root_process_identity", "0" * 63),
+                        detail,
+                    )[1],
+                ),
+                semantic=True,
+                expected_failures=("FAIL observer network: event detail",),
             ),
             MutationSpec(
                 "noncanonical-event",
@@ -1041,6 +1964,56 @@ def main() -> int:
                 failures.append(
                     f"negative {spec.name}: {result.stdout}{result.stderr}"
                 )
+
+        substituted_validator = Path(temp) / "substituted-validator"
+        substituted_validator.mkdir()
+        substituted_validator_path = (
+            substituted_validator / "tools/m8_validate_minimal_1k_graph_v3.py"
+        )
+        substituted_validator_path.parent.mkdir()
+        substituted_validator_path.write_bytes(VALIDATOR.read_bytes())
+        schema_source = (
+            ROOT
+            / "docs/plans/references/schemas/m8-minimal-1k-artifacts-v3.schema.json"
+        )
+        schema_destination = (
+            substituted_validator
+            / "docs/plans/references/schemas/m8-minimal-1k-artifacts-v3.schema.json"
+        )
+        schema_destination.parent.mkdir(parents=True)
+        schema_destination.write_bytes(schema_source.read_bytes())
+        altered_protocol = b"altered ambient protocol\n"
+        (
+            substituted_validator
+            / "docs/plans/references/m8-minimal-1k-dry-run-protocol-v3.md"
+        ).write_bytes(altered_protocol)
+        substitution_target = fixture_root / "mutations/ambient-protocol-substitution"
+        shutil.copytree(fixture_root / "success", substitution_target)
+        substitution_expectation_path = substitution_target / "expectation.json"
+        substitution_expectation = load(substitution_expectation_path)
+        substitution_expectation["graph"] = substitution_target.name
+        save(substitution_expectation_path, substitution_expectation)
+        substitution_identity_path = substitution_target / "artifacts/identity.json"
+        substitution_identity = load(substitution_identity_path)
+        substitution_identity["payload"]["protocol_sha256"] = hashlib.sha256(
+            altered_protocol
+        ).hexdigest()
+        save(substitution_identity_path, substitution_identity)
+        reseal_artifact_refs(substitution_target)
+        substitution_result = run(substitution_target, substituted_validator_path)
+        substitution_ok = exact_failure(
+            substitution_result,
+            ("FAIL identity: protocol digest bytes",),
+        )
+        print(
+            ("PASS" if substitution_ok else "FAIL")
+            + " ambient protocol substitution"
+        )
+        if not substitution_ok:
+            failures.append(
+                "ambient protocol substitution: "
+                f"{substitution_result.stdout}{substitution_result.stderr}"
+            )
 
         critical_specs = {
             spec.name: spec
