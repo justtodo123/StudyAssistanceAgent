@@ -60,3 +60,7 @@ tools/m8_test_s1_controls_v3.py text eol=lf
 tools/m8_test_s1_prerequisites_v3.py text eol=lf
 tools/m8_validate_minimal_1k_graph_v3.py text eol=lf
 tools/m8_validate_s1_preflight_v3.py text eol=lf
+# M8 S1 network-acquisition observer candidate and its hermetic test are
+# digest-bound; keep their working-tree bytes LF on every platform.
+tools/m8_observe_network_acquisition_v1.py text eol=lf
+tools/m8_test_observe_network_acquisition_v1.py text eol=lf

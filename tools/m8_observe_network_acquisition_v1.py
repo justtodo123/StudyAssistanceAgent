@@ -60,8 +60,8 @@ ERROR_CODES = (
     "M8ACQ_E021_OBSERVER_INCOMPLETE",
 )
 SECRET_PATTERNS = (
-    re.compile(r"(?i)authorization\s*:"),
-    re.compile(r"(?i)proxy-authorization\s*:"),
+    re.compile(r"(?i)authorization\s*[=:]"),
+    re.compile(r"(?i)proxy-authorization\s*[=:]"),
     re.compile(r"(?i)(token|password|passwd|secret|api[_-]?key)\s*[=:]"),
     re.compile(r"(?i)https?://[^/\s:@]+:[^/\s@]+@"),
 )
@@ -79,7 +79,17 @@ class ObservationError(ValueError):
 
 
 def canonical_bytes(value: object) -> bytes:
-    return (json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+    try:
+        encoded = json.dumps(
+            value,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError, UnicodeEncodeError):
+        raise ObservationError("M8ACQ_E001_INVALID_EVENT", "canonical json") from None
+    return encoded + b"\n"
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -91,7 +101,6 @@ def _require(condition: bool, code: str, detail: str) -> None:
         raise ObservationError(code, detail)
 
 
-
 def _require_mapping(value: Any, detail: str) -> Mapping[str, Any]:
     _require(isinstance(value, Mapping), "M8ACQ_E001_INVALID_EVENT", detail)
     return value
@@ -99,7 +108,13 @@ def _require_mapping(value: Any, detail: str) -> Mapping[str, Any]:
 
 def _host(url: str, *, initial: bool) -> str:
     code = "M8ACQ_E003_INITIAL_HOST_DENIED" if initial else "M8ACQ_E004_REDIRECT_HOST_DENIED"
-    _require(isinstance(url, str) and bool(url) and not any(character.isspace() or ord(character) < 32 for character in url), "M8ACQ_E001_INVALID_EVENT", "url syntax")
+    _require(
+        isinstance(url, str)
+        and bool(url)
+        and not any(character.isspace() or ord(character) < 32 for character in url),
+        "M8ACQ_E001_INVALID_EVENT",
+        "url syntax",
+    )
     try:
         parsed = urlsplit(url)
         has_userinfo = bool(parsed.username or parsed.password)
@@ -109,7 +124,11 @@ def _host(url: str, *, initial: bool) -> str:
         raise ObservationError("M8ACQ_E001_INVALID_EVENT", "url syntax") from None
     _require(parsed.scheme == "https", "M8ACQ_E002_NON_HTTPS", "scheme")
     _require(not has_userinfo, "M8ACQ_E009_AUTH_PRESENT", "url credentials")
-    _require(host != "" and parsed.path != "" and parsed.query == "" and parsed.fragment == "", "M8ACQ_E001_INVALID_EVENT", "url form")
+    _require(
+        host != "" and parsed.path != "" and parsed.query == "" and parsed.fragment == "",
+        "M8ACQ_E001_INVALID_EVENT",
+        "url form",
+    )
     _require(port is None or port == 443, "M8ACQ_E001_INVALID_EVENT", "url port")
     allowed = ALLOWED_INITIAL_HOSTS if initial else ALLOWED_REDIRECT_HOSTS
     _require(host in allowed, code, host)
@@ -118,16 +137,23 @@ def _host(url: str, *, initial: bool) -> str:
 
 def observe_network(event: Mapping[str, Any]) -> dict[str, Any]:
     event = _require_mapping(event, "network event")
-    required = {"method", "initial_url", "redirect_chain", "final_url", "tls_verified", "certificate_bypass", "proxy", "authentication"}
-    _require(required <= set(event), "M8ACQ_E001_INVALID_EVENT", "network fields")
+    required = {
+        "method", "initial_url", "redirect_chain", "final_url",
+        "tls_verified", "certificate_bypass", "proxy", "authentication",
+    }
+    _require(set(event) == required, "M8ACQ_E001_INVALID_EVENT", "network fields")
     _require(event["method"] == "GET", "M8ACQ_E010_METHOD_DENIED", "method")
-    _host(event["initial_url"], initial=True)
+    initial_url = event["initial_url"]
+    _host(initial_url, initial=True)
     chain = event["redirect_chain"]
     _require(isinstance(chain, list), "M8ACQ_E001_INVALID_EVENT", "redirect_chain")
     _require(len(chain) <= 3, "M8ACQ_E005_REDIRECT_LIMIT", str(len(chain)))
     for url in chain:
         _host(url, initial=False)
-    final_host = _host(event["final_url"], initial=False)
+    final_url = event["final_url"]
+    final_host = _host(final_url, initial=False)
+    expected_final_url = initial_url if not chain else chain[-1]
+    _require(final_url == expected_final_url, "M8ACQ_E001_INVALID_EVENT", "redirect binding")
     _require(event["tls_verified"] is True, "M8ACQ_E006_TLS_UNVERIFIED", "tls")
     _require(event["certificate_bypass"] is False, "M8ACQ_E007_CERT_BYPASS", "certificate")
     _require(event["proxy"] in (None, ""), "M8ACQ_E008_PROXY_PRESENT", "proxy")
@@ -138,8 +164,10 @@ def observe_network(event: Mapping[str, Any]) -> dict[str, Any]:
 def observe_process(event: Mapping[str, Any]) -> dict[str, Any]:
     event = _require_mapping(event, "process event")
     required = {"executable", "process_count", "shell"}
-    _require(required <= set(event), "M8ACQ_E001_INVALID_EVENT", "process fields")
-    _require(str(event["executable"]).casefold() == ALLOWED_EXECUTABLE.casefold(), "M8ACQ_E011_PROCESS_DENIED", "executable")
+    _require(set(event) == required, "M8ACQ_E001_INVALID_EVENT", "process fields")
+    executable = event["executable"]
+    _require(isinstance(executable, str), "M8ACQ_E001_INVALID_EVENT", "executable")
+    _require(executable.casefold() == ALLOWED_EXECUTABLE.casefold(), "M8ACQ_E011_PROCESS_DENIED", "executable")
     _require(isinstance(event["process_count"], int) and not isinstance(event["process_count"], bool), "M8ACQ_E001_INVALID_EVENT", "process_count")
     _require(event["process_count"] == 1, "M8ACQ_E012_PROCESS_COUNT", "process_count")
     _require(event["shell"] is False, "M8ACQ_E013_SHELL_ENABLED", "shell")
@@ -180,6 +208,8 @@ def _has_unsafe_component(path: PureWindowsPath) -> bool:
             continue
         if len(component) > 255:
             return True
+        if "(" in component:
+            return True
         if ".." in component:
             return True
         if any(ord(character) < 32 or character in _WINDOWS_FORBIDDEN_CHARACTERS for character in component):
@@ -217,11 +247,7 @@ def _allowed_relative_path(relative_path: str, kind: str) -> bool:
 
 
 def _bounded_int(value: Any, maximum: int, detail: str) -> int:
-    _require(
-        isinstance(value, int) and not isinstance(value, bool),
-        "M8ACQ_E001_INVALID_EVENT",
-        detail,
-    )
+    _require(isinstance(value, int) and not isinstance(value, bool), "M8ACQ_E001_INVALID_EVENT", detail)
     _require(0 <= value <= maximum, "M8ACQ_E018_LIMIT_EXCEEDED", detail)
     return value
 
@@ -229,7 +255,7 @@ def _bounded_int(value: Any, maximum: int, detail: str) -> int:
 def observe_write(event: Mapping[str, Any]) -> dict[str, Any]:
     event = _require_mapping(event, "write event")
     required = {"path", "is_reparse_point", "kind", "byte_size", "total_byte_size", "file_count"}
-    _require(required <= set(event), "M8ACQ_E001_INVALID_EVENT", "write fields")
+    _require(set(event) == required, "M8ACQ_E001_INVALID_EVENT", "write fields")
     _require(isinstance(event["path"], str), "M8ACQ_E001_INVALID_EVENT", "path")
     raw_path = event["path"]
     _require(not _has_unsafe_raw_path_syntax(raw_path), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", "path syntax")
@@ -253,7 +279,7 @@ def observe_write(event: Mapping[str, Any]) -> dict[str, Any]:
 def observe_redaction(event: Mapping[str, Any]) -> dict[str, Any]:
     event = _require_mapping(event, "redaction event")
     required = {"text", "declared_sha256", "content_bytes"}
-    _require(required <= set(event), "M8ACQ_E001_INVALID_EVENT", "redaction fields")
+    _require(set(event) == required, "M8ACQ_E001_INVALID_EVENT", "redaction fields")
     content = event["content_bytes"]
     _require(isinstance(content, bytes), "M8ACQ_E001_INVALID_EVENT", "content_bytes")
     declared_sha256 = event["declared_sha256"]

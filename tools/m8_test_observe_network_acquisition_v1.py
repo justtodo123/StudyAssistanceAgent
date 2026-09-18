@@ -86,6 +86,9 @@ def main() -> None:
     event["redirect_chain"] = ["https://pypi.org/a"] * 4
     expect_code("M8ACQ_E005_REDIRECT_LIMIT", lambda: observe_network(event))
     event = fixtures()["network"].copy()
+    event["redirect_chain"] = ["https://files.pythonhosted.org/packages/a.whl"]
+    expect_code("M8ACQ_E001_INVALID_EVENT", lambda: observe_network(event))
+    event = fixtures()["network"].copy()
     event["tls_verified"] = False
     expect_code("M8ACQ_E006_TLS_UNVERIFIED", lambda: observe_network(event))
     event = fixtures()["network"].copy()
@@ -117,9 +120,33 @@ def main() -> None:
         else:
             raise RuntimeError("malformed or noncanonical URL unexpectedly passed")
 
+    event = fixtures()["network"].copy()
+    event["mirror"] = "https://evil.example/simple"
+    expect_code("M8ACQ_E001_INVALID_EVENT", lambda: observe_network(event))
+    event = fixtures()["network"].copy()
+    event["extra_index"] = "https://evil.example/simple"
+    expect_code("M8ACQ_E001_INVALID_EVENT", lambda: observe_network(event))
+    event = fixtures()["redaction"].copy()
+    event["text"] = "Authorization=Bearer hidden\n"
+    event["content_bytes"] = event["text"].encode("utf-8")
+    event["declared_sha256"] = hashlib.sha256(event["content_bytes"]).hexdigest()
+    expect_code("M8ACQ_E020_REDACTION_MATCH", lambda: observe_redaction(event))
+    for value in (float("nan"), chr(0xD800)):
+        try:
+            from tools.m8_observe_network_acquisition_v1 import canonical_bytes
+            canonical_bytes(value)
+        except ObservationError as exc:
+            if exc.code != "M8ACQ_E001_INVALID_EVENT":
+                raise RuntimeError("canonical edge case returned wrong code") from exc
+        else:
+            raise RuntimeError("non-canonical JSON value unexpectedly passed")
+
     event = fixtures()["process"].copy()
     event["executable"] = "pip.exe"
     expect_code("M8ACQ_E011_PROCESS_DENIED", lambda: observe_process(event))
+    event = fixtures()["process"].copy()
+    event["executable"] = pathlib.Path(r"C:\Program Files\Git\mingw64\bin\curl.exe")
+    expect_code("M8ACQ_E001_INVALID_EVENT", lambda: observe_process(event))
     event = fixtures()["process"].copy()
     event["process_count"] = 2
     expect_code("M8ACQ_E012_PROCESS_COUNT", lambda: observe_process(event))
@@ -223,6 +250,10 @@ def main() -> None:
         event["path"] = unsafe_path
         expect_code("M8ACQ_E014_WRITE_OUTSIDE_ROOT", lambda event=event: observe_write(event))
 
+    event = fixtures()["write"].copy()
+    event["path"] = base_path + r"\wheels\payload(.whl"
+    event["kind"] = "wheel"
+    expect_code("M8ACQ_E014_WRITE_OUTSIDE_ROOT", lambda: observe_write(event))
     event = fixtures()["write"].copy()
     event["is_reparse_point"] = True
     expect_code("M8ACQ_E016_REPARSE_POINT", lambda: observe_write(event))
