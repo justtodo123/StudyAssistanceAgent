@@ -14,6 +14,7 @@ from tools.m8_observe_network_acquisition_v1 import (
     observe_process,
     observe_redaction,
     observe_write,
+    PREPARATION_ROOT,
 )
 
 
@@ -108,6 +109,10 @@ def main() -> None:
     event = fixtures()["write"].copy()
     event["path"] = r"D:\outside\numpy.whl"
     expect_code("M8ACQ_E014_WRITE_OUTSIDE_ROOT", lambda: observe_write(event))
+    for disallowed_path in ("random.txt", "events/random.bin", "wheels/not-a-wheel.txt", "secret/unknown.json"):
+        event = fixtures()["write"].copy()
+        event["path"] = str(PREPARATION_ROOT / disallowed_path.replace("/", "\\"))
+        expect_code("M8ACQ_E017_FILE_TYPE_DENIED", lambda: observe_write(event))
     event = fixtures()["write"].copy()
     event["path"] = r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01\..\outside\numpy.whl"
     expect_code("M8ACQ_E014_WRITE_OUTSIDE_ROOT", lambda: observe_write(event))

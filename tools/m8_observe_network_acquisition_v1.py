@@ -19,6 +19,15 @@ ALLOWED_INITIAL_HOSTS = {"pypi.org"}
 ALLOWED_REDIRECT_HOSTS = {"pypi.org", "files.pythonhosted.org"}
 ALLOWED_EXECUTABLE = r"C:\Program Files\Git\mingw64\bin\curl.exe"
 PREPARATION_ROOT = PureWindowsPath(r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01")
+PERSISTENT_RELATIVE_FILES = {
+    "authority.json",
+    "inventory.json",
+    "provenance.json",
+    "events/network.jsonl",
+    "events/process.jsonl",
+    "events/redaction.jsonl",
+    "events/write.jsonl",
+}
 FORBIDDEN_ROOTS = tuple(
     PureWindowsPath(value)
     for value in (
@@ -149,6 +158,19 @@ def _within(path: PureWindowsPath, root: PureWindowsPath) -> bool:
         return False
 
 
+def _allowed_relative_path(relative_path: str, kind: str) -> bool:
+    if relative_path in PERSISTENT_RELATIVE_FILES:
+        return kind == "evidence"
+    if relative_path.startswith("wheels/"):
+        filename = relative_path.removeprefix("wheels/")
+        if "/" in filename or not filename:
+            return False
+        if kind == "wheel":
+            return filename.endswith(".whl")
+        if kind == "partial":
+            return filename.endswith(".whl.partial")
+    return False
+
 def observe_write(event: Mapping[str, Any]) -> dict[str, Any]:
     required = {"path", "is_reparse_point", "kind", "byte_size", "total_byte_size", "file_count"}
     _require(required <= set(event), "M8ACQ_E001_INVALID_EVENT", "write fields")
@@ -159,10 +181,12 @@ def observe_write(event: Mapping[str, Any]) -> dict[str, Any]:
     _require(_within(path, PREPARATION_ROOT), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", str(path))
     _require(event["is_reparse_point"] is False, "M8ACQ_E016_REPARSE_POINT", str(path))
     _require(event["kind"] in {"wheel", "partial", "evidence"}, "M8ACQ_E017_FILE_TYPE_DENIED", str(event["kind"]))
+    relative_path = str(path.relative_to(PREPARATION_ROOT)).replace("\\", "/")
+    _require(_allowed_relative_path(relative_path, str(event["kind"])), "M8ACQ_E017_FILE_TYPE_DENIED", relative_path)
     _require(0 <= int(event["byte_size"]) <= 536870912, "M8ACQ_E018_LIMIT_EXCEEDED", "single bytes")
     _require(0 <= int(event["total_byte_size"]) <= 2147483648, "M8ACQ_E018_LIMIT_EXCEEDED", "total bytes")
     _require(0 <= int(event["file_count"]) <= 256, "M8ACQ_E018_LIMIT_EXCEEDED", "file count")
-    return {"observer": "write", "status": "PASS", "relative_path": str(path.relative_to(PREPARATION_ROOT)).replace("\\", "/")}
+    return {"observer": "write", "status": "PASS", "relative_path": relative_path}
 
 
 def observe_redaction(event: Mapping[str, Any]) -> dict[str, Any]:
