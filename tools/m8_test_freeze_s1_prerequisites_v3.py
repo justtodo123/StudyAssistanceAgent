@@ -12,25 +12,40 @@ from unittest import mock
 
 import m8_freeze_s1_prerequisites_v3 as freeze_module
 from m8_freeze_s1_prerequisites_v3 import (
-    DEFAULT_PATHS,
-    EXPECTED_CANDIDATE_FILE_COUNT,
-    EXPECTED_FIXTURE_FILE_COUNT,
-    EXPECTED_FIXTURE_GRAPH_COUNT,
-    EXPECTED_FIXTURE_MEMBER_COUNT,
-    EXPECTED_NON_FIXTURE_FILE_COUNT,
-    FIXTURE_GRAPHS,
-    FIXTURE_MEMBERS,
-    FIXTURE_PATHS,
-    FIXTURE_ROOT,
-    FORBIDDEN_INVENTORY_PARTS,
+    CODE_FIXED_BOOTSTRAP_PATHS,
+    DECLARED_TEMPLATE_PATHS,
+    FREEZE_FORMAT,
+    HISTORICAL_REPLAY_ENTRYPOINT,
+    ORACLE_MANIFEST_FORMAT,
+    ORACLE_MANIFEST_PATH,
+    SUPPORTED_CLOSURE_VERSION,
     FreezeError,
     build_freeze,
     canonical,
     compare_worktree,
+    derive_closure_digest,
+    derive_gating_closure,
+    expand_fixture_paths,
+    parse_oracle_manifest,
     publish_output,
 )
 
 SCRIPT = Path(__file__).with_name("m8_freeze_s1_prerequisites_v3.py")
+
+
+MANIFEST_SOURCE = (
+    Path(__file__).resolve().parents[1]
+    / "docs/plans/references/m8-minimal-1k-v3-s1-prereq-oracle-manifest.json"
+).read_bytes()
+MANIFEST = parse_oracle_manifest(MANIFEST_SOURCE)
+MANIFEST_GATING = MANIFEST["gating"]
+MANIFEST_FIXTURE = MANIFEST["fixture_expansion"]
+assert isinstance(MANIFEST_GATING, dict) and isinstance(MANIFEST_FIXTURE, dict)
+DEFAULT_PATHS = list(derive_gating_closure(MANIFEST))
+FIXTURE_PATHS = list(expand_fixture_paths(MANIFEST_FIXTURE))
+FIXTURE_ROOT = str(MANIFEST_FIXTURE["root"])
+FIXTURE_GRAPHS = tuple(MANIFEST_FIXTURE["graphs"])
+FIXTURE_MEMBERS = tuple(MANIFEST_FIXTURE["members"])
 
 
 def check(condition: object, message: str) -> None:
@@ -198,7 +213,10 @@ def write_inventory(repo: Path) -> None:
     for index, path in enumerate(DEFAULT_PATHS):
         target = repo / path
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(f"s1-prerequisite:{index}:{path}\n".encode("utf-8"))
+        if path == ORACLE_MANIFEST_PATH:
+            target.write_bytes(MANIFEST_SOURCE)
+        else:
+            target.write_bytes(f"s1-prerequisite:{index}:{path}\n".encode("utf-8"))
 
 
 def create_repo(repo: Path) -> Path:
@@ -248,6 +266,150 @@ def make_tree_commit(repo: Path, message: str) -> str:
         "-m",
         message,
     ).decode("ascii").strip()
+
+
+def manifest_validation_tests(repo: Path, commit: str) -> None:
+    """Exercise canonical parsing, target binding, bootstrap, and class guards."""
+    check(MANIFEST["format"] == ORACLE_MANIFEST_FORMAT, "wrong manifest format")
+    check(parse_oracle_manifest(MANIFEST_SOURCE) == MANIFEST, "canonical manifest does not parse")
+    expect_error(
+        lambda: parse_oracle_manifest(MANIFEST_SOURCE.rstrip(b"\n") + b" \n"),
+        "not canonical",
+    )
+    expect_error(
+        lambda: parse_oracle_manifest(b'{"format":"x","format":"y"}\n'),
+        "duplicate JSON key",
+    )
+
+    manifest_path = repo / ORACLE_MANIFEST_PATH
+    original = manifest_path.read_bytes()
+    manifest_path.write_bytes(b'{"dirty":"worktree"}\n')
+    check(
+        build_freeze(commit, repo_root=repo)["manifest"]["sha256"]
+        == hashlib.sha256(original).hexdigest(),
+        "dirty worktree changed target-commit manifest binding",
+    )
+    manifest_path.write_bytes(original)
+
+    def commit_manifest(mutator, message: str) -> str:
+        candidate = parse_oracle_manifest(original)
+        mutator(candidate)
+        manifest_path.write_bytes(canonical(candidate))
+        run_git(repo, "add", "--", ORACLE_MANIFEST_PATH)
+        candidate_commit = make_tree_commit(repo, message)
+        manifest_path.write_bytes(original)
+        run_git(repo, "add", "--", ORACLE_MANIFEST_PATH)
+        return candidate_commit
+
+    def first_subprocess(item: dict[str, object]) -> dict[str, object]:
+        gating = item["gating"]
+        assert isinstance(gating, dict)
+        subprocesses = gating["allowed_subprocesses"]
+        assert isinstance(subprocesses, list) and subprocesses
+        child = subprocesses[0]
+        assert isinstance(child, dict)
+        return child
+
+    def expect_manifest_error(mutator, message: str, expected: str) -> None:
+        candidate = commit_manifest(mutator, message)
+        expect_error(lambda: build_freeze(candidate, repo_root=repo), expected)
+
+    def omit_bootstrap(item: dict[str, object]) -> None:
+        gating = item["gating"]
+        assert isinstance(gating, dict)
+        modules = gating["support_modules"]
+        assert isinstance(modules, list)
+        modules.remove("tools/m8_freeze_s1_prerequisites_v3.py")
+
+    expect_manifest_error(omit_bootstrap, "omit bootstrap", "bootstrap")
+
+    def add_forbidden(item: dict[str, object]) -> None:
+        gating = item["gating"]
+        assert isinstance(gating, dict)
+        reads = gating["static_reads"]
+        assert isinstance(reads, list)
+        reads.append("docs/plans/references/external-gates/forbidden.json")
+        reads.sort(key=lambda path: str(path).encode("utf-8"))
+
+    expect_manifest_error(
+        add_forbidden,
+        "forbidden ambient path",
+        "forbidden ambient path",
+    )
+    expect_manifest_error(
+        lambda item: item["declared_templates"].reverse(),
+        "bad template order",
+        "declared_templates",
+    )
+    expect_manifest_error(
+        lambda item: item["historical_replay"].update(
+            {"entrypoint": "tools/other.py"}
+        ),
+        "bad replay entrypoint",
+        "historical replay entrypoint",
+    )
+    expect_manifest_error(
+        lambda item: first_subprocess(item).pop("success_oracle"),
+        "missing child success oracle",
+        "allowed subprocess has invalid keys",
+    )
+    expect_manifest_error(
+        lambda item: first_subprocess(item).update({"extra": True}),
+        "extra child field",
+        "allowed subprocess has invalid keys",
+    )
+    def mutate_success_oracle(
+        item: dict[str, object],
+        key: str,
+        value: object,
+    ) -> None:
+        oracle = first_subprocess(item)["success_oracle"]
+        assert isinstance(oracle, dict)
+        oracle[key] = value
+
+    expect_manifest_error(
+        lambda item: mutate_success_oracle(item, "kind", "unsupported"),
+        "bad child oracle kind",
+        "unsupported allowed subprocess success oracle",
+    )
+    expect_manifest_error(
+        lambda item: mutate_success_oracle(item, "success_line", ""),
+        "empty child success line",
+        "non-empty string",
+    )
+    expect_manifest_error(
+        lambda item: mutate_success_oracle(
+            item,
+            "success_line",
+            "first\nsecond",
+        ),
+        "multiline child success line",
+        "one non-empty line",
+    )
+
+    def mutate_unittest_count(item: dict[str, object], value: object) -> None:
+        gating = item["gating"]
+        assert isinstance(gating, dict)
+        subprocesses = gating["allowed_subprocesses"]
+        assert isinstance(subprocesses, list)
+        child = next(
+            candidate
+            for candidate in subprocesses
+            if isinstance(candidate, dict)
+            and isinstance(candidate.get("success_oracle"), dict)
+            and candidate["success_oracle"].get("kind") == "unittest"
+        )
+        child["success_oracle"]["expected_test_count"] = value
+
+    for index, invalid_count in enumerate((True, 0, -1, 1.5)):
+        expect_manifest_error(
+            lambda item, value=invalid_count: mutate_unittest_count(
+                item,
+                value,
+            ),
+            f"bad unittest count {index}",
+            "positive integer",
+        )
 
 
 def check_cli_error(result, fragment: bytes) -> None:
@@ -708,65 +870,63 @@ def main() -> int:
             executable_path_tests(workspace)
             repo = create_repo(workspace / "repo")
             commit = run_git(repo, "rev-parse", "HEAD").decode("ascii").strip()
+            manifest_validation_tests(repo, commit)
             first = build_freeze(commit, repo_root=repo)
             second = build_freeze(commit, repo_root=repo)
             check(canonical(first) == canonical(second), "freeze is not deterministic")
-            check(
-                first["format"] == "m8-s1-prerequisites-v3-freeze-v1",
-                "wrong format",
-            )
+            check(first["format"] == FREEZE_FORMAT, "wrong format")
             check(
                 first["purpose"] == "S1_PREREQUISITE_RECORD_ONLY_NOT_AUTHORIZATION",
                 "wrong purpose",
             )
             check(first["source_commit"] == commit, "wrong commit")
+            check(first["closure_version"] == SUPPORTED_CLOSURE_VERSION, "wrong closure version")
+            check(first["manifest"]["path"] == ORACLE_MANIFEST_PATH, "manifest is not bound")
             check(
-                len(FIXTURE_GRAPHS) == EXPECTED_FIXTURE_GRAPH_COUNT == 5,
-                "wrong fixture graph count",
+                first["manifest"]["sha256"] == hashlib.sha256(MANIFEST_SOURCE).hexdigest(),
+                "wrong manifest digest",
+            )
+            check(first["gating"]["entrypoint"] == "tools/m8_test_s1_prerequisites_v3.py", "wrong entrypoint")
+            check(first["gating"]["default_mode"] == "gating-only", "wrong default mode")
+            manifest_gating = MANIFEST["gating"]
+            assert isinstance(manifest_gating, dict)
+            expected_subprocesses = manifest_gating["allowed_subprocesses"]
+            check(
+                first["gating"]["allowed_subprocesses"]
+                == expected_subprocesses,
+                "gating subprocess declarations changed in freeze",
+            )
+            subprocess_paths = [
+                item["path"]
+                for item in first["gating"]["allowed_subprocesses"]
+            ]
+            check(
+                "tools/m8_test_freeze_minimal_1k_v3_review.py"
+                in subprocess_paths,
+                "S0 freeze regression is not a gating subprocess",
             )
             check(
-                len(FIXTURE_MEMBERS) == EXPECTED_FIXTURE_MEMBER_COUNT == 18,
-                "wrong fixture member count",
+                "tools/m8_freeze_minimal_1k_v3_review.py" in first["gating"]["support_modules"],
+                "S0 freeze implementation is not bound",
             )
+            check(first["declared_templates"] == list(DECLARED_TEMPLATE_PATHS), "wrong templates")
             check(
-                len(FIXTURE_PATHS) == EXPECTED_FIXTURE_FILE_COUNT == 90,
-                "wrong fixture path count",
+                first["historical_replay"]["entrypoint"] == HISTORICAL_REPLAY_ENTRYPOINT
+                and first["historical_replay"]["gating"] is False
+                and first["historical_replay"]["object_count"] == 8,
+                "historical replay boundary is wrong",
             )
+            check(len(FIXTURE_GRAPHS) == 5, "wrong fixture graph count")
+            check(len(FIXTURE_MEMBERS) == 18, "wrong fixture member count")
+            check(len(FIXTURE_PATHS) == 90, "wrong fixture path count")
+            check(set(CODE_FIXED_BOOTSTRAP_PATHS) <= set(DEFAULT_PATHS), "bootstrap omitted")
+            check(first["aggregate"]["file_count"] == len(DEFAULT_PATHS), "wrong file count")
             check(
-                len(DEFAULT_PATHS[:EXPECTED_NON_FIXTURE_FILE_COUNT])
-                == EXPECTED_NON_FIXTURE_FILE_COUNT
-                == 29,
-                "wrong non-fixture path count",
-            )
-            check(
-                len(DEFAULT_PATHS) == EXPECTED_CANDIDATE_FILE_COUNT == 119,
-                "wrong candidate path count",
-            )
-            check(
-                DEFAULT_PATHS[EXPECTED_NON_FIXTURE_FILE_COUNT:] == FIXTURE_PATHS,
-                "fixture paths are not the exact generated suffix",
-            )
-            check(
-                all(path.startswith(FIXTURE_ROOT) for path in FIXTURE_PATHS),
-                "fixture path escapes the fixture root",
-            )
-            check(
-                not any(
-                    part in f"/{path.casefold()}"
-                    for path in DEFAULT_PATHS
-                    for part in FORBIDDEN_INVENTORY_PARTS
-                ),
-                "historical review or authorization path entered the inventory",
-            )
-            check(
-                first["aggregate"]["file_count"] == EXPECTED_CANDIDATE_FILE_COUNT,
-                "wrong file count",
+                first["aggregate"]["closure_digest"] == derive_closure_digest(first["frozen_files"]),
+                "wrong closure digest",
             )
             paths = [item["path"] for item in first["frozen_files"]]
-            check(
-                paths == sorted(DEFAULT_PATHS, key=lambda item: item.encode("utf-8")),
-                "wrong inventory",
-            )
+            check(paths == DEFAULT_PATHS, "wrong manifest-derived inventory")
             check(
                 first["worktree_comparison"]["status"] == "NOT_REQUESTED",
                 "wrong comparison state",

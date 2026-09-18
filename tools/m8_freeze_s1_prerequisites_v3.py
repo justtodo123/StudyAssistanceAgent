@@ -15,11 +15,45 @@ import sys
 import tempfile
 import threading
 import unicodedata
+from collections.abc import Mapping, Sequence
 from pathlib import Path, PurePosixPath
 from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[1]
 CANON = "sa-json-c14n-v1"
+ORACLE_MANIFEST_PATH = (
+    "docs/plans/references/m8-minimal-1k-v3-s1-prereq-oracle-manifest.json"
+)
+ORACLE_MANIFEST_FORMAT = "m8-s1-prerequisite-oracle-manifest-v1"
+SUPPORTED_CLOSURE_VERSION = "m8-s1-prerequisite-closure-v2"
+FREEZE_FORMAT = "m8-s1-prerequisites-v3-freeze-v2"
+CODE_FIXED_BOOTSTRAP_PATHS = (
+    ORACLE_MANIFEST_PATH,
+    "tools/m8_freeze_s1_prerequisites_v3.py",
+    "tools/m8_test_freeze_s1_prerequisites_v3.py",
+    "tools/m8_test_s1_prerequisites_v3.py",
+)
+DECLARED_TEMPLATE_PATHS = (
+    "docs/plans/references/templates/m8-minimal-1k-observer-config-v3.json",
+    "docs/plans/references/templates/m8-minimal-1k-redaction-registry-v3.json",
+    "docs/plans/references/templates/m8-minimal-1k-s1-config-v3.json",
+    "docs/plans/references/templates/m8-minimal-1k-s1-gate-v3.json",
+)
+HISTORICAL_REPLAY_ENTRYPOINT = "tools/m8_replay_historical_regressions_v3.py"
+HISTORICAL_REPLAY_OBJECTS = (
+    "docs/plans/references/external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json",
+    "docs/plans/references/external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json",
+    "docs/plans/references/external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json",
+    "docs/plans/references/external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json",
+    "docs/plans/references/external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543.json",
+    "docs/plans/references/m8-active-execution-protocol-draft-0.9.md",
+    "tools/m8_validate_p0_r02.py",
+    "tools/m8_validate_p1_materials.py",
+)
+HISTORICAL_RUNTIME_ORACLES = (
+    ("tools/m8_validate_p1_materials.py", 88),
+    ("tools/m8_validate_p0_r02.py", 77),
+)
 COMMIT_RE = re.compile(r"[0-9a-f]{40}")
 OID_RE = re.compile(r"[0-9a-f]{40}")
 GIT_VERSION_RE = re.compile(r"git version (\d+)\.(\d+)\.(\d+)(?:\.[^\s]+)?")
@@ -27,75 +61,6 @@ GIT_TIMEOUT_SECONDS = 15
 MAX_GIT_OUTPUT_BYTES = 16 * 1024 * 1024
 MAX_FILE_BYTES = 8 * 1024 * 1024
 MAX_TOTAL_BYTES = 64 * 1024 * 1024
-FIXTURE_GRAPHS = (
-    "failure-cleanup",
-    "failure-observer",
-    "failure-runtime",
-    "failure-validation",
-    "success",
-)
-FIXTURE_MEMBERS = (
-    "artifacts/cleanup-receipt.json",
-    "artifacts/identity.json",
-    "artifacts/input-manifest.json",
-    "artifacts/run-report.json",
-    "artifacts/s0.json",
-    "artifacts/s1.json",
-    "artifacts/s2.json",
-    "artifacts/s3.json",
-    "artifacts/validation-report.json",
-    "events/network.jsonl",
-    "events/process.jsonl",
-    "events/redaction.jsonl",
-    "events/write.jsonl",
-    "expectation.json",
-    "input/chunks.jsonl",
-    "input/gold.jsonl",
-    "input/queries.jsonl",
-    "input/vectors.bin",
-)
-FIXTURE_PATHS = [
-    f"docs/plans/references/fixtures/m8-minimal-1k-v3/{graph}/{member}"
-    for graph in FIXTURE_GRAPHS
-    for member in FIXTURE_MEMBERS
-]
-DEFAULT_PATHS = [
-    ".gitattributes",
-    "docs/plans/references/README.md",
-    "docs/plans/references/m8-minimal-1k-dry-run-protocol-v3.md",
-    "docs/plans/references/m8-minimal-1k-v3-generator-spec.md",
-    "docs/plans/references/m8-minimal-1k-v3-observer-spec.md",
-    "docs/plans/references/schemas/m8-minimal-1k-artifacts-v3.schema.json",
-    "docs/plans/references/schemas/m8-minimal-1k-observer-config-v3.schema.json",
-    "docs/plans/references/schemas/m8-minimal-1k-redaction-registry-v3.schema.json",
-    "docs/plans/references/schemas/m8-minimal-1k-s1-config-v3.schema.json",
-    "docs/plans/references/schemas/m8-minimal-1k-s1-gate-v3.schema.json",
-    "docs/plans/references/templates/m8-minimal-1k-observer-config-v3.json",
-    "docs/plans/references/templates/m8-minimal-1k-redaction-registry-v3.json",
-    "docs/plans/references/templates/m8-minimal-1k-s1-config-v3.json",
-    "docs/plans/references/templates/m8-minimal-1k-s1-gate-v3.json",
-    "tools/README.md",
-    "tools/m8_freeze_s1_prerequisites_v3.py",
-    "tools/m8_generate_minimal_1k_input_v3.py",
-    "tools/m8_generate_minimal_1k_v3_fixtures.py",
-    "tools/m8_observe_minimal_1k_v3.py",
-    "tools/m8_probe_s1_environment_v3.py",
-    "tools/m8_run_minimal_1k_v3.py",
-    "tools/m8_test_freeze_s1_prerequisites_v3.py",
-    "tools/m8_test_generate_minimal_1k_input_v3.py",
-    "tools/m8_test_minimal_1k_graph_v3.py",
-    "tools/m8_test_observe_minimal_1k_v3.py",
-    "tools/m8_test_s1_controls_v3.py",
-    "tools/m8_test_s1_prerequisites_v3.py",
-    "tools/m8_validate_minimal_1k_graph_v3.py",
-    "tools/m8_validate_s1_preflight_v3.py",
-    *FIXTURE_PATHS,
-]
-EXPECTED_FIXTURE_GRAPH_COUNT = 5
-EXPECTED_FIXTURE_MEMBER_COUNT = 18
-EXPECTED_FIXTURE_FILE_COUNT = 90
-EXPECTED_NON_FIXTURE_FILE_COUNT = 29
-EXPECTED_CANDIDATE_FILE_COUNT = 119
 FIXTURE_ROOT = "docs/plans/references/fixtures/m8-minimal-1k-v3/"
 FORBIDDEN_INVENTORY_PARTS = (
     "/external-gates/",
@@ -697,6 +662,18 @@ def validate_repo(repo_root: Path) -> Path:
     if object_format != "sha1":
         raise FreezeError(f"unsupported repository object format: {object_format or '<empty>'}")
     try:
+        shallow = git(
+            "rev-parse",
+            "--is-shallow-repository",
+            repo_root=repo_root,
+        ).decode("ascii").strip()
+    except UnicodeDecodeError as exc:
+        raise FreezeError("repository shallow status is not ASCII") from exc
+    if shallow not in {"true", "false"}:
+        raise FreezeError("repository shallow status is invalid")
+    if shallow == "true":
+        raise FreezeError("shallow repositories are not allowed")
+    try:
         alternates_text = git(
             "rev-parse",
             "--git-path",
@@ -774,6 +751,405 @@ def validate_logical_path(path: str) -> str:
     if any(unicodedata.category(char) == "Cc" for char in path):
         raise FreezeError(f"invalid logical path: {path!r}")
     return path
+
+
+def _reject_duplicate_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise FreezeError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def parse_oracle_manifest(data: bytes) -> dict[str, object]:
+    """Strictly parse canonical oracle-manifest bytes."""
+    if data.startswith(b"\xef\xbb\xbf"):
+        raise FreezeError("oracle manifest must not contain a UTF-8 BOM")
+    if b"\r" in data:
+        raise FreezeError("oracle manifest must not contain carriage returns")
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise FreezeError("oracle manifest is not valid UTF-8") from exc
+    try:
+        parsed = json.loads(text, object_pairs_hook=_reject_duplicate_json_keys)
+    except (json.JSONDecodeError, FreezeError) as exc:
+        if isinstance(exc, FreezeError):
+            raise
+        raise FreezeError("oracle manifest is not valid JSON") from exc
+    manifest = validate_oracle_manifest(parsed)
+    if canonical(manifest) != data:
+        raise FreezeError("oracle manifest is not canonical sa-json-c14n-v1")
+    return manifest
+
+
+def _require_object(value: object, label: str) -> dict[str, object]:
+    if not isinstance(value, dict) or not all(isinstance(key, str) for key in value):
+        raise FreezeError(f"{label} must be a JSON object")
+    return value
+
+
+def _require_exact_keys(
+    value: Mapping[str, object],
+    expected: set[str],
+    label: str,
+) -> None:
+    actual = set(value)
+    if actual != expected:
+        missing = sorted(expected - actual)
+        unexpected = sorted(actual - expected)
+        detail = []
+        if missing:
+            detail.append("missing " + ", ".join(missing))
+        if unexpected:
+            detail.append("unexpected " + ", ".join(unexpected))
+        raise FreezeError(f"{label} has invalid keys: {'; '.join(detail)}")
+
+
+def _require_string(value: object, label: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise FreezeError(f"{label} must be a non-empty string")
+    return value
+
+
+def _validate_path_list(
+    value: object,
+    label: str,
+    *,
+    exact: tuple[str, ...] | None = None,
+) -> tuple[str, ...]:
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise FreezeError(f"{label} must be a list of logical path strings")
+    paths = tuple(validate_logical_path(item) for item in value)
+    if len(paths) != len(set(paths)):
+        raise FreezeError(f"{label} contains duplicate paths")
+    if exact is not None and paths != exact:
+        raise FreezeError(f"{label} does not match the supported exact path list")
+    if exact is None and paths != tuple(sorted(paths, key=lambda item: item.encode("utf-8"))):
+        raise FreezeError(f"{label} must be sorted by UTF-8 bytes")
+    return paths
+
+
+def expand_fixture_paths(fixture_expansion: object) -> tuple[str, ...]:
+    """Validate and mechanically expand a manifest fixture declaration."""
+    fixture = _require_object(fixture_expansion, "fixture_expansion")
+    _require_exact_keys(fixture, {"graphs", "members", "root"}, "fixture_expansion")
+    root = _require_string(fixture["root"], "fixture_expansion.root")
+    if not root.endswith("/"):
+        raise FreezeError("fixture_expansion.root must end with '/' ")
+    validate_logical_path(root[:-1])
+    graphs = _validate_path_list(fixture["graphs"], "fixture_expansion.graphs")
+    members = _validate_path_list(fixture["members"], "fixture_expansion.members")
+    if not graphs or not members:
+        raise FreezeError("fixture expansion must contain graphs and members")
+    for graph in graphs:
+        if "/" in graph:
+            raise FreezeError("fixture graph names must be single path segments")
+    paths = tuple(
+        sorted(
+            (validate_logical_path(f"{root}{graph}/{member}") for graph in graphs for member in members),
+            key=lambda item: item.encode("utf-8"),
+        )
+    )
+    if len(paths) != len(set(paths)):
+        raise FreezeError("fixture expansion produced duplicate paths")
+    return paths
+
+
+def _path_matches_forbidden_class(
+    path: str,
+    declaration: Mapping[str, object],
+) -> bool:
+    match = declaration["match"]
+    values = declaration["values"]
+    assert isinstance(match, str) and isinstance(values, list)
+    folded_path = path.casefold()
+    if match == "exact_path":
+        return folded_path in {value.casefold() for value in values if isinstance(value, str)}
+    if match == "path_segment":
+        segments = {part.casefold() for part in PurePosixPath(path).parts}
+        return any(isinstance(value, str) and value.casefold() in segments for value in values)
+    if match == "substring":
+        return any(isinstance(value, str) and value.casefold() in folded_path for value in values)
+    raise FreezeError(f"unsupported forbidden ambient match type: {match!r}")
+
+
+def _validate_forbidden_classes(value: object) -> tuple[dict[str, object], ...]:
+    if not isinstance(value, list) or not value:
+        raise FreezeError("forbidden_ambient_path_classes must be a non-empty list")
+    declarations: list[dict[str, object]] = []
+    identifiers: set[str] = set()
+    for index, raw in enumerate(value):
+        item = _require_object(raw, f"forbidden_ambient_path_classes[{index}]")
+        _require_exact_keys(item, {"id", "match", "values"}, "forbidden ambient class")
+        identifier = _require_string(item["id"], "forbidden ambient class id")
+        if identifier in identifiers:
+            raise FreezeError("duplicate forbidden ambient class id")
+        identifiers.add(identifier)
+        match = _require_string(item["match"], "forbidden ambient class match")
+        if match not in {"exact_path", "path_segment", "substring"}:
+            raise FreezeError("unsupported forbidden ambient match type")
+        values = item["values"]
+        if not isinstance(values, list) or not values or not all(
+            isinstance(entry, str) and entry for entry in values
+        ):
+            raise FreezeError("forbidden ambient class values must be non-empty strings")
+        if len(values) != len(set(values)) or values != sorted(values, key=lambda entry: entry.encode("utf-8")):
+            raise FreezeError("forbidden ambient class values must be unique and UTF-8 sorted")
+        if match == "exact_path":
+            for entry in values:
+                validate_logical_path(entry)
+        elif match == "path_segment" and any("/" in entry or "\\" in entry for entry in values):
+            raise FreezeError("forbidden path segments must be single segments")
+        declarations.append(item)
+    return tuple(declarations)
+
+
+def validate_oracle_manifest(manifest: object) -> dict[str, object]:
+    """Validate the supported closed manifest schema without reading the worktree."""
+    result = _require_object(manifest, "oracle manifest")
+    _require_exact_keys(
+        result,
+        {
+            "canonicalization_id",
+            "closure_version",
+            "declared_templates",
+            "fixture_expansion",
+            "forbidden_ambient_path_classes",
+            "format",
+            "gating",
+            "historical_replay",
+            "purpose",
+        },
+        "oracle manifest",
+    )
+    if result["canonicalization_id"] != CANON:
+        raise FreezeError("unsupported oracle manifest canonicalization_id")
+    if result["format"] != ORACLE_MANIFEST_FORMAT:
+        raise FreezeError("unsupported oracle manifest format")
+    if result["closure_version"] != SUPPORTED_CLOSURE_VERSION:
+        raise FreezeError("unsupported prerequisite closure version")
+    if result["purpose"] != "S1_PREREQUISITE_ORACLE_ONLY_NOT_AUTHORIZATION":
+        raise FreezeError("unsupported oracle manifest purpose")
+    _validate_path_list(
+        result["declared_templates"],
+        "declared_templates",
+        exact=DECLARED_TEMPLATE_PATHS,
+    )
+    expand_fixture_paths(result["fixture_expansion"])
+    forbidden = _validate_forbidden_classes(result["forbidden_ambient_path_classes"])
+
+    gating = _require_object(result["gating"], "gating")
+    _require_exact_keys(
+        gating,
+        {
+            "allowed_subprocesses",
+            "default_mode",
+            "entrypoint",
+            "static_reads",
+            "support_modules",
+            "temporary_directory_allowances",
+        },
+        "gating",
+    )
+    if gating["default_mode"] != "gating-only":
+        raise FreezeError("gating.default_mode must be 'gating-only'")
+    if gating["entrypoint"] != "tools/m8_test_s1_prerequisites_v3.py":
+        raise FreezeError("unsupported gating entrypoint")
+    validate_logical_path(_require_string(gating["entrypoint"], "gating.entrypoint"))
+    _validate_path_list(gating["static_reads"], "gating.static_reads")
+    support_modules = _validate_path_list(gating["support_modules"], "gating.support_modules")
+    if HISTORICAL_REPLAY_ENTRYPOINT not in support_modules:
+        raise FreezeError("historical replay entrypoint must be bound as a support module")
+
+    subprocesses = gating["allowed_subprocesses"]
+    if not isinstance(subprocesses, list) or not subprocesses:
+        raise FreezeError("gating.allowed_subprocesses must be a non-empty list")
+    subprocess_paths: list[str] = []
+    for index, raw in enumerate(subprocesses):
+        item = _require_object(raw, f"gating.allowed_subprocesses[{index}]")
+        _require_exact_keys(
+            item,
+            {"path", "role", "success_oracle"},
+            "allowed subprocess",
+        )
+        path = validate_logical_path(
+            _require_string(item["path"], "allowed subprocess path")
+        )
+        if item["role"] != "bounded-test":
+            raise FreezeError("unsupported allowed subprocess role")
+        oracle = _require_object(
+            item["success_oracle"],
+            "allowed subprocess success_oracle",
+        )
+        kind = oracle.get("kind")
+        if kind == "exact-line":
+            _require_exact_keys(
+                oracle,
+                {"kind", "success_line"},
+                "exact-line success oracle",
+            )
+        elif kind == "unittest":
+            _require_exact_keys(
+                oracle,
+                {"expected_test_count", "kind", "success_line"},
+                "unittest success oracle",
+            )
+            count = oracle["expected_test_count"]
+            if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
+                raise FreezeError(
+                    "unittest expected_test_count must be a positive integer"
+                )
+        else:
+            raise FreezeError("unsupported allowed subprocess success oracle")
+        success_line = _require_string(
+            oracle["success_line"],
+            "allowed subprocess success line",
+        )
+        if not success_line or "\n" in success_line or "\r" in success_line:
+            raise FreezeError(
+                "allowed subprocess success line must be one non-empty line"
+            )
+        subprocess_paths.append(path)
+    if len(subprocess_paths) != len(set(subprocess_paths)):
+        raise FreezeError("gating.allowed_subprocesses contains duplicate paths")
+    if subprocess_paths != sorted(subprocess_paths, key=lambda item: item.encode("utf-8")):
+        raise FreezeError("gating.allowed_subprocesses must be sorted by UTF-8 path bytes")
+    if HISTORICAL_REPLAY_ENTRYPOINT in subprocess_paths:
+        raise FreezeError("historical replay entrypoint must not be a gating subprocess")
+
+    allowances = gating["temporary_directory_allowances"]
+    if not isinstance(allowances, list) or not allowances:
+        raise FreezeError("temporary_directory_allowances must be a non-empty list")
+    allowance_ids: set[str] = set()
+    for index, raw in enumerate(allowances):
+        item = _require_object(raw, f"temporary_directory_allowances[{index}]")
+        _require_exact_keys(
+            item,
+            {"id", "location_class", "repository_write", "scope"},
+            "temporary directory allowance",
+        )
+        identifier = _require_string(item["id"], "temporary allowance id")
+        if identifier in allowance_ids:
+            raise FreezeError("duplicate temporary directory allowance id")
+        allowance_ids.add(identifier)
+        _require_string(item["location_class"], "temporary allowance location_class")
+        _require_string(item["scope"], "temporary allowance scope")
+        if item["repository_write"] is not False:
+            raise FreezeError("temporary directory allowances must forbid repository writes")
+
+    historical = _require_object(result["historical_replay"], "historical_replay")
+    _require_exact_keys(
+        historical,
+        {"entrypoint", "gating", "mode", "objects", "runtime_oracles"},
+        "historical_replay",
+    )
+    if historical["gating"] is not False:
+        raise FreezeError("historical replay must be non-gating")
+    if historical["mode"] != "explicit-commit-bound-only":
+        raise FreezeError("unsupported historical replay mode")
+    if historical["entrypoint"] != HISTORICAL_REPLAY_ENTRYPOINT:
+        raise FreezeError("unsupported historical replay entrypoint")
+    _validate_path_list(
+        historical["objects"],
+        "historical_replay.objects",
+        exact=HISTORICAL_REPLAY_OBJECTS,
+    )
+    runtime_oracles = historical["runtime_oracles"]
+    if not isinstance(runtime_oracles, list) or len(runtime_oracles) != len(HISTORICAL_RUNTIME_ORACLES):
+        raise FreezeError("historical replay must declare exactly two runtime oracles")
+    actual_oracles: list[tuple[str, int]] = []
+    for index, raw in enumerate(runtime_oracles):
+        item = _require_object(raw, f"historical runtime oracle {index}")
+        _require_exact_keys(item, {"expected_passed", "path"}, "historical runtime oracle")
+        path = validate_logical_path(_require_string(item["path"], "historical runtime oracle path"))
+        count = item["expected_passed"]
+        if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
+            raise FreezeError("historical runtime expected_passed must be a positive integer")
+        actual_oracles.append((path, count))
+    if tuple(actual_oracles) != HISTORICAL_RUNTIME_ORACLES:
+        raise FreezeError("historical runtime oracles do not match the supported exact values")
+
+    explicitly_declared = {
+        _require_string(gating["entrypoint"], "gating.entrypoint"),
+        *_validate_path_list(gating["static_reads"], "gating.static_reads"),
+        *support_modules,
+        *subprocess_paths,
+    }
+    missing_bootstrap = sorted(set[str](CODE_FIXED_BOOTSTRAP_PATHS) - explicitly_declared)
+    if missing_bootstrap:
+        raise FreezeError("manifest omits code-fixed bootstrap path: " + missing_bootstrap[0])
+    closure = derive_gating_closure(result, _validated=True)
+    missing_bootstrap = sorted(set[str](CODE_FIXED_BOOTSTRAP_PATHS) - set(closure))
+    if missing_bootstrap:
+        raise FreezeError("manifest omits code-fixed bootstrap path: " + missing_bootstrap[0])
+    for path in closure:
+        if any(_path_matches_forbidden_class(path, item) for item in forbidden):
+            raise FreezeError("forbidden ambient path entered gating closure: " + path)
+        guarded = f"/{path.casefold()}"
+        if any(part in guarded for part in FORBIDDEN_INVENTORY_PARTS):
+            raise FreezeError("code-fixed forbidden ambient path entered gating closure: " + path)
+    return result
+
+
+def derive_gating_closure(
+    manifest: dict[str, object],
+    *,
+    _validated: bool = False,
+) -> tuple[str, ...]:
+    """Derive the unique UTF-8-sorted candidate gating closure."""
+    if not _validated:
+        manifest = validate_oracle_manifest(manifest)
+    gating = _require_object(manifest["gating"], "gating")
+    subprocesses = gating["allowed_subprocesses"]
+    assert isinstance(subprocesses, list)
+    declared = [
+        *CODE_FIXED_BOOTSTRAP_PATHS,
+        _require_string(gating["entrypoint"], "gating.entrypoint"),
+        *_validate_path_list(gating["static_reads"], "gating.static_reads"),
+        *_validate_path_list(gating["support_modules"], "gating.support_modules"),
+        *_validate_path_list(
+            manifest["declared_templates"],
+            "declared_templates",
+            exact=DECLARED_TEMPLATE_PATHS,
+        ),
+        *expand_fixture_paths(manifest["fixture_expansion"]),
+    ]
+    for item in subprocesses:
+        assert isinstance(item, dict)
+        declared.append(validate_logical_path(_require_string(item["path"], "allowed subprocess path")))
+    return tuple(sorted(set(declared), key=lambda item: item.encode("utf-8")))
+
+
+def derive_closure_digest(frozen_files: Sequence[Mapping[str, object]]) -> str:
+    """Hash canonical ordered per-file closure facts."""
+    facts: list[dict[str, object]] = []
+    previous: bytes | None = None
+    for raw in frozen_files:
+        item = dict(raw)
+        _require_exact_keys(
+            item,
+            {"byte_count", "git_blob_oid", "git_mode", "lf_count", "path", "sha256"},
+            "frozen file fact",
+        )
+        path = validate_logical_path(_require_string(item["path"], "frozen file path"))
+        encoded = path.encode("utf-8")
+        if previous is not None and encoded <= previous:
+            raise FreezeError("frozen file facts must have unique UTF-8-sorted paths")
+        previous = encoded
+        facts.append(item)
+    return hashlib.sha256(canonical(facts)).hexdigest()
+
+
+def load_oracle_manifest(
+    commit: str,
+    repo_root: Path = ROOT,
+) -> tuple[dict[str, object], dict[str, object]]:
+    """Load and summarize the canonical manifest blob at an exact commit."""
+    mode, oid, data = read_blob(commit, ORACLE_MANIFEST_PATH, repo_root)
+    manifest = parse_oracle_manifest(data)
+    return manifest, summarize(ORACLE_MANIFEST_PATH, mode, oid, data)
 
 
 def tree_entries(
@@ -939,51 +1315,34 @@ def build_freeze(
     *,
     git_executable: Path | None = None,
 ) -> dict:
-    """Build a non-authorizing immutable record of S1 prerequisite sources."""
+    """Build a non-authorizing immutable record from target-commit declarations."""
     if git_executable is not None:
         select_git_executable(git_executable)
     repo_root = validate_repo(repo_root)
     validate_commit(commit, repo_root)
     if paths is not None:
         raise FreezeError("custom source inventory is not allowed")
-    if len(FIXTURE_GRAPHS) != EXPECTED_FIXTURE_GRAPH_COUNT:
-        raise FreezeError("default fixture graph inventory has an unexpected size")
-    if len(FIXTURE_MEMBERS) != EXPECTED_FIXTURE_MEMBER_COUNT:
-        raise FreezeError("default fixture member inventory has an unexpected size")
-    if len(FIXTURE_PATHS) != EXPECTED_FIXTURE_FILE_COUNT:
-        raise FreezeError("default fixture path inventory has an unexpected size")
-    non_fixture_paths = DEFAULT_PATHS[:EXPECTED_NON_FIXTURE_FILE_COUNT]
-    if len(non_fixture_paths) != EXPECTED_NON_FIXTURE_FILE_COUNT or any(
-        path.startswith(FIXTURE_ROOT) for path in non_fixture_paths
-    ):
-        raise FreezeError("default non-fixture inventory has an unexpected shape")
-    if DEFAULT_PATHS[EXPECTED_NON_FIXTURE_FILE_COUNT:] != FIXTURE_PATHS:
-        raise FreezeError("default fixture inventory is not the exact generated closure")
 
-    normalized = [validate_logical_path(path) for path in DEFAULT_PATHS]
-    if len(normalized) != len(set(normalized)):
-        raise FreezeError("duplicate logical path")
-    if len(normalized) != EXPECTED_CANDIDATE_FILE_COUNT:
-        raise FreezeError("default candidate inventory has an unexpected size")
-    for path in normalized:
-        guarded = f"/{path.casefold()}"
-        if any(part in guarded for part in FORBIDDEN_INVENTORY_PARTS):
-            raise FreezeError("historical review or authorization path is forbidden")
-
+    manifest, manifest_fact = load_oracle_manifest(commit, repo_root)
+    closure = derive_gating_closure(manifest)
     candidate_entries = tree_entries(commit, ".gitattributes", repo_root)
     candidate_entries.extend(tree_entries(commit, "docs", repo_root))
     candidate_entries.extend(tree_entries(commit, "tools", repo_root))
-    entry_by_path = {
-        path: (path, mode, object_type, oid)
-        for path, mode, object_type, oid in candidate_entries
-    }
+    entry_by_path: dict[str, tuple[str, str, str, str]] = {}
+    for entry in candidate_entries:
+        path = entry[0]
+        if path in entry_by_path:
+            raise FreezeError("duplicate Git tree path: " + path)
+        entry_by_path[path] = entry
+
+    fixture_paths = expand_fixture_paths(manifest["fixture_expansion"])
+    fixture = _require_object(manifest["fixture_expansion"], "fixture_expansion")
+    fixture_root = _require_string(fixture["root"], "fixture_expansion.root")
     fixture_entries = [
-        entry
-        for entry in candidate_entries
-        if entry[0].startswith(FIXTURE_ROOT)
+        entry for entry in candidate_entries if entry[0].startswith(fixture_root)
     ]
     actual_fixture_paths = {path for path, _mode, _object_type, _oid in fixture_entries}
-    expected_fixture_paths = set(FIXTURE_PATHS)
+    expected_fixture_paths = set(fixture_paths)
     missing_fixture_paths = sorted(
         expected_fixture_paths - actual_fixture_paths,
         key=lambda path: path.encode("utf-8"),
@@ -993,20 +1352,16 @@ def build_freeze(
         key=lambda path: path.encode("utf-8"),
     )
     if missing_fixture_paths:
-        raise FreezeError(
-            "fixture members are missing: " + ", ".join(missing_fixture_paths)
-        )
+        raise FreezeError("fixture members are missing: " + ", ".join(missing_fixture_paths))
     if unexpected_fixture_paths:
-        raise FreezeError(
-            "unexpected fixture members: " + ", ".join(unexpected_fixture_paths)
-        )
+        raise FreezeError("unexpected fixture members: " + ", ".join(unexpected_fixture_paths))
 
-    missing_paths = [path for path in normalized if path not in entry_by_path]
+    missing_paths = [path for path in closure if path not in entry_by_path]
     if missing_paths:
         raise FreezeError("missing path at commit: " + missing_paths[0])
-    selected_entries = [entry_by_path[path] for path in normalized]
+    selected_entries = [entry_by_path[path] for path in closure]
     blobs = read_blob_batch(selected_entries, repo_root)
-    files = []
+    files: list[dict[str, object]] = []
     total_byte_count = 0
     for path, mode, _object_type, oid in selected_entries:
         data = blobs[path]
@@ -1014,15 +1369,48 @@ def build_freeze(
         if total_byte_count > MAX_TOTAL_BYTES:
             raise FreezeError("candidate inventory exceeds total byte safety limit")
         files.append(summarize(path, mode, oid, data))
-    files = sorted(files, key=lambda item: item["path"].encode("utf-8"))
+    files = sorted(files, key=lambda item: str(item["path"]).encode("utf-8"))
+
+    gating = _require_object(manifest["gating"], "gating")
+    historical = _require_object(manifest["historical_replay"], "historical_replay")
+    templates = _validate_path_list(
+        manifest["declared_templates"],
+        "declared_templates",
+        exact=DECLARED_TEMPLATE_PATHS,
+    )
     return {
         "aggregate": {
+            "closure_digest": derive_closure_digest(files),
             "file_count": len(files),
             "total_byte_count": total_byte_count,
         },
         "canonicalization_id": CANON,
-        "format": "m8-s1-prerequisites-v3-freeze-v1",
+        "closure_version": SUPPORTED_CLOSURE_VERSION,
+        "declared_templates": list(templates),
+        "fixture_expansion": {
+            "file_count": len(fixture_paths),
+            "graphs": list(_validate_path_list(fixture["graphs"], "fixture_expansion.graphs")),
+            "members": list(_validate_path_list(fixture["members"], "fixture_expansion.members")),
+            "root": fixture_root,
+        },
+        "format": FREEZE_FORMAT,
         "frozen_files": files,
+        "gating": {
+            "allowed_subprocesses": gating["allowed_subprocesses"],
+            "default_mode": gating["default_mode"],
+            "entrypoint": gating["entrypoint"],
+            "static_reads": gating["static_reads"],
+            "support_modules": gating["support_modules"],
+            "temporary_directory_allowances": gating["temporary_directory_allowances"],
+        },
+        "historical_replay": {
+            "entrypoint": historical["entrypoint"],
+            "gating": False,
+            "mode": historical["mode"],
+            "object_count": len(HISTORICAL_REPLAY_OBJECTS),
+            "runtime_oracles": historical["runtime_oracles"],
+        },
+        "manifest": manifest_fact,
         "purpose": "S1_PREREQUISITE_RECORD_ONLY_NOT_AUTHORIZATION",
         "source_commit": commit,
         "worktree_comparison": {

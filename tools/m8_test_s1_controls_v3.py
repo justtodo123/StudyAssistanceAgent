@@ -33,6 +33,13 @@ FAKE_COMMIT = "a" * 40
 FAKE_TREE = "b" * 40
 FAKE_DIGEST = "c" * 64
 EXPERIMENT = "sa-m8-minimal-1k-v3-synthetic-s1-positive"
+ORACLE_MANIFEST = "m8-minimal-1k-v3-s1-prereq-oracle-manifest.json"
+EXPECTED_DECLARED_TEMPLATES = {
+    "docs/plans/references/templates/m8-minimal-1k-observer-config-v3.json",
+    "docs/plans/references/templates/m8-minimal-1k-redaction-registry-v3.json",
+    "docs/plans/references/templates/m8-minimal-1k-s1-config-v3.json",
+    "docs/plans/references/templates/m8-minimal-1k-s1-gate-v3.json",
+}
 ObserverMutation: TypeAlias = Callable[[dict], None]
 
 
@@ -518,6 +525,8 @@ def schema_errors(instance: object, schema: dict) -> list[str]:
         valid_type = True
         if expected_type == "array":
             valid_type = isinstance(value, list)
+        elif expected_type == "boolean":
+            valid_type = isinstance(value, bool)
         elif expected_type == "integer":
             valid_type = isinstance(value, int) and not isinstance(value, bool)
         elif expected_type == "object":
@@ -587,6 +596,106 @@ def schema_errors(instance: object, schema: dict) -> list[str]:
     visit(instance, schema, "$")
     return errors
 
+
+def replace_template_placeholders(
+    value: object,
+    replacements: dict[str, object],
+    structured_replacements: dict[tuple[str | int, ...], object] | None = None,
+) -> object:
+    """Replace parsed placeholder values and declared structured slots."""
+    structured = structured_replacements or {}
+    if () in structured:
+        raise AssertionError("structured replacement cannot replace the template root")
+    consumed: set[tuple[str | int, ...]] = set()
+
+    def visit(current: object, path: tuple[str | int, ...]) -> object:
+        if path in structured:
+            consumed.add(path)
+            return copy.deepcopy(structured[path])
+        if isinstance(current, dict):
+            return {
+                key: visit(child, (*path, key))
+                for key, child in current.items()
+            }
+        if isinstance(current, list):
+            return [
+                visit(child, (*path, index))
+                for index, child in enumerate(current)
+            ]
+        if isinstance(current, str):
+            matches = re.findall(r"__[A-Z0-9_]+_PLACEHOLDER__", current)
+            if not matches:
+                return current
+            if current in replacements:
+                return copy.deepcopy(replacements[current])
+            replaced = current
+            for placeholder in matches:
+                replacement = replacements.get(placeholder)
+                if replacement is None or not isinstance(replacement, str):
+                    raise AssertionError(
+                        f"missing string replacement for {placeholder}"
+                    )
+                replaced = replaced.replace(placeholder, replacement)
+            return replaced
+        return copy.deepcopy(current)
+
+    result = visit(value, ())
+    missing = set(structured).difference(consumed)
+    if missing:
+        path = sorted(missing, key=repr)[0]
+        raise AssertionError(
+            f"structured replacement path is absent: {path!r}"
+        )
+    return result
+
+
+
+def assert_structured_replacement_rejections() -> None:
+    """Reject malformed or unconsumed parsed-tree replacement paths."""
+    template = {"payload": {"items": [{"value": "unchanged"}]}}
+    rejected: tuple[dict[tuple[str | int, ...], object], ...] = (
+        {("missing", "leaf"): "value"},
+        {("payload", "missing", "leaf"): "value"},
+        {("payload", "deleted_slot"): "value"},
+        {("payload", "items", 2, "value"): "value"},
+        {("payload", "items", 0, 0): "value"},
+        {(): "value"},
+    )
+    for structured in rejected:
+        try:
+            replace_template_placeholders(template, {}, structured)
+        except AssertionError:
+            continue
+        raise AssertionError(
+            f"malformed structured replacement was accepted: {structured!r}"
+        )
+
+
+def assert_raw_text_substitution_is_not_an_instantiation_path() -> None:
+    """Raw byte replacement cannot produce the typed structured instance."""
+    raw = b'{"payload":{"enabled":"__BOOLEAN_PLACEHOLDER__"}}\n'
+    parsed = probe.strict_json(raw)
+    populated = replace_template_placeholders(
+        parsed,
+        {"__BOOLEAN_PLACEHOLDER__": True},
+    )
+    canonical = probe.canonical_bytes(populated)
+    if canonical != b'{"payload":{"enabled":true}}\n':
+        raise AssertionError("parsed-tree replacement did not preserve the typed value")
+    textually_substituted = raw.replace(
+        b"__BOOLEAN_PLACEHOLDER__",
+        b"true",
+    )
+    textual_value = probe.strict_json(textually_substituted)
+    if textual_value == populated:
+        raise AssertionError("raw textual substitution reproduced the typed instance")
+    if not isinstance(textual_value, dict):
+        raise AssertionError("raw textual substitution changed the root type")
+    textual_payload = textual_value.get("payload")
+    if not isinstance(textual_payload, dict):
+        raise AssertionError("raw textual substitution changed the payload type")
+    if not isinstance(textual_payload.get("enabled"), str):
+        raise AssertionError("raw textual substitution unexpectedly preserved the type")
 
 class S1ControlsTests(unittest.TestCase):
     def test_s1_contract_documents_are_strict_and_schema_compatible(self) -> None:
@@ -759,6 +868,179 @@ class S1ControlsTests(unittest.TestCase):
             ["unknown_binary_policy"]["const"],
             "fail-closed",
         )
+
+    def test_declared_templates_are_canonical_blank_non_instances(self) -> None:
+        assert_structured_replacement_rejections()
+        assert_raw_text_substitution_is_not_an_instantiation_path()
+        repository = Path(__file__).resolve().parents[1]
+        references = repository / "docs" / "plans" / "references"
+        manifest_path = references / ORACLE_MANIFEST
+        manifest_raw = manifest_path.read_bytes()
+        manifest_value = probe.strict_json(manifest_raw)
+        if not isinstance(manifest_value, dict):
+            self.fail("oracle manifest must be an object")
+        manifest = manifest_value
+        declared_value = manifest.get("declared_templates")
+        if not isinstance(declared_value, list):
+            self.fail("oracle manifest declared_templates must be a list")
+        declared = declared_value
+        self.assertEqual(len(declared), 4)
+        self.assertTrue(all(isinstance(path, str) for path in declared))
+        self.assertEqual(set(declared), EXPECTED_DECLARED_TEMPLATES)
+        self.assertEqual(len(set(declared)), len(declared))
+
+        schema_names = {
+            "m8-minimal-1k-observer-config-v3.json": "m8-minimal-1k-observer-config-v3.schema.json",
+            "m8-minimal-1k-redaction-registry-v3.json": "m8-minimal-1k-redaction-registry-v3.schema.json",
+            "m8-minimal-1k-s1-config-v3.json": "m8-minimal-1k-s1-config-v3.schema.json",
+            "m8-minimal-1k-s1-gate-v3.json": "m8-minimal-1k-s1-gate-v3.schema.json",
+        }
+        replacements: dict[str, object] = {
+            "__ALLOWED_NEXT_ACTION_PLACEHOLDER__": "stop",
+            "__BOOLEAN_PLACEHOLDER__": True,
+            "__BOUNDED_RETRY_COUNT_PLACEHOLDER__": 1,
+            "__BYTE_COUNT_PLACEHOLDER__": 1,
+            "__CANONICAL_WINDOWS_PARENT_PATH_PLACEHOLDER__": "C:/synthetic",
+            "__CANONICAL_WINDOWS_PATH_PLACEHOLDER__": "C:/synthetic/path",
+            "__CLEAN_STATUS_BYTE_COUNT_PLACEHOLDER__": 0,
+            "__CLEAN_STATUS_SHA256_PLACEHOLDER__": probe.sha256_hex(b""),
+            "__CPYTHON_VERSION_PLACEHOLDER__": "3.12.0",
+            "__DECISION_PLACEHOLDER__": "NOT_AUTHORIZED",
+            "__EXPERIMENT_ID_PLACEHOLDER__": EXPERIMENT,
+            "__LANCEDB_VERSION_PLACEHOLDER__": "1.0.0",
+            "__LOGICAL_NAME_PLACEHOLDER__": "synthetic/artifact.json",
+            "__NUMPY_VERSION_PLACEHOLDER__": "1.0.0",
+            "__OWNER_NAME_PLACEHOLDER__": "synthetic-owner",
+            "__POLL_INTERVAL_MS_PLACEHOLDER__": 1,
+            "__PSUTIL_VERSION_PLACEHOLDER__": "1.0.0",
+            "__PYARROW_VERSION_PLACEHOLDER__": "1.0.0",
+            "__REASON_PLACEHOLDER__": "synthetic non-authorizing template test",
+            "__REPOSITORY_COMMIT_PLACEHOLDER__": FAKE_COMMIT,
+            "__REPOSITORY_RELATIVE_PATH_PLACEHOLDER__": "tools/synthetic.py",
+            "__S0_EXPERIMENT_ID_PLACEHOLDER__": EXPERIMENT,
+            "__SHA256_PLACEHOLDER__": FAKE_DIGEST,
+            "__ST_DEV_PLACEHOLDER__": 1,
+            "__ST_INO_PLACEHOLDER__": 2,
+            "__TIMEOUT_MS_PLACEHOLDER__": 1,
+        }
+        environment = synthetic_probe()
+        template_registry = redaction_registry_object()
+        template_registry_bytes = probe.canonical_bytes(template_registry)
+        frozen_observer = environment["facts"]["files"]["observer-implementation"]
+        observer_components = observer_config_object(
+            environment,
+            template_registry_bytes,
+        )["payload"]
+        structured_by_name: dict[
+            str,
+            dict[tuple[str | int, ...], object],
+        ] = {
+            "m8-minimal-1k-observer-config-v3.json": {
+                ("logical_name",): preflight.OBSERVER_LOGICAL_NAME,
+                ("payload", "components", 0, "api_ids"): [
+                    "fake-network-event-stream"
+                ],
+                ("payload", "components", 1, "api_ids"): [
+                    "fake-write-event-stream"
+                ],
+                ("payload", "components", 2, "api_ids"): [
+                    "fake-process-event-stream"
+                ],
+                ("payload", "components", 3, "api_ids"): [
+                    "fake-redaction-scan-stream"
+                ],
+                ("payload", "error_code_registry"): copy.deepcopy(
+                    observer_components["error_code_registry"]
+                ),
+                ("payload", "persistent_file_allowlist"): copy.deepcopy(
+                    observer_components["persistent_file_allowlist"]
+                ),
+                ("payload", "redaction_registry_ref"): copy.deepcopy(
+                    observer_components["redaction_registry_ref"]
+                ),
+            },
+            "m8-minimal-1k-redaction-registry-v3.json": {
+                ("payload", "binary_allowlist"): copy.deepcopy(
+                    template_registry["payload"]["binary_allowlist"]
+                ),
+                ("payload", "patterns"): copy.deepcopy(
+                    template_registry["payload"]["patterns"]
+                ),
+            },
+        }
+        template_replacements = dict(replacements)
+        template_replacements["__BYTE_COUNT_PLACEHOLDER__"] = frozen_observer[
+            "byte_count"
+        ]
+        template_replacements["__SHA256_PLACEHOLDER__"] = frozen_observer[
+            "sha256"
+        ]
+        schema_by_template: dict[str, dict] = {}
+        template_by_name: dict[str, dict] = {}
+        populated_by_name: dict[str, dict] = {}
+        for logical_path in declared:
+            with self.subTest(template=logical_path):
+                self.assertRegex(
+                    logical_path,
+                    r"^docs/plans/references/templates/[^/]+\.json$",
+                )
+                template_path = repository / Path(logical_path)
+                raw = template_path.read_bytes()
+                self.assertNotIn(b"\xef\xbb\xbf", raw[:3])
+                self.assertNotIn(b"\r", raw)
+                self.assertTrue(raw.endswith(b"\n"))
+                self.assertFalse(raw.endswith(b"\n\n"))
+                parsed_value = probe.strict_json(raw)
+                self.assertEqual(raw, probe.canonical_bytes(parsed_value))
+                if not isinstance(parsed_value, dict):
+                    self.fail(f"template must be an object: {logical_path}")
+                value = parsed_value
+                self.assertEqual(
+                    value.get("canonicalization_id"),
+                    probe.CANONICALIZATION_ID,
+                )
+                schema_name = schema_names[template_path.name]
+                parsed_schema = preflight.strict_json_bytes(
+                    (references / "schemas" / schema_name).read_bytes()
+                )
+                if not isinstance(parsed_schema, dict):
+                    self.fail(f"schema must be an object: {schema_name}")
+                schema = parsed_schema
+                schema_by_template[template_path.name] = schema
+                template_by_name[template_path.name] = value
+                self.assertTrue(
+                    schema_errors(value, schema),
+                    f"blank template unexpectedly became an instance: {logical_path}",
+                )
+
+                populated_value = replace_template_placeholders(
+                    value,
+                    template_replacements,
+                    structured_by_name.get(template_path.name),
+                )
+                if not isinstance(populated_value, dict):
+                    self.fail(f"populated template must be an object: {logical_path}")
+                populated = populated_value
+                populated_by_name[template_path.name] = populated
+                populated_bytes = probe.canonical_bytes(populated)
+                self.assertEqual(probe.strict_json(populated_bytes), populated)
+                self.assertEqual(populated_bytes, probe.canonical_bytes(probe.strict_json(populated_bytes)))
+                self.assertNotIn(b"_PLACEHOLDER__", populated_bytes)
+                self.assertEqual(
+                    schema_errors(populated, schema),
+                    [],
+                    f"populated template is schema-invalid: {logical_path}",
+                )
+
+        gate = template_by_name["m8-minimal-1k-s1-gate-v3.json"]
+        gate_schema = schema_by_template["m8-minimal-1k-s1-gate-v3.json"]
+        self.assertTrue(schema_errors(gate, gate_schema))
+        self.assertNotEqual(gate["payload"].get("decision"), "DRY_RUN_AUTHORIZED")
+        self.assertNotEqual(gate["payload"].get("allowed_next_action"), "run-s2")
+        populated_gate = populated_by_name["m8-minimal-1k-s1-gate-v3.json"]
+        self.assertEqual(schema_errors(populated_gate, gate_schema), [])
+        self.assertEqual(populated_gate["payload"]["decision"], "NOT_AUTHORIZED")
+        self.assertEqual(populated_gate["payload"]["allowed_next_action"], "stop")
 
     def test_probe_is_read_only_and_marks_missing_metadata_absent(self) -> None:
         with mock.patch.object(probe.importlib.metadata, "version", side_effect=probe.importlib.metadata.PackageNotFoundError):
@@ -1926,4 +2208,8 @@ class S1ControlsTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    program = unittest.main(verbosity=2, exit=False)
+    result = program.result
+    if result.wasSuccessful():
+        print("ALL PASS: canonical declared templates")
+    raise SystemExit(0 if result.wasSuccessful() else 1)

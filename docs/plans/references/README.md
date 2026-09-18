@@ -18,6 +18,17 @@
 
 ## 当前文件
 
+S1 prerequisite freeze 的 candidate closure 由目标 commit 内的 canonical oracle manifest 唯一声明并机械展开。
+Code-fixed bootstrap 防止 manifest 省略自身、aggregate 或 freeze authority chain；fixture graph/member 数仍可作为
+展开规则的结构事实，但最终排序路径、数量、总字节与 closure digest 均从声明推导，不再以旧 29 + 90 = 119
+组合作为独立权威。Gating closure 排除 historical reviewer、worksheet、external gate/artifact 和既有 review-freeze；
+旧 88/88 与 77/77 校验只能从显式 full commit 的八对象闭包隔离重放，并明确为 non-gating evidence；shallow
+repository 被拒绝。所选 commit 中的 validator bytes 是调用者明确选择并执行的代码，仍具有调用用户的 OS 权限；外部临时树、
+`python -I`、环境清理、bounded I/O/timeout、Windows kill-on-close Job Object 与 process cleanup 不是 OS sandbox，且
+Windows process launch 到 Job assignment 之间仍有短暂非原子窗口。四个 declared template 都必须是
+`sa-json-c14n-v1` bytes；实例化规则为 strict parse、结构化替换、canonical serialize，不得直接文本替换 placeholder。
+本索引与以上声明均不产生任何 gate 或执行授权。
+
 | 文件 | 说明 | 地位 |
 | --- | --- | --- |
 | [`agent-alignment-analysis.md`](agent-alignment-analysis.md) | 对照 Agent 招聘要求与仓库现状 | 辅助调查 |
@@ -25,6 +36,7 @@
 | [`recruitment-driven-feasibility.md`](recruitment-driven-feasibility.md) | 以招聘要求为唯一标准的可行性分析与阶段更新建议 | 辅助调查 |
 | [`m8-m12-scope-decision-v1.md`](m8-m12-scope-decision-v1.md) | M8–M12 规模化范围决策 | `APPROVED / SCOPE_FROZEN`；不等于阶段 admission |
 | [`m8-decision-closure-v1.md`](m8-decision-closure-v1.md) | M8 八项 Decision 批准记录 | `APPROVED / EIGHT_DECISIONS_RESOLVED`；不选择后端或授权实现 |
+| [`m8-minimal-1k-v3-s1-prereq-oracle-manifest.json`](m8-minimal-1k-v3-s1-prereq-oracle-manifest.json) | v3 S1 prerequisite oracle 声明 | target-commit-bound canonical manifest；声明封闭 gating closure、四个模板与独立 non-gating historical replay；不产生授权 |
 | [`m8-minimal-1k-v3-generator-spec.md`](m8-minimal-1k-v3-generator-spec.md) | 最小 1K v3 S1 受控输入生成规格 | 受限前置规格；不构成 binding、执行、后端选择或阶段 admission |
 | [`m8-minimal-1k-v3-observer-spec.md`](m8-minimal-1k-v3-observer-spec.md) | 最小 1K v3 S1 环境观察规格 | 受限前置规格；不构成 binding、执行、后端选择或阶段 admission |
 | [`schemas/m8-minimal-1k-observer-config-v3.schema.json`](schemas/m8-minimal-1k-observer-config-v3.schema.json) | v3 closed observer config schema | 绑定 synthetic implementation、四 component、collector 参数、error registry 与 redaction registry；不产生授权 |
@@ -36,11 +48,6 @@
 | [`templates/m8-minimal-1k-s1-config-v3.json`](templates/m8-minimal-1k-s1-config-v3.json) | v3 S1 config 空白模板 | non-authorizing、non-instance；不含真实机器身份或 root |
 | [`templates/m8-minimal-1k-s1-gate-v3.json`](templates/m8-minimal-1k-s1-gate-v3.json) | v3 S1 gate 空白模板 | non-authorizing、non-instance；不预填成功 decision/action |
 | [`templates/`](templates/) | 其余 v3 受控模板与 fixture | 仅供对应前置规格使用；不构成任何阶段证据或授权 |
-
-S1 prerequisite freeze 的 candidate closure 固定为 29 个非 fixture 路径与 5 × 18 = 90 个 graph fixture
-路径，共 119 个互异路径。该 closure 排除 historical reviewer、worksheet、external gate/artifact 和既有
-review-freeze 记录；本索引作为 candidate documentation 被摘要，不会把其链接的历史文件纳入 freeze，也不产生授权。
-
 | [`m8-active-execution-protocol-draft.md`](m8-active-execution-protocol-draft.md) | M8 active execution protocol `draft-0.5` | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY / UNBOUND / NOT_AUTHORIZED / NEVER_EXECUTED` |
 | [`m8-active-execution-protocol-draft-0.5-authorization-20260912.md`](m8-active-execution-protocol-draft-0.5-authorization-20260912.md) | `draft-0.5` 修订授权 | 已授权并已消费的文本修订；不解除任何执行禁令 |
 | [`m8-active-execution-protocol-draft-0.5-review-20260913.md`](m8-active-execution-protocol-draft-0.5-review-20260913.md) | `draft-0.5` P0 技术审查 | `PASS / P0_TECHNICAL_SCOPE_WORDING_ACCEPTED_ONLY`；不产生执行、准入或后端权限 |

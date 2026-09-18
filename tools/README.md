@@ -30,7 +30,9 @@ tools/
 ├── m8_test_generate_minimal_1k_input_v3.py # M8 v3 S1 生成器验证脚本
 ├── m8_test_observe_minimal_1k_v3.py # M8 v3 synthetic observer hermetic 验证脚本
 ├── m8_test_s1_controls_v3.py # M8 v3 S1 控制项验证脚本
-├── m8_test_s1_prerequisites_v3.py # M8 v3 S1 Builder 前置聚合自检
+├── m8_replay_historical_regressions_v3.py # 从显式 commit 隔离重放 88/77 历史校验；非 gating
+├── m8_test_replay_historical_regressions_v3.py # 历史重放 helper 的 hermetic 自测
+├── m8_test_s1_prerequisites_v3.py # M8 v3 S1 封闭 gating 聚合与显式 non-gating 入口
 ├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   ├── requirements.txt   # crawler 独立依赖
 │   └── fetcher/cleaner/converter/dedup/pipeline
@@ -155,7 +157,7 @@ python tools/m8_generate_minimal_1k_v3_fixtures.py --replace-tracked
 python tools/m8_validate_minimal_1k_graph_v3.py \
   docs/plans/references/fixtures/m8-minimal-1k-v3/success
 
-# 在 disposable tree 重放 5 个图、32 个 fail-closed mutation 和 2 个边界敏感性证明
+# 在 disposable tree 重放 5 个图、45 个 fail-closed mutation 和 2 个边界敏感性证明
 python tools/m8_test_minimal_1k_graph_v3.py
 
 # 对明确仓库中的完整 commit SHA，从 Git objects 生成确定性 canonical freeze
@@ -265,13 +267,37 @@ preflight 校验与 mock-only 授权边界编排。其规范、schema
 | [`m8_test_freeze_s1_prerequisites_v3.py`](m8_test_freeze_s1_prerequisites_v3.py) | 验证冻结工具的 Git-object 身份、边界、确定性、原子发布及独立 clone replay。 |
 | [`m8_test_generate_minimal_1k_input_v3.py`](m8_test_generate_minimal_1k_input_v3.py) | 验证生成输入的确定性、格式、失败原子性和 formal/test-only 隔离。 |
 | [`m8_test_observe_minimal_1k_v3.py`](m8_test_observe_minimal_1k_v3.py) | Hermetic 验证四账本 lifecycle、detail branch、FAIL 传播、canonical framing 和原子发布。 |
-| [`m8_test_s1_controls_v3.py`](m8_test_s1_controls_v3.py) | 验证 closed schemas、preflight、redaction、observer config 与 mock-only authorization controls 的 fail-closed 行为。 |
-| [`m8_test_s1_prerequisites_v3.py`](m8_test_s1_prerequisites_v3.py) | 聚合运行 Builder 边界内的 syntax、generator、observer、control、freeze、graph 与历史机械回归。 |
+| [`m8_test_s1_controls_v3.py`](m8_test_s1_controls_v3.py) | 验证 closed schemas、preflight、redaction、observer config、四个 canonical 空白模板、结构化实例化与 mock-only authorization controls 的 fail-closed 行为。 |
+| [`m8_replay_historical_regressions_v3.py`](m8_replay_historical_regressions_v3.py) | 从显式 full commit 的八个 Git objects 隔离重放旧 88/88 与 77/77 validator；结果仅为 non-gating evidence。 |
+| [`m8_test_replay_historical_regressions_v3.py`](m8_test_replay_historical_regressions_v3.py) | Hermetic 验证历史对象闭包、复制后结构化 `REPO` 重绑定、环境隔离、runtime oracle 和 canonical report。 |
+| [`m8_test_s1_prerequisites_v3.py`](m8_test_s1_prerequisites_v3.py) | 默认运行 manifest 声明的封闭 gating oracle；历史回归只可经显式 commit-bound non-gating 模式单独运行。 |
 
-`m8_freeze_s1_prerequisites_v3.py` 的固定 inventory 由 29 个非 fixture candidate path 和
-5 个 graph × 18 个 member（90 个 fixture path）组成，共 119 个互异路径。工具与自测分别以独立常量固定
-5/18/90/29/119 的组成，并拒绝把 historical reviewer、worksheet、external gate/artifact 或 review-freeze
-路径加入 inventory；`source_commit` 和逐 blob 摘要只记录候选字节，不产生 S1 授权。
+`m8_freeze_s1_prerequisites_v3.py` 从目标 commit 中读取 canonical oracle manifest，校验 code-fixed bootstrap、
+静态 read/support/subprocess 声明、四个 template 与 fixture expansion，再由声明推导排序 closure、数量、总字节与 digest。
+旧的 29 + 90 = 119 只描述已拒绝 candidate 的历史 inventory，不再是当前 verdict 或 freeze 的独立权威。
+Gating closure 禁止 historical reviewer/worksheet、external gate/artifact 与 review-freeze 记录；历史八对象仅位于独立
+non-gating replay 声明。`source_commit`、manifest 身份和逐 blob 摘要都只记录 candidate bytes，不产生 S1 授权。
+
+默认与显式 gating 命令分别为：
+
+```bash
+python tools/m8_test_s1_prerequisites_v3.py
+python tools/m8_test_s1_prerequisites_v3.py --gating-only
+```
+
+两者只运行封闭 candidate-local oracle。历史回归必须另行绑定绝对仓库和完整 commit：
+
+```bash
+python tools/m8_test_s1_prerequisites_v3.py --historical-regressions \
+  --repo <absolute-repository-path> --commit <full-lowercase-40-hex>
+```
+
+历史 replay 的成功或失败不重写 gating verdict。它拒绝 shallow repository，并从所选 full commit 的 Git objects
+复制八对象；其中 validator bytes 是调用者明确选择并执行的代码，仍具有调用用户的 OS 权限。外部临时树、`python -I`、
+清理环境、bounded I/O/timeout、Windows kill-on-close Job Object 与 process-group/tree cleanup 只是隔离和回收控制，不是
+OS sandbox；Windows `Popen` 到 Job Object assignment 之间仍有短暂非原子窗口。四个 declared template 必须先严格 parse，
+再按 JSON object 结构替换 placeholder value，最后以 `sa-json-c14n-v1` canonical serializer 输出；不得直接文本替换
+placeholder。
 
 运行前请先阅读相应规格；可通过 `python tools/<script> --help` 查看每个工具接受的参数。工具只应在其规定的
 受控范围内使用，不能将单次通过或本地观察解释为 M8 开工、执行或退出证据。
