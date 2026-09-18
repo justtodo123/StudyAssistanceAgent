@@ -37,6 +37,8 @@ Windows process launch 到 Job assignment 之间仍有短暂非原子窗口。�
 | [`m8-m12-scope-decision-v1.md`](m8-m12-scope-decision-v1.md) | M8–M12 规模化范围决策 | `APPROVED / SCOPE_FROZEN`；不等于阶段 admission |
 | [`m8-decision-closure-v1.md`](m8-decision-closure-v1.md) | M8 八项 Decision 批准记录 | `APPROVED / EIGHT_DECISIONS_RESOLVED`；不选择后端或授权实现 |
 | [`m8-minimal-1k-v3-s1-prereq-oracle-manifest.json`](m8-minimal-1k-v3-s1-prereq-oracle-manifest.json) | v3 S1 prerequisite oracle 声明 | target-commit-bound canonical manifest；声明封闭 gating closure、四个模板与独立 non-gating historical replay；不产生授权 |
+| [`external-artifacts/m8-minimal-1k-v3-s1-owner-decision-20260918.json`](external-artifacts/m8-minimal-1k-v3-s1-owner-decision-20260918.json) | v3 S1 Owner 决策记录 | `S1_AUTHORIZED / prepare-s1-environment`；不授权 S2/S3、backend execution 或 admission |
+| [`external-artifacts/m8-minimal-1k-v3-s1-failure-20260918-r01.json`](external-artifacts/m8-minimal-1k-v3-s1-failure-20260918-r01.json) | v3 S1-A fail-closed 并行失败记录 | `S1_A_FAILED / request-owner-environment-resolution`；缺少唯一精确离线依赖闭包及完整 frozen config/inventory；S2 保持 `NOT_AUTHORIZED` |
 | [`m8-minimal-1k-v3-generator-spec.md`](m8-minimal-1k-v3-generator-spec.md) | 最小 1K v3 S1 受控输入生成规格 | 受限前置规格；不构成 binding、执行、后端选择或阶段 admission |
 | [`m8-minimal-1k-v3-observer-spec.md`](m8-minimal-1k-v3-observer-spec.md) | 最小 1K v3 S1 环境观察规格 | 受限前置规格；不构成 binding、执行、后端选择或阶段 admission |
 | [`schemas/m8-minimal-1k-observer-config-v3.schema.json`](schemas/m8-minimal-1k-observer-config-v3.schema.json) | v3 closed observer config schema | 绑定 synthetic implementation、四 component、collector 参数、error registry 与 redaction registry；不产生授权 |
