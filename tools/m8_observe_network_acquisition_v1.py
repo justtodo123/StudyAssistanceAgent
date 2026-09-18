@@ -91,28 +91,43 @@ def _require(condition: bool, code: str, detail: str) -> None:
         raise ObservationError(code, detail)
 
 
+
+def _require_mapping(value: Any, detail: str) -> Mapping[str, Any]:
+    _require(isinstance(value, Mapping), "M8ACQ_E001_INVALID_EVENT", detail)
+    return value
+
+
 def _host(url: str, *, initial: bool) -> str:
-    parsed = urlsplit(url)
-    _require(parsed.scheme == "https", "M8ACQ_E002_NON_HTTPS", url)
-    _require(not parsed.username and not parsed.password, "M8ACQ_E009_AUTH_PRESENT", url)
-    host = (parsed.hostname or "").lower()
-    allowed = ALLOWED_INITIAL_HOSTS if initial else ALLOWED_REDIRECT_HOSTS
     code = "M8ACQ_E003_INITIAL_HOST_DENIED" if initial else "M8ACQ_E004_REDIRECT_HOST_DENIED"
+    _require(isinstance(url, str) and bool(url) and not any(character.isspace() or ord(character) < 32 for character in url), "M8ACQ_E001_INVALID_EVENT", "url syntax")
+    try:
+        parsed = urlsplit(url)
+        has_userinfo = bool(parsed.username or parsed.password)
+        host = (parsed.hostname or "").casefold()
+        port = parsed.port
+    except (TypeError, ValueError):
+        raise ObservationError("M8ACQ_E001_INVALID_EVENT", "url syntax") from None
+    _require(parsed.scheme == "https", "M8ACQ_E002_NON_HTTPS", "scheme")
+    _require(not has_userinfo, "M8ACQ_E009_AUTH_PRESENT", "url credentials")
+    _require(host != "" and parsed.path != "" and parsed.query == "" and parsed.fragment == "", "M8ACQ_E001_INVALID_EVENT", "url form")
+    _require(port is None or port == 443, "M8ACQ_E001_INVALID_EVENT", "url port")
+    allowed = ALLOWED_INITIAL_HOSTS if initial else ALLOWED_REDIRECT_HOSTS
     _require(host in allowed, code, host)
     return host
 
 
 def observe_network(event: Mapping[str, Any]) -> dict[str, Any]:
+    event = _require_mapping(event, "network event")
     required = {"method", "initial_url", "redirect_chain", "final_url", "tls_verified", "certificate_bypass", "proxy", "authentication"}
     _require(required <= set(event), "M8ACQ_E001_INVALID_EVENT", "network fields")
-    _require(event["method"] == "GET", "M8ACQ_E010_METHOD_DENIED", str(event["method"]))
-    _host(str(event["initial_url"]), initial=True)
+    _require(event["method"] == "GET", "M8ACQ_E010_METHOD_DENIED", "method")
+    _host(event["initial_url"], initial=True)
     chain = event["redirect_chain"]
     _require(isinstance(chain, list), "M8ACQ_E001_INVALID_EVENT", "redirect_chain")
     _require(len(chain) <= 3, "M8ACQ_E005_REDIRECT_LIMIT", str(len(chain)))
     for url in chain:
-        _host(str(url), initial=False)
-    final_host = _host(str(event["final_url"]), initial=False)
+        _host(url, initial=False)
+    final_host = _host(event["final_url"], initial=False)
     _require(event["tls_verified"] is True, "M8ACQ_E006_TLS_UNVERIFIED", "tls")
     _require(event["certificate_bypass"] is False, "M8ACQ_E007_CERT_BYPASS", "certificate")
     _require(event["proxy"] in (None, ""), "M8ACQ_E008_PROXY_PRESENT", "proxy")
@@ -121,10 +136,12 @@ def observe_network(event: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def observe_process(event: Mapping[str, Any]) -> dict[str, Any]:
+    event = _require_mapping(event, "process event")
     required = {"executable", "process_count", "shell"}
     _require(required <= set(event), "M8ACQ_E001_INVALID_EVENT", "process fields")
-    _require(str(event["executable"]).casefold() == ALLOWED_EXECUTABLE.casefold(), "M8ACQ_E011_PROCESS_DENIED", str(event["executable"]))
-    _require(event["process_count"] == 1, "M8ACQ_E012_PROCESS_COUNT", str(event["process_count"]))
+    _require(str(event["executable"]).casefold() == ALLOWED_EXECUTABLE.casefold(), "M8ACQ_E011_PROCESS_DENIED", "executable")
+    _require(isinstance(event["process_count"], int) and not isinstance(event["process_count"], bool), "M8ACQ_E001_INVALID_EVENT", "process_count")
+    _require(event["process_count"] == 1, "M8ACQ_E012_PROCESS_COUNT", "process_count")
     _require(event["shell"] is False, "M8ACQ_E013_SHELL_ENABLED", "shell")
     return {"observer": "process", "status": "PASS", "process_count": 1}
 
@@ -161,6 +178,8 @@ def _has_unsafe_component(path: PureWindowsPath) -> bool:
     for component in path.parts:
         if component in {path.anchor, "\\"}:
             continue
+        if len(component) > 255:
+            return True
         if ".." in component:
             return True
         if any(ord(character) < 32 or character in _WINDOWS_FORBIDDEN_CHARACTERS for character in component):
@@ -168,7 +187,7 @@ def _has_unsafe_component(path: PureWindowsPath) -> bool:
         if component.endswith((".", " ")):
             return True
         stem = component.split(".", 1)[0].casefold()
-        if stem in _WINDOWS_RESERVED_NAMES:
+        if stem in _WINDOWS_RESERVED_NAMES or stem in {"conin$", "conout$"}:
             return True
     return False
 
@@ -208,39 +227,55 @@ def _bounded_int(value: Any, maximum: int, detail: str) -> int:
 
 
 def observe_write(event: Mapping[str, Any]) -> dict[str, Any]:
+    event = _require_mapping(event, "write event")
     required = {"path", "is_reparse_point", "kind", "byte_size", "total_byte_size", "file_count"}
     _require(required <= set(event), "M8ACQ_E001_INVALID_EVENT", "write fields")
-    raw_path = str(event["path"])
-    _require(not _has_unsafe_raw_path_syntax(raw_path), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", raw_path)
+    _require(isinstance(event["path"], str), "M8ACQ_E001_INVALID_EVENT", "path")
+    raw_path = event["path"]
+    _require(not _has_unsafe_raw_path_syntax(raw_path), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", "path syntax")
     path = PureWindowsPath(raw_path)
-    _require(not _has_unsafe_component(path), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", str(path))
+    _require(not _has_unsafe_component(path), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", "path component")
     for root in FORBIDDEN_ROOTS:
-        _require(not _within(path, root), "M8ACQ_E015_FORBIDDEN_ROOT", str(path))
-    _require(_within(path, PREPARATION_ROOT), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", str(path))
-    _require(event["is_reparse_point"] is False, "M8ACQ_E016_REPARSE_POINT", str(path))
-    _require(event["kind"] in {"wheel", "partial", "evidence"}, "M8ACQ_E017_FILE_TYPE_DENIED", str(event["kind"]))
+        _require(not _within(path, root), "M8ACQ_E015_FORBIDDEN_ROOT", "forbidden root")
+    _require(_within(path, PREPARATION_ROOT), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", "write root")
+    _require(event["is_reparse_point"] is False, "M8ACQ_E016_REPARSE_POINT", "reparse point")
+    _require(event["kind"] in {"wheel", "partial", "evidence"}, "M8ACQ_E017_FILE_TYPE_DENIED", "kind")
     relative_path = str(path.relative_to(PREPARATION_ROOT)).replace("\\", "/")
-    _require(_allowed_relative_path(relative_path, str(event["kind"])), "M8ACQ_E017_FILE_TYPE_DENIED", relative_path)
-    _bounded_int(event["byte_size"], 536870912, "single bytes")
-    _bounded_int(event["total_byte_size"], 2147483648, "total bytes")
-    _bounded_int(event["file_count"], 256, "file count")
+    _require(_allowed_relative_path(relative_path, event["kind"]), "M8ACQ_E017_FILE_TYPE_DENIED", relative_path)
+    byte_size = _bounded_int(event["byte_size"], 536870912, "single bytes")
+    total_byte_size = _bounded_int(event["total_byte_size"], 2147483648, "total bytes")
+    file_count = _bounded_int(event["file_count"], 256, "file count")
+    _require(file_count >= 1, "M8ACQ_E018_LIMIT_EXCEEDED", "file count")
+    _require(total_byte_size >= byte_size, "M8ACQ_E018_LIMIT_EXCEEDED", "total bytes")
     return {"observer": "write", "status": "PASS", "relative_path": relative_path}
 
 
 def observe_redaction(event: Mapping[str, Any]) -> dict[str, Any]:
+    event = _require_mapping(event, "redaction event")
     required = {"text", "declared_sha256", "content_bytes"}
     _require(required <= set(event), "M8ACQ_E001_INVALID_EVENT", "redaction fields")
     content = event["content_bytes"]
     _require(isinstance(content, bytes), "M8ACQ_E001_INVALID_EVENT", "content_bytes")
-    _require(sha256_bytes(content) == event["declared_sha256"], "M8ACQ_E019_DIGEST_MISMATCH", "sha256")
-    text = str(event["text"])
+    declared_sha256 = event["declared_sha256"]
+    _require(isinstance(declared_sha256, str), "M8ACQ_E001_INVALID_EVENT", "declared_sha256")
+    _require(sha256_bytes(content) == declared_sha256, "M8ACQ_E019_DIGEST_MISMATCH", "sha256")
+    try:
+        decoded_content = content.decode("utf-8")
+    except UnicodeDecodeError:
+        raise ObservationError("M8ACQ_E001_INVALID_EVENT", "content encoding") from None
     for pattern in SECRET_PATTERNS:
-        _require(pattern.search(text) is None, "M8ACQ_E020_REDACTION_MATCH", pattern.pattern)
+        _require(pattern.search(decoded_content) is None, "M8ACQ_E020_REDACTION_MATCH", pattern.pattern)
+    text = event["text"]
+    _require(isinstance(text, str), "M8ACQ_E001_INVALID_EVENT", "text")
+    _require(decoded_content == text, "M8ACQ_E001_INVALID_EVENT", "text/content binding")
     return {"observer": "redaction", "status": "PASS", "byte_size": len(content)}
 
 
 def observe_all(events: Mapping[str, Mapping[str, Any]]) -> bytes:
+    _require_mapping(events, "observer events")
     _require(set(events) == {"network", "process", "write", "redaction"}, "M8ACQ_E021_OBSERVER_INCOMPLETE", "four observers required")
+    for name in ("network", "process", "write", "redaction"):
+        _require_mapping(events[name], f"{name} event")
     result = {
         "canonicalization_id": CANONICALIZATION_ID,
         "error_code_registry": list(ERROR_CODES),
