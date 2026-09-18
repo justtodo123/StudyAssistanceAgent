@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import pathlib
 import sys
+
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
 from tools.m8_observe_network_acquisition_v1 import (
@@ -106,28 +107,92 @@ def main() -> None:
     event["shell"] = True
     expect_code("M8ACQ_E013_SHELL_ENABLED", lambda: observe_process(event))
 
+    base_path = str(PREPARATION_ROOT).replace("/", "\\")
+    accepted = (
+        ("authority.json", "evidence"),
+        ("inventory.json", "evidence"),
+        ("provenance.json", "evidence"),
+        ("events/network.jsonl", "evidence"),
+        ("events/process.jsonl", "evidence"),
+        ("events/redaction.jsonl", "evidence"),
+        ("events/write.jsonl", "evidence"),
+        ("wheels/numpy.whl", "wheel"),
+        ("wheels/numpy.whl.partial", "partial"),
+    )
+    for relative_path, kind in accepted:
+        event = fixtures()["write"].copy()
+        event["path"] = base_path + "\\" + relative_path.replace("/", "\\")
+        event["kind"] = kind
+        assert observe_write(event)["relative_path"] == relative_path
+
+    for relative_path in (
+        "random.txt", "events/random.bin", "events/random.jsonl",
+        "events/network.txt", "secret/unknown.json",
+        "wheels/not-a-wheel.txt", "wheels/package.tar.gz", "wheels/package.zip",
+        "wheels/package.whl.tmp", "wheels/subdir/package.whl",
+    ):
+        event = fixtures()["write"].copy()
+        event["path"] = base_path + "\\" + relative_path.replace("/", "\\")
+        expect_code("M8ACQ_E017_FILE_TYPE_DENIED", lambda event=event: observe_write(event))
+
+    for relative_path, kind in (
+        ("authority.json", "wheel"), ("inventory.json", "partial"),
+        ("wheels/numpy.whl", "evidence"), ("wheels/numpy.whl.partial", "wheel"),
+    ):
+        event = fixtures()["write"].copy()
+        event["path"] = base_path + "\\" + relative_path.replace("/", "\\")
+        event["kind"] = kind
+        expect_code("M8ACQ_E017_FILE_TYPE_DENIED", lambda event=event: observe_write(event))
+
     event = fixtures()["write"].copy()
     event["path"] = r"D:\outside\numpy.whl"
     expect_code("M8ACQ_E014_WRITE_OUTSIDE_ROOT", lambda: observe_write(event))
-    for disallowed_path in ("random.txt", "events/random.bin", "wheels/not-a-wheel.txt", "secret/unknown.json"):
-        event = fixtures()["write"].copy()
-        event["path"] = str(PREPARATION_ROOT / disallowed_path.replace("/", "\\"))
-        expect_code("M8ACQ_E017_FILE_TYPE_DENIED", lambda: observe_write(event))
     event = fixtures()["write"].copy()
-    event["path"] = r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01\..\outside\numpy.whl"
+    event["path"] = base_path + r"\..\outside\numpy.whl"
     expect_code("M8ACQ_E014_WRITE_OUTSIDE_ROOT", lambda: observe_write(event))
     event = fixtures()["write"].copy()
     event["path"] = r"D:\Git Demo\StudyAssistanceAgent\numpy.whl"
+    event["kind"] = "evidence"
     expect_code("M8ACQ_E015_FORBIDDEN_ROOT", lambda: observe_write(event))
     for unsafe_path in (
-        r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01\wheels\.. \\outside\x.whl",
-        r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01\wheels\x.whl:payload",
-        r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01\wheels\NUL.whl",
-        r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01\wheels\CON",
+        base_path + r"\..\outside\x.whl",
+        base_path + r"\wheels\..\..\outside\x.whl",
+        base_path + r"\wheels\.. \outside\x.whl",
+        base_path + r"\wheels\abc..def\x.whl",
+        base_path + r"\wheels\foo.. \x.whl",
+        base_path + r"\wheels\x.whl:payload",
+        base_path + r"\wheels\x.whl::$DATA",
+        base_path + r"\events\event.jsonl:stream",
+        base_path + r"\wheels\NUL",
+        base_path + r"\wheels\NUL.whl",
+        base_path + r"\wheels\CON",
+        base_path + r"\wheels\CON.whl",
+        base_path + r"\wheels\PRN.txt",
+        base_path + r"\wheels\AUX.data",
+        base_path + r"\wheels\COM1.log",
+        base_path + r"\wheels\LPT1.tmp",
+        base_path + r"\wheels\payload?.whl",
+        base_path + r"\wheels\payload*.whl",
+        base_path + r"\wheels\payload<.whl",
+        base_path + r"\wheels\payload>.whl",
+        base_path + r"\wheels\payload\".whl",
+        base_path + r"\wheels\payload|.whl",
+        base_path + r"\wheels\x.whl.",
+        base_path + r"\wheels\x.whl ",
+        base_path + r"\wheels\folder.\x.whl",
+        base_path + r"\wheels\folder \x.whl",
+        base_path + "\\wheels\\payload" + "\x00" + ".whl",
+        base_path + "\\wheels\\payload\n.whl",
+        r"relative\path\x.whl",
+        r"D:\outside\x.whl",
+        r"C:\temp\x.whl",
+        r"\\server\share\x.whl",
+        base_path + r"\wheels\numpy.whl\\\x.whl",
     ):
         event = fixtures()["write"].copy()
         event["path"] = unsafe_path
-        expect_code("M8ACQ_E014_WRITE_OUTSIDE_ROOT", lambda: observe_write(event))
+        expect_code("M8ACQ_E014_WRITE_OUTSIDE_ROOT", lambda event=event: observe_write(event))
+
     event = fixtures()["write"].copy()
     event["is_reparse_point"] = True
     expect_code("M8ACQ_E016_REPARSE_POINT", lambda: observe_write(event))
@@ -137,6 +202,25 @@ def main() -> None:
     event = fixtures()["write"].copy()
     event["byte_size"] = 536870913
     expect_code("M8ACQ_E018_LIMIT_EXCEEDED", lambda: observe_write(event))
+    for field, value in (
+        ("byte_size", -1),
+        ("total_byte_size", -1),
+        ("total_byte_size", 2147483649),
+        ("file_count", -1),
+        ("file_count", 257),
+    ):
+        event = fixtures()["write"].copy()
+        event[field] = value
+        expect_code("M8ACQ_E018_LIMIT_EXCEEDED", lambda event=event: observe_write(event))
+    for field, value in (
+        ("byte_size", "not-a-number"),
+        ("total_byte_size", None),
+        ("file_count", 1.9),
+        ("file_count", True),
+    ):
+        event = fixtures()["write"].copy()
+        event[field] = value
+        expect_code("M8ACQ_E001_INVALID_EVENT", lambda event=event: observe_write(event))
 
     event = fixtures()["redaction"].copy()
     event["declared_sha256"] = "0" * 64

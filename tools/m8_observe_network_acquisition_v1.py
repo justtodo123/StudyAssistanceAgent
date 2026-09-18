@@ -134,12 +134,36 @@ _WINDOWS_RESERVED_NAMES = {
     *(f"com{index}" for index in range(1, 10)),
     *(f"lpt{index}" for index in range(1, 10)),
 }
+_WINDOWS_FORBIDDEN_CHARACTERS = frozenset('<>:"|?*')
+
+
+def _has_unsafe_raw_path_syntax(raw_path: str) -> bool:
+    """Reject spellings that PureWindowsPath would silently normalize."""
+    if "\x00" in raw_path:
+        return True
+    if raw_path.startswith("\\\\"):
+        return True
+    if len(raw_path) >= 3 and raw_path[1] == ":" and raw_path[0].isalpha():
+        body = raw_path[2:]
+        leading_separators = len(body) - len(body.lstrip("\\/"))
+        if leading_separators != 1:
+            return True
+        body = body[1:]
+    else:
+        body = raw_path
+    if "\\" in body and "/" in body:
+        return True
+    components = re.split(r"[\\/]", body)
+    return any(component in {"", "."} for component in components)
+
 
 def _has_unsafe_component(path: PureWindowsPath) -> bool:
     for component in path.parts:
         if component in {path.anchor, "\\"}:
             continue
-        if ".." in component or ":" in component:
+        if ".." in component:
+            return True
+        if any(ord(character) < 32 or character in _WINDOWS_FORBIDDEN_CHARACTERS for character in component):
             return True
         if component.endswith((".", " ")):
             return True
@@ -147,6 +171,7 @@ def _has_unsafe_component(path: PureWindowsPath) -> bool:
         if stem in _WINDOWS_RESERVED_NAMES:
             return True
     return False
+
 
 def _within(path: PureWindowsPath, root: PureWindowsPath) -> bool:
     if _has_unsafe_component(path):
@@ -171,10 +196,23 @@ def _allowed_relative_path(relative_path: str, kind: str) -> bool:
             return filename.endswith(".whl.partial")
     return False
 
+
+def _bounded_int(value: Any, maximum: int, detail: str) -> int:
+    _require(
+        isinstance(value, int) and not isinstance(value, bool),
+        "M8ACQ_E001_INVALID_EVENT",
+        detail,
+    )
+    _require(0 <= value <= maximum, "M8ACQ_E018_LIMIT_EXCEEDED", detail)
+    return value
+
+
 def observe_write(event: Mapping[str, Any]) -> dict[str, Any]:
     required = {"path", "is_reparse_point", "kind", "byte_size", "total_byte_size", "file_count"}
     _require(required <= set(event), "M8ACQ_E001_INVALID_EVENT", "write fields")
-    path = PureWindowsPath(str(event["path"]))
+    raw_path = str(event["path"])
+    _require(not _has_unsafe_raw_path_syntax(raw_path), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", raw_path)
+    path = PureWindowsPath(raw_path)
     _require(not _has_unsafe_component(path), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", str(path))
     for root in FORBIDDEN_ROOTS:
         _require(not _within(path, root), "M8ACQ_E015_FORBIDDEN_ROOT", str(path))
@@ -183,9 +221,9 @@ def observe_write(event: Mapping[str, Any]) -> dict[str, Any]:
     _require(event["kind"] in {"wheel", "partial", "evidence"}, "M8ACQ_E017_FILE_TYPE_DENIED", str(event["kind"]))
     relative_path = str(path.relative_to(PREPARATION_ROOT)).replace("\\", "/")
     _require(_allowed_relative_path(relative_path, str(event["kind"])), "M8ACQ_E017_FILE_TYPE_DENIED", relative_path)
-    _require(0 <= int(event["byte_size"]) <= 536870912, "M8ACQ_E018_LIMIT_EXCEEDED", "single bytes")
-    _require(0 <= int(event["total_byte_size"]) <= 2147483648, "M8ACQ_E018_LIMIT_EXCEEDED", "total bytes")
-    _require(0 <= int(event["file_count"]) <= 256, "M8ACQ_E018_LIMIT_EXCEEDED", "file count")
+    _bounded_int(event["byte_size"], 536870912, "single bytes")
+    _bounded_int(event["total_byte_size"], 2147483648, "total bytes")
+    _bounded_int(event["file_count"], 256, "file count")
     return {"observer": "write", "status": "PASS", "relative_path": relative_path}
 
 
