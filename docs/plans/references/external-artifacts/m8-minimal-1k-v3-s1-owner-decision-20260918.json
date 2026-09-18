@@ -1,0 +1,98 @@
+{
+  "format": "m8-s1-owner-decision-v3",
+  "purpose": "S1_OWNER_DECISION_NOT_S2_AUTHORIZATION",
+  "decision": "S1_AUTHORIZED",
+  "allowed_next_action": "prepare-s1-environment",
+  "execution_status": "NOT_STARTED",
+  "owner_identity": {
+    "role": "StudyAssistanceAgent M8 Owner",
+    "repository_identity": "justtodo123 <2103286227@qq.com>",
+    "decision_agent": "Claude Code M8 Owner for this session"
+  },
+  "decision_timestamp": "2026-09-18T15:41:06+08:00",
+  "candidate_commit": "6f9cf4617e79462130737eaf78cdb392b02b6664",
+  "package_commit": "3c2249d7fd0a7d2cb4363ba9093ff62f09c975b6",
+  "independent_rereview_path": "D:\\面试实习\\m8-minimal-1k-v3-s1-prereq-independent-rereview-20260918-r01.md",
+  "independent_rereview_sha256": "4c614564a0f4bc90c0a6054e44687c28d638c92553b867470230a79975cebd0f",
+  "freeze_path": "docs/plans/references/external-artifacts/m8-minimal-1k-v3-s1-prereq-freeze-20260918-r01.json",
+  "freeze_sha256": "6f1315591915a80ae9d463ec85aafa92925d57514ea691180318dc212817a517",
+  "closure_files": 123,
+  "closure_bytes": 1019137,
+  "closure_digest": "b3063aa32b07ecfb1b6349210e4ec6a20c86922d1f6f6155828d180d654dd011",
+  "prerequisite_verification": {
+    "independent_rereview_exists": true,
+    "independent_rereview_hash_matches": true,
+    "candidate_package_match_application": true,
+    "independent_decision": "S1_PREREQUISITES_ACCEPTED",
+    "independent_allowed_next_action": "request-owner-s1-decision",
+    "freeze_hash_matches": true,
+    "repository_head": "3c2249d7fd0a7d2cb4363ba9093ff62f09c975b6",
+    "package_direct_parent_is_candidate": true,
+    "blank_worksheet_unchanged": true,
+    "new_blocking_finding": false,
+    "unauthorized_execution_observed": false
+  },
+  "s1_scope": {
+    "s1_a_allowed": [
+      "create-one-time-experiment-identity",
+      "create-protocol-isolated-experiment-root",
+      "create-isolated-evidence-root",
+      "create-isolated-venv",
+      "install-protocol-allowlisted-exact-version-dependencies",
+      "run-environment-probe",
+      "record-package-and-wheel-inventory",
+      "run-s1-preflight",
+      "freeze-machine-environment-identity-and-config"
+    ],
+    "s1_b_allowed_after_successful_s1_a": [
+      "generate-formal-synthetic-1k-input",
+      "validate-vectors-jsonl-manifest-and-digests",
+      "freeze-formal-input",
+      "prepare-s2-handoff"
+    ],
+    "s1_b_condition": "S1-B requires successful S1-A preflight and may not proceed after any failed preflight or environment mismatch.",
+    "failure_policy": [
+      "do-not-represent-failure-as-success",
+      "do-not-automatically-authorize-s2",
+      "do-not-automatically-rerun-until-success",
+      "create-a-new-parallel-failure-record",
+      "keep-s2-not-authorized"
+    ]
+  },
+  "forbidden_actions": [
+    "read-scan-or-copy-D:\\111_Others_Subjects",
+    "use-real-learning-materials",
+    "access-network",
+    "modify-production",
+    "create-backend-evidence",
+    "run-sqlite",
+    "run-lancedb",
+    "select-backend",
+    "execute-s2",
+    "execute-s3",
+    "issue-DRY_RUN_AUTHORIZED",
+    "issue-run-s2",
+    "execute-10k-or-100k",
+    "modify-historical-records",
+    "modify-candidate-or-package",
+    "admit-m8",
+    "push-origin"
+  ],
+  "decision_state_at_issuance": {
+    "identity_created": false,
+    "experiment_root_created": false,
+    "evidence_root_created": false,
+    "venv_created": false,
+    "dependencies_installed": false,
+    "formal_1k_generated": false,
+    "sqlite_run": false,
+    "lancedb_run": false,
+    "backend_selected": false,
+    "s2_issued": false,
+    "s3_issued": false,
+    "origin_pushed": false
+  },
+  "s2_status": "NOT_AUTHORIZED",
+  "s3_status": "NOT_AUTHORIZED",
+  "m8_status": "S1_AUTHORIZED_NOT_STARTED"
+}
