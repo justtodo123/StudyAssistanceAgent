@@ -114,6 +114,15 @@ def main() -> None:
     event = fixtures()["write"].copy()
     event["path"] = r"D:\Git Demo\StudyAssistanceAgent\numpy.whl"
     expect_code("M8ACQ_E015_FORBIDDEN_ROOT", lambda: observe_write(event))
+    for unsafe_path in (
+        r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01\wheels\.. \\outside\x.whl",
+        r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01\wheels\x.whl:payload",
+        r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01\wheels\NUL.whl",
+        r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01\wheels\CON",
+    ):
+        event = fixtures()["write"].copy()
+        event["path"] = unsafe_path
+        expect_code("M8ACQ_E014_WRITE_OUTSIDE_ROOT", lambda: observe_write(event))
     event = fixtures()["write"].copy()
     event["is_reparse_point"] = True
     expect_code("M8ACQ_E016_REPARSE_POINT", lambda: observe_write(event))

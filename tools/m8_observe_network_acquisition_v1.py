@@ -120,11 +120,27 @@ def observe_process(event: Mapping[str, Any]) -> dict[str, Any]:
     return {"observer": "process", "status": "PASS", "process_count": 1}
 
 
-def _has_parent_segment(path: PureWindowsPath) -> bool:
-    return ".." in path.parts
+_WINDOWS_RESERVED_NAMES = {
+    "con", "prn", "aux", "nul",
+    *(f"com{index}" for index in range(1, 10)),
+    *(f"lpt{index}" for index in range(1, 10)),
+}
+
+def _has_unsafe_component(path: PureWindowsPath) -> bool:
+    for component in path.parts:
+        if component in {path.anchor, "\\"}:
+            continue
+        if ".." in component or ":" in component:
+            return True
+        if component.endswith((".", " ")):
+            return True
+        stem = component.split(".", 1)[0].casefold()
+        if stem in _WINDOWS_RESERVED_NAMES:
+            return True
+    return False
 
 def _within(path: PureWindowsPath, root: PureWindowsPath) -> bool:
-    if _has_parent_segment(path):
+    if _has_unsafe_component(path):
         return False
     try:
         path.relative_to(root)
@@ -137,7 +153,7 @@ def observe_write(event: Mapping[str, Any]) -> dict[str, Any]:
     required = {"path", "is_reparse_point", "kind", "byte_size", "total_byte_size", "file_count"}
     _require(required <= set(event), "M8ACQ_E001_INVALID_EVENT", "write fields")
     path = PureWindowsPath(str(event["path"]))
-    _require(not _has_parent_segment(path), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", str(path))
+    _require(not _has_unsafe_component(path), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", str(path))
     for root in FORBIDDEN_ROOTS:
         _require(not _within(path, root), "M8ACQ_E015_FORBIDDEN_ROOT", str(path))
     _require(_within(path, PREPARATION_ROOT), "M8ACQ_E014_WRITE_OUTSIDE_ROOT", str(path))
