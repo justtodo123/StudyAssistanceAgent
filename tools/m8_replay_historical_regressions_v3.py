@@ -68,6 +68,8 @@ def sanitized_environment() -> dict[str, str]:
     env: dict[str, str] = {
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONHASHSEED": "0",
+        "PYTHONHOME": "",
+        "PYTHONPATH": "",
         "PYTHONIOENCODING": "utf-8",
         "PYTHONUTF8": "1",
     }
@@ -224,10 +226,10 @@ def run_bounded_process(
             "process",
         )
     if allowed_python_script is not None:
-        expected = [sys.executable, "-I", str(allowed_python_script)]
+        expected = [sys.executable, "-I", "-B", str(allowed_python_script)]
     else:
         assert allowed_isolated_code is not None
-        expected = [sys.executable, "-I", "-c", allowed_isolated_code]
+        expected = [sys.executable, "-I", "-B", "-c", allowed_isolated_code]
     if command != expected:
         raise FreezeError("bounded process destination mismatch", "process")
     job = _create_kill_on_close_job()
@@ -586,10 +588,13 @@ def replay_historical_regressions(commit: str, repo_root: Path) -> dict[str, obj
             raise FreezeError(
                 "replay temporary directory must be external to the repository"
             )
-        dummy_cwd = temporary_root / "unrelated-cwd"
-        dummy_cwd.mkdir()
         for index, (logical_path, expected_checks) in enumerate(VALIDATORS):
-            materialized_root = temporary_root / f"materialized-{index}"
+            child_root = temporary_root / f"child-{index}"
+            materialized_root = child_root / "materialized"
+            dummy_cwd = child_root / "unrelated-cwd"
+            runtime_root = child_root / "runtime"
+            dummy_cwd.mkdir(parents=True)
+            runtime_root.mkdir()
             materialize_inventory(materialized_root, inventory, blobs)
             for item in inventory:
                 inventory_path = str(item["path"])
@@ -607,10 +612,19 @@ def replay_historical_regressions(commit: str, repo_root: Path) -> dict[str, obj
                         f"fresh materialization differs from its verified source: {inventory_path}"
                     )
             validator = materialized_root.joinpath(*logical_path.split("/"))
+            environment = sanitized_environment()
+            environment.update(
+                {
+                    "TEMP": str(runtime_root),
+                    "TMP": str(runtime_root),
+                    "TMPDIR": str(runtime_root),
+                }
+            )
             return_code, stdout, stderr = run_bounded_process(
-                [sys.executable, "-I", str(validator)],
+                [sys.executable, "-I", "-B", str(validator)],
                 dummy_cwd,
                 allowed_python_script=validator,
+                environment=environment,
             )
             result, validator_mismatches = parse_validator_result(
                 logical_path,

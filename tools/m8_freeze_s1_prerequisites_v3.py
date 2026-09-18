@@ -54,6 +54,66 @@ HISTORICAL_RUNTIME_ORACLES = (
     ("tools/m8_validate_p1_materials.py", 88),
     ("tools/m8_validate_p0_r02.py", 77),
 )
+ALLOWED_GATING_SUBPROCESSES = (
+    {
+        "path": "tools/m8_test_freeze_minimal_1k_v3_review.py",
+        "role": "bounded-test",
+        "success_oracle": {
+            "kind": "exact-line",
+            "success_line": "ALL PASS: hermetic Git-object freeze and CLI checks",
+        },
+    },
+    {
+        "path": "tools/m8_test_freeze_s1_prerequisites_v3.py",
+        "role": "bounded-test",
+        "success_oracle": {
+            "kind": "exact-line",
+            "success_line": "ALL PASS: M8 v3 S1 prerequisite freeze self-test",
+        },
+    },
+    {
+        "path": "tools/m8_test_generate_minimal_1k_input_v3.py",
+        "role": "bounded-test",
+        "success_oracle": {
+            "expected_test_count": 27,
+            "kind": "unittest",
+            "success_line": "OK",
+        },
+    },
+    {
+        "path": "tools/m8_test_minimal_1k_graph_v3.py",
+        "role": "bounded-test",
+        "success_oracle": {
+            "kind": "exact-line",
+            "success_line": (
+                "ALL PASS: 5 persistent graphs + 45 fail-closed mutations "
+                "+ 2 sensitivity proofs"
+            ),
+        },
+    },
+    {
+        "path": "tools/m8_test_observe_minimal_1k_v3.py",
+        "role": "bounded-test",
+        "success_oracle": {
+            "expected_test_count": 20,
+            "kind": "unittest",
+            "success_line": "OK",
+        },
+    },
+    {
+        "path": "tools/m8_test_s1_controls_v3.py",
+        "role": "bounded-test",
+        "success_oracle": {
+            "kind": "exact-line",
+            "success_line": "ALL PASS: canonical declared templates",
+        },
+    },
+)
+PROCESS_CONTROL_SUPPORT_MODULES = (
+    "tools/m8_freeze_minimal_1k_v3_review.py",
+    "tools/m8_freeze_s1_prerequisites_v3.py",
+    "tools/m8_replay_historical_regressions_v3.py",
+)
 COMMIT_RE = re.compile(r"[0-9a-f]{40}")
 OID_RE = re.compile(r"[0-9a-f]{40}")
 GIT_VERSION_RE = re.compile(r"git version (\d+)\.(\d+)\.(\d+)(?:\.[^\s]+)?")
@@ -962,6 +1022,14 @@ def validate_oracle_manifest(manifest: object) -> dict[str, object]:
     support_modules = _validate_path_list(gating["support_modules"], "gating.support_modules")
     if HISTORICAL_REPLAY_ENTRYPOINT not in support_modules:
         raise FreezeError("historical replay entrypoint must be bound as a support module")
+    missing_process_support = sorted(
+        set(PROCESS_CONTROL_SUPPORT_MODULES) - set(support_modules)
+    )
+    if missing_process_support:
+        raise FreezeError(
+            "manifest omits a process-control support module: "
+            + missing_process_support[0]
+        )
 
     subprocesses = gating["allowed_subprocesses"]
     if not isinstance(subprocesses, list) or not subprocesses:
@@ -1016,6 +1084,10 @@ def validate_oracle_manifest(manifest: object) -> dict[str, object]:
         raise FreezeError("gating.allowed_subprocesses contains duplicate paths")
     if subprocess_paths != sorted(subprocess_paths, key=lambda item: item.encode("utf-8")):
         raise FreezeError("gating.allowed_subprocesses must be sorted by UTF-8 path bytes")
+    if subprocesses != list(ALLOWED_GATING_SUBPROCESSES):
+        raise FreezeError(
+            "gating.allowed_subprocesses does not match the code-fixed exact map"
+        )
     if HISTORICAL_REPLAY_ENTRYPOINT in subprocess_paths:
         raise FreezeError("historical replay entrypoint must not be a gating subprocess")
 

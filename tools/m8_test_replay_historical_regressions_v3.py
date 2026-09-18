@@ -228,7 +228,7 @@ def test_descendant_pipe_cleanup(workspace: Path) -> None:
     )
     started = time.monotonic()
     return_code, stdout, stderr = replay.run_bounded_process(
-        [sys.executable, "-I", str(child)],
+        [sys.executable, "-I", "-B", str(child)],
         workspace,
         allowed_python_script=child,
         timeout_seconds=5,
@@ -249,13 +249,13 @@ def test_bounded_destination_contract(workspace: Path) -> None:
     cases = (
         (
             "missing authority",
-            [sys.executable, "-I", str(child)],
+            [sys.executable, "-I", "-B", str(child)],
             {},
             "exactly one bounded process destination is required",
         ),
         (
             "ambiguous authority",
-            [sys.executable, "-I", str(child)],
+            [sys.executable, "-I", "-B", str(child)],
             {
                 "allowed_python_script": child,
                 "allowed_isolated_code": "pass",
@@ -264,13 +264,13 @@ def test_bounded_destination_contract(workspace: Path) -> None:
         ),
         (
             "command mismatch",
-            [sys.executable, "-I", str(other)],
+            [sys.executable, "-I", "-B", str(other)],
             {"allowed_python_script": child},
             "bounded process destination mismatch",
         ),
         (
             "wrong script authority",
-            [sys.executable, "-I", str(child)],
+            [sys.executable, "-I", "-B", str(child)],
             {"allowed_python_script": other},
             "bounded process destination mismatch",
         ),

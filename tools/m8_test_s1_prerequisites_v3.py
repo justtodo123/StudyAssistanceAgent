@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import os
 import re
@@ -25,12 +26,16 @@ if os.fspath(TOOLS) not in sys.path:
     sys.path.insert(0, os.fspath(TOOLS))
 
 from m8_freeze_s1_prerequisites_v3 import (
+    ALLOWED_GATING_SUBPROCESSES,
+    PROCESS_CONTROL_SUPPORT_MODULES,
     FreezeError,
     ORACLE_MANIFEST_PATH,
     canonical,
     derive_gating_closure,
     inspect_path_components,
     parse_oracle_manifest,
+    read_blob,
+    validate_commit,
     validate_logical_path,
 )
 from m8_replay_historical_regressions_v3 import (
@@ -47,6 +52,9 @@ GATING_SUCCESS_LINE = (
 HISTORICAL_SUCCESS_LINE = (
     "HISTORICAL NON-GATING PASS: "
     "88/88 and 77/77 via isolated replay"
+)
+HISTORICAL_HELPER_SHA256 = (
+    "cab4075464e9febd1a36241d13265c77279f3a37571b1dc04160708ef4348c61"
 )
 FULL_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 MAX_CONSOLE_LINE = 2400
@@ -77,12 +85,13 @@ class SubprocessSpec:
 
 @dataclass(frozen=True)
 class OracleContext:
-    """Validated manifest-derived authority for repository access."""
+    """Validated manifest-derived authority for immutable repository bytes."""
 
     root: Path
     manifest: dict[str, object]
     closure: tuple[str, ...]
     subprocess_specs: tuple[SubprocessSpec, ...]
+    snapshot: dict[str, bytes]
 
     @classmethod
     def load(cls, root: Path) -> OracleContext:
@@ -98,6 +107,19 @@ class OracleContext:
             closure = derive_gating_closure(manifest)
         except FreezeError as exc:
             raise CheckFailure(f"invalid oracle manifest: {exc}") from exc
+        snapshot: dict[str, bytes] = {}
+        for logical_path in closure:
+            path = root.joinpath(*logical_path.split("/"))
+            try:
+                resolved = path.resolve(strict=True)
+                resolved.relative_to(root.resolve(strict=True))
+                snapshot[logical_path] = path.read_bytes()
+            except (OSError, ValueError) as exc:
+                raise CheckFailure(
+                    f"cannot capture closure member {logical_path}: {exc}"
+                ) from exc
+        if snapshot.get(ORACLE_MANIFEST_PATH) != raw:
+            raise CheckFailure("oracle manifest changed during snapshot capture")
         gating = _object(manifest.get("gating"), "gating")
         subprocesses = gating.get("allowed_subprocesses")
         if not isinstance(subprocesses, list):
@@ -118,65 +140,61 @@ class OracleContext:
                     ),
                 )
             )
-        return cls(root, manifest, closure, tuple(specs))
+        return cls(root, manifest, closure, tuple(specs), snapshot)
 
     @property
     def allowed_subprocesses(self) -> frozenset[str]:
         return frozenset(spec.path for spec in self.subprocess_specs)
 
     def path(self, logical_path: str) -> Path:
-        """Authorize one normalized closure member before touching it."""
-        try:
-            normalized = validate_logical_path(logical_path)
-        except FreezeError as exc:
-            raise CheckFailure(str(exc)) from exc
+        normalized = validate_logical_path(logical_path)
         if normalized not in self.closure:
             raise CheckFailure(
-                "undeclared repository read refused: " + normalized
+                f"undeclared repository read refused: {normalized}"
             )
-        candidate = self.root.joinpath(*normalized.split("/"))
+        path = self.root.joinpath(*normalized.split("/"))
         try:
-            return inspect_path_components(
-                candidate,
-                f"declared repository path {normalized}",
-            )
-        except FreezeError as exc:
-            raise CheckFailure(str(exc)) from exc
+            path.resolve(strict=True).relative_to(self.root.resolve(strict=True))
+        except (OSError, ValueError) as exc:
+            raise CheckFailure(
+                f"declared path escaped repository: {normalized}"
+            ) from exc
+        return path
 
     def read_bytes(self, logical_path: str) -> bytes:
-        path = self.path(logical_path)
-        try:
-            return path.read_bytes()
-        except OSError as exc:
+        normalized = validate_logical_path(logical_path)
+        if normalized not in self.closure:
             raise CheckFailure(
-                f"cannot read declared repository path {logical_path}: {exc}"
+                f"undeclared repository read refused: {normalized}"
+            )
+        try:
+            return self.snapshot[normalized]
+        except KeyError as exc:
+            raise CheckFailure(
+                f"closure snapshot omits declared path: {normalized}"
             ) from exc
 
     def read_text(self, logical_path: str) -> str:
-        raw = self.read_bytes(logical_path)
         try:
-            return raw.decode("utf-8")
+            return self.read_bytes(logical_path).decode("utf-8")
         except UnicodeDecodeError as exc:
             raise CheckFailure(
-                f"declared repository path is not UTF-8: {logical_path}"
+                f"declared text is not UTF-8: {logical_path}"
             ) from exc
 
     def require_subprocess(self, logical_path: str) -> SubprocessSpec:
-        """Return the exact manifest declaration for one gating child."""
-        try:
-            normalized = validate_logical_path(logical_path)
-        except FreezeError as exc:
-            raise CheckFailure(str(exc)) from exc
-        for spec in self.subprocess_specs:
-            if spec.path == normalized:
-                self.path(normalized)
-                return spec
-        raise CheckFailure(
-            "undeclared gating subprocess refused: " + normalized
+        normalized = validate_logical_path(logical_path)
+        matches = tuple(
+            spec for spec in self.subprocess_specs if spec.path == normalized
         )
+        if len(matches) != 1:
+            raise CheckFailure(
+                f"undeclared gating subprocess refused: {normalized}"
+            )
+        return matches[0]
 
     def materialize_closure(self, destination: Path) -> Path:
-        """Copy only declared closure bytes into a fresh external tree."""
+        """Copy only captured closure bytes into a fresh external tree."""
         materialized = inspect_path_components(
             destination,
             "gating closure materialization root",
@@ -241,26 +259,22 @@ def _call_name(node: ast.AST) -> str | None:
 
 
 def _source_subprocess_paths() -> frozenset[str]:
-    """Return closure members allowed to contain process-control source."""
+    """Return only validated manifest roles allowed process-control source."""
     context = _context()
     gating = _object(context.manifest["gating"], "gating")
     support = gating.get("support_modules")
     if not isinstance(support, list):
         raise CheckFailure("gating.support_modules is not a list")
-    special_support = {
-        "tools/m8_freeze_minimal_1k_v3_review.py",
-        "tools/m8_freeze_s1_prerequisites_v3.py",
-        "tools/m8_replay_historical_regressions_v3.py",
-    }
-    if not special_support.issubset(set(support)):
+    missing = sorted(set(PROCESS_CONTROL_SUPPORT_MODULES) - set(support))
+    if missing:
         raise CheckFailure(
-            "manifest omits a process-control support module"
+            "manifest omits a process-control support module: " + missing[0]
         )
     return frozenset(
         {
             str(gating["entrypoint"]),
             *context.allowed_subprocesses,
-            *special_support,
+            *PROCESS_CONTROL_SUPPORT_MODULES,
         }
     )
 
@@ -663,121 +677,171 @@ def _validate_execution_policy(logical_path: str, source: str) -> None:
         "urllib",
         "venv",
     }
+    process_modules = {"asyncio", "multiprocessing", "os", "subprocess"}
+    process_terminals = {
+        "Popen",
+        "Pool",
+        "Process",
+        "call",
+        "check_call",
+        "check_output",
+        "create_subprocess_exec",
+        "create_subprocess_shell",
+        "popen",
+        "run",
+        "startfile",
+        "system",
+    }
+    windows_process_terminals = {
+        "CreateProcess",
+        "CreateProcessA",
+        "CreateProcessW",
+        "ShellExecute",
+        "ShellExecuteA",
+        "ShellExecuteW",
+        "WinExec",
+    }
     process_source_allowed = logical_path in _source_subprocess_paths()
-    subprocess_aliases: set[str] = set()
     enclosing_names = _enclosing_symbol_names(tree)
     _validate_process_path_constants(logical_path, tree)
+    imported_modules: dict[str, str] = {}
+
+    def bound_name(node: ast.AST) -> str | None:
+        if isinstance(node, ast.Name):
+            return imported_modules.get(node.id, node.id)
+        if isinstance(node, ast.Attribute):
+            parent = bound_name(node.value)
+            return f"{parent}.{node.attr}" if parent else None
+        return None
+
+    def process_callable(name: str | None) -> bool:
+        if not name:
+            return False
+        root, separator, remainder = name.partition(".")
+        if not separator:
+            return False
+        terminal = remainder.rsplit(".", 1)[-1]
+        return root in process_modules and (
+            root == "multiprocessing"
+            or terminal in process_terminals
+            or terminal.startswith("spawn")
+            or terminal.startswith("exec")
+        )
+
+    def reject(node: ast.AST, message: str) -> NoReturn:
+        raise CheckFailure(
+            f"{logical_path}:{getattr(node, 'lineno', 0)}: {message}"
+        )
 
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
                 root = alias.name.split(".", 1)[0]
+                imported_modules[alias.asname or root] = alias.name
                 if root in forbidden_modules:
-                    raise CheckFailure(
-                        f"{logical_path}:{node.lineno}: "
-                        f"forbidden import {root}"
-                    )
-                if root == "subprocess":
-                    if alias.asname:
-                        raise CheckFailure(
-                            f"{logical_path}:{node.lineno}: "
-                            "aliased subprocess imports are forbidden"
-                        )
-                    if not process_source_allowed:
-                        raise CheckFailure(
-                            f"{logical_path}:{node.lineno}: "
-                            "subprocess source role is undeclared"
-                        )
-                    subprocess_aliases.add("subprocess")
+                    reject(node, f"forbidden import {root}")
+                if root == "subprocess" and alias.asname:
+                    reject(node, "aliased subprocess imports are forbidden")
+                if root == "subprocess" and not process_source_allowed:
+                    reject(node, "subprocess source role is undeclared")
         elif isinstance(node, ast.ImportFrom):
             root = (node.module or "").split(".", 1)[0]
             if root in forbidden_modules:
-                raise CheckFailure(
-                    f"{logical_path}:{node.lineno}: "
-                    f"forbidden import {root}"
-                )
+                reject(node, f"forbidden import {root}")
             if root == "subprocess":
-                raise CheckFailure(
-                    f"{logical_path}:{node.lineno}: "
-                    "from-subprocess imports are forbidden"
-                )
-        elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.NamedExpr)):
-            if node.value is None:
-                continue
-            call_name = _call_name(node.value)
-            if call_name in {
-                "subprocess.Popen",
-                "subprocess.run",
-            }:
-                raise CheckFailure(
-                    f"{logical_path}:{node.lineno}: "
-                    "subprocess callable aliases are forbidden"
-                )
-        elif isinstance(node, ast.Call):
-            call_name = _call_name(node.func)
-            if call_name in {
-                "__import__",
-                "breakpoint",
-                "eval",
-                "exec",
-            }:
-                raise CheckFailure(
-                    f"{logical_path}:{node.lineno}: "
-                    f"forbidden dynamic call {call_name}()"
-                )
-            if call_name == "importlib.import_module":
-                if any(
-                    isinstance(argument, ast.Constant)
-                    and argument.value == "subprocess"
-                    for argument in node.args
-                ):
-                    raise CheckFailure(
-                        f"{logical_path}:{node.lineno}: "
-                        "dynamic subprocess imports are forbidden"
+                reject(node, "from-subprocess imports are forbidden")
+            if root in {"asyncio", "multiprocessing", "os"}:
+                for alias in node.names:
+                    candidate = f"{root}.{alias.name}"
+                    if process_callable(candidate):
+                        reject(node, f"from-{root} process imports are forbidden")
+            for alias in node.names:
+                if alias.name == "*":
+                    reject(node, "star imports are forbidden")
+                if root == "importlib" and alias.name == "import_module":
+                    imported_modules[alias.asname or alias.name] = (
+                        "importlib.import_module"
                     )
+        elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.NamedExpr)):
+            value = node.value
+            if value is None:
+                continue
+            value_name = bound_name(value)
+            if value_name == "subprocess":
+                reject(node, "subprocess module aliases are forbidden")
+            if process_callable(value_name):
+                reject(node, "process callable aliases are forbidden")
+        elif isinstance(node, ast.Call):
+            call_name = bound_name(node.func)
+            if call_name in {"__import__", "breakpoint", "eval", "exec"}:
+                reject(node, f"forbidden dynamic call {call_name}()")
+            if call_name == "importlib.import_module":
+                if (
+                    len(node.args) != 1
+                    or node.keywords
+                    or not isinstance(node.args[0], ast.Constant)
+                    or not isinstance(node.args[0].value, str)
+                ):
+                    reject(node, "dynamic imports require one literal module name")
+                imported_root = node.args[0].value.split(".", 1)[0]
+                if imported_root == "subprocess":
+                    reject(node, "dynamic subprocess imports are forbidden")
+                if imported_root in forbidden_modules:
+                    reject(node, f"dynamic import of forbidden module {imported_root}")
+                reject(node, "dynamic imports are forbidden")
+            if (
+                isinstance(node.func, ast.Subscript)
+                and isinstance(node.func.value, ast.Attribute)
+                and node.func.value.attr == "__dict__"
+            ):
+                target = bound_name(node.func.value.value)
+                if target and target.split(".", 1)[0] in process_modules:
+                    reject(node, "process module dictionary access is forbidden")
             if call_name == "getattr" and node.args:
-                if _call_name(node.args[0]) in subprocess_aliases:
+                target = bound_name(node.args[0])
+                if target and target.split(".", 1)[0] in (
+                    process_modules | {"importlib"}
+                ):
                     attribute = (
                         node.args[1].value
-                        if len(node.args) > 1
+                        if len(node.args) >= 2
                         and isinstance(node.args[1], ast.Constant)
                         and isinstance(node.args[1].value, str)
                         else None
                     )
-                    if attribute in {"Popen", "run"} or attribute is None:
-                        raise CheckFailure(
-                            f"{logical_path}:{node.lineno}: "
-                            "indirect subprocess invocation is forbidden"
+                    if (
+                        target == "importlib"
+                        or attribute is None
+                        or attribute in process_terminals
+                        or attribute in windows_process_terminals
+                        or attribute.startswith("spawn")
+                        or attribute.startswith("exec")
+                    ):
+                        reject(
+                            node,
+                            "indirect process or import invocation is forbidden",
                         )
-            if call_name not in {
-                "subprocess.Popen",
-                "subprocess.run",
-            }:
+            terminal = call_name.rsplit(".", 1)[-1] if call_name else ""
+            if terminal in windows_process_terminals:
+                reject(node, "alternate process invocation is forbidden")
+            if not process_callable(call_name):
                 continue
+            if call_name not in {"subprocess.Popen", "subprocess.run"}:
+                reject(node, "alternate process invocation is forbidden")
             if not process_source_allowed:
-                raise CheckFailure(
-                    f"{logical_path}:{node.lineno}: "
-                    "subprocess call is not allowed for this source role"
-                )
+                reject(node, "subprocess call is not allowed for this source role")
             keywords = {
                 keyword.arg: keyword.value
                 for keyword in node.keywords
                 if keyword.arg
             }
             if any(keyword.arg is None for keyword in node.keywords):
-                raise CheckFailure(
-                    f"{logical_path}:{node.lineno}: "
-                    "expanded subprocess keywords are forbidden"
-                )
+                reject(node, "expanded subprocess keywords are forbidden")
             shell = keywords.get("shell")
             if shell is not None and not (
-                isinstance(shell, ast.Constant)
-                and shell.value is False
+                isinstance(shell, ast.Constant) and shell.value is False
             ):
-                raise CheckFailure(
-                    f"{logical_path}:{node.lineno}: "
-                    "shell must be omitted or literal False"
-                )
+                reject(node, "shell must be omitted or literal False")
             _validate_subprocess_destination(
                 logical_path,
                 node,
@@ -788,9 +852,9 @@ def _validate_execution_policy(logical_path: str, source: str) -> None:
 def _child_environment(temp_root: Path) -> dict[str, str]:
     """Build a bounded environment without inherited Python/Git controls."""
     env: dict[str, str] = {
+        "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONHASHSEED": "0",
         "PYTHONIOENCODING": "utf-8",
-        "PYTHONPYCACHEPREFIX": str(temp_root / "pycache"),
         "PYTHONUTF8": "1",
         "TEMP": str(temp_root),
         "TMP": str(temp_root),
@@ -974,25 +1038,30 @@ def _verify_materialized_closure(
 
 
 def check_materialized_closure_regressions() -> None:
-    """Prove external materialization excludes undeclared source bytes."""
+    """Prove materialization uses one immutable captured byte snapshot."""
     with tempfile.TemporaryDirectory(
         prefix="m8-s1-materialization-regression-"
     ) as directory:
         temp_root = Path(directory)
         source_root = temp_root / "source"
         source_root.mkdir()
-        (source_root / "declared.txt").write_bytes(b"declared\n")
+        declared = source_root / "declared.txt"
+        declared.write_bytes(b"declared\n")
         (source_root / "undeclared.txt").write_bytes(b"ambient\n")
         context = OracleContext(
             root=source_root,
             manifest={},
             closure=("declared.txt",),
             subprocess_specs=(),
+            snapshot={"declared.txt": b"declared\n"},
         )
+        declared.write_bytes(b"post-snapshot mutation\n")
         materialized_root = temp_root / "materialized"
         materialized_root.mkdir()
         context.materialize_closure(materialized_root)
         _verify_materialized_closure(context, materialized_root)
+        if (materialized_root / "declared.txt").read_bytes() != b"declared\n":
+            raise CheckFailure("post-snapshot source mutation entered closure")
         if (materialized_root / "undeclared.txt").exists():
             raise CheckFailure(
                 "undeclared source bytes entered materialized closure"
@@ -1024,6 +1093,81 @@ def check_materialized_closure_regressions() -> None:
             )
 
 
+def check_child_runtime_isolation_regressions() -> None:
+    """Prove separate child processes cannot observe each other's writable roots."""
+    with tempfile.TemporaryDirectory(
+        prefix="m8-s1-child-isolation-regression-"
+    ) as directory:
+        temp_root = Path(directory)
+        probe = temp_root / "probe.py"
+        probe.write_text(
+            "import os, pathlib, sys\n"
+            "root = pathlib.Path(os.environ['CHILD_ROOT'])\n"
+            "mode = os.environ['CHILD_MODE']\n"
+            "locations = ('closure', 'cwd', 'runtime', 'runtime/pycache')\n"
+            "if mode == 'write':\n"
+            "    for location in locations:\n"
+            "        root.joinpath(*location.split('/'), 'sentinel').write_text('child-a\\n')\n"
+            "else:\n"
+            "    leaked = [location for location in locations if root.joinpath(*location.split('/'), 'sentinel').exists()]\n"
+            "    if leaked:\n"
+            "        print('leaked:' + ','.join(leaked))\n"
+            "        sys.exit(1)\n"
+            "    print('isolated')\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+        child_a = temp_root / "child-a"
+        child_b = temp_root / "child-b"
+        locations = ("closure", "cwd", "runtime", "runtime/pycache")
+        for child_root in (child_a, child_b):
+            for location in locations:
+                child_root.joinpath(*location.split("/")).mkdir(
+                    parents=True,
+                    exist_ok=True,
+                )
+        environment_a = _child_environment(temp_root / "runtime-a")
+        environment_a["CHILD_ROOT"] = str(child_a)
+        environment_a["CHILD_MODE"] = "write"
+        return_code, stdout, stderr = run_bounded_process(
+            [sys.executable, "-I", "-B", str(probe)],
+            child_a / "cwd",
+            allowed_python_script=probe,
+            environment=environment_a,
+            timeout_seconds=30,
+        )
+        if return_code != 0 or stdout != b"" or stderr != b"":
+            raise CheckFailure("child A isolation probe failed")
+        for location in locations:
+            sentinel = child_a.joinpath(*location.split("/"), "sentinel")
+            if not sentinel.is_file():
+                raise CheckFailure(
+                    "child A did not write isolation sentinel: " + location
+                )
+        environment_b = _child_environment(temp_root / "runtime-b")
+        environment_b["CHILD_ROOT"] = str(child_b)
+        environment_b["CHILD_MODE"] = "read"
+        return_code, stdout, stderr = run_bounded_process(
+            [sys.executable, "-I", "-B", str(probe)],
+            child_b / "cwd",
+            allowed_python_script=probe,
+            environment=environment_b,
+            timeout_seconds=30,
+        )
+        if (
+            return_code != 0
+            or _normalize_historical_output(stdout) != b"isolated\n"
+            or stderr != b""
+        ):
+            raise CheckFailure("child B observed child A writable state")
+        for location in locations:
+            if not child_b.joinpath(*location.split("/"), "sentinel").exists():
+                continue
+            raise CheckFailure(
+                "child A writable state is visible to child B: " + location
+            )
+
+
 def _run_declared_tool(
     spec: SubprocessSpec,
     materialized_root: Path,
@@ -1043,19 +1187,20 @@ def _run_declared_tool(
         materialized_root / "tools",
         "materialized gating tools directory",
     )
-    cwd = temp_root / "unrelated-cwd"
-    cwd.mkdir(exist_ok=True)
-    child_temp_root = temp_root / "child-runtime"
-    child_temp_root.mkdir(exist_ok=True)
-    pycache_root = child_temp_root / "pycache"
+    child_id = hashlib.sha256(spec.path.encode("utf-8")).hexdigest()[:16]
+    child_root = temp_root / f"child-{child_id}"
+    child_root.mkdir()
+    cwd = child_root / "cwd"
+    cwd.mkdir()
+    child_temp_root = child_root / "runtime"
+    child_temp_root.mkdir()
     launcher = (
         "import runpy,sys;"
-        f"sys.pycache_prefix={os.fspath(pycache_root)!r};"
         f"sys.path.insert(0,{os.fspath(materialized_tools)!r});"
         f"runpy.run_path({os.fspath(tool)!r},run_name='__main__')"
     )
     return_code, stdout, stderr = run_bounded_process(
-        [sys.executable, "-I", "-c", launcher],
+        [sys.executable, "-I", "-B", "-c", launcher],
         cwd,
         allowed_isolated_code=launcher,
         environment=_child_environment(child_temp_root),
@@ -1084,6 +1229,18 @@ def check_repository_contract() -> None:
         raise CheckFailure("gating closure is not UTF-8-byte sorted")
     if len(context.closure) != len(set(context.closure)):
         raise CheckFailure("gating closure contains duplicate paths")
+    expected_subprocesses = tuple(
+        SubprocessSpec(
+            path=str(item["path"]),
+            success_oracle=_object(
+                item["success_oracle"],
+                "code-fixed subprocess success_oracle",
+            ),
+        )
+        for item in ALLOWED_GATING_SUBPROCESSES
+    )
+    if context.subprocess_specs != expected_subprocesses:
+        raise CheckFailure("gating subprocess authority is not code-fixed")
     for logical_path in context.closure:
         context.read_bytes(logical_path)
 
@@ -1119,76 +1276,47 @@ def check_execution_policy() -> None:
 
 
 def check_execution_policy_regressions() -> None:
-    """Prove process-source and destination bypasses fail closed."""
+    """Prove alternate process and import bypasses fail closed."""
     graph_path = "tools/m8_test_minimal_1k_graph_v3.py"
     freeze_test_path = "tools/m8_test_freeze_s1_prerequisites_v3.py"
     rejected = (
-        (
-            graph_path,
-            "import subprocess as sp\nsp.run(['tool'])\n",
-            "aliased subprocess imports are forbidden",
-        ),
-        (
-            graph_path,
-            "from subprocess import run\nrun(['tool'])\n",
-            "from-subprocess imports are forbidden",
-        ),
-        (
-            graph_path,
-            "import subprocess\nrunner = subprocess.run\nrunner(['tool'])\n",
-            "subprocess callable aliases are forbidden",
-        ),
-        (
-            graph_path,
-            "import subprocess\ngetattr(subprocess, 'run')(['tool'])\n",
-            "indirect subprocess invocation is forbidden",
-        ),
-        (
-            graph_path,
-            "import importlib\nimportlib.import_module('subprocess').run(['tool'])\n",
-            "dynamic subprocess imports are forbidden",
-        ),
-        (
-            graph_path,
-            "import subprocess\nenabled = True\n"
-            "subprocess.run(['tool'], shell=enabled)\n",
-            "shell must be omitted or literal False",
-        ),
-        (
-            graph_path,
-            "import subprocess\noptions = {'shell': False}\n"
-            "subprocess.run(['tool'], **options)\n",
-            "expanded subprocess keywords are forbidden",
-        ),
-        (
-            graph_path,
-            "import subprocess\nsubprocess.run(['tool'], shell=False)\n",
-            "subprocess destination is not bound",
-        ),
-        (
-            graph_path,
-            "import subprocess, sys\n"
-            "subprocess.run([sys.executable, 'other.py'])\n",
-            "subprocess destination is not bound",
-        ),
-        (
-            graph_path,
-            "import subprocess\n"
-            "subprocess.run(['cmd.exe', '/d', '/c', 'del', 'x'])\n",
-            "subprocess destination is not bound",
-        ),
-        (
-            graph_path,
-            "import subprocess\ncommand = ['tool']\n"
-            "subprocess.run(command)\n",
-            "subprocess destination is not bound",
-        ),
+        (graph_path, "import os\nos.system('x')\n", "alternate process invocation"),
+        (graph_path, "import os\nos.popen('x')\n", "alternate process invocation"),
+        (graph_path, "import os\nos.spawnv(0, 'x', ['x'])\n", "alternate process invocation"),
+        (graph_path, "import os\nos.execv('x', ['x'])\n", "alternate process invocation"),
+        (graph_path, "import os\nos.startfile('x')\n", "alternate process invocation"),
+        (graph_path, "import asyncio\nasyncio.create_subprocess_exec('x')\n", "alternate process invocation"),
+        (graph_path, "import asyncio\nasyncio.create_subprocess_shell('x')\n", "alternate process invocation"),
+        (graph_path, "import multiprocessing\nmultiprocessing.Process()\n", "alternate process invocation"),
+        (graph_path, "import multiprocessing\nmultiprocessing.Pool()\n", "alternate process invocation"),
+        (graph_path, "import subprocess\nsubprocess.call(['x'])\n", "alternate process invocation"),
+        (graph_path, "import subprocess\nsubprocess.check_call(['x'])\n", "alternate process invocation"),
+        (graph_path, "import subprocess\nsubprocess.check_output(['x'])\n", "alternate process invocation"),
+        (graph_path, "import subprocess as sp\nsp.run(['tool'])\n", "aliased subprocess imports"),
+        (graph_path, "from subprocess import run\nrun(['tool'])\n", "from-subprocess imports"),
+        (graph_path, "import subprocess\nsp = subprocess\nsp.run(['tool'])\n", "subprocess module aliases"),
+        (graph_path, "import subprocess\nrunner = subprocess.run\nrunner(['tool'])\n", "process callable aliases"),
+        (graph_path, "import subprocess\ngetattr(subprocess, 'run')(['tool'])\n", "indirect process or import invocation"),
+        (graph_path, "import subprocess\nsubprocess.__dict__['run'](['tool'])\n", "process module dictionary access"),
+        (graph_path, "import importlib\nimportlib.import_module('subprocess').run(['tool'])\n", "dynamic subprocess imports"),
+        (graph_path, "import importlib as il\nil.import_module('requests')\n", "dynamic import of forbidden module requests"),
+        (graph_path, "from importlib import import_module as load\nload('socket')\n", "dynamic import of forbidden module socket"),
+        (graph_path, "import importlib\nimportlib.import_module('urllib.request')\n", "dynamic import of forbidden module urllib"),
+        (graph_path, "import importlib\nname = 'urllib'\nimportlib.import_module(name)\n", "dynamic imports require one literal module name"),
+        (graph_path, "import importlib\ngetattr(importlib, 'import_module')('httpx')\n", "indirect process or import invocation"),
+        (graph_path, "import importlib\nimportlib.import_module('pip')\n", "dynamic import of forbidden module pip"),
+        (graph_path, "import importlib\nimportlib.import_module('venv')\n", "dynamic import of forbidden module venv"),
+        (graph_path, "import subprocess\nenabled = True\nsubprocess.run(['tool'], shell=enabled)\n", "shell must be omitted or literal False"),
+        (graph_path, "import subprocess\noptions = {'shell': False}\nsubprocess.run(['tool'], **options)\n", "expanded subprocess keywords"),
+        (graph_path, "import subprocess\nsubprocess.run(['tool'], shell=False)\n", "subprocess destination is not bound"),
+        (graph_path, "import subprocess, sys\nsubprocess.run([sys.executable, 'other.py'])\n", "subprocess destination is not bound"),
+        (graph_path, "import subprocess\nsubprocess.run(['cmd.exe', '/d', '/c', 'del', 'x'])\n", "subprocess destination is not bound"),
+        (graph_path, "import subprocess\ncommand = ['tool']\nsubprocess.run(command)\n", "subprocess destination is not bound"),
         (
             graph_path,
             "import subprocess, sys\nfrom pathlib import Path\n"
             "ROOT = Path(__file__).resolve().parents[1]\n"
-            "GENERATOR = ROOT / 'tools' / "
-            "'m8_generate_minimal_1k_v3_fixtures.py'\n"
+            "GENERATOR = ROOT / 'tools' / 'm8_generate_minimal_1k_v3_fixtures.py'\n"
             "extra = ['--escape']\n"
             "subprocess.run([sys.executable, str(GENERATOR), *extra])\n",
             "subprocess destination is not bound",
@@ -1202,12 +1330,10 @@ def check_execution_policy_regressions() -> None:
         ),
         (
             graph_path,
-            "import subprocess\n"
-            "from pathlib import Path\n"
+            "import subprocess\nfrom pathlib import Path\n"
             "def _terminate_process_tree(process):\n"
             "    taskkill = Path('other.exe')\n"
-            "    subprocess.run([str(taskkill), '/PID', "
-            "str(process.pid), '/F'])\n",
+            "    subprocess.run([str(taskkill), '/PID', str(process.pid), '/F'])\n",
             "taskkill destination is not bound",
         ),
     )
@@ -1217,8 +1343,7 @@ def check_execution_policy_regressions() -> None:
         except CheckFailure as exc:
             if expected not in str(exc):
                 raise CheckFailure(
-                    "execution-policy regression failed incorrectly: "
-                    + str(exc)
+                    "execution-policy regression failed incorrectly: " + str(exc)
                 ) from exc
         else:
             raise CheckFailure(
@@ -1227,18 +1352,15 @@ def check_execution_policy_regressions() -> None:
 
     _validate_execution_policy(
         graph_path,
-        "import subprocess, sys\n"
-        "from pathlib import Path\n"
+        "import subprocess, sys\nfrom pathlib import Path\n"
         "ROOT = Path(__file__).resolve().parents[1]\n"
-        "GENERATOR = ROOT / "
-        "'tools/m8_generate_minimal_1k_v3_fixtures.py'\n"
+        "GENERATOR = ROOT / 'tools/m8_generate_minimal_1k_v3_fixtures.py'\n"
         "subprocess.run([sys.executable, str(GENERATOR), "
         "'--output-root', 'fixture'])\n",
     )
     _validate_execution_policy(
         graph_path,
-        "import subprocess\n"
-        "from pathlib import Path\n"
+        "import subprocess\nfrom pathlib import Path\n"
         "def test_link(parent, external):\n"
         "    subprocess.run(['cmd.exe', '/d', '/c', 'mklink', '/J', "
         "str(parent), str(external)])\n",
@@ -1258,7 +1380,7 @@ def check_execution_policy_regressions() -> None:
 
 
 def check_oracle_enforcement_regressions() -> None:
-    """Prove undeclared reads/processes fail before filesystem access."""
+    """Prove undeclared reads/processes and manifest expansion fail closed."""
     missing = "definitely-not-declared/does-not-exist.txt"
     try:
         _context().read_bytes(missing)
@@ -1269,30 +1391,47 @@ def check_oracle_enforcement_regressions() -> None:
             ) from exc
     else:
         raise CheckFailure("undeclared repository read was accepted")
-    try:
-        _context().require_subprocess(
-            "tools/m8_replay_historical_regressions_v3.py"
-        )
-    except CheckFailure as exc:
-        if "undeclared gating subprocess refused" not in str(exc):
+    for undeclared in (
+        "tools/m8_replay_historical_regressions_v3.py",
+        "tools/definitely-not-declared.py",
+    ):
+        try:
+            _context().require_subprocess(undeclared)
+        except CheckFailure as exc:
+            if "undeclared gating subprocess refused" not in str(exc):
+                raise CheckFailure(
+                    f"undeclared-process regression failed incorrectly: {exc}"
+                ) from exc
+        else:
             raise CheckFailure(
-                f"historical-dispatch regression failed incorrectly: {exc}"
+                f"undeclared gating subprocess was accepted: {undeclared}"
+            )
+
+    forged = json.loads(json.dumps(_context().manifest))
+    gating = _object(forged["gating"], "forged gating")
+    subprocesses = gating.get("allowed_subprocesses")
+    if not isinstance(subprocesses, list):
+        raise CheckFailure("forged subprocess list setup failed")
+    subprocesses.append(
+        {
+            "path": "tools/canary-must-not-execute.py",
+            "role": "bounded-test",
+            "success_oracle": {
+                "kind": "exact-line",
+                "success_line": "FORGED PASS",
+            },
+        }
+    )
+    subprocesses.sort(key=lambda item: str(item["path"]).encode("utf-8"))
+    try:
+        parse_oracle_manifest(canonical(forged))
+    except FreezeError as exc:
+        if "code-fixed exact map" not in str(exc):
+            raise CheckFailure(
+                f"manifest authority regression failed incorrectly: {exc}"
             ) from exc
     else:
-        raise CheckFailure(
-            "default gating can dispatch the historical replay helper"
-        )
-    try:
-        _context().require_subprocess(
-            "tools/definitely-not-declared.py"
-        )
-    except CheckFailure as exc:
-        if "undeclared gating subprocess refused" not in str(exc):
-            raise CheckFailure(
-                f"undeclared-process regression failed incorrectly: {exc}"
-            ) from exc
-    else:
-        raise CheckFailure("undeclared gating subprocess was accepted")
+        raise CheckFailure("manifest expanded gating process authority")
 
 
 def _validate_dispatch_sequence(
@@ -1346,18 +1485,21 @@ def check_declared_child_suites() -> None:
     ):
         raise CheckFailure("manifest declares duplicate gating subprocesses")
     completed: list[str] = []
-    with tempfile.TemporaryDirectory(
-        prefix="m8-s1-gating-"
-    ) as directory:
+    short_temp_parent = Path("C:/m8tmp")
+    temporary_directory_kwargs: dict[str, object] = {
+        "prefix": "m8-s1-gating-",
+    }
+    if short_temp_parent.is_dir():
+        temporary_directory_kwargs["dir"] = os.fspath(short_temp_parent)
+    with tempfile.TemporaryDirectory(**temporary_directory_kwargs) as directory:
         temp_root = inspect_path_components(
             Path(directory),
             "gating temporary directory",
         )
-        materialized_root = temp_root / "closure"
-        materialized_root.mkdir()
-        context.materialize_closure(materialized_root)
-        _verify_materialized_closure(context, materialized_root)
-        for spec in context.subprocess_specs:
+        for index, spec in enumerate(context.subprocess_specs):
+            materialized_root = temp_root / f"closure-{index}"
+            materialized_root.mkdir()
+            context.materialize_closure(materialized_root)
             _verify_materialized_closure(context, materialized_root)
             _run_declared_tool(spec, materialized_root, temp_root)
             completed.append(spec.path)
@@ -1388,6 +1530,10 @@ def gating_checks() -> Iterable[Check]:
         Check(
             "external closure materialization regressions",
             check_materialized_closure_regressions,
+        ),
+        Check(
+            "per-child runtime isolation regressions",
+            check_child_runtime_isolation_regressions,
         ),
         Check(
             "manifest dispatch exact-once regressions",
@@ -1463,8 +1609,255 @@ def _strict_canonical_json(data: bytes) -> dict[str, object]:
     return report
 
 
+def _historical_line_byte_offsets(source: bytes) -> list[int]:
+    offsets = [0]
+    for index, byte in enumerate(source):
+        if byte == 0x0A:
+            offsets.append(index + 1)
+    return offsets
+
+
+def _bind_historical_repository(
+    source: bytes,
+    repository_root: Path,
+    logical_path: str,
+) -> bytes:
+    """Rewrite only the sole structural top-level REPO Path literal."""
+    if source.startswith(b"\xef\xbb\xbf"):
+        raise CheckFailure(
+            f"historical validator has a UTF-8 BOM: {logical_path}"
+        )
+    try:
+        text = source.decode("utf-8")
+        module = ast.parse(text, filename=logical_path)
+    except (UnicodeDecodeError, SyntaxError) as exc:
+        raise CheckFailure(
+            f"historical validator cannot be parsed: {logical_path}"
+        ) from exc
+    candidates = [
+        statement
+        for statement in module.body
+        if isinstance(statement, ast.Assign)
+        and any(
+            isinstance(target, ast.Name) and target.id == "REPO"
+            for target in statement.targets
+        )
+    ]
+    if len(candidates) != 1:
+        raise CheckFailure(
+            "historical validator must contain exactly one top-level "
+            f"REPO assignment: {logical_path}"
+        )
+    assignment = candidates[0]
+    call = assignment.value
+    if not (
+        len(assignment.targets) == 1
+        and isinstance(assignment.targets[0], ast.Name)
+        and assignment.targets[0].id == "REPO"
+        and isinstance(call, ast.Call)
+        and isinstance(call.func, ast.Name)
+        and call.func.id == "Path"
+        and len(call.args) == 1
+        and not call.keywords
+        and isinstance(call.args[0], ast.Constant)
+        and isinstance(call.args[0].value, str)
+    ):
+        raise CheckFailure(
+            f"historical validator REPO assignment has an unexpected shape: {logical_path}"
+        )
+    literal = call.args[0]
+    if literal.end_lineno is None or literal.end_col_offset is None:
+        raise CheckFailure(
+            f"historical validator REPO literal has no source span: {logical_path}"
+        )
+    offsets = _historical_line_byte_offsets(source)
+    start = offsets[literal.lineno - 1] + literal.col_offset
+    end = offsets[literal.end_lineno - 1] + literal.end_col_offset
+    rebound = (
+        source[:start]
+        + repr(str(repository_root)).encode("utf-8")
+        + source[end:]
+    )
+    try:
+        rebound_module = ast.parse(
+            rebound.decode("utf-8"),
+            filename=logical_path,
+        )
+    except (UnicodeDecodeError, SyntaxError) as exc:
+        raise CheckFailure(
+            f"rebound historical validator cannot be parsed: {logical_path}"
+        ) from exc
+    rebound_assignments = [
+        statement
+        for statement in rebound_module.body
+        if isinstance(statement, ast.Assign)
+        and len(statement.targets) == 1
+        and isinstance(statement.targets[0], ast.Name)
+        and statement.targets[0].id == "REPO"
+    ]
+    if len(rebound_assignments) != 1:
+        raise CheckFailure(
+            f"rebound historical validator lost its REPO assignment: {logical_path}"
+        )
+    rebound_call = rebound_assignments[0].value
+    if not (
+        isinstance(rebound_call, ast.Call)
+        and len(rebound_call.args) == 1
+        and isinstance(rebound_call.args[0], ast.Constant)
+        and rebound_call.args[0].value == str(repository_root)
+    ):
+        raise CheckFailure(
+            f"rebound historical validator has the wrong repository root: {logical_path}"
+        )
+    return rebound
+
+
+def _normalize_historical_output(data: bytes) -> bytes:
+    return data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def _observe_historical_validator(
+    logical_path: str,
+    expected_checks: int,
+    return_code: int,
+    stdout: bytes,
+    stderr: bytes,
+) -> dict[str, object]:
+    stdout = _normalize_historical_output(stdout)
+    stderr = _normalize_historical_output(stderr)
+    summaries = [
+        line for line in stdout.splitlines() if line.startswith(b"checks: ")
+    ]
+    checks = passed = failed = -1
+    if len(summaries) == 1:
+        parts = summaries[0].decode("ascii", errors="replace").split()
+        try:
+            if (
+                len(parts) == 6
+                and parts[0] == "checks:"
+                and parts[2] == "passed:"
+                and parts[4] == "failed:"
+            ):
+                checks, passed, failed = (
+                    int(parts[1]),
+                    int(parts[3]),
+                    int(parts[5]),
+                )
+        except ValueError:
+            pass
+    return {
+        "all_checks_pass_marker_count": stdout.splitlines().count(
+            b"ALL CHECKS PASS"
+        ),
+        "checks": checks,
+        "expected_checks": expected_checks,
+        "failed": failed,
+        "passed": passed,
+        "path": logical_path,
+        "return_code": return_code,
+        "stderr_byte_count": len(stderr),
+        "stderr_sha256": hashlib.sha256(stderr).hexdigest(),
+        "stdout_byte_count": len(stdout),
+        "stdout_sha256": hashlib.sha256(stdout).hexdigest(),
+    }
+
+
+def _independently_replay_historical_validators(
+    repo: Path,
+    commit: str,
+) -> list[dict[str, object]]:
+    """Run exact validator blobs independently of the helper report."""
+    context = _context()
+    historical = _object(
+        context.manifest["historical_replay"],
+        "historical_replay",
+    )
+    raw_objects = historical.get("objects")
+    raw_oracles = historical.get("runtime_oracles")
+    if not isinstance(raw_objects, list) or not isinstance(raw_oracles, list):
+        raise CheckFailure("historical replay declaration is invalid")
+    blobs: dict[str, bytes] = {}
+    for raw_path in raw_objects:
+        if not isinstance(raw_path, str):
+            raise CheckFailure("historical object path is invalid")
+        mode, _oid, data = read_blob(commit, raw_path, repo)
+        if mode != "100644":
+            raise CheckFailure(
+                f"historical object is not a regular non-executable blob: {raw_path}"
+            )
+        blobs[raw_path] = data
+    validators: list[tuple[str, int]] = []
+    for raw_oracle in raw_oracles:
+        oracle = _object(raw_oracle, "historical runtime oracle")
+        path = oracle.get("path")
+        expected = oracle.get("expected_passed")
+        if (
+            not isinstance(path, str)
+            or not isinstance(expected, int)
+            or isinstance(expected, bool)
+        ):
+            raise CheckFailure("historical runtime oracle is invalid")
+        validators.append((path, expected))
+    observed: list[dict[str, object]] = []
+    with tempfile.TemporaryDirectory(
+        prefix="m8-s1-independent-historical-"
+    ) as directory:
+        temp_root = inspect_path_components(
+            Path(directory),
+            "independent historical replay directory",
+        )
+        repository_root = repo.resolve()
+        if (
+            temp_root.resolve() == repository_root
+            or repository_root in temp_root.resolve().parents
+            or temp_root.resolve() in repository_root.parents
+        ):
+            raise CheckFailure(
+                "independent historical replay directory must be repository-external"
+            )
+        for index, (logical_path, expected_checks) in enumerate(validators):
+            child_root = temp_root / f"child-{index}"
+            materialized_root = child_root / "materialized"
+            cwd = child_root / "cwd"
+            runtime_root = child_root / "runtime"
+            materialized_root.mkdir(parents=True)
+            cwd.mkdir()
+            runtime_root.mkdir()
+            validator_paths = {path for path, _count in validators}
+            for path, data in blobs.items():
+                target = materialized_root.joinpath(*path.split("/"))
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if path in validator_paths:
+                    data = _bind_historical_repository(
+                        data,
+                        materialized_root,
+                        path,
+                    )
+                target.write_bytes(data)
+            validator = materialized_root.joinpath(*logical_path.split("/"))
+            environment = _child_environment(runtime_root)
+            return_code, stdout, stderr = run_bounded_process(
+                [sys.executable, "-I", "-B", str(validator)],
+                cwd,
+                allowed_python_script=validator,
+                environment=environment,
+                timeout_seconds=120,
+            )
+            observed.append(
+                _observe_historical_validator(
+                    logical_path,
+                    expected_checks,
+                    return_code,
+                    stdout,
+                    stderr,
+                )
+            )
+    return observed
+
+
 def _validate_historical_report(
     report: dict[str, object],
+    repo: Path,
     commit: str,
 ) -> None:
     expected_keys = {
@@ -1503,6 +1896,18 @@ def _validate_historical_report(
         raise CheckFailure("historical inventory count mismatch")
     if report["inventory_file_count"] != len(objects):
         raise CheckFailure("historical inventory_file_count mismatch")
+    validate_commit(commit, repo)
+    trusted_object_facts: dict[str, tuple[str, str, int, str]] = {}
+    for raw_path in objects:
+        if not isinstance(raw_path, str):
+            raise CheckFailure("historical manifest object path is invalid")
+        mode, oid, data = read_blob(commit, raw_path, repo)
+        trusted_object_facts[raw_path] = (
+            mode,
+            oid,
+            len(data),
+            hashlib.sha256(data).hexdigest(),
+        )
     inventory_keys = {
         "byte_count",
         "git_blob_oid",
@@ -1519,19 +1924,19 @@ def _validate_historical_report(
         if not isinstance(path, str):
             raise CheckFailure("historical inventory path is invalid")
         observed_paths.append(path)
-        if item["git_mode"] != "100644":
-            raise CheckFailure("historical inventory mode mismatch")
-        if not isinstance(item["byte_count"], int) or item["byte_count"] < 0:
-            raise CheckFailure("historical inventory byte_count is invalid")
-        for key, length in (("git_blob_oid", 40), ("sha256", 64)):
-            value = item[key]
-            if not isinstance(value, str) or not re.fullmatch(
-                rf"[0-9a-f]{{{length}}}",
-                value,
-            ):
-                raise CheckFailure(
-                    f"historical inventory {key} is invalid"
-                )
+        trusted = trusted_object_facts.get(path)
+        if trusted is None:
+            raise CheckFailure("historical inventory path is not trusted")
+        expected_mode, expected_oid, expected_bytes, expected_sha256 = trusted
+        if (
+            item["git_mode"] != expected_mode
+            or item["git_blob_oid"] != expected_oid
+            or item["byte_count"] != expected_bytes
+            or item["sha256"] != expected_sha256
+        ):
+            raise CheckFailure(
+                f"historical inventory facts mismatch exact Git object: {path}"
+            )
     expected_paths = sorted(
         (str(path) for path in objects),
         key=lambda item: item.encode("utf-8"),
@@ -1626,22 +2031,33 @@ def run_historical(repo: Path, commit: str) -> int:
             raise CheckFailure(
                 "historical commit must be full lowercase 40-hex"
             )
+        context = _context()
         historical = _object(
-            _context().manifest["historical_replay"],
+            context.manifest["historical_replay"],
             "historical_replay",
         )
         entrypoint = historical.get("entrypoint")
-        if not isinstance(entrypoint, str):
-            raise CheckFailure("historical entrypoint is invalid")
-        if entrypoint in _context().allowed_subprocesses:
-            raise CheckFailure(
-                "historical entrypoint entered gating subprocess authority"
-            )
-        if entrypoint not in _context().closure:
-            raise CheckFailure(
-                "historical entrypoint is not closure-bound support source"
-            )
-        helper = _context().path(entrypoint)
+        if entrypoint != "tools/m8_replay_historical_regressions_v3.py":
+            raise CheckFailure("historical entrypoint is not code-fixed")
+        helper_bytes = context.read_bytes(entrypoint)
+        if hashlib.sha256(helper_bytes).hexdigest() != HISTORICAL_HELPER_SHA256:
+            raise CheckFailure("historical helper provenance hash mismatch")
+        freeze_bytes = context.read_bytes("tools/m8_freeze_s1_prerequisites_v3.py")
+        validate_commit(commit, repo)
+        trusted_inventory = tuple(
+            str(path) for path in historical.get("objects", ())
+        )
+        if trusted_inventory != (
+            "docs/plans/references/external-artifacts/identity/sa-m8-active-draft09-21aaa3818bd761b63543.json",
+            "docs/plans/references/external-gates/p0/p0-m8-active-execution-draft09-20260913-r01.json",
+            "docs/plans/references/external-gates/p0/p0-m8-active-execution-draft09-20260913-r02.json",
+            "docs/plans/references/external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543-r02.json",
+            "docs/plans/references/external-gates/p1/p1-m8-active-execution-active-draft09-21aaa3818bd761b63543.json",
+            "docs/plans/references/m8-active-execution-protocol-draft-0.9.md",
+            "tools/m8_validate_p0_r02.py",
+            "tools/m8_validate_p1_materials.py",
+        ):
+            raise CheckFailure("historical inventory is not code-fixed")
         with tempfile.TemporaryDirectory(
             prefix="m8-s1-historical-dispatch-"
         ) as directory:
@@ -1651,16 +2067,22 @@ def run_historical(repo: Path, commit: str) -> int:
             )
             cwd = temp_root / "unrelated-cwd"
             cwd.mkdir()
-            launcher = (
+            tools_root = temp_root / "tools"
+            tools_root.mkdir()
+            helper = tools_root / "m8_replay_historical_regressions_v3.py"
+            helper.write_bytes(helper_bytes)
+            (tools_root / "m8_freeze_s1_prerequisites_v3.py").write_bytes(
+                freeze_bytes
+            )
+            helper_launcher = (
                 "import runpy,sys;"
-                f"sys.path.insert(0,{os.fspath(TOOLS)!r});"
                 f"sys.argv={[os.fspath(helper), '--repo', str(repo), '--commit', commit]!r};"
                 f"runpy.run_path({os.fspath(helper)!r},run_name='__main__')"
             )
             return_code, stdout, stderr = run_bounded_process(
-                [sys.executable, "-I", "-c", launcher],
+                [sys.executable, "-I", "-B", "-c", helper_launcher],
                 cwd,
-                allowed_isolated_code=launcher,
+                allowed_isolated_code=helper_launcher,
                 environment=_child_environment(temp_root),
                 timeout_seconds=120,
             )
@@ -1675,7 +2097,16 @@ def run_historical(repo: Path, commit: str) -> int:
         if stderr:
             raise CheckFailure("historical helper wrote stderr")
         report = _strict_canonical_json(stdout)
-        _validate_historical_report(report, commit)
+        _validate_historical_report(report, repo, commit)
+        independent_validators = _independently_replay_historical_validators(
+            repo,
+            commit,
+        )
+        helper_validators = report.get("validators")
+        if helper_validators != independent_validators:
+            raise CheckFailure(
+                "historical helper report does not match independent replay"
+            )
     except (
         CheckFailure,
         FreezeError,

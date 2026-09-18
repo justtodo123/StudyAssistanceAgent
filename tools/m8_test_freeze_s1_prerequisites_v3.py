@@ -321,7 +321,11 @@ def manifest_validation_tests(repo: Path, commit: str) -> None:
         assert isinstance(modules, list)
         modules.remove("tools/m8_freeze_s1_prerequisites_v3.py")
 
-    expect_manifest_error(omit_bootstrap, "omit bootstrap", "bootstrap")
+    expect_manifest_error(
+        omit_bootstrap,
+        "omit bootstrap",
+        "process-control support module",
+    )
 
     def add_forbidden(item: dict[str, object]) -> None:
         gating = item["gating"]
