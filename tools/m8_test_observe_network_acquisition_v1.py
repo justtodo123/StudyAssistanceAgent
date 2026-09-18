@@ -109,6 +109,9 @@ def main() -> None:
     event["path"] = r"D:\outside\numpy.whl"
     expect_code("M8ACQ_E014_WRITE_OUTSIDE_ROOT", lambda: observe_write(event))
     event = fixtures()["write"].copy()
+    event["path"] = r"D:\面试实习\m8-network-acquisition-cycle-20260918-r01\..\outside\numpy.whl"
+    expect_code("M8ACQ_E014_WRITE_OUTSIDE_ROOT", lambda: observe_write(event))
+    event = fixtures()["write"].copy()
     event["path"] = r"D:\Git Demo\StudyAssistanceAgent\numpy.whl"
     expect_code("M8ACQ_E015_FORBIDDEN_ROOT", lambda: observe_write(event))
     event = fixtures()["write"].copy()
