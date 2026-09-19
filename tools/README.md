@@ -30,6 +30,8 @@ tools/
 ├── m8_test_generate_minimal_1k_input_v3.py # M8 v3 S1 生成器验证脚本
 ├── m8_test_observe_minimal_1k_v3.py # M8 v3 synthetic observer hermetic 验证脚本
 ├── m8_test_s1_controls_v3.py # M8 v3 S1 控制项验证脚本
+├── m8_resolve_s1_environment_v3.py # M8 v3 S1 显式本地 wheel 离线解析器；只读且不创建环境
+├── m8_test_resolve_s1_environment_v3.py # M8 v3 S1 解析器 hermetic 自测；不安装依赖
 ├── m8_replay_historical_regressions_v3.py # 从显式 commit 隔离重放 88/77 历史校验；非 gating
 ├── m8_test_replay_historical_regressions_v3.py # 历史重放 helper 的 hermetic 自测
 ├── m8_test_s1_prerequisites_v3.py # M8 v3 S1 封闭 gating 聚合与显式 non-gating 入口
@@ -191,6 +193,16 @@ role-specific primitive 与跨文件检查，不宣称调用了通用 JSON Schem
 
 协议见 [`m8-minimal-1k-dry-run-protocol-v3.md`](../docs/plans/references/m8-minimal-1k-dry-run-protocol-v3.md)。独立 S0 接受和 owner S1 授权前，禁止创建真实实验环境、安装 LanceDB 或执行 1K dry-run。
 
+## m8_resolve_s1_environment_v3.py — M8 v3 S1 离线环境解析准备
+
+该工具只读取调用方显式提供的本地 wheel 路径和 JSON authority 输入，直接检查 ZIP、METADATA、WHEEL、RECORD、依赖约束、marker 与运行时兼容性，枚举完整语义闭包并输出三分支 fail-closed 结果。它不调用 pip，不导入候选包，不解压、不安装、不构建、不访问网络、不修改缓存，也不创建 venv 或任何正式实验对象。
+
+解析结果为准备阶段报告，不是 environment-authority acceptance；`READY` 仅允许请求一次独立只读审查，不能授权 S1 retry、S2 或 S3。当前测试 fixture 版本仅用于 hermetic 自测，不是 Owner package authority。
+
+```bash
+python tools/m8_test_resolve_s1_environment_v3.py
+```
+
 ## m8_prepare_p2_draft011.py — draft-0.11 P2 binding 候选准备
 
 读取已提交的 protocol、P1、identity 及最新 parent 只读测量，在仓库外生成 candidate-only parent/repository
@@ -248,6 +260,20 @@ python tools/start_local.py --use-vector  # 本机已缓存 BGE 时可选
 
 默认设置 `SA_USE_VECTOR=false`、`HF_HUB_OFFLINE=1`，并以 `--workers 1` 启动唯一 uvicorn worker；不要求 LLM key。演示步骤见 [docs/demo.md](../docs/demo.md)。
 
+
+## M8 network-acquisition observer v2
+
+`m8_observe_network_acquisition_v2.py` 是与当前 M8 r04 candidate 对齐的 additive、hermetic declared-event/schema validator。
+它不联网、不启动 curl、不创建 wheelhouse、不执行 resolver 或安装；因此不构成真实 collector 或 acquisition authorization。
+
+```bash
+python -I tools/m8_test_observe_network_acquisition_v2.py
+python -O -I tools/m8_test_observe_network_acquisition_v2.py
+```
+
+v2 固定当前 candidate 的 curl 路径和 preparation root，拒绝显式 URL 端口及 canonical-case drift，执行 candidate JSON
+的重复键、非有限数、surrogate、unknown-field、类型和关键 downloader/environment contract 校验。v1 历史对象保持不变，
+真实 collector、coverage receipts 与 Owner/Reviewer gate 仍然是后续独立审查范围。
 
 ## M8 v3 S1 前置工具
 
