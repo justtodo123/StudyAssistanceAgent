@@ -22,6 +22,9 @@ tools/
 ├── run_m7_parser_evidence.py # M7 五格式 parser/normalized/identity 冻结证据
 ├── m8_freeze_s1_prerequisites_v3.py # M8 v3 S1 前置候选 Git-object 冻结工具
 ├── m8_generate_minimal_1k_input_v3.py # M8 v3 S1 最小 1K 受控输入生成器
+├── m8_metadata_discovery_schema.py # offline metadata-discovery schema and fail-closed validation
+├── m8_build_metadata_discovery_cycle.py # committed-intent Builder; no network or acquisition
+├── m8_validate_metadata_discovery_review.py # independent read-only review validator
 ├── m8_observe_minimal_1k_v3.py # synthetic-only 四账本观察器；不实现真实 Windows collector
 ├── m8_probe_s1_environment_v3.py # M8 v3 S1 只读静态环境探针
 ├── m8_validate_s1_preflight_v3.py # M8 v3 S1 preflight 校验器
@@ -391,4 +394,26 @@ PowerShell 中的完整证据报告路径使用
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-06（M7 五格式冻结证据仍须在 Python 3.11.9 精确依赖环境执行）· 维护：随新增工具脚本与评测集同步更新*
+
+## M8 metadata-discovery governance
+
+`m8_metadata_discovery_schema.py`、`m8_build_metadata_discovery_cycle.py` 和
+`m8_validate_metadata_discovery_review.py` 组成离线、只读、fail-closed 的 Metadata Discovery
+治理链：从显式 commit 的 tracked intent evidence 生成 candidate，运行 Builder QA，再由外部
+独立 reviewer 重算 Git objects。它们不联网、不查询 DNS/PyPI、不调用 pip、不下载、不解析或
+安装、不创建环境、不执行 collector/resolver，也不产生 M8 授权。当前仓库 intent 不唯一时，
+结果为 `METADATA_DISCOVERY_INTENT_OWNER_SELECTION_REQUIRED`。
+
+```bash
+python tools/m8_build_metadata_discovery_cycle.py \\
+  --commit <full-40-hex-commit> --repo <absolute-repository-path> \\
+  --output <temporary-candidate.json>
+python tools/m8_validate_metadata_discovery_review.py \\
+  --candidate <temporary-candidate.json> --repo <absolute-repository-path>
+```
+
+治理边界与角色分离见
+[`docs/plans/m8-metadata-discovery-governance.md`](../docs/plans/m8-metadata-discovery-governance.md)。
+
+
+*创建：2026-08-11 · 更新：2026-09-19（新增离线 Metadata Discovery 治理工具）· 维护：随新增工具脚本与评测集同步更新*

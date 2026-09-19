@@ -142,6 +142,10 @@ tests/
 │   ├── test_inventory_cli.py # 默认根目录与输出隔离
 │   └── test_privacy.py     # 无宿主绝对路径、不解析/不索引
 │
+├── M8_metadata_discovery/       # M8 Metadata Discovery 离线治理（不执行 discovery/acquisition）
+│   ├── README.md                 # 范围、排除项与运行命令
+│   └── test_metadata_discovery_governance.py # schema、Git binding、intent 与 fail-closed 边界
+│
 ├── regression/             # 跨阶段回归套件
 │   ├── conftest.py         # 回归专用 fixtures（离线 BM25-only，恢复 vector 全局状态）
 │   ├── test_api_contract.py      # API 契约稳定性
@@ -175,6 +179,16 @@ tests/
 ```
 
 ## 二、各阶段测试规划
+
+### M8 Metadata Discovery（离线治理）
+
+`tests/M8_metadata_discovery/` 只验证 committed-intent inventory、candidate schema、Git object binding、角色隔离和 failed-closed 状态。测试不得访问网络、DNS、PyPI、metadata endpoint，不得下载、解析、安装、调用 resolver/collector，亦不得启动其他 M8 stage。
+
+```bash
+python -m pytest tests/M8_metadata_discovery -v
+```
+
+`m8_metadata_discovery` marker 用于显式筛选该阶段测试。
 
 ### 当前测试基线
 
