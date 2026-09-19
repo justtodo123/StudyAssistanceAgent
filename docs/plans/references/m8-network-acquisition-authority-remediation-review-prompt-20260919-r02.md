@@ -31,6 +31,8 @@ Exact preceding commit facts:
 Exact file facts:
 
 - design path `docs/plans/references/m8-network-acquisition-authority-remediation-binding-design-20260919-r02.md`, bytes `3219`, SHA-256 `501c9c57a37ef3f93bd0ba40aae4ca0911bdfb2eb54ecc8de727e6f1beaa6403`, Git blob `a3c5865965015464da2d26e58fdaabfaf5ad21cc`
+- historical r01 failure path `docs/plans/references/m8-network-acquisition-authority-remediation-independent-review-failure-20260919-r01.md`, bytes `1610`, SHA-256 `303fcfec5a30e18543a10b94e692bacdd766369fc7c086a2f19d8ca69d8be252`, Git blob `6aed5b3f636e247efbbfb7b47149a1e7792fc968`
+- authority payload path `docs/plans/references/external-artifacts/m8-network-acquisition-authority-remediation-payload-20260919-r02.json`, bytes `12245`, SHA-256 `f2992204cff95bf56c85601f44cf47ec03f0655aa71fe4690f199fd864da8a1e`, Git blob `a5b0e2f92bc16092738f57bf2329394d1694fe90`
 - payload-binding path `docs/plans/references/external-artifacts/m8-network-acquisition-authority-remediation-payload-binding-20260919-r02.json`, bytes `1712`, SHA-256 `1b3a9f6bad93ba15f0a36cbcb45c14e27d759b2525e517e5a04c1ab48f80c7c3`, Git blob `c67469440360332d37f2b3b3400182cb4f1e3bc5`
 - candidate-binding path `docs/plans/references/external-artifacts/m8-network-acquisition-authority-remediation-candidate-binding-20260919-r02.json`, bytes `2575`, SHA-256 `479d6bf79592d5f1527012c86795313f866714d5ab0c881db9d5dc5c2876f4d4`, Git blob `ec82b25d3ec69ab8f6e6e78ff57652c03ed3b3db`
 - candidate path `docs/plans/references/external-artifacts/m8-network-acquisition-authority-remediation-candidate-20260919-r02.json`, bytes `2614`, SHA-256 `0ebe9bf8a335e3f6bcde7e6791311370e2104cd80361de3dda1757f5b6bf5332`, Git blob `c4478c841b74d3aec8038677686f5d6fdad0a2d5`

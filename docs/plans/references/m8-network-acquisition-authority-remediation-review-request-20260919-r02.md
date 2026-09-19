@@ -55,6 +55,11 @@ design_path: docs/plans/references/m8-network-acquisition-authority-remediation-
 design_bytes: 3219
 design_sha256: 501c9c57a37ef3f93bd0ba40aae4ca0911bdfb2eb54ecc8de727e6f1beaa6403
 design_git_blob: a3c5865965015464da2d26e58fdaabfaf5ad21cc
+historical_failure_path: docs/plans/references/m8-network-acquisition-authority-remediation-independent-review-failure-20260919-r01.md
+historical_failure_bytes: 1610
+historical_failure_sha256: 303fcfec5a30e18543a10b94e692bacdd766369fc7c086a2f19d8ca69d8be252
+historical_failure_git_blob: 6aed5b3f636e247efbbfb7b47149a1e7792fc968
+payload_path: docs/plans/references/external-artifacts/m8-network-acquisition-authority-remediation-payload-20260919-r02.json
 payload_binding_path: docs/plans/references/external-artifacts/m8-network-acquisition-authority-remediation-payload-binding-20260919-r02.json
 payload_binding_bytes: 1712
 payload_binding_sha256: 1b3a9f6bad93ba15f0a36cbcb45c14e27d759b2525e517e5a04c1ab48f80c7c3
