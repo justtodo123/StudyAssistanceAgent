@@ -1,0 +1,108 @@
+# M8 Network-Acquisition Remediation Independent Review Request r02
+
+record_type: M8_NETWORK_ACQUISITION_REMEDIATION_INDEPENDENT_SCOPE_REVIEW_REQUEST
+cycle_id: m8-network-acquisition-authority-remediation-20260919-r02
+candidate_version: remediation-candidate-20260919-r02
+reviewer_role: independent-scope-reviewer
+independence_required: true
+request_status: PENDING_INDEPENDENT_REVIEW
+
+## Exact review target
+
+review_target_commit: 20d60cd06733c2f42a2ac36434a9d1a41e2eef8d
+review_target_parent: 68b568d097808200ccf55c5904906882f0e1d8f8
+review_target_tree: 8e49fc6c540b9b851c616703f4a290f7e54ecf57
+review_target_object_size: 316
+
+## Directly bound preceding objects
+
+design_commit: 075725e523821c577cf042ffd719bfed1ded6959
+payload_commit: 44e6cff5535f37405b277a893bc59e9bbb4781c9
+payload_binding_commit: bbb131c8e0816c3fec28e0e49787ea60f8101724
+candidate_envelope_commit: 1e4beeeec0690a4c72868625556af68913410bd7
+candidate_binding_commit: 68b568d097808200ccf55c5904906882f0e1d8f8
+payload_sha256: f2992204cff95bf56c85601f44cf47ec03f0655aa71fe4690f199fd864da8a1e
+payload_git_blob: a5b0e2f92bc16092738f57bf2329394d1694fe90
+payload_bytes: 12245
+candidate_envelope_sha256: 0ebe9bf8a335e3f6bcde7e6791311370e2104cd80361de3dda1757f5b6bf5332
+candidate_envelope_git_blob: c4478c841b74d3aec8038677686f5d6fdad0a2d5
+candidate_envelope_bytes: 2614
+candidate_binding_sha256: 479d6bf79592d5f1527012c86795313f866714d5ab0c881db9d5dc5c2876f4d4
+candidate_binding_git_blob: ec82b25d3ec69ab8f6e6e78ff57652c03ed3b3db
+candidate_binding_bytes: 2575
+
+## Complete frozen commit facts
+
+design_commit_parent: 8e7e0b7788184a4a3cf58751f39e70e386cc300b
+design_commit_tree: 6a5159e379a31d3bdb65485ac3b6aeb7e77d783e
+design_commit_object_size: 310
+payload_commit_parent: 075725e523821c577cf042ffd719bfed1ded6959
+payload_commit_tree: fbb513bac44c0652c969bedac2ee765e349b880c
+payload_commit_object_size: 314
+payload_binding_commit_parent: 44e6cff5535f37405b277a893bc59e9bbb4781c9
+payload_binding_commit_tree: a88ab2adb7d7159cc718f3a657dbf90a71df8930
+payload_binding_commit_object_size: 304
+candidate_envelope_commit_parent: bbb131c8e0816c3fec28e0e49787ea60f8101724
+candidate_envelope_commit_tree: 3879ca8067cc7c0c5c3c57124b8ee1fa51f2c1a4
+candidate_envelope_commit_object_size: 317
+candidate_binding_commit_parent: 1e4beeeec0690a4c72868625556af68913410bd7
+candidate_binding_commit_tree: ce7cac027c59a05e4e280cf5000051dce1549941
+candidate_binding_commit_object_size: 306
+
+## Complete frozen file facts
+
+design_path: docs/plans/references/m8-network-acquisition-authority-remediation-binding-design-20260919-r02.md
+design_bytes: 3219
+design_sha256: 501c9c57a37ef3f93bd0ba40aae4ca0911bdfb2eb54ecc8de727e6f1beaa6403
+design_git_blob: a3c5865965015464da2d26e58fdaabfaf5ad21cc
+payload_binding_path: docs/plans/references/external-artifacts/m8-network-acquisition-authority-remediation-payload-binding-20260919-r02.json
+payload_binding_bytes: 1712
+payload_binding_sha256: 1b3a9f6bad93ba15f0a36cbcb45c14e27d759b2525e517e5a04c1ab48f80c7c3
+payload_binding_git_blob: c67469440360332d37f2b3b3400182cb4f1e3bc5
+candidate_binding_path: docs/plans/references/external-artifacts/m8-network-acquisition-authority-remediation-candidate-binding-20260919-r02.json
+candidate_binding_bytes: 2575
+candidate_binding_sha256: 479d6bf79592d5f1527012c86795313f866714d5ab0c881db9d5dc5c2876f4d4
+candidate_binding_git_blob: ec82b25d3ec69ab8f6e6e78ff57652c03ed3b3db
+candidate_path: docs/plans/references/external-artifacts/m8-network-acquisition-authority-remediation-candidate-20260919-r02.json
+candidate_bytes: 2614
+candidate_sha256: 0ebe9bf8a335e3f6bcde7e6791311370e2104cd80361de3dda1757f5b6bf5332
+candidate_git_blob: c4478c841b74d3aec8038677686f5d6fdad0a2d5
+review_target_parent: 68b568d097808200ccf55c5904906882f0e1d8f8
+review_target_tree: 8e49fc6c540b9b851c616703f4a290f7e54ecf57
+review_target_object_size: 316
+
+## Required read-only checks
+
+Recompute every declared raw byte sequence from the exact named Git objects. Verify
+canonical JSON, UTF-8/LF rules, duplicate-key and finite-number rules, strict schema,
+all source/runtime/downloader/write/provenance/limit policies, exact paths and versions,
+all Git parents/trees/object sizes, all file sizes/SHA-256 values/blobs, and the
+one-way binding graph. Verify that r01 and earlier evidence is unchanged and read-only.
+The Builder self-check is construction evidence only and is not an independent review.
+
+Reject any mismatch, omitted field, unknown field, policy drift, self-reference, or
+inability to resolve the exact review target named above.
+
+## Prohibitions
+
+Do not access the network or PyPI, download or copy wheels, create a wheelhouse or
+preparation root, run pip/resolver/installer, create a formal venv or identity, select
+a backend, run a collector, execute S1/S1-B/S2/S3, modify historical objects, or
+fabricate acquisition evidence.
+
+acquisition_authorized: false
+network_access_authorized: false
+wheel_download_authorized: false
+wheelhouse_creation_authorized: false
+resolver_authorized: false
+installation_authorized: false
+formal_venv_authorized: false
+formal_identity_authorized: false
+real_collector_authorized: false
+s1_retry_authorized: false
+s1_b_authorized: false
+s2_authorized: false
+s3_authorized: false
+backend_selection_authorized: false
+m8_status: BLOCKED / NOT_STARTED
+allowed_next_action: independent-read-only-remediation-review
