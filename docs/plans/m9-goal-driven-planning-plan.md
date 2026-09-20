@@ -54,6 +54,9 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 所有决策都需明确默认、覆盖、输入校验、失败、隐私/兼容影响、适用阈值、证据、责任人和日期。外部模型可以生成
 自由文本不等于计划 schema 已闭合；没有确定性 fallback 的候选方案保持 `OPEN`。
 
+八项决策的设计草案（非授权、不产生 `RESOLVED`）见
+[`references/m9-decision-design-draft.md`](references/m9-decision-design-draft.md)。
+
 ## 4. 准入检查与批准记录
 
 - [ ] M7/M8 数据、scope、revision 和存储契约退出证据有效；
