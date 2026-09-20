@@ -239,3 +239,69 @@ class StudySessionResponse(BaseModel):
     tool_trace: list[ToolTraceStep] = Field(default_factory=list)
     created_at: str
     updated_at: str
+
+
+# ── M9 目标驱动学习计划 ────────────────────────────────────────────────────────
+
+
+class GoalPlanConstraints(BaseModel):
+    """目标驱动计划的可选结构化约束。"""
+
+    required_topics: list[str] = Field(default_factory=list, description="必须覆盖的话题，置于计划最前")
+    excluded_topics: list[str] = Field(default_factory=list, description="排除的话题")
+
+
+class GoalPlanRequest(BaseModel):
+    """目标驱动计划请求：Goal + 约束 + 可选课程/目标日期/每日学时。"""
+
+    goal: str = Field(min_length=1, max_length=2000, description="学习目标（自由文本）")
+    course: str | None = Field(default=None, description="课程简称，如 os / ds / co；缺省覆盖全部课程")
+    target_date: str | None = Field(default=None, description="目标日期 YYYY-MM-DD，默认 14 天后")
+    hours_per_day: float = Field(default=2.0, ge=0.5, le=8.0, description="每天可用学习小时数")
+    constraints: GoalPlanConstraints = Field(
+        default_factory=GoalPlanConstraints, description="可选话题约束"
+    )
+
+
+class GoalPlanTask(BaseModel):
+    """目标驱动计划中的单个学习任务（按 topic 粒度）。"""
+
+    task_id: str = Field(description="稳定任务 ID")
+    topic: str = Field(description="话题（知识条目标题）")
+    file: str = Field(description="知识库文件相对路径")
+    difficulty: str = Field(description="难度：入门 / 中等 / 进阶")
+    estimated_minutes: int = Field(description="预估学习时间（分钟）")
+    priority: str = Field(description="优先级：high / medium / low")
+    tags: list[str] = Field(default_factory=list, description="标签")
+    reviewed: bool = Field(default=False, description="是否已有复习记录（只读投影）")
+
+
+class GoalPlanDay(BaseModel):
+    """目标驱动计划中的一天。"""
+
+    day: int = Field(description="第几天（从 1 开始）")
+    date: str = Field(description="日期 YYYY-MM-DD")
+    tasks: list[GoalPlanTask] = Field(description="当天任务列表")
+    total_minutes: int = Field(description="当天总学习时间（分钟）")
+
+
+class GoalPlanRevision(BaseModel):
+    """计划的一个不可变修订版本。"""
+
+    revision_id: int = Field(description="修订号，从 1 开始")
+    generated_at: str = Field(description="生成时间 ISO 格式")
+    goal: str = Field(description="生成该修订时的 Goal")
+    days: list[GoalPlanDay] = Field(description="分日任务")
+
+
+class GoalPlanResponse(BaseModel):
+    """目标驱动计划响应：版本化计划 + 汇总。"""
+
+    plan_id: str
+    schema_version: str
+    revision_id: int
+    target_date: str
+    total_days: int
+    total_hours: float
+    revisions: list[GoalPlanRevision]
+    summary: dict[str, Any]

@@ -17,6 +17,8 @@ from fastapi.staticfiles import StaticFiles
 from . import config
 from .errors import ErrorCode, http_error
 from .models import (
+    GoalPlanRequest,
+    GoalPlanResponse,
     QaRequest,
     QaResponse,
     QuizRequest,
@@ -32,6 +34,7 @@ from .models import (
     StudySessionResponse,
 )
 from .learning_store import ReviewHistoryRepositoryAdapter, SqliteLearningStore
+from .goal_planner import GoalPlannerService
 from .qa import QaService
 from .quiz import QuizService
 from .retrieval import MultiRecallService, RetrievalScope
@@ -74,6 +77,7 @@ _qa = QaService(_recall, scope=RetrievalScope.DEFAULT_PLUS_EXTRAS)
 _review_plan = ReviewPlanService()
 _quiz = QuizService()
 _learning_store = SqliteLearningStore(config.LEARNING_STORE_PATH)
+_goal_planner = GoalPlannerService(review_history=_learning_store.all_reviews())
 _review_scheduler = ReviewSchedulerService(
     repository=ReviewHistoryRepositoryAdapter(_learning_store)
 )
@@ -220,6 +224,12 @@ def review_due(course: str | None = None) -> ReviewDueResponse:
 def review_plan(req: ReviewPlanRequest) -> ReviewPlanResponse:
     """生成复习计划：输入课程 + 目标日期 → 输出分日学习计划。"""
     return _review_plan.generate(req)
+
+
+@app.post("/api/v1/plans", response_model=GoalPlanResponse)
+def goal_plan(req: GoalPlanRequest) -> GoalPlanResponse:
+    """生成目标驱动学习计划（M9 确定性 Planner，仅生成、不写状态）。"""
+    return _goal_planner.generate(req)
 
 
 @app.post("/api/v1/study-sessions", response_model=StudySessionResponse)
