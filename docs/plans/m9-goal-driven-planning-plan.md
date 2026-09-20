@@ -42,10 +42,10 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 
 | Decision ID | 状态 | 准入前必须选定并留证的内容 |
 | --- | --- | --- |
-| `M9-PLANNER-INPUT-SCHEMA` | `OPEN` | Goal、目标日、用户等级、mastery snapshot、source scope、限制条件的版本化 schema、校验与拒绝行为 |
-| `M9-PLAN-SCHEMA` | `OPEN` | Plan/PlanRevision/PlanTask/ProgressEvent 的字段、身份、状态转换、验证、可重放和 schema 升级 |
-| `M9-MASTERY-SCHEMA` | `OPEN` | mastery 量表、置信度、证据、时间、衰减、来源、缺失值和旧数据迁移规则 |
-| `M9-MASTERY-AUTHORITY` | `OPEN` | `StudySessionService`/领域仓储的唯一正式写入边界，planner 建议的隔离、采纳与冲突处理 |
+| `M9-PLANNER-INPUT-SCHEMA` | `RESOLVED` | 自由文本 Goal + 可选结构化约束；Planner 只读权威仓储获取 mastery；输入有界、不随 chunk 总量线性膨胀 |
+| `M9-PLAN-SCHEMA` | `RESOLVED` | 版本化 Plan/PlanRevision/PlanTask/ProgressEvent；task 按 topic 粒度稳定标识；显式采纳、不自动激活；确定性可重放 |
+| `M9-MASTERY-SCHEMA` | `OPEN` | mastery 量表、置信度、证据、时间、衰减、来源、缺失值和旧数据迁移规则（先粗粒度，量表留待有真实需求） |
+| `M9-MASTERY-AUTHORITY` | `RESOLVED` | `StudySessionService`/领域仓储唯一写；Planner 建议隔离；先粗粒度 mastery；采纳由 SessionService 记录 |
 | `M9-EXECUTION-DEVIATION` | `OPEN` | 选题、完成、跳过、过期、偏差指标、重规划触发、版本关系和并发事件语义 |
 | `M9-EXTERNAL-AI` | `OPEN` | provider/model、发送字段、隐私/保留、认证、timeout/cost、失败行为及确定性无 LLM fallback |
 | `M9-EVALUATION` | `OPEN` | 计划有效性、先修关系、source grounding、遵循度、偏差、可重放性、延迟、成本的 workload 与阈值 |
@@ -74,7 +74,8 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 | plan_revision | — |
 | decision_set_version | — |
 
-批准为空，M9 保持 `BLOCKED / NOT_STARTED`。`M9-M7-EXIT` 与 `M9-M8-EXIT` 均已满足，但八项强制决策与独立批准仍为阻断项。Agent 不得自行批准。
+批准为空，M9 保持 `BLOCKED / NOT_STARTED`。`M9-M7-EXIT` 与 `M9-M8-EXIT` 均已满足，`PLANNER-INPUT-SCHEMA`、
+`PLAN-SCHEMA`、`MASTERY-AUTHORITY` 已 `RESOLVED`，但其余五项强制决策与独立批准仍为阻断项。Agent 不得自行批准。
 
 ## 5. 获准后的拟实施顺序
 

@@ -321,10 +321,10 @@
         {"id": "M9-M8-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m8-specialized-storage-plan.md"]}
       ],
       "mandatory_decisions": [
-        {"id": "M9-PLANNER-INPUT-SCHEMA", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M9-PLAN-SCHEMA", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M9-PLANNER-INPUT-SCHEMA", "status": "RESOLVED", "value": "FREE_TEXT_GOAL_PLUS_OPTIONAL_STRUCTURED_CONSTRAINTS__PLANNER_READS_MASTERY_FROM_AUTHORITATIVE_STORE__BOUNDED_INPUT_NOT_SCALING_WITH_CHUNKS", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]},
+        {"id": "M9-PLAN-SCHEMA", "status": "RESOLVED", "value": "VERSIONED_PLAN_REVISION_TASK_PROGRESS_EVENT__TOPIC_GRANULARITY_STABLE_TASK_IDENTITY__EXPLICIT_ADOPTION_NO_AUTO_ACTIVATION__DETERMINISTIC_REPLAY", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]},
         {"id": "M9-MASTERY-SCHEMA", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M9-MASTERY-AUTHORITY", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M9-MASTERY-AUTHORITY", "status": "RESOLVED", "value": "STUDY_SESSION_SERVICE_PLUS_DOMAIN_REPO_SOLE_WRITER__PLANNER_ADVISORY_SUGGESTIONS_ISOLATED__COARSE_GRAINED_MASTERY_FIRST__ADOPTION_RECORDED_BY_SESSION_SERVICE", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]},
         {"id": "M9-EXECUTION-DEVIATION", "status": "OPEN", "value": null, "evidence": []},
         {"id": "M9-EXTERNAL-AI", "status": "OPEN", "value": null, "evidence": []},
         {"id": "M9-EVALUATION", "status": "OPEN", "value": null, "evidence": []},
