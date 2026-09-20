@@ -70,6 +70,7 @@ tools/m8_test_observe_network_acquisition_v1.py text eol=lf
 tools/m8_metadata_discovery_schema.py text eol=lf
 tools/m8_git_object_reader.py text eol=lf
 tools/m8_build_metadata_discovery_scope_candidate.py text eol=lf
+tools/m8_build_metadata_discovery_scope_chain.py text eol=lf
 tools/m8_validate_metadata_discovery_scope_review.py text eol=lf
 tests/M8_metadata_discovery/test_metadata_discovery_scope_governance.py text eol=lf
 docs/plans/m8-metadata-discovery-governance.md text eol=lf
