@@ -26,6 +26,7 @@ tools/
 ├── m8_build_metadata_discovery_cycle.py # unresolved committed-intent Builder; no network or acquisition
 ├── m8_validate_metadata_discovery_review.py # unresolved-candidate read-only review validator
 ├── m8_build_metadata_discovery_scope_candidate.py # fixed pypdf==6.0.0 scope Builder; offline only
+├── m8_build_metadata_discovery_scope_chain.py # offline six-stage publication-chain Builder; no review or authorization
 ├── m8_git_object_reader.py # bounded explicit Git-object reader; no lazy fetch or replacement objects
 ├── m8_validate_metadata_discovery_scope_review.py # selected-scope validator; no authorization or acquisition
 ├── m8_observe_minimal_1k_v3.py # synthetic-only 四账本观察器；不实现真实 Windows collector
@@ -423,6 +424,9 @@ Selected-scope 流程是加法式、独立的 hardening surface：
 `m8_git_object_reader.py` 统一提供显式 SHA-1 OID、`--no-replace-objects`、`--no-lazy-fetch`、对象
 类型/声明大小预检、单对象与整链累计字节上限、Git OID 复算，以及
 `ordinary_single_parent_commit_only` 校验；
+`m8_build_metadata_discovery_scope_chain.py` 从 source commit 离线生成并逐 commit 固化六阶段
+publication 链，结束只打印 dispatch commit OID 与各 stage content-addressed 摘要，不 push、不生成
+review 或授权；
 `m8_validate_metadata_discovery_scope_review.py` 则验证 candidate 或从 dispatch publication 反向闭合
 六阶段 committed chain：
 
@@ -439,6 +443,11 @@ python tools/m8_build_metadata_discovery_scope_candidate.py \
   --commit <full-lowercase-40-hex-commit> \
   --repo <absolute-repository-path> \
   --output <temporary-scope-candidate.json>
+
+# build and commit the six-stage publication chain (offline, no review)
+python tools/m8_build_metadata_discovery_scope_chain.py \
+  --commit <full-lowercase-40-hex-commit> \
+  --repo <absolute-repository-path>
 
 # deterministic candidate validation only
 python tools/m8_validate_metadata_discovery_scope_review.py \

@@ -20,7 +20,9 @@
 
 本轮 selected-scope M8 材料尚未形成独立 publication commit；因此本索引暂不登记
 candidate、review request/prompt、dispatch 或 Owner Gate 文件。待这些材料实际创建并提交后，
-只新增导航条目，不改写、删除、重命名或重新格式化既有历史条目。
+只新增导航条目，不改写、删除、重命名或重新格式化既有历史条目。六阶段 publication 链与
+dispatch 根的独立审查请求指路文档见
+[`m8-metadata-discovery-scope-independent-review-request-20260920-r02.md`](m8-metadata-discovery-scope-independent-review-request-20260920-r02.md)。
 
 S1 prerequisite freeze 的 candidate closure 由目标 commit 内的 canonical oracle manifest 唯一声明并机械展开。
 Code-fixed bootstrap 防止 manifest 省略自身、aggregate 或 freeze authority chain；fixture graph/member 数仍可作为
@@ -103,6 +105,7 @@ Windows process launch 到 Job assignment 之间仍有短暂非原子窗口。�
 | [`m8-network-acquisition-authority-remediation-collector-coverage-receipts-review-20260919-r01.md`](m8-network-acquisition-authority-remediation-collector-coverage-receipts-review-20260919-r01.md) | Additive independent coverage/lifecycle receipt review | No separate collector authority and downloader validation failed; zero collector behavior and zero receipts; `COLLECTOR_COVERAGE_RECEIPTS_REJECTED_FAILED_CLOSED`; request independent collector authority before receipts |
 | [`m8-network-acquisition-authority-remediation-handoff-20260919-r04.md`](m8-network-acquisition-authority-remediation-handoff-20260919-r04.md) | Additive owner exact-acquisition-object request handoff | Exact acquisition object and offline provenance remain blocked failed-closed; all permissions false, limits zero, `m8_status: BLOCKED / NOT_STARTED`; non-authorizing |
 | [`m8-network-acquisition-owner-failed-closed-decision-20260919-r03.md`](m8-network-acquisition-owner-failed-closed-decision-20260919-r03.md) | New additive Owner failed-closed decision for the r03 handoff | Exact acquisition, downloader, collector, authority, and coverage-receipt objects remain unselected; all permissions false, limits zero, `m8_status: BLOCKED / NOT_STARTED`; non-authorizing |
+| [`m8-metadata-discovery-scope-independent-review-request-20260920-r02.md`](m8-metadata-discovery-scope-independent-review-request-20260920-r02.md) | M8 selected-scope independent review request | Binds dispatch commit `98ca8c70…` and six-stage content-addressed digests; `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW`; reviewer designation blank; non-authorizing |
 | [`m8-minimal-1k-v3-s1-network-acquisition-authority-20260918-r01.json`](external-artifacts/m8-minimal-1k-v3-s1-network-acquisition-authority-20260918-r01.json) | v3 S1 network-acquisition 来源与 runtime authority 候选 | 冻结 CPython 3.13.3、官方 PyPI host、写入边界、限额和 provenance 字段；observer 尚未实例化，不授权联网或下载 |
 | `external-artifacts/m8-minimal-1k-v3-s1-network-acquisition-observer-authority-20260918-r06.json` | v3 S1 network-acquisition observer authority 候选 r06 | 仅绑定 hermetic declared-event validator 与测试字节；显式不具真实 collector 能力，不授权 acquisition 或 M8 执行 |
 | `external-artifacts/m8-minimal-1k-v3-s1-network-acquisition-observer-authority-20260918-r07.json` | v3 S1 network-acquisition observer authority 候选 r07 | additive；绑定最新 observer/test 字节并记录 redirect、redaction、process 与 Windows path remediation；仍不授权 acquisition 或 M8 执行 |
