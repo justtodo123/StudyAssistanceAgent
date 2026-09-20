@@ -23,8 +23,11 @@ tools/
 ├── m8_freeze_s1_prerequisites_v3.py # M8 v3 S1 前置候选 Git-object 冻结工具
 ├── m8_generate_minimal_1k_input_v3.py # M8 v3 S1 最小 1K 受控输入生成器
 ├── m8_metadata_discovery_schema.py # offline metadata-discovery schema and fail-closed validation
-├── m8_build_metadata_discovery_cycle.py # committed-intent Builder; no network or acquisition
-├── m8_validate_metadata_discovery_review.py # independent read-only review validator
+├── m8_build_metadata_discovery_cycle.py # unresolved committed-intent Builder; no network or acquisition
+├── m8_validate_metadata_discovery_review.py # unresolved-candidate read-only review validator
+├── m8_build_metadata_discovery_scope_candidate.py # fixed pypdf==6.0.0 scope Builder; offline only
+├── m8_git_object_reader.py # bounded explicit Git-object reader; no lazy fetch or replacement objects
+├── m8_validate_metadata_discovery_scope_review.py # selected-scope validator; no authorization or acquisition
 ├── m8_observe_minimal_1k_v3.py # synthetic-only 四账本观察器；不实现真实 Windows collector
 ├── m8_probe_s1_environment_v3.py # M8 v3 S1 只读静态环境探针
 ├── m8_validate_s1_preflight_v3.py # M8 v3 S1 preflight 校验器
@@ -414,6 +417,51 @@ python tools/m8_validate_metadata_discovery_review.py \\
 
 治理边界与角色分离见
 [`docs/plans/m8-metadata-discovery-governance.md`](../docs/plans/m8-metadata-discovery-governance.md)。
+Selected-scope 流程是加法式、独立的 hardening surface：
+`m8_build_metadata_discovery_scope_candidate.py` 仅从显式完整 commit 的 Git objects 冻结 Owner 已选择的
+`pypdf==6.0.0`，`dependency_scope` 严格为 `["pypdf"]`；
+`m8_git_object_reader.py` 统一提供显式 SHA-1 OID、`--no-replace-objects`、`--no-lazy-fetch`、对象
+类型/声明大小预检、单对象与整链累计字节上限、Git OID 复算，以及
+`ordinary_single_parent_commit_only` 校验；
+`m8_validate_metadata_discovery_scope_review.py` 则验证 candidate 或从 dispatch publication 反向闭合
+六阶段 committed chain：
 
+`candidate_publication → builder_self_check → review_request → review_prompt → review_target → dispatch_manifest`
 
-*创建：2026-08-11 · 更新：2026-09-19（新增离线 Metadata Discovery 治理工具）· 维护：随新增工具脚本与评测集同步更新*
+每个 stage 都必须是 canonical JSON，使用固定 path、exact schema、direct-parent publication 顺序和
+content-addressed predecessor bindings；self/forward/deferred reference、root/merge commit、错误对象类型、
+超限或 framing 异常，以及 commit/blob/byte-count/SHA-256/protocol/cycle divergence 都以
+`MetadataGovernanceError` fail closed。一次 dispatch traversal 共享同一个 bounded reader 和累计预算，
+不能退回 `HEAD`、branch/tag、worktree 或调用方替换的 records。
+
+```bash
+python tools/m8_build_metadata_discovery_scope_candidate.py \
+  --commit <full-lowercase-40-hex-commit> \
+  --repo <absolute-repository-path> \
+  --output <temporary-scope-candidate.json>
+
+# deterministic candidate validation only
+python tools/m8_validate_metadata_discovery_scope_review.py \
+  --candidate <temporary-scope-candidate.json> \
+  --repo <absolute-repository-path> \
+  --output <temporary-validation-report.json>
+
+# validate the committed six-stage chain from its dispatch root
+python tools/m8_validate_metadata_discovery_scope_review.py \
+  --dispatch-commit <full-lowercase-40-hex-commit> \
+  --repo <absolute-repository-path> \
+  --output <temporary-dispatch-validation-report.json>
+```
+
+两种入口都只做 deterministic validation，不构成 independent review。当前仓库没有可信 Reviewer
+身份颁发或签名根，caller-authored `reviewer_id`、Git author/committer 或 self-attestation 均不能建立
+independent provenance；legacy review generation/validation 因而 fail closed。完整 dispatch 校验最多输出
+`READY_FOR_EXTERNAL_INDEPENDENT_REVIEW`，不能输出 `INDEPENDENT_REVIEW_APPROVED`、
+`METADATA_DISCOVERY_SCOPE_OWNER_GATE_READY`、Owner approval 或 metadata-discovery authorization。
+`m8_status` 保持 `BLOCKED / NOT_STARTED`，当前 limits/counts 为零，authorization 为 false/null，
+proposed policy 保持 `PROPOSED_NOT_EFFECTIVE`。
+
+上述工具不发起 metadata request，不访问 DNS/HTTP/HTTPS/PyPI，不下载 artifact，不调用 pip 或其他
+package manager，不解析/安装依赖，不创建环境，也不运行 collector 或其他 M8 execution。治理边界与角色
+分离见
+[`docs/plans/m8-metadata-discovery-governance.md`](../docs/plans/m8-metadata-discovery-governance.md)。

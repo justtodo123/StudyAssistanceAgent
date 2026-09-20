@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-09-06（M7 correctness 收口；`tests/M7/` 当前收集 270 项；Python 3.13.3 下 3 个 TXT 用例按精确 parser 合同 fail closed；`m7_exit=true` 不是 M7 阶段退出）
+> 起始日期：2026-08-17 · 更新：2026-09-06（M7 correctness 收口；`tests/M7/` 当前收集 270 项；Python 3.13.3 下 3 个 TXT 用例按精确 parser 合同 fail closed；`m7_exit=true` 不是 M7 阶段退出）；2026-09-20（M8 selected-scope hardening：`tests/M8_metadata_discovery/` 收集 74 项、74 passed；历史 replay 88/88 与 77/77 通过且明确 non-gating）
 
 ## 一、测试策略总览
 
@@ -144,7 +144,8 @@ tests/
 │
 ├── M8_metadata_discovery/       # M8 Metadata Discovery 离线治理（不执行 discovery/acquisition）
 │   ├── README.md                 # 范围、排除项与运行命令
-│   └── test_metadata_discovery_governance.py # schema、Git binding、intent 与 fail-closed 边界
+│   ├── test_metadata_discovery_governance.py # schema、Git binding、intent 与 fail-closed 边界
+│   └── test_metadata_discovery_scope_governance.py # selected pypdf scope 与独立审查边界
 │
 ├── regression/             # 跨阶段回归套件
 │   ├── conftest.py         # 回归专用 fixtures（离线 BM25-only，恢复 vector 全局状态）
@@ -184,6 +185,10 @@ tests/
 
 `tests/M8_metadata_discovery/` 只验证 committed-intent inventory、candidate schema、Git object binding、角色隔离和 failed-closed 状态。测试不得访问网络、DNS、PyPI、metadata endpoint，不得下载、解析、安装、调用 resolver/collector，亦不得启动其他 M8 stage。
 
+selected-scope 增量覆盖 Owner 选择的 `pypdf==6.0.0`、严格单包 `dependency_scope: ["pypdf"]`、未选择 artifact/URL、有限但未生效的 proposed policy、全零 limits/counts、全 false/null authorization，以及 deterministic candidate validation 与 genuine independent review 的角色区分。六阶段链固定为 candidate publication → Builder self-check → review request → review prompt → review target → dispatch manifest；dispatch-rooted validator 只沿 committed content-addressed references 读取固定 path，并验证 direct-parent forward-only 顺序、exact stage schema、cycle/protocol/candidate continuity。链测试拒绝 self/forward/deferred reference、重复 record、错误 parent、篡改 predecessor、任意 committed text 和 target/dispatch divergence。
+
+Git 读取测试覆盖 full lowercase SHA-1 OID、禁用 replacement/lazy fetch、对象类型与声明大小预检、单对象及整链累计预算、Git OID/blob/SHA-256 复算、`ordinary_single_parent_commit_only` 和统一 `MetadataGovernanceError` 边界；root/merge、wrong type、oversized、truncated/extra framing 或缺失对象必须 fail closed。caller-authored Reviewer identity、自签 independence 或 legacy review package 不能产生 independent approval；当前完整 dispatch 校验最多返回 `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW`。这些测试仍不执行 metadata discovery 或任何 acquisition。
+
 ```bash
 python -m pytest tests/M8_metadata_discovery -v
 ```
@@ -192,12 +197,15 @@ python -m pytest tests/M8_metadata_discovery -v
 
 ### 当前测试基线
 
+selected-scope 测试文件已登记在 `tests/M8_metadata_discovery/`，与历史 generic governance 测试保持阶段隔离。
+
 | 测试范围 | 收集数量 | 当前结果 | 说明 |
 |----------|----------|----------|------|
 | 根级 `tests/`（含 M6_crawler、M6a、M6b、M7、source_inventory，不含 `platform/tests/`） | 826 项 | 2026-09-06 CPython 3.13.3：822 passed、1 skipped、3 failed；CPython 3.11.9 精确环境：825 passed、1 skipped | 三个 3.13 失败仅为 TXT 精确 `cpython-textio==3.11.9` 合同 fail closed；唯一 skip 为显式 online crawler smoke；历史 810/809 passed/1 skipped 仅作历史证据 |
 | `tests/M6b/` | 129 项 | 2026-08-29 当前：普通套件 126 passed、3 deselected；benchmark 3 passed；2026-08-28 首轮：111 passed | fake provider；native tool loop、API/auth、隐私、零写入与独立 blocking benchmark |
 | `tests/M6a/` | 124 项 | 2026-08-28：124 passed | 含 worker topology、generation 分离、缓存生命周期与 API/OpenAPI/链接收口 |
 | `tests/M7/` | 270 项 | 当前 collect-only：270 项；Python 3.13.3 执行 267 passed / 3 failed（TXT 精确 `cpython-textio==3.11.9` 合同导致的预期 `PARSER_UNAVAILABLE`，非代码放宽项）；2026-09-06 Python 3.11.9 精确依赖环境的五格式 100×20 冻结协议独立全 PASS | source-local FTS5+vector identity、delete/isolation、Search/QA internal overlay、M7-2 snapshot cache、M7-4 exact-query/query-encode、M7-5 READY/CURRENT 与 correctness 收口；parser 证据报告只写系统临时目录且不入库 |
+| `tests/M8_metadata_discovery/` | 74 项 | 2026-09-20：74 passed | 离线治理；generic unresolved intent 仍为 `METADATA_DISCOVERY_INTENT_OWNER_SELECTION_REQUIRED`；pypdf==6.0.0 selected-scope 的 bounded Git reader、六阶段 dispatch-rooted chain、single-parent policy、provenance fail-closed 与最大 `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW` 均已覆盖 |
 | `tests/source_inventory/` | 21 项 | 2026-08-27：21 passed | 外部资料只读盘点；tmp_path 迷你树，不扫描真实外部目录，不构成 M7 开工 |
 | `tests/regression/`（含 slow） | 62 项 | 2026-09-06 当前 checkout 离线 keyword mode：62 passed | 含 SSE、结构化 CI、准入治理、导航与生产树契约；含显式 active-delivery 开工授权门禁 |
 | `tests/regression/test_rag_quality.py` slow | 3 项 | 2026-09-01 复测：3 passed；2026-08-28：3 passed | 默认 OS/DS/CO 90 题 Recall@3 门禁 |
