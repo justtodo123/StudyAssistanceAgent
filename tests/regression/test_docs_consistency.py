@@ -401,7 +401,6 @@ class TestStageAdmissionConsistency:
 
         downstream = {
             "M8": "M8-M7-EXIT",
-            "M9": "M9-M7-EXIT",
             "M10": "M10-M7-EXIT",
         }
         expected_exit_evidence = [
@@ -424,6 +423,19 @@ class TestStageAdmissionConsistency:
                 "evidence": expected_exit_evidence,
             }
             assert all(value is None for value in stage["approval"].values())
+
+        m9 = stages["M9"]
+        assert m9["admission_status"] == "ADMITTED"
+        assert m9["delivery_status"] == "IN_PROGRESS"
+        m9_exit = next(
+            prerequisite
+            for prerequisite in m9["prerequisites"]
+            if prerequisite["id"] == "M9-M7-EXIT"
+        )
+        assert m9_exit["status"] == "SATISFIED"
+        assert m9["approval"]["approved_by"] == "justtodo123"
+        assert m9["approval_scope"]["scope_id"] == "m9-deterministic-planner-v1"
+        assert m9["implementation_start"]["status"] == "AUTHORIZED"
 
         m8 = stages["M8"]
         expected_m8_decisions = {

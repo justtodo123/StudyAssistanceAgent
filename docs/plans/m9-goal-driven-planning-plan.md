@@ -1,6 +1,6 @@
 # M9 目标驱动学习计划准备计划
 
-> 当前状态：设计准备；`BLOCKED / NOT_STARTED`，未获准开工
+> 当前状态：`ADMITTED / IN_PROGRESS`；确定性 Planner 先行（只生成计划，不做采纳/进度/重规划/外部 AI）
 > 前置：M7 用户源生命周期与 M8 存储契约退出证据
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
@@ -68,14 +68,15 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 
 | 批准字段 | 当前值 |
 | --- | --- |
-| approved_by | — |
-| approved_at | — |
-| approval_reference | — |
-| plan_revision | — |
-| decision_set_version | — |
+| approved_by | justtodo123 |
+| approved_at | 2026-09-20 |
+| approval_reference | User instruction: 批准 M9 确定性 Planner 先行（只生成计划，不做采纳/进度/重规划/外部 AI） |
+| plan_revision | v1.0 |
+| decision_set_version | m9-decision-set-v1 |
 
-批准为空，M9 保持 `BLOCKED / NOT_STARTED`。`M9-M7-EXIT` 与 `M9-M8-EXIT` 均已满足，八项强制决策全部
-`RESOLVED`，仅剩准入批准字段未填写；Agent 不得自行批准。
+批准范围 `m9-deterministic-planner-v1`：仅 `m9.goal-plan-generation`；排除采纳、进度事件、重规划、外部 AI、
+mastery 写入。`M9-M7-EXIT` 与 `M9-M8-EXIT` 均已满足，八项强制决策全部 `RESOLVED`；`ADMITTED / IN_PROGRESS`
+仅覆盖确定性计划生成。
 
 ## 5. 获准后的拟实施顺序
 
