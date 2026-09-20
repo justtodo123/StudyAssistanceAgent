@@ -1,6 +1,7 @@
 # M8 专业化检索存储准入准备计划
 
 > 当前状态：准入准备；`BLOCKED / NOT_STARTED`，未获准开工
+> 容量验证暂缓：现有 SQLite 线性余弦 + BM25 已满足当前个人规模；100K 专业化存储容量验证（LanceDB/Qdrant）转为待命参考，不阻塞当前学习闭环
 > 前置：`M8-M7-EXIT=SATISFIED`；M8 八项 Decision 已于 2026-09-10 逐项批准并 `RESOLVED`，阶段 admission 仍未批准
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
