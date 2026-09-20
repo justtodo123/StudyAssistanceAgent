@@ -19,6 +19,7 @@ _EXTERNAL_SOURCE_ROOT = re.compile(
 )
 _RETURNED_ARCHIVE_PARENT = Path("docs") / "plans" / "references"
 _RETURNED_ARCHIVE_SUFFIX = "-returned.md"
+_GOVERNANCE_HISTORY_PARENT = Path("docs") / "plans" / "references"
 _EXTERNAL_POLICY_WORDS = (
     "外部",
     "原始资料",
@@ -47,6 +48,19 @@ def _is_immutable_returned_archive(document: Path, repo_root: Path) -> bool:
         relative.parent == _RETURNED_ARCHIVE_PARENT
         and document.name.endswith(_RETURNED_ARCHIVE_SUFFIX)
     )
+
+
+def _is_governance_history(document: Path, repo_root: Path) -> bool:
+    """Return whether document is an immutable historical governance record.
+
+    历史治理记录把 C:/D: 卷复验事实、P2 parent 路径等主机绝对路径作为「事实证据」记载，
+    不是运行时泄露。它们与 `-returned.md` 归档一样不可改，不应被路径隐私扫描判为违规。
+    """
+    try:
+        relative = document.relative_to(repo_root)
+    except ValueError:
+        return False
+    return relative.parent == _GOVERNANCE_HISTORY_PARENT
 
 
 def _contains_host_path(value: Any, roots: tuple[Path, ...]) -> bool:
@@ -110,6 +124,7 @@ def test_governance_documents_reject_host_temp_paths_and_limit_external_root(
         document
         for document in documents
         if not _is_immutable_returned_archive(document, repo_root)
+        and not _is_governance_history(document, repo_root)
     ]
     violations: list[str] = []
 
