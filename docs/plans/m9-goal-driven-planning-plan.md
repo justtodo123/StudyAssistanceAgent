@@ -32,7 +32,7 @@ M9 必须在 M8 的 100K capacity 能力上保持输入有界，但不把 100K c
 | Prerequisite ID | 当前状态 | 准入所需证据 |
 | --- | --- | --- |
 | `M9-M7-EXIT` | `SATISFIED` | M7 Source lifecycle、scope/isolation、revision/delete、离线 fallback 与独立完成批准；证据见 `docs/PLAN.md`、M7 计划与 `docs/baselines.md` |
-| `M9-M8-EXIT` | `OPEN` | M8 control schema、migration/parity/fallback 或明确维持当前后端的批准结论与退出证据 |
+| `M9-M8-EXIT` | `SATISFIED` | 明确维持当前 SQLite/BM25 后端作为 M9 数据面基线（100K 专业化存储容量验证暂缓）；证据见 `docs/PLAN.md` 与 `docs/plans/m8-specialized-storage-plan.md` |
 
 `StudySessionService` 与领域仓储继续掌握正式状态转换、答案评估和 mastery 写入。现有 review-plan 与
 study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时仍有确定性路径；授权 Source 内容和用户数据
@@ -71,7 +71,7 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 | plan_revision | — |
 | decision_set_version | — |
 
-批准为空，M9 保持 `BLOCKED / NOT_STARTED`。`M9-M7-EXIT` 已满足，但 `M9-M8-EXIT`、八项强制决策与独立批准仍为阻断项。Agent 不得自行批准。
+批准为空，M9 保持 `BLOCKED / NOT_STARTED`。`M9-M7-EXIT` 与 `M9-M8-EXIT` 均已满足，但八项强制决策与独立批准仍为阻断项。Agent 不得自行批准。
 
 ## 5. 获准后的拟实施顺序
 

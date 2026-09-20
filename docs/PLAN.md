@@ -147,7 +147,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
 | M7 | `ADMITTED` | `COMPLETE` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策、保护基线、Source lifecycle/delete/isolation/fallback、冻结 1k/3k BGE 与五格式 100×20 parser/normalized/lifecycle 证据已闭合。原 2026-08-31 准入与开工授权保持不变；justtodo123 于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内独立批准 `M7 COMPLETE`。技术证据本身不产生批准；M6b preview、Quiz、Review Plan 与 study-sessions 仍不含用户源 |
 | M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | 八项 Decision 已 `RESOLVED`；`draft-0.10` P3 拒绝链冻结；`draft-0.11` 独立 P3 已 `REJECTED / stop`，失败链冻结；执行、后端选择和 admission 未授权；100K 专业化存储容量验证暂缓，现有 SQLite 线性余弦 + BM25 满足当前个人规模 |
-| M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT=SATISFIED`；仍等待 M8 退出，计划/mastery 权威设定与独立批准仍 `OPEN` |
+| M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT`、`M9-M8-EXIT`（维持当前 SQLite/BM25 后端）均已 `SATISFIED`；八项强制决策、计划/mastery 权威设定与独立批准仍 `OPEN` |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | `M10-M7-EXIT=SATISFIED`；仍等待 M8/M9，写授权、恢复、rollout 与独立批准仍 `OPEN` |
 | M11 | `BLOCKED` | `NOT_STARTED` | [`m11-data-scaling-plan.md`](plans/m11-data-scaling-plan.md) | 拟议真实数据规模化阶段；正式退出目标为 10K approved chunks，3K 为先行 Gate，全部 Decision 与批准 `OPEN` |
 | M12 | `BLOCKED` | `NOT_STARTED` | [`m12-cloud-deployment-plan.md`](plans/m12-cloud-deployment-plan.md) | 拟议可选云端单用户部署；本地离线仍为默认，服务器 baseline、十三项 Decision 与批准全部 `OPEN` |
