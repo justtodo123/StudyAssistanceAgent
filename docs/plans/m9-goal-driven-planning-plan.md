@@ -44,12 +44,12 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 | --- | --- | --- |
 | `M9-PLANNER-INPUT-SCHEMA` | `RESOLVED` | 自由文本 Goal + 可选结构化约束；Planner 只读权威仓储获取 mastery；输入有界、不随 chunk 总量线性膨胀 |
 | `M9-PLAN-SCHEMA` | `RESOLVED` | 版本化 Plan/PlanRevision/PlanTask/ProgressEvent；task 按 topic 粒度稳定标识；显式采纳、不自动激活；确定性可重放 |
-| `M9-MASTERY-SCHEMA` | `OPEN` | mastery 量表、置信度、证据、时间、衰减、来源、缺失值和旧数据迁移规则（先粗粒度，量表留待有真实需求） |
+| `M9-MASTERY-SCHEMA` | `RESOLVED` | 粗粒度两段式（topic 的 attempt/correct/last_mastered 计数）；暂不引入连续浮点等级、置信度与时间衰减 |
 | `M9-MASTERY-AUTHORITY` | `RESOLVED` | `StudySessionService`/领域仓储唯一写；Planner 建议隔离；先粗粒度 mastery；采纳由 SessionService 记录 |
-| `M9-EXECUTION-DEVIATION` | `OPEN` | 选题、完成、跳过、过期、偏差指标、重规划触发、版本关系和并发事件语义 |
-| `M9-EXTERNAL-AI` | `OPEN` | provider/model、发送字段、隐私/保留、认证、timeout/cost、失败行为及确定性无 LLM fallback |
-| `M9-EVALUATION` | `OPEN` | 计划有效性、先修关系、source grounding、遵循度、偏差、可重放性、延迟、成本的 workload 与阈值 |
-| `M9-COMPATIBILITY` | `OPEN` | 现有 review-plan/study-session API、SQLite 数据、默认工作台和 M0–M5 行为的映射、迁移及回滚 |
+| `M9-EXECUTION-DEVIATION` | `RESOLVED` | completed/skipped/overdue/replanned 事件；跳过+逾期≥3 或目标/约束变化触发重规划；parent_revision 前向链；复用 review_scheduler 的 days_overdue |
+| `M9-EXTERNAL-AI` | `RESOLVED` | 默认关闭、显式 opt-in；最小披露（不送 chunk 正文/用户数据/路径/凭据）；硬超时+成本预算；确定性 fallback |
+| `M9-EVALUATION` | `RESOLVED` | 先修违反=0、stale/deleted Source 进入=0、确定性可重放=100%、输入有界可证明；遵循度先定性，延迟/成本暂缓 |
+| `M9-COMPATIBILITY` | `RESOLVED` | review-plan/study-session API 不变；SQLite 可恢复可迁移不回写历史；90 题不退化；关闭时回退确定性 review-plan |
 
 所有决策都需明确默认、覆盖、输入校验、失败、隐私/兼容影响、适用阈值、证据、责任人和日期。外部模型可以生成
 自由文本不等于计划 schema 已闭合；没有确定性 fallback 的候选方案保持 `OPEN`。
@@ -59,8 +59,8 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 
 ## 4. 准入检查与批准记录
 
-- [ ] M7/M8 数据、scope、revision 和存储契约退出证据有效；
-- [ ] 八项强制决策全部 `RESOLVED`，schema 与 authority 不冲突；
+- [x] M7/M8 数据、scope、revision 和存储契约退出证据有效；
+- [x] 八项强制决策全部 `RESOLVED`，schema 与 authority 不冲突；
 - [ ] 外部 AI 最小披露、失败和无 LLM fallback 可验证；
 - [ ] evaluation workload、样本、阈值和人工评审口径冻结；
 - [ ] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表一致；
@@ -74,8 +74,8 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 | plan_revision | — |
 | decision_set_version | — |
 
-批准为空，M9 保持 `BLOCKED / NOT_STARTED`。`M9-M7-EXIT` 与 `M9-M8-EXIT` 均已满足，`PLANNER-INPUT-SCHEMA`、
-`PLAN-SCHEMA`、`MASTERY-AUTHORITY` 已 `RESOLVED`，但其余五项强制决策与独立批准仍为阻断项。Agent 不得自行批准。
+批准为空，M9 保持 `BLOCKED / NOT_STARTED`。`M9-M7-EXIT` 与 `M9-M8-EXIT` 均已满足，八项强制决策全部
+`RESOLVED`，仅剩准入批准字段未填写；Agent 不得自行批准。
 
 ## 5. 获准后的拟实施顺序
 
