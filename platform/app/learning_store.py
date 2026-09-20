@@ -47,6 +47,41 @@ CREATE TABLE IF NOT EXISTS review_history (
     source_session_id TEXT NOT NULL DEFAULT '',
     payload TEXT NOT NULL DEFAULT '{}'
 );
+
+CREATE TABLE IF NOT EXISTS plans (
+    plan_id TEXT PRIMARY KEY,
+    schema_version TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'generated',
+    goal TEXT NOT NULL,
+    target_date TEXT NOT NULL,
+    total_days INTEGER NOT NULL,
+    total_hours REAL NOT NULL,
+    parent_revision_id INTEGER,
+    adopted_at TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    payload TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS plan_tasks (
+    plan_id TEXT NOT NULL,
+    task_id TEXT NOT NULL,
+    topic TEXT NOT NULL,
+    file TEXT NOT NULL,
+    difficulty TEXT NOT NULL,
+    estimated_minutes INTEGER NOT NULL,
+    priority TEXT NOT NULL,
+    reviewed INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (plan_id, task_id)
+);
+
+CREATE TABLE IF NOT EXISTS progress_events (
+    event_id TEXT PRIMARY KEY,
+    plan_id TEXT NOT NULL,
+    task_id TEXT NOT NULL,
+    event TEXT NOT NULL,
+    occurred_at TEXT NOT NULL
+);
 """
 
 
@@ -290,6 +325,110 @@ class SqliteLearningStore:
                 self.db_path.replace(corrupt)
             except OSError:
                 self.db_path.unlink(missing_ok=True)
+
+    # ── M9 计划生命周期持久化 ─────────────────────────────────────────────────
+
+    def save_plan(self, plan: dict[str, Any]) -> None:
+        payload = json.dumps(plan, ensure_ascii=False)
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO plans(
+                    plan_id, schema_version, state, goal, target_date, total_days,
+                    total_hours, parent_revision_id, adopted_at, created_at, updated_at, payload
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(plan_id) DO UPDATE SET
+                    state = excluded.state,
+                    goal = excluded.goal,
+                    target_date = excluded.target_date,
+                    total_days = excluded.total_days,
+                    total_hours = excluded.total_hours,
+                    parent_revision_id = excluded.parent_revision_id,
+                    adopted_at = excluded.adopted_at,
+                    updated_at = excluded.updated_at,
+                    payload = excluded.payload
+                """,
+                (
+                    plan["plan_id"],
+                    plan.get("schema_version", ""),
+                    plan.get("state", "generated"),
+                    plan.get("goal", ""),
+                    plan.get("target_date", ""),
+                    int(plan.get("total_days", 0)),
+                    float(plan.get("total_hours", 0.0)),
+                    plan.get("parent_revision_id"),
+                    plan.get("adopted_at"),
+                    plan.get("created_at", ""),
+                    plan.get("updated_at", ""),
+                    payload,
+                ),
+            )
+            connection.execute("DELETE FROM plan_tasks WHERE plan_id = ?", (plan["plan_id"],))
+            for task in plan.get("tasks", []):
+                connection.execute(
+                    """
+                    INSERT INTO plan_tasks(
+                        plan_id, task_id, topic, file, difficulty,
+                        estimated_minutes, priority, reviewed
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        plan["plan_id"],
+                        task["task_id"],
+                        task.get("topic", ""),
+                        task.get("file", ""),
+                        task.get("difficulty", ""),
+                        int(task.get("estimated_minutes", 0)),
+                        task.get("priority", ""),
+                        1 if task.get("reviewed") else 0,
+                    ),
+                )
+
+    def get_plan(self, plan_id: str) -> dict[str, Any] | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT payload FROM plans WHERE plan_id = ?", (plan_id,)
+            ).fetchone()
+        if row is None:
+            return None
+        return json.loads(row[0])
+
+    def save_progress_event(self, event: dict[str, Any]) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO progress_events(
+                    event_id, plan_id, task_id, event, occurred_at
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    event["event_id"],
+                    event["plan_id"],
+                    event["task_id"],
+                    event["event"],
+                    event["occurred_at"],
+                ),
+            )
+
+    def list_progress_events(self, plan_id: str) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT event_id, plan_id, task_id, event, occurred_at
+                FROM progress_events WHERE plan_id = ? ORDER BY occurred_at
+                """,
+                (plan_id,),
+            ).fetchall()
+        return [
+            {
+                "event_id": row[0],
+                "plan_id": row[1],
+                "task_id": row[2],
+                "event": row[3],
+                "occurred_at": row[4],
+            }
+            for row in rows
+        ]
 
     def _init_schema(self) -> None:
         with self._connect() as connection:

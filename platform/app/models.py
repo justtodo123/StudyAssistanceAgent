@@ -305,3 +305,34 @@ class GoalPlanResponse(BaseModel):
     total_hours: float
     revisions: list[GoalPlanRevision]
     summary: dict[str, Any]
+    state: str = "generated"
+    parent_revision_id: int | None = None
+    adopted_at: str | None = None
+    progress_events: list["PlanProgressEvent"] = Field(default_factory=list)
+
+
+# ── M9 计划生命周期（采纳 / 进度 / 重规划） ───────────────────────────────────
+
+
+class PlanAdoptRequest(BaseModel):
+    """采纳一个已生成的目标驱动计划。"""
+
+    plan_id: str = Field(min_length=1, description="计划 ID")
+
+
+class PlanProgressRequest(BaseModel):
+    """记录一个计划任务的进度事件。"""
+
+    plan_id: str = Field(min_length=1, description="计划 ID")
+    task_id: str = Field(min_length=1, description="任务 ID")
+    event: str = Field(description="进度事件：completed / skipped")
+
+
+class PlanProgressEvent(BaseModel):
+    """一条已记录的进度事件。"""
+
+    event_id: str
+    plan_id: str
+    task_id: str
+    event: str
+    occurred_at: str
