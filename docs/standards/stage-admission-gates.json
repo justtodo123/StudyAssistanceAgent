@@ -330,13 +330,13 @@
         {"id": "M9-EVALUATION", "status": "RESOLVED", "value": "PREREQUISITE_VIOLATION_ZERO__STALE_DELETED_SOURCE_ENTRY_ZERO__DETERMINISTIC_REPLAY_100__BOUNDED_INPUT_PROVABLE__ADHERENCE_QUALITATIVE_FIRST_LATENCY_COST_DEFERRED", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]},
         {"id": "M9-COMPATIBILITY", "status": "RESOLVED", "value": "REVIEW_PLAN_AND_STUDY_SESSION_APIS_UNCHANGED__SQLITE_RECOVERABLE_MIGRATABLE_NO_HISTORY_REWRITE__90_QUESTION_NO_REGRESSION__FALLBACK_TO_DETERMINISTIC_REVIEW_PLAN", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]}
       ],
-      "approval": {"approved_by": "justtodo123", "approved_at": "2026-09-20", "approval_reference": "User instruction: 批准 M9 确定性 Planner 先行（只生成计划，不做采纳/进度/重规划/外部 AI）", "plan_revision": "v1.0", "decision_set_version": "m9-decision-set-v1"},
+      "approval": {"approved_by": "justtodo123", "approved_at": "2026-09-20", "approval_reference": "User instruction: 批准 M9 确定性 Planner 先行并扩展到计划生命周期（生成+采纳+进度+重规划；外部 AI 与 mastery 写入除外）", "plan_revision": "v1.1", "decision_set_version": "m9-decision-set-v1"},
       "approval_scope": {
-        "scope_id": "m9-deterministic-planner-v1",
-        "included": ["m9.goal-plan-generation"],
-        "excluded": ["m9.plan-adoption", "m9.progress-event", "m9.replanning", "m9.external-ai", "m9.mastery-write"]
+        "scope_id": "m9-plan-lifecycle-v1",
+        "included": ["m9.goal-plan-generation", "m9.plan-adoption", "m9.progress-event", "m9.replanning"],
+        "excluded": ["m9.external-ai", "m9.mastery-write"]
       },
-      "implementation_start": {"status": "AUTHORIZED", "authorized_by": "justtodo123", "authorized_at": "2026-09-20", "authorization_reference": "User instruction: 批准 M9 确定性 Planner 先行（只生成计划，不做采纳/进度/重规划/外部 AI）"}
+      "implementation_start": {"status": "AUTHORIZED", "authorized_by": "justtodo123", "authorized_at": "2026-09-20", "authorization_reference": "User instruction: 批准 M9 确定性 Planner 先行并扩展到计划生命周期（生成+采纳+进度+重规划；外部 AI 与 mastery 写入除外）"}
     },
     {
       "stage": "M10",

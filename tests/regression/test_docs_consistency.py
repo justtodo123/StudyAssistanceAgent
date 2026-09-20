@@ -434,7 +434,7 @@ class TestStageAdmissionConsistency:
         )
         assert m9_exit["status"] == "SATISFIED"
         assert m9["approval"]["approved_by"] == "justtodo123"
-        assert m9["approval_scope"]["scope_id"] == "m9-deterministic-planner-v1"
+        assert m9["approval_scope"]["scope_id"] == "m9-plan-lifecycle-v1"
         assert m9["implementation_start"]["status"] == "AUTHORIZED"
 
         m8 = stages["M8"]
