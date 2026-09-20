@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from tools import m8_build_metadata_discovery_scope_candidate as builder
+from tools import m8_build_metadata_discovery_scope_chain as chain_builder
 from tools import m8_git_object_reader as git_reader
 from tools import m8_metadata_discovery_schema as schema
 from tools import m8_validate_metadata_discovery_scope_review as scope_reviewer
@@ -980,3 +981,28 @@ def test_git_reader_rejects_invalid_declared_size(
     monkeypatch.setattr(reader, "_capture", capture)
     with pytest.raises(schema.MetadataGovernanceError, match="size is invalid"):
         reader.read_object(first_commit, "commit")
+
+
+def test_scope_chain_builder_produces_non_authorizing_dispatch(
+    tmp_path: Path, repo_root: Path
+) -> None:
+    repo = tmp_path / "chain-builder-repo"
+    repo.mkdir()
+    _run_git(repo, "init", "-b", "master")
+    _run_git(repo, "config", "user.name", "Scope Governance Tests")
+    _run_git(repo, "config", "user.email", "scope-governance-tests@example.invalid")
+    _commit_file(repo, "bootstrap.txt", b"bootstrap\n", "bootstrap")
+
+    candidate = builder.build_scope_candidate(_commit(repo_root), repo_root)
+    records, dispatch = chain_builder.build_scope_chain(candidate, repo)
+
+    assert dispatch == records[-1]["publication"]
+    assert [record["stage"] for record in records] == list(schema.SCOPE_CHAIN_STAGES)
+    report = scope_reviewer.validate_dispatch_publication(dispatch, repo)
+    assert report == {
+        "execution_counts": _stage_governance()["execution_counts"],
+        "m8_status": "BLOCKED / NOT_STARTED",
+        "status": schema.SCOPE_READY_FOR_EXTERNAL_REVIEW,
+    }
+    assert report["status"] != schema.SCOPE_REVIEW_PASSED
+    assert report["status"] != schema.SCOPE_OWNER_GATE_READY
