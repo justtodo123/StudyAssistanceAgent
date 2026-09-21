@@ -14,7 +14,7 @@
     → RRF 融合（k=60）+ 文件级去重
     → QaService: LLM 生成 | 降级笔记摘要
     → StudySessionService: QA → Quiz → 评估 → review-log
-    → FastAPI 工作台与 /api/v1/{search,qa,qa/stream,quiz,review-plan,review-log,review-due,study-sessions}
+    → FastAPI 工作台与 /api/v1/{search,qa,qa/stream,quiz,review-plan,review-log,review-due,plans,study-sessions}
 ```
 
 **M1d 优化**：课程过滤前移至检索阶段（避免无关课程占位）、RRF 结果按文件去重（同文件只保留最高分 chunk）、摘要截断在句子边界。
@@ -281,6 +281,70 @@ GET /api/v1/review-due?course=os
 响应字段：
 - `entries`: 待复习条目列表，含 `days_overdue`（逾期天数）、`interval_days`（当前间隔）、`review_count`（累计次数）
 - `summary`: 汇总（total_tracked / overdue / due_today / upcoming）
+
+### 目标驱动学习计划（M9）
+
+确定性 Planner：输入 Goal + 可选约束，输出版本化分日计划。不写 mastery、不写学习会话状态、
+不读 chunk 正文、不引入外部 AI。
+
+```
+POST /api/v1/plans
+Content-Type: application/json
+
+{
+  "goal": "两周内掌握进程调度与死锁",
+  "course": "os",
+  "target_date": "2026-10-05",
+  "hours_per_day": 2.0,
+  "constraints": {
+    "required_topics": ["死锁"],
+    "excluded_topics": []
+  }
+}
+```
+
+- `goal`：必填，学习目标（自由文本，1-2000 字符）
+- `course`：可选，课程简称；缺省覆盖全部课程
+- `target_date`：可选，默认 14 天后
+- `hours_per_day`：可选（0.5-8.0），默认 2.0
+- `constraints.required_topics`：置顶必选话题；`constraints.excluded_topics`：排除话题
+
+响应字段：`plan_id`（由 goal + 目标日期 + 课程 + 约束确定性派生）、`schema_version`（`m9-goal-plan-v1`）、
+`revision_id`、`revisions[].days`、`summary`，以及请求回显 `course` / `hours_per_day` / `constraints`
+和状态字段 `state` / `parent_revision_id` / `adopted_at` / `progress_events`。
+
+```
+POST /api/v1/plans/{plan_id}/adopt
+POST /api/v1/plans/{plan_id}/progress
+Content-Type: application/json
+
+{
+  "plan_id": "…",
+  "task_id": "…",
+  "event": "completed"
+}
+
+POST /api/v1/plans/{plan_id}/replan
+Content-Type: application/json
+
+{
+  "goal": "一周内攻克死锁",
+  "constraints": { "excluded_topics": ["死锁"] }
+}
+
+GET /api/v1/plans/{plan_id}
+```
+
+- `adopt`：显式采纳（`generated` → `adopted`），不自动激活
+- `progress`：`event` 取 `completed` / `skipped` / `overdue`；同 plan + task + event 幂等
+- `replan`：偏差任务（跳过 + 逾期）≥ 3，或请求体中任何与已存计划不同的字段（目标/约束变化）即触发；
+  生成 `parent_revision_id` 前向链的新 revision，`replan_reason` 记录触发原因；未触发时原样返回当前计划
+- 逾期信号复用复习排程的 `days_overdue`（只读复习历史，不构建 chunk 索引）
+- `GET`：查询当前 revision、状态与进度事件
+- 旧 revision 只读保留在 `revisions` 列表，新 revision 追加为链尾；同一 Goal/课程/约束重复
+  `POST /api/v1/plans` 命中同一 `plan_id`，不重置已存计划的采纳状态与进度
+- 错误码：`PLAN_NOT_FOUND`（404）、`ILLEGAL_PLAN_PROGRESS_EVENT`（400），见
+  [runtime-contracts.md](../docs/standards/runtime-contracts.md)
 
 ### 学习会话
 

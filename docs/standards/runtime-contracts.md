@@ -70,9 +70,11 @@ HTTP 状态码是传输层；`detail.code` 才是契约。
 | `LLM_GENERATION_FAILED` | 503 | 是 | 预留：生成失败且调用方要求失败而非降级 |
 | `TOOL_PERMISSION_DENIED` | 403 | 否 | 预留：M6b 只读 preview 拒绝写工具 |
 | `BUDGET_EXCEEDED` | 429 | 是 | 预留：M6b 步数/token/cost 预算耗尽 |
+| `PLAN_NOT_FOUND` | 404 | 否 | 目标驱动计划的 plan_id 不存在（采纳/进度/重规划/查询） |
+| `ILLEGAL_PLAN_PROGRESS_EVENT` | 400 | 否 | 进度事件不在 `completed` / `skipped` / `overdue` 词表内 |
 | `WORKER_TOPOLOGY_UNSUPPORTED` | 启动失败 | 否 | 多 worker、第二服务进程、5 秒拿不到 `service.lock`，或设置了不支持的 `SA_INDEX_READONLY` |
 
-已落地的是会话 404/409、工作台 404，以及启动期 `WORKER_TOPOLOGY_UNSUPPORTED`。其余码先入库，M6b/M7 按表使用，不另起名字。
+已落地的是会话 404/409、工作台 404、M9 计划 404/400，以及启动期 `WORKER_TOPOLOGY_UNSUPPORTED`。其余码先入库，M6b/M7 按表使用，不另起名字。
 
 ## 4. 生成质量分层与延迟分位数
 

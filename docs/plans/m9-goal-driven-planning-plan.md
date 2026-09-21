@@ -1,6 +1,6 @@
 # M9 目标驱动学习计划准备计划
 
-> 当前状态：`ADMITTED / IN_PROGRESS`；确定性 Planner + 计划生命周期（生成/采纳/进度/重规划；外部 AI、mastery 写入除外）
+> 当前状态：`ADMITTED / IN_PROGRESS`；确定性 Planner + 计划生命周期（生成/采纳/进度/重规划 + 跳过/逾期偏差信号；外部 AI、mastery 写入除外）
 > 前置：M7 用户源生命周期与 M8 存储契约退出证据
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
@@ -91,6 +91,32 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 source grounding 与先修关系，而非只检查 JSON 可解析。退出条件包括正式 mastery 只有一个写入权威、计划可重放、
 Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入、默认学习闭环与 90 题不退化、无 LLM 路径可
 运行，以及冻结评测达标。
+
+### 5.1 实现进度
+
+| 步骤 | 状态 | 证据 |
+| --- | --- | --- |
+| 1 冻结 planner input / plan / mastery / progress event schema | 部分 | `tests/M9/test_goal_planner.py`；mastery schema 尚未落到只读投影 |
+| 2 确定性规则生成最小计划 + 验证 API/SQLite 兼容 | 已完成 | `tests/M9/test_goal_planner.py`、`tests/M9/test_plan_lifecycle.py` |
+| 3 只读 mastery snapshot / topic graph / Source 摘要 | 未开始 | 逾期投影已接入复习排程，mastery 投影仍缺 |
+| 4 按需受限检索与 stale/deleted Source 拒绝 | 未开始 | 属 M9 后续增量，未获批前不实现 |
+| 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放 |
+| 6 可选外部 AI adapter 与冻结任务集比较 | 未开始 | 外部 AI 在 `m9-plan-lifecycle-v1` 范围外 |
+
+偏差信号实现约定：逾期复用 `ReviewSchedulerService.overdue_by_file()` 的 `days_overdue`（只读复习历史，
+不构建 chunk 索引，保持 Planner 输入有界）；偏差按 task_id 去重后计数，跳过与逾期不重复计入同一任务；
+`replan` 记录 `replan_reason` 以便审计重规划由何触发。Plan 记录自描述（回显 `course` / `hours_per_day` /
+`constraints`），重规划据此保真还原范围；旧 revision 只读保留，`revision_id` 与 `parent_revision_id`
+构成前向链。`persist_generated` 幂等：同一 plan_id 重复生成不重置已存计划状态。
+
+已知未决项（不阻塞当前范围，需 owner 决定后再改触发语义）：偏差是累计而非「自上次重规划以来」，
+因此在偏差未消解时反复调用 `replan` 会持续产生内容相同的新 revision。当前按已 `RESOLVED` 的
+`M9-EXECUTION-DEVIATION` 字面实现（偏差 ≥ 3 即触发）。
+
+跨阶段登记：M9 的 5 条公开路由（`/api/v1/plans` 与 `{plan_id}` 的查询/采纳/进度/重规划）已补登到
+`tests/M6a/test_closeout_contracts.py` 的 `PUBLIC_API_PATHS`。该集合是「有意公开面」的登记表，
+断言仍会在出现任何未登记路径时失败；这是对存量测试的唯一改动，若 owner 不认可可回退该 8 行并改按
+已知基线失败记录。
 
 ## 6. 撤销与后续边界
 

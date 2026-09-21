@@ -4,8 +4,9 @@
 > **双目标**：① 按用户目标把任意知识源学完（产品价值）；② 可讲清 Agent harness / RAG / 计划执行（工程价值）。
 > 状态图例：⬜ 未开始 ｜ 🔄 进行中 ｜ ✅ 完成
 > **当前阶段**：M6a、M6b、M7 均为 `ADMITTED / COMPLETE`；M7 基础设施范围已获批，生产开工门禁为
-> `AUTHORIZED`，并于 2026-09-06 在独立人工完成批准后成为 `ADMITTED / COMPLETE`；M8–M10 的事实型
-> M7 退出前置已满足，但 M8–M12 自身仍为 `BLOCKED / NOT_STARTED`；M8 active execution protocol `draft-0.10`
+> `AUTHORIZED`，并于 2026-09-06 在独立人工完成批准后成为 `ADMITTED / COMPLETE`；M9 于 2026-09-20 在
+> `m9-plan-lifecycle-v1` 范围内获批为 `ADMITTED / IN_PROGRESS`；M8 与 M10–M12 自身仍为
+> `BLOCKED / NOT_STARTED`；M8 active execution protocol `draft-0.10`
 > 曾完成 P0/P1/P2 并到达 `BINDING_FROZEN`，但 2026-09-14 独立 P3 文本审计因三项阻断性
 > schema/治理闭合缺陷判定 `REJECTED / stop`（`FAILED / RETURNED`）。不得 `request-p4`，且未授权或执行任何
 > experiment root 创建、依赖获取、输入准备、benchmark、发布、后端选择或 M8 admission。
@@ -133,7 +134,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 - **完整退出条件**：✅ 会话可跨重启恢复；工作台可完成学习闭环；离线 CI 与一键启动已落地；阶段测试、回归和平台测试保持通过。
 - **收口结论**：M5 作为 MVP 关闭。默认学习闭环与离线交付不再回退；通用运行时与可插拔数据源改由 M6 起按路线图建设。
 
-### M6–M12：通用学习 Agent Harness 与规模化落地（M6a/M6b/M7 已完成，M8–M12 仍阻断）
+### M6–M12：通用学习 Agent Harness 与规模化落地（M6a/M6b/M7 已完成，M9 进行中，M8 与 M10–M12 仍阻断）
 > **最终依据**：本节（M6–M12）。辅助分析见 `docs/plans/references/`，冲突时以本文为准。
 > **统一门禁**：[`stage-admission-gates.md`](standards/stage-admission-gates.md) 定义决策、准入、撤销与禁止事项；
 > [`stage-admission-gates.json`](standards/stage-admission-gates.json) 只用于机器检查，不能单独批准阶段。
@@ -147,7 +148,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
 | M7 | `ADMITTED` | `COMPLETE` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策、保护基线、Source lifecycle/delete/isolation/fallback、冻结 1k/3k BGE 与五格式 100×20 parser/normalized/lifecycle 证据已闭合。原 2026-08-31 准入与开工授权保持不变；justtodo123 于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内独立批准 `M7 COMPLETE`。技术证据本身不产生批准；M6b preview、Quiz、Review Plan 与 study-sessions 仍不含用户源 |
 | M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | 八项 Decision 已 `RESOLVED`；`draft-0.10` P3 拒绝链冻结；`draft-0.11` 独立 P3 已 `REJECTED / stop`，失败链冻结；执行、后端选择和 admission 未授权；100K 专业化存储容量验证暂缓，现有 SQLite 线性余弦 + BM25 满足当前个人规模 |
-| M9 | `BLOCKED` | `NOT_STARTED` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT`、`M9-M8-EXIT`（维持当前 SQLite/BM25 后端）均已 `SATISFIED`；八项强制决策、计划/mastery 权威设定与独立批准仍 `OPEN` |
+| M9 | `ADMITTED` | `IN_PROGRESS` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT`、`M9-M8-EXIT`（维持当前 SQLite/BM25 后端）均已 `SATISFIED`；八项强制决策全部 `RESOLVED`；justtodo123 于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内批准开工（生成 + 采纳 + 进度 + 偏差重规划；外部 AI 与 mastery 写入除外）。确定性 Planner、计划生命周期与跳过/逾期偏差信号已实现；评测 workload 与 mastery 只读投影尚未完成 |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | `M10-M7-EXIT=SATISFIED`；仍等待 M8/M9，写授权、恢复、rollout 与独立批准仍 `OPEN` |
 | M11 | `BLOCKED` | `NOT_STARTED` | [`m11-data-scaling-plan.md`](plans/m11-data-scaling-plan.md) | 拟议真实数据规模化阶段；正式退出目标为 10K approved chunks，3K 为先行 Gate，全部 Decision 与批准 `OPEN` |
 | M12 | `BLOCKED` | `NOT_STARTED` | [`m12-cloud-deployment-plan.md`](plans/m12-cloud-deployment-plan.md) | 拟议可选云端单用户部署；本地离线仍为默认，服务器 baseline、十三项 Decision 与批准全部 `OPEN` |
@@ -160,9 +161,10 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 **依赖顺序**：M6b 与 M7 都只依赖 M6a 退出证据，彼此不互为前置。M7 已完成 Source Registry、
 source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline fail-closed、Search/QA overlay 与冻结技术验收，
 并于 2026-09-06 取得独立完成批准。因此 M8/M9/M10 的事实型 M7 退出前置均为 `SATISFIED`；这不批准任何下游阶段。
-M8 的八项政策 Decision 已闭合，但仍须完成新实证协议、后端选择和人工 admission；M9 仍依赖 M8，M10 仍依赖
-M8–M9；M11 拟依赖 M8–M10 的真实退出并交付 10K approved chunks；M12 拟依赖 M8–M11 并交付可选云端单用户
-profile。所有阶段都不以 M6b 为写路径或 Source 生命周期前置。
+M8 的八项政策 Decision 已闭合，但仍须完成新实证协议、后端选择和人工 admission；M9 的 M8 退出前置已通过
+「维持当前 SQLite/BM25 后端」分支满足（100K 专业化存储容量验证暂缓），但 M9 不因此获得 M8 的 100K 数据面
+或执行授权；M10 仍依赖 M8–M9 退出；M11 拟依赖 M8–M10 的真实退出并交付 10K approved chunks；M12 拟依赖
+M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为写路径或 Source 生命周期前置。
 
 - ✅ **M6a-P0 crawler 前置收口**：`tests/M6_crawler` 使用独立 marker `m6_crawler`；离线测试 mock HTTP；
   CI job `crawler-offline` 安装 `tools/crawler/requirements.txt` 并跑 `-m "m6_crawler and not online"`。
@@ -258,9 +260,10 @@ profile。所有阶段都不以 M6b 为写路径或 Source 生命周期前置。
   完成 P0 技术文字接受，并由 owner `justtodo123` 完成 P1/P2；全新 identity、parent-binding 与 repository-binding 已
   冻结；独立 reviewer `external-reviewer-01` 已判定 draft-0.11 P3 `REJECTED / stop`，记录 14 项阻断 finding；
   未授权建根、依赖、输入、执行、发布、后端选择或 M8 admission。
-- ⬜ **M9 目标驱动计划**：准备计划见
-  [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md)；planner/mastery schema、唯一写入权威、
-  偏差重规划、外部 AI 隐私/fallback 和评测阈值未闭合前保持阻断。
+- 🔄 **M9 目标驱动计划**：执行计划见
+  [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md)；八项强制决策已 `RESOLVED` 并在
+  `m9-plan-lifecycle-v1` 范围内获批开工，确定性生成、采纳/进度/重规划与跳过+逾期偏差信号已实现。
+  外部 AI 隐私/fallback、mastery 只读投影与评测 workload 未闭合前不得扩大范围。
 - ⬜ **M10 完整自主 Runner 与 Harness 对外**：准备计划见
   [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md)；在 M7–M9 退出后仍须先闭合写授权、
   checkpoint、幂等、EffectLedger、恢复、Agent 评测、manifest、MCP 和 rollout。状态机继续作为正式默认和
