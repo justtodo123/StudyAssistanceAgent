@@ -1,8 +1,9 @@
 # M9 目标驱动学习计划测试
 
-验证确定性 Planner 的完整链路：Goal + 约束 + 只读复习与三个只读投影（**mastery** / 授权 **Source 摘要** /
+验证确定性 Planner 的完整链路：Goal + 约束 + 四个只读投影（**复习历史** / **mastery** / 授权 **Source 摘要** /
 **先修关系 topic graph**）→ 版本化、可重放的分日计划，以及采纳 / 进度事件 / 偏差触发的版本化重规划。
-三个投影都是纯读（不写领域状态、不构建 chunk 索引、不读原始 chunk 正文，不引入外部 AI）。
+四个投影都是纯读（不写领域状态、不构建 chunk 索引、不读原始 chunk 正文，不引入外部 AI），
+且都以**活对象**注入，使计划身份与排序随答题 / 复习状态刷新。
 `test_plan_grounding.py` 覆盖其后的**受限检索接缝**：Planner 按需取回有界 grounding 证据，
 并在接缝上独立交叉校验用户源可用性。
 
@@ -19,8 +20,9 @@
 | `test_topic_graph_projection.py` | frontmatter 行内列表解析（含块状形式被静默丢弃的陷阱）、同目录兄弟边解析与嵌套目录不跨目录连边、丢弃规则、环与环下游诊断、零写入与每条目恰好解析一次、空图等价于无图的逐字节不变量、真图拓扑序与 `violations` 三种成因、置顶闭包交互、60 条语料数据完整性 |
 | `test_plan_grounding.py` | 受限检索接缝：四类预算各自生效与放宽被拒、stale/deleted/未发布/未就绪/禁用/待删源在接缝上被丢弃（真 registry + 真投影端到端）、无 principal 与投影不可用时的 fail-closed、畸形 provenance、真只读守卫、证据有界 |
 | `test_plan_identity.py` | 计划身份按 principal 分隔（带标签段、7 例参数化、`goal` 伪造 `\|principal=` 段不碰撞）与反 churn 逐字节护栏（对合成任务对比旧公式，不依赖语料）、进度事件不跨 principal 污染、`summary` 落记录、replan 还原 principal 与源范围、principal 不出现在任何读取路径、源码级单点剥离护栏 |
+| `test_review_history_projection.py` | 复习历史活投影：只返回成员资格（不交 payload）、刻意不缓存、恰好一次批量读、无写面（import 级 AST 扫描 + 连接级 `total_changes` 审计 + 库快照比对）、**构造 Planner 之后落的复习必须可见**（旧代码下必失败的缺陷证明）、快照参数仍冻结、`plan_id` 随复习变化、`main.py` 装配护栏 |
 
-## 六条关键约定
+## 七条关键约定
 
 - **聚合身份是知识条目的 file 路径**，不是 `study_sessions.topic` 那样的自由文本。解析顺序与
   `StudySessionService._log_review` 一致（检索出处 → 出题出处 → `knowledge/{course}/{topic}.md` 回退）；
@@ -51,6 +53,14 @@
   既有计划 id 不 churn。principal 是**内部记录键**，`get` / `adopt` / `replan` 的每个返回点都过单点
   函数 `_public_plan`，故「不进响应体」是结构保证而非逐点过滤；`GoalPlanRequest` / `GoalPlanResponse`
   都没有该字段，因此也不进 OpenAPI schema。
+- **只读输入必须是活对象，不能是构造时求值的快照**：`main.py` 原先把
+  `review_history=_learning_store.all_reviews()` 传给 Planner，那是**构造时求值一次**的快照，于是同一进程内
+  新记录的复习永不反映到计划上——`reviewed` 标志、排序优先级，以及经 `_derived_digest` 参与 `plan_id` 的
+  身份全部停在进程启动时刻；而紧邻的 mastery 投影刻意传活对象（注释原文「使计划身份与排序随答题状态刷新」），
+  两条同源只读输入一个冻结一个实时。现由 `ReviewHistoryProjection` 补齐，形状对齐既有三个只读投影，
+  每轮 `generate` 只重读一次（生成途中落库的新复习不能让不同任务看到两个快照）；未注入投影时回落到构造时的
+  快照，故既有调用方行为逐字节不变。**该守卫必须钉在 `main.py` 的装配上**——本目录其余用例直接构造
+  `GoalPlannerService`，把装配改回快照它们仍然全绿，而缺陷原本就长在装配上。
 
 ## 命令
 

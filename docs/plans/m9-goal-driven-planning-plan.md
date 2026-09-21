@@ -148,6 +148,7 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | 3 只读 mastery snapshot / topic graph / Source 摘要 | 已完成 | mastery 投影：`platform/app/mastery_projection.py`、`tests/M9/test_mastery_projection.py`；授权 Source 摘要：`platform/app/source_summary_projection.py`、`tests/M9/test_source_summary_projection.py`；topic graph（先修关系）：`platform/app/topic_graph_projection.py`、`tests/M9/test_topic_graph_projection.py`。三者均已接入确定性 Planner |
 | 4a 受限检索接缝与四类预算（`m9.bounded-grounding-retrieval`） | 已完成 | `platform/app/plan_grounding.py`、`tests/M9/test_plan_grounding.py`；装配于 `main.py` |
 | 4b principal 内部接缝与计划身份往返保真（`m9.plan-identity-fidelity`） | 已完成 | `tests/M9/test_plan_identity.py`；`platform/app/goal_planner.py` 的身份键与 `platform/app/plan_lifecycle.py` 的往返保真 |
+| 4c 复习历史活投影（`m9.review-history-projection`）——步骤 3 已记录残留的修复，**非**范围扩张 | 已完成 | `platform/app/review_history_projection.py`、`tests/M9/test_review_history_projection.py`；装配于 `main.py` |
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
 | 6 可选外部 AI adapter 与冻结任务集比较 | 未开始 | 外部 AI 在 `m9-plan-lifecycle-v1` 范围外 |
 
@@ -405,9 +406,9 @@ mastery 字段**只落 payload**，不给 `plan_tasks` 表加列（该表只写�
 `POST /api/v1/plans` 与 `replan` 可达，`PUBLIC_API_PATHS` 未改动。`tests/M9` 自本次起纳入
 `.github/workflows/offline-ci.yml` 的阶段命令。同阶段测试修复：`tests/M9/test_goal_planner.py::test_planner_does_not_write_state`
 此前是**空转**的（构造了 Spy 却从未注入，`spy.saves == 0` 恒真），已改为真 store + 写入口全 fail +
-连接级 `total_changes` 审计 + 库快照比对的真守卫，用例名保留。残留（不在本次范围，如实记录）：
-`main.py` 仍在 import 时把 `all_reviews()` 冻结成快照，故 `reviewed` 在进程生命周期内不更新；
-mastery 投影是实时的，因此计划身份与排序仍会随答题变化刷新。
+连接级 `total_changes` 审计 + 库快照比对的真守卫，用例名保留。**当时记录的残留已由步骤 4c 修复**：
+`main.py` 原先在 import 时把 `all_reviews()` 冻结成快照，故 `reviewed` 在进程生命周期内不更新，而紧邻的
+mastery 投影是实时的——两条同源只读输入一个冻结一个实时。详见下方「复习历史活投影（步骤 4c）」。
 
 计划身份往返保真（步骤 4b）实现约定：
 
@@ -459,6 +460,45 @@ mastery 投影是实时的，因此计划身份与排序仍会随答题变化刷
 
 (j) **仍未闭合**：与 4a 同——评测 workload 冻结（§5 步骤 6）与外部 AI 仍在 `m9-plan-lifecycle-v1` 之外，
 本增量不使 M9 达到退出条件。`tests/M9` 自本次起 219 → 245 项。
+
+复习历史活投影（步骤 4c）实现约定：
+
+(a) **这不是范围扩张**：步骤 3 交付时已把「`main.py` 仍在 import 时把 `all_reviews()` 冻结成快照」逐字
+记为残留，本增量只是把它修掉。批准字段（`approval_scope` / `approval_reference` / `plan_revision`）与
+`admission_history` 均**未改动**——能力 id `m9.review-history-projection` 是既有 `m9-plan-lifecycle-v1`
+范围内的实现项，不是新边界。
+
+(b) **缺陷定性**：Planner 本身没错，错在**装配**。`main.py` 传的是
+`review_history=_learning_store.all_reviews()`——构造时求值一次的快照，于是同一进程内新记录的复习永不
+反映到计划上：`reviewed` 标志、排序优先级，以及经 `_derived_digest` 参与 `plan_id` 的身份全部停在进程
+启动时刻。紧邻的 mastery 投影刻意传活对象（注释原文「使计划身份与排序随答题状态刷新」），两条同源只读
+输入一个实时一个冻结。
+
+(c) **修法**：新增 `ReviewHistoryProjection`（形状对齐 `mastery_projection` / `source_summary_projection` /
+`topic_graph_projection`），`main.py` 注入活对象；`GoalPlannerService._reviews()` 每轮重读投影，未注入时
+回落到构造时的快照，故既有调用方行为逐字节不变。投影**只返回成员资格**（`frozenset[str]`）——Planner 只用
+`file in reviewed`，从不读 review payload，把 payload 交出去会凭空给出一条调用方并不需要、也无从审计的
+读取路径。
+
+(d) **整轮只读一次**：`generate` 开头取一次 `reviews = self._reviews()` 再传给 `_build_tasks`，与 `mastery`
+同形。否则生成途中若有新复习落库，不同任务会看到两个快照，排序与派生摘要就基于不一致的输入。
+
+(e) **变异验证**：把 `main.py` 装配改回冻结快照 → **恰好 1 项**失败（`test_main_wires_a_live_review_history_projection`，
+即装配护栏本身）；把 `_reviews()` 改回恒读快照 → 4 项失败。两道守卫都不是空转。
+
+(f) **装配护栏单独存在是必要的**：本文件其余用例直接构造 `GoalPlannerService`，因此**不覆盖 `main.py` 的
+装配**——把装配改回快照，它们仍然全绿。缺陷原本就长在装配上，故守卫必须钉在装配上，否则「修好了」这句话
+没有证据。
+
+(g) **迁移语义（诚实残留）**：进程内新记录的复习**现在会改变 `plan_id`**（`reviewed` 参与
+`_derived_digest`）。这与既有 docstring「复习/mastery 状态变化后会得到新的 plan_id」一致，只是此前该承诺
+在复习这一侧**不成立**（mastery 侧成立）。旧 `plan_id` 仍可 `GET` / `adopt` / `progress` / `replan`
+（主键查找，读时不重算），**不回填、不改写**。未 bump `SCHEMA_VERSION`：记录 schema 未变。
+
+(h) **未新增公开路由**：纯装配改动，`PUBLIC_API_PATHS` 与路由 docstring 均未改动。
+
+(i) **仍未闭合**：与 4a / 4b 同——评测 workload 冻结（§5 步骤 6）与外部 AI 仍在 `m9-plan-lifecycle-v1`
+之外，本增量不使 M9 达到退出条件。`tests/M9` 自本次起 245 → 263 项。
 
 跨阶段登记（owner 已追认）：M9 的 5 条公开路由已补登到 `tests/M6a/test_closeout_contracts.py` 的
 `PUBLIC_API_PATHS`，逐项为 `/api/v1/plans`、`/api/v1/plans/{plan_id}`、`/api/v1/plans/{plan_id}/adopt`、
