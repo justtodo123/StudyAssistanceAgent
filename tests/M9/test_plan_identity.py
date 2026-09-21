@@ -376,9 +376,18 @@ def test_principal_is_not_a_field_of_any_plan_model() -> None:
         assert PRINCIPAL_RECORD_KEY not in models.__dict__[name].model_fields, name
 
 
-#: 会被 HTTP 路由直接返回的公开方法（`main.py` 逐个调用它们）。`persist_generated` 返回 None，
-#: `record_progress` 返回 `PlanProgressEvent`（不含计划记录），故不在其列。
-_PUBLIC_RETURNING_METHODS = ("get", "adopt", "replan")
+def _public_methods() -> list[str]:
+    """`PlanLifecycleService` 的全部公开方法名。
+
+    **动态枚举而非硬编码名单**：写死 `("get", "adopt", "replan")` 的话，将来新增一个
+    `def summarize(self): return plan` 就能悄悄绕过下面那道护栏。这里扫类上所有非下划线开头
+    的可调用属性，新增方法自动进入扫描范围。
+    """
+    return sorted(
+        name
+        for name, member in inspect.getmembers(PlanLifecycleService, callable)
+        if not name.startswith("_")
+    )
 
 
 def test_service_returns_go_through_public_plan() -> None:
@@ -390,7 +399,7 @@ def test_service_returns_go_through_public_plan() -> None:
     落盘与还原都依赖完整记录。
     """
     offenders: list[str] = []
-    for name in _PUBLIC_RETURNING_METHODS:
+    for name in _public_methods():
         for line in inspect.getsource(getattr(PlanLifecycleService, name)).splitlines():
             if re.match(r"\s*return\s+(self\._require_plan\(|plan$|record$)", line):
                 if "_public_plan" not in line:
@@ -398,13 +407,17 @@ def test_service_returns_go_through_public_plan() -> None:
     assert offenders == [], f"returns a raw plan record: {offenders}"
 
 
-def test_public_returning_methods_actually_return_something() -> None:
-    """护栏的护栏：上面那份方法名单必须真的覆盖到返回计划记录的公开方法。
+def test_public_method_scan_covers_the_routes() -> None:
+    """护栏的护栏：扫描集合必须非空，且覆盖 `main.py` 真正调用的那几个返回计划的方法。
 
-    否则把名单改成空元组就能让 `test_service_returns_go_through_public_plan` 空转通过。
+    否则把 `_public_methods` 改成返回空列表，`test_service_returns_go_through_public_plan`
+    就会空转通过。
     """
-    assert set(_PUBLIC_RETURNING_METHODS) == {"get", "adopt", "replan"}
-    for name in _PUBLIC_RETURNING_METHODS:
+    scanned = set(_public_methods())
+    assert {"get", "adopt", "replan"} <= scanned
+    # 三个返回计划记录的方法确实都过了 `_public_plan`；`persist_generated` 返回 None，
+    # `record_progress` 返回 PlanProgressEvent，两者不含计划记录，故不要求。
+    for name in ("get", "adopt", "replan"):
         assert "_public_plan" in inspect.getsource(getattr(PlanLifecycleService, name)), name
 
 
