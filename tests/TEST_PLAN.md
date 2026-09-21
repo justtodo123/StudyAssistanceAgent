@@ -604,6 +604,18 @@ pytest tests/ -v -n auto
 
 - ❌ **不要**修改 `tests/conftest.py` 的已有 fixtures（只能追加）
 - ❌ **不要**修改其他阶段的测试文件；若已冻结的公开契约与安全/隐私不变量直接冲突，必须在获批计划中逐项记录唯一迁移例外
+- ⚠️ **已知缺口：后续阶段新增默认公开路由没有合法渠道**（2026-09-21 记录）。上述唯一例外只覆盖「与安全/隐私
+  不变量直接冲突」，但 `tests/M6a/test_closeout_contracts.py::test_openapi_public_paths_remain_exact` 断言的是默认
+  公开面的**精确集合**（同时断言子集与「无未登记路径」）。因此后续阶段只要新增一条**默认开启**的公开路由，该断言
+  必然失败；而该测试在 `offline-ci.yml` 中运行且无 `continue-on-error`，回退会让 CI 永久变红，且仓库规则中不存在
+  「已知基线失败」这一记录类别可登记。结论：现行规则下，后续阶段新增默认公开路由**没有合法登记渠道**。
+  - 先例：M9 的 5 条 `/api/v1/plans*` 路由由 `f03d205` 登记进 `PUBLIC_API_PATHS`（纯追加 8 行，未改动既有断言）；
+    owner 于 2026-09-21 追认为**一次性迁移例外**，逐项记录在 `docs/plans/m9-goal-driven-planning-plan.md`。该追认
+    不满足原例外的字面前提（公开面扩张，非安全/隐私冲突），属 owner 对例外机制的一次性扩展。
+  - 历史先例（已核实）：本红线在 M9 之前已被越过两次，且均未登记迁移例外——`5eae89e`（2026-09-11，M6a 冻结后
+    16 天）重构了 `tests/M6a/test_closeout_contracts.py` 的 markdown 链接 helper；`ee73dd2`（2026-09-06，M7）
+    改写了 `tests/M6b/test_preview_service.py`。M9 的 `f03d205` 是其中**唯一**有记录的一次。
+  - 后续同类改动：必须同样在获批计划中**逐项列出**新增路由，并经 owner 明确追认后方可登记；不得默认沿用。
 - ✅ 可以在 `tests/regression/` 新增回归用例
 - 本次 `/health.knowledge_root` 从宿主路径迁移为逻辑标识 `knowledge-pack`，仅收紧
   `tests/M3b/test_health_enhanced.py::test_health_shows_knowledge_root` 的旧 suffix 断言；其他历史阶段测试保持不变

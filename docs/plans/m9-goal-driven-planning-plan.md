@@ -154,10 +154,29 @@ task_id 集合减去台账里已消费的并集。台账键 `deviation_ledger` �
 升级行为：改造前的旧库没有 `deviation_ledger` 键，缺键即空集，因此首次重规划会按「累计」语义
 多产生一个 revision，写入台账后即收敛到新语义；不需要回填迁移。
 
-跨阶段登记：M9 的 5 条公开路由（`/api/v1/plans` 与 `{plan_id}` 的查询/采纳/进度/重规划）已补登到
-`tests/M6a/test_closeout_contracts.py` 的 `PUBLIC_API_PATHS`。该集合是「有意公开面」的登记表，
-断言仍会在出现任何未登记路径时失败；这是对存量测试的唯一改动，若 owner 不认可可回退该 8 行并改按
-已知基线失败记录。
+跨阶段登记（owner 已追认）：M9 的 5 条公开路由已补登到 `tests/M6a/test_closeout_contracts.py` 的
+`PUBLIC_API_PATHS`，逐项为 `/api/v1/plans`、`/api/v1/plans/{plan_id}`、`/api/v1/plans/{plan_id}/adopt`、
+`/api/v1/plans/{plan_id}/progress`、`/api/v1/plans/{plan_id}/replan`。改动纯追加（8 行 = 5 条路由 + 3 行注释，
+0 删除），未改动任何既有断言，`test_openapi_public_paths_remain_exact` 仍同时断言子集与「无未登记路径」。
+
+这是 owner 于 2026-09-21 **追认**的一次性迁移例外。诚实记录两点：
+
+1. 它**不满足** `tests/TEST_PLAN.md` §5.2 唯一例外的字面前提——§5.2 允许改存量测试的条件是「已冻结的公开契约
+   与安全/隐私不变量直接冲突」，而本次是公开面**扩张**，不是隐私冲突。该追认属 owner 作为唯一权威对例外机制的
+   一次性扩展，不是「规则本就允许」。
+2. 之所以不选回退：M6a 的 `test_openapi_public_paths_remain_exact` 断言的是默认公开面的**精确集合**，回退会使
+   `.github/workflows/offline-ci.yml` 永久变红（该测试在 CI 中运行且无 `continue-on-error`），而仓库规则中不存在
+   「已知基线失败」这一记录类别可供登记；同时回退会摧毁该断言的信号——在已失败于 5 条已知路径之后，后续第 6 条
+   未登记路由会淹没在噪声里。§5.2 的规则缺口已记录在 `tests/TEST_PLAN.md`。
+
+顺带更正一处过期表述：`docs/plans/m6b-agent-core-plan.md` §0.1.1 的继承不变量「默认路由集合不变」在 M9 之后已不
+再字面成立（新增 5 条默认开启路由，属**追加式**变更，未删除或改动任何既有路由）。该行是 M6b 阶段的历史记录，
+不予改写；当前事实以本段为准。
+
+另更正一处事实错误：登记提交 `f03d205` 的正文声称「This is the only edit to a prior stage's test file」，
+该说法不成立——已核实 `5eae89e`（2026-09-11，M6a 冻结后 16 天）改过同一个 M6a 文件，`ee73dd2`（2026-09-06，M7）
+改过 `tests/M6b/test_preview_service.py`。历史提交正文无法追溯改写，故在此更正。这也意味着 §5.2 的红线在 M9 之前
+已被越过两次且均无记录，M9 的登记是这几例中唯一有记录的一次。
 
 ## 6. 撤销与后续边界
 
