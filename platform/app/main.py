@@ -50,6 +50,7 @@ from .quiz import QuizService
 from .retrieval import MultiRecallService, RetrievalScope
 from .snapshot_publisher import CombinedSnapshotPublisher
 from .source_summary_projection import LazySourceSummaryProjection
+from .topic_graph_projection import TopicGraphProjection
 from .user_source_search import LazyUserSourceSearch
 from .worker_topology import (
     ServiceLock,
@@ -96,10 +97,13 @@ _mastery_projection = MasteryProjectionService(_learning_store)
 # 授权 Source 只读摘要：懒装配。registry 库不存在时不打开控制面，且绝不因缺库而建库
 # （`SqliteSourceRegistry.__init__` 会 mkdir 建表，故守卫必须在构造之前）。
 _source_summary = LazySourceSummaryProjection(config.SOURCE_REGISTRY_PATH)
+# 先修关系只读投影：只读 frontmatter，构造无副作用（不建库、不 mkdir），故不需要懒装配。
+_topic_graph = TopicGraphProjection()
 _goal_planner = GoalPlannerService(
     review_history=_learning_store.all_reviews(),
     mastery_projection=_mastery_projection,
     source_summary=_source_summary,
+    topic_graph=_topic_graph,
 )
 _plan_lifecycle = PlanLifecycleService(
     _learning_store,

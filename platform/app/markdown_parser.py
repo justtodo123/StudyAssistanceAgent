@@ -7,6 +7,19 @@ from typing import Any
 
 _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 _YAML_FIELD_RE = re.compile(r"^(\w[\w-]*)\s*:\s*(.*)$")
+# 值按行内列表解码的键。其余键一律保留为字符串——刻意不「看到方括号就当列表」，
+# 那会改变既有消费方对未知键的取值形态。
+_LIST_FIELDS = frozenset({"tags", "prerequisites"})
+
+
+def _decode_inline_list(value: str) -> list[str]:
+    """`[a, b]` → `['a', 'b']`；非列表值按单项处理，空值得到空列表。
+
+    只支持**行内**形式：块状 YAML（后续行写 `- a`）不匹配 `_YAML_FIELD_RE`，会被静默丢弃成
+    空列表。该陷阱由 `tests/M9/test_topic_graph_projection.py` 的数据完整性用例钉住。
+    """
+    items = value.strip().strip("[]").split(",")
+    return [item.strip().strip('"').strip("'") for item in items if item.strip()]
 
 
 def parse_frontmatter(text: str) -> dict[str, Any]:
@@ -20,8 +33,8 @@ def parse_frontmatter(text: str) -> dict[str, Any]:
         if not field:
             continue
         key, value = field.group(1), field.group(2).strip().strip('"').strip("'")
-        if key == "tags":
-            value = [tag.strip().strip('"') for tag in value.strip("[]").split(",") if tag.strip()]
+        if key in _LIST_FIELDS:
+            value = _decode_inline_list(value)
         else:
             value = value.strip()
         data[key] = value
