@@ -3,6 +3,13 @@
 from __future__ import annotations
 
 import json
+import re
+
+
+# docs/PLAN.md 里程碑表的一行：`| M9 | `ADMITTED` | `IN_PROGRESS` | ... |`
+_MILESTONE_ROW = re.compile(
+    r"^\|\s*(M\d+[a-z]?)\s*\|\s*`([A-Z_]+)`\s*\|\s*`([A-Z_]+)`\s*\|"
+)
 
 
 def _read(repo_root, relative_path: str) -> str:
@@ -23,7 +30,7 @@ class TestProjectStatusConsistency:
         assert "M6a-P0 crawler 已收口" in root
         assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in plan
         assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in root
-        assert "M8–M12" in root
+        assert "M8 与 M10–M12" in root
         assert "M6–M12" in plan
         for text in (root, plan):
             assert "BLOCKED / NOT_STARTED" in text
@@ -33,7 +40,8 @@ class TestProjectStatusConsistency:
         assert "独立人工完成批准" in root
         assert "M8–M10 的事实型" in root
         assert "M7 退出前置已满足" in root
-        assert "M8–M12 仍为 `BLOCKED / NOT_STARTED`" in root
+        assert "M8 与 M10–M12 仍为 `BLOCKED / NOT_STARTED`" in root
+        assert "M9 八项 Decision 已 `RESOLVED`" in root
         assert "M0–M5 MVP 可用。" in root
         assert "M10" in root and "自主 Runner" in root
         assert "课程笔记创建" not in root
@@ -665,6 +673,29 @@ class TestStageAdmissionConsistency:
         assert "不接管 `/api/v1/study-sessions`" in plan
         assert "状态机继续作为正式默认" in plan
         assert "无 LLM 降级路径" in plan
+
+    def test_plan_milestone_table_matches_registry(self, repo_root):
+        """`docs/PLAN.md` 是准入权威，其里程碑表必须与 JSON 登记表逐行一致。
+
+        回归：M9 曾在登记表已改为 `ADMITTED / IN_PROGRESS` 后仍停留在
+        `BLOCKED / NOT_STARTED`，权威文档因此失真，而既有断言只检查阶段名出现。
+        """
+        registry = _load_admission_registry(repo_root)
+        plan = _read(repo_root, "docs/PLAN.md")
+
+        rows: dict[str, tuple[str, str]] = {}
+        for line in plan.splitlines():
+            match = _MILESTONE_ROW.match(line)
+            if match:
+                rows[match.group(1)] = (match.group(2), match.group(3))
+
+        for stage in registry["stages"]:
+            expected = (stage["admission_status"], stage["delivery_status"])
+            assert rows.get(stage["stage"]) == expected, (
+                f"{stage['stage']} milestone row {rows.get(stage['stage'])} "
+                f"does not match registry {expected}"
+            )
+        assert set(rows) == {stage["stage"] for stage in registry["stages"]}
 
     def test_prd_defers_to_plan_registry_and_stage_gates(self, repo_root):
         prd = _read(
