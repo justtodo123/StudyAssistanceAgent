@@ -39,6 +39,7 @@ from .models import (
 )
 from .learning_store import ReviewHistoryRepositoryAdapter, SqliteLearningStore
 from .goal_planner import GoalPlannerService
+from .mastery_projection import MasteryProjectionService
 from .plan_lifecycle import (
     IllegalPlanProgressEventError,
     PlanLifecycleService,
@@ -89,7 +90,12 @@ _learning_store = SqliteLearningStore(config.LEARNING_STORE_PATH)
 _review_scheduler = ReviewSchedulerService(
     repository=ReviewHistoryRepositoryAdapter(_learning_store)
 )
-_goal_planner = GoalPlannerService(review_history=_learning_store.all_reviews())
+# mastery 只读投影：传活对象而非快照，使计划身份与排序随答题状态刷新（与 _review_scheduler 同形）
+_mastery_projection = MasteryProjectionService(_learning_store)
+_goal_planner = GoalPlannerService(
+    review_history=_learning_store.all_reviews(),
+    mastery_projection=_mastery_projection,
+)
 _plan_lifecycle = PlanLifecycleService(
     _learning_store,
     _goal_planner,
@@ -249,7 +255,11 @@ def _plan_error(exc: Exception) -> HTTPException:
 
 @app.post("/api/v1/plans", response_model=GoalPlanResponse)
 def goal_plan(req: GoalPlanRequest) -> GoalPlanResponse:
-    """生成目标驱动学习计划（M9 确定性 Planner，仅生成、不写状态）。"""
+    """生成目标驱动学习计划（M9 确定性 Planner，仅生成、不写状态）。
+
+    任务的 mastery 字段与排序取自权威 mastery 只读投影；plan_id 含派生输入摘要，
+    因此复习/mastery 状态变化后会得到新的 plan_id（旧计划记录只读保留）。
+    """
     response = _goal_planner.generate(req)
     _plan_lifecycle.persist_generated(response)
     return response

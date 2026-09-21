@@ -274,6 +274,15 @@ class GoalPlanTask(BaseModel):
     priority: str = Field(description="优先级：high / medium / low")
     tags: list[str] = Field(default_factory=list, description="标签")
     reviewed: bool = Field(default=False, description="是否已有复习记录（只读投影）")
+    mastery_attempts: int = Field(
+        default=0, description="权威 mastery 只读投影：该条目答题尝试总数（无记录为 0）"
+    )
+    mastery_correct: int = Field(
+        default=0, description="权威 mastery 只读投影：答对次数（无记录为 0）"
+    )
+    mastery_last_mastered: str | None = Field(
+        default=None, description="权威 mastery 只读投影：最近一次答对时间 ISO；无记录为 None"
+    )
 
 
 class GoalPlanDay(BaseModel):

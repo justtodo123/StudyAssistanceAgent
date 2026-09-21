@@ -210,6 +210,60 @@ class SqliteLearningStore:
             )
         return results
 
+    def aggregate_attempts_by_session(self) -> dict[str, dict[str, Any]]:
+        """跨会话答题聚合（只读）：`session_id → {course, topic, source_file,
+        question_source_file, attempts, correct, last_mastered}`。
+
+        `list_answer_attempts` 只按单个 session 读；M9 的 mastery 只读投影需要的是跨会话视图，
+        因此这里做一次 join 聚合。三点刻意设计：
+
+        - **一次查询**：会话身份列与答题计数在同一条语句里取，既避免 N+1，也避免两次读之间
+          被并发写撕裂（`_connect` 的锁只覆盖单次语句）；
+        - **不把 payload 整份读进内存**：只用 `json_extract` 取两个出处字段。payload 含讲解
+          正文与 tool_trace，整份读出会让投影输入随「会话数 × 载荷大小」膨胀；这里过界的只有
+          两个短字符串，输入有界；
+        - **`json_valid` 兜底**：`save()` 是唯一写者且总是 `json.dumps`，正常库里 payload 必然
+          合法；万一遇到被外部改坏的行，`json_valid` 让该行退化成「无出处 → 走回退」，而不是让
+          `json_extract` 抛错把整条只读路径打挂。
+
+        `JOIN` 天然排除没有答题记录的会话——「无答题证据」不进投影，而不是补 0。
+        """
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT s.session_id,
+                       s.course,
+                       s.topic,
+                       json_extract(
+                           CASE WHEN json_valid(s.payload) THEN s.payload ELSE '{}' END,
+                           '$.sources[0].file'
+                       ) AS source_file,
+                       json_extract(
+                           CASE WHEN json_valid(s.payload) THEN s.payload ELSE '{}' END,
+                           '$.questions[0].question.source_file'
+                       ) AS question_source_file,
+                       COUNT(a.question_id) AS attempts,
+                       COALESCE(SUM(CASE WHEN a.correct = 1 THEN 1 ELSE 0 END), 0) AS correct,
+                       MAX(CASE WHEN a.correct = 1 THEN a.created_at END) AS last_mastered
+                FROM study_sessions AS s
+                JOIN answer_attempts AS a ON a.session_id = s.session_id
+                GROUP BY s.session_id
+                ORDER BY s.session_id
+                """
+            ).fetchall()
+        return {
+            row[0]: {
+                "course": row[1] or "",
+                "topic": row[2] or "",
+                "source_file": row[3] or "",
+                "question_source_file": row[4] or "",
+                "attempts": int(row[5]),
+                "correct": int(row[6]),
+                "last_mastered": row[7],
+            }
+            for row in rows
+        }
+
     def get_review(self, file_key: str) -> dict[str, Any] | None:
         with self._connect() as connection:
             row = connection.execute(

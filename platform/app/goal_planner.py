@@ -1,6 +1,6 @@
 """确定性目标驱动学习计划服务（M9 第一增量）。
 
-只做计划生成：基于 Goal + 约束 + 只读复习历史投影，产出版本化、可重放的分日计划。
+只做计划生成：基于 Goal + 约束 + 只读复习历史与只读 mastery 投影，产出版本化、可重放的分日计划。
 不写 mastery、不写学习状态、不引入外部 AI、不读原始 chunk 正文。
 """
 
@@ -32,10 +32,23 @@ REVIEW_BUFFER_MINUTES = 10
 class GoalPlannerService:
     """确定性目标驱动计划生成器。"""
 
-    def __init__(self, review_history: dict[str, dict[str, Any]] | None = None) -> None:
+    def __init__(
+        self,
+        review_history: dict[str, dict[str, Any]] | None = None,
+        mastery_projection: Any | None = None,
+    ) -> None:
         # review_history 是 file -> {review_count,...} 的只读投影，仅用于排序优先；
         # 不写回、不新建表。缺省空表表示“全部未复习”。
         self._review_history = review_history or {}
+        # 权威 mastery 只读投影（只需实现 mastery_by_file()）。传**活对象**而非快照：
+        # 快照会让 mastery 在进程生命周期内不更新，派生摘要永不变化，过期计划被幂等分支静默保留。
+        self._mastery_projection = mastery_projection
+
+    def _mastery(self) -> dict[str, dict[str, Any]]:
+        """权威 mastery 只读投影；未注入时返回空表（等价于接入前的行为）。"""
+        if self._mastery_projection is None:
+            return {}
+        return self._mastery_projection.mastery_by_file()
 
     def generate(self, req: GoalPlanRequest) -> GoalPlanResponse:
         """根据 Goal 请求生成版本化计划。"""
@@ -43,7 +56,8 @@ class GoalPlannerService:
         entries = self._load_entries(req.course)
         # 2. 应用话题约束：先排除，再确定排序，最后置顶必选（保持置顶不被排序破坏）
         entries = self._exclude(entries, req.constraints.excluded_topics)
-        tasks = self._build_tasks(entries)
+        mastery = self._mastery()  # 整轮只读一次：保证确定性，且只查一次库
+        tasks = self._build_tasks(entries, mastery)
         tasks = self._stable_order(tasks)
         tasks = self._pin_required(tasks, req.constraints.required_topics)
         # 4. 解析目标日期
@@ -56,8 +70,10 @@ class GoalPlannerService:
         # 5. 贪心分日
         daily_minutes = int(req.hours_per_day * 60)
         days = self._distribute(tasks, today, total_days, daily_minutes)
-        # 6. 确定性 plan_id（goal 归一化 + 目标日期 + 课程 + 约束）
-        plan_id = self._plan_id(req.goal, target, req.course, req.constraints)
+        # 6. 确定性 plan_id（goal 归一化 + 目标日期 + 课程 + 每日学时 + 约束 + 派生输入摘要）
+        plan_id = self._plan_id(
+            req.goal, target, req.course, req.constraints, req.hours_per_day, tasks
+        )
         total_task_minutes = sum(t.estimated_minutes for t in tasks)
         return GoalPlanResponse(
             plan_id=plan_id,
@@ -79,6 +95,12 @@ class GoalPlannerService:
                 "reviewed": sum(1 for t in tasks if t.reviewed),
                 "unreviewed": sum(1 for t in tasks if not t.reviewed),
                 "by_difficulty": _count_by(tasks, "difficulty"),
+                # 只读 mastery 投影的粗粒度分布；与 _stable_order 共用 _mastery_rank 这一处定义
+                "mastery": {
+                    "no_evidence": sum(1 for t in tasks if _mastery_rank(t) == 0),
+                    "attempted": sum(1 for t in tasks if _mastery_rank(t) == 1),
+                    "mastered": sum(1 for t in tasks if _mastery_rank(t) == 2),
+                },
             },
             # 请求回显：计划自描述，重规划按此还原范围，不依赖调用方另传上下文
             course=req.course,
@@ -134,13 +156,19 @@ class GoalPlannerService:
         rest = [t for t in tasks if t.topic.lower() not in rank]
         return pinned + rest
 
-    def _build_tasks(self, entries: list[dict[str, Any]]) -> list[GoalPlanTask]:
+    def _build_tasks(
+        self,
+        entries: list[dict[str, Any]],
+        mastery: dict[str, dict[str, Any]] | None = None,
+    ) -> list[GoalPlanTask]:
+        mastery = mastery or {}
         tasks: list[GoalPlanTask] = []
         for e in entries:
             diff = e["difficulty"]
             minutes = DIFFICULTY_TIME.get(diff, 35)
             priority = DIFFICULTY_PRIORITY.get(diff, "medium")
             reviewed = e["file"] in self._review_history
+            evidence = mastery.get(e["file"]) or {}
             tasks.append(
                 GoalPlanTask(
                     task_id=_task_id(e["file"]),
@@ -151,18 +179,27 @@ class GoalPlannerService:
                     priority=priority,
                     tags=e.get("tags", []),
                     reviewed=reviewed,
+                    mastery_attempts=int(evidence.get("attempts", 0)),
+                    mastery_correct=int(evidence.get("correct", 0)),
+                    mastery_last_mastered=evidence.get("last_mastered"),
                 )
             )
         return tasks
 
     @staticmethod
     def _stable_order(tasks: list[GoalPlanTask]) -> list[GoalPlanTask]:
-        """确定性排序：未复习优先，其次难度优先级降序，最后 file 字典序。"""
+        """确定性排序：未复习优先 → mastery 证据由少到多 → 难度优先级降序 → file 字典序。
+
+        mastery 桶只细化同一 `reviewed` 桶内的相对顺序；`reviewed` 仍是主键（它是最强的已学信号）。
+        未注入投影时全部任务落在桶 0，排序结果与接入前逐字节一致——这是既有 M9 测试不受影响的
+        **结构**原因，不是巧合。
+        """
         priority_rank = {"high": 0, "medium": 1, "low": 2}
         return sorted(
             tasks,
             key=lambda t: (
                 t.reviewed,  # False(未复习) 排前
+                _mastery_rank(t),
                 priority_rank.get(t.priority, 1),
                 t.file,
             ),
@@ -224,11 +261,20 @@ class GoalPlannerService:
         target,
         course: str | None = None,
         constraints: GoalPlanConstraints | None = None,
+        hours_per_day: float = 2.0,
+        tasks: list[GoalPlanTask] | None = None,
     ) -> str:
-        """计划身份：goal 归一化 + 目标日期 + 课程 + 约束（保持列出顺序）。
+        """计划身份：请求字段 + 最终任务列表的派生输入摘要。
 
-        身份必须覆盖所有影响任务集合与排序的输入；否则同名 Goal 配不同约束会撞同一
-        plan_id，后生成的计划会覆盖已存记录，采纳/进度也会落到错误的计划上。
+        身份必须覆盖所有影响任务集合、排序与分日的输入，否则：
+          - 同名 Goal 配不同约束会撞同一 plan_id，后生成的计划被 `persist_generated`
+            的幂等分支静默丢弃；
+          - 同一请求在复习/mastery 状态变化后会撞同一 plan_id，已存计划永远停在旧排序上
+            （本增量修复的已证实缺陷）。
+
+        `hours_per_day` 属请求字段却经 `_distribute` 决定分日，漏掉它会让「顺序对、分日错」的
+        计划共用身份，故并入请求键。刻意**不含生成日期**：它只影响分日日期锚点与 total_days，
+        含它会让正在采纳中的计划每天被孤立——这是一处显式记录的残留（旧计划的日期锚定在生成时刻）。
         """
         constraints = constraints or GoalPlanConstraints()
         normalized = re.sub(r"\s+", " ", goal.strip()).lower()
@@ -237,11 +283,39 @@ class GoalPlannerService:
                 normalized,
                 target.isoformat(),
                 course or "",
+                f"{float(hours_per_day):.4f}",
                 ",".join(constraints.required_topics),
                 ",".join(constraints.excluded_topics),
             ]
         )
-        return hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
+        return hashlib.sha256(
+            f"{key}|{_derived_digest(tasks or [])}".encode("utf-8")
+        ).hexdigest()[:16]
+
+
+def _mastery_rank(task: GoalPlanTask) -> int:
+    """mastery 桶：0 无答题证据 / 1 有尝试但从未答对 / 2 已答对过。"""
+    if task.mastery_attempts <= 0:
+        return 0
+    if task.mastery_correct <= 0:
+        return 1
+    return 2
+
+
+def _derived_digest(tasks: list[GoalPlanTask]) -> str:
+    """派生输入摘要：**按最终顺序**排列的 (task_id, reviewed, mastery…) 元组。
+
+    顺序本身编码在序列里，所以「排序变了」必然换摘要。元组带上 reviewed 与三个 mastery 值，
+    是因为它们会落进 plan 记录的 task 载荷——只摘要 task_id 序列会让「单任务计划」这类
+    顺序不变、载荷变了的输入撞同一 plan_id，`persist_generated` 又会保留旧载荷。
+    摘要只覆盖本计划范围内的任务，故范围外条目的状态变化不会无谓改变 plan_id。
+    """
+    payload = "\n".join(
+        f"{t.task_id}:{int(t.reviewed)}:{t.mastery_attempts}:"
+        f"{t.mastery_correct}:{t.mastery_last_mastered or ''}"
+        for t in tasks
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
 def _count_by(tasks: list[GoalPlanTask], field: str) -> dict[str, int]:
