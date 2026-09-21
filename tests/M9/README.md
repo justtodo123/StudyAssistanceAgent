@@ -1,8 +1,8 @@
 # M9 目标驱动学习计划测试
 
-验证确定性 Planner 的完整链路：Goal + 约束 + 只读复习与 **mastery** 投影 → 版本化、可重放的分日计划，
-以及采纳 / 进度事件 / 偏差触发的版本化重规划。只读 mastery 投影（不写 mastery、不写学习状态，
-不读原始 chunk 正文，不引入外部 AI）。
+验证确定性 Planner 的完整链路：Goal + 约束 + 只读复习与三个只读投影（**mastery** / 授权 **Source 摘要** /
+**先修关系 topic graph**）→ 版本化、可重放的分日计划，以及采纳 / 进度事件 / 偏差触发的版本化重规划。
+三个投影都是纯读（不写领域状态、不构建 chunk 索引、不读原始 chunk 正文，不引入外部 AI）。
 
 ## 文件
 
@@ -14,8 +14,9 @@
 | `test_deviation_consumption.py` | 未消费阈值、`deviation_ledger` 消费台账与重复调用幂等 |
 | `test_mastery_projection.py` | 跨会话答题聚合、知识条目 file 路径映射（三分支，与 `_log_review` 同序）、不可映射排除、真只读守卫、有界输入、计划身份派生输入摘要、存量计划兼容 |
 | `test_source_summary_projection.py` | 「可用」规则 7 态 × 有无 generation 矩阵、隐藏态排除、恰好一次 bulk 读、只读守卫、懒装配不建库、principal 守卫、有界输入、与 Planner 的接缝 |
+| `test_topic_graph_projection.py` | frontmatter 行内列表解析（含块状形式被静默丢弃的陷阱）、同目录兄弟边解析与嵌套目录不跨目录连边、丢弃规则、环与环下游诊断、零写入与每条目恰好解析一次、空图等价于无图的逐字节不变量、真图拓扑序与 `violations` 三种成因、置顶闭包交互、60 条语料数据完整性 |
 
-## 三条关键约定
+## 四条关键约定
 
 - **聚合身份是知识条目的 file 路径**，不是 `study_sessions.topic` 那样的自由文本。解析顺序与
   `StudySessionService._log_review` 一致（检索出处 → 出题出处 → `knowledge/{course}/{topic}.md` 回退）；
@@ -28,6 +29,11 @@
   `IsolationSnapshot.authorized_source_ids`（后者含 REGISTERED / SYNCING / DISABLED）。未发布、未就绪、
   禁用、待删、已删的源都不进入摘要；隐藏态由 `list_sources` 的 WHERE 子句构造性排除，
   因此投影**无法报告**被排除的计数——该证据由本目录的测试提供。
+- **先修边解析为「同目录兄弟文件」**：`prerequisites: [a]` 指 `knowledge/{course}/a.md`，**不**按课程解析。
+  `knowledge/interview/co/` 是嵌套目录且全树有多个 basename 撞名，按课程解析会把先修静默连到面经条目上。
+  **只支持行内方括号形式**——块状 YAML 会被解析器静默丢成空列表，故数据完整性用例按**原始文件**断言。
+  计划侧 `summary.prerequisites.violations` 只从**最终顺序**算出，因此「同一 `plan_id` ⇒ 相同 `summary`」
+  这条不变量结构上成立；`unorderable()` 是**图级**环诊断，刻意不进计划 `summary`。
 
 ## 命令
 

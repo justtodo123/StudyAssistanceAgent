@@ -67,6 +67,35 @@ P0 治理登记。`canonical_url` 与 `project_authored: true` 必须二选一�
 统一保持 `candidate`，不得依赖旧默认值自动提升为可检索文档。该登记不是未来 M7 runtime `ProvenanceRecord`，也不构成
 M7 准入。
 
+### 课程条目的精简键集与 `prerequisites`
+
+上面的 22 键规范描述的是 `network/`、`interview/` 语料（受
+[`docs/reference/document-mapping.json`](../docs/reference/document-mapping.json) 治理）。`os/`、`ds/`、`co/`
+三门课程的 60 条条目**实际只用 6 个键**（外加可选的 `prerequisites`）：
+
+```yaml
+---
+title: 段页式存储管理
+course: os
+tags: [分段, 分页, 段页式, 地址转换, x86]
+difficulty: 进阶
+updated: 2026-09-21
+source: docs/reference/os.md
+prerequisites: [memory-management]
+---
+```
+
+- `prerequisites`（可选）声明**先修条目**，供 M9 确定性 Planner 生成先修合法的学习顺序；
+  不写该键与写 `prerequisites: []` 等价于「无先修」。期考复盘类条目不声明先修——它们是复习产物，
+  不是有先修关系的知识主题。
+- 值是**与本文档同目录的兄弟文件的 stem**（不含 `.md`、不含路径分隔符）。刻意不做跨目录/跨课程解析：
+  `knowledge/interview/co/` 是嵌套目录，全树有多个 basename 撞名，按课程解析会把先修**静默**连到面经条目上。
+- **只支持行内方括号形式**。块状 YAML（后续行写 `- a`）不匹配解析器的字段正则，会被**静默**解析成空列表——
+  不报错、不告警。`tests/M9/test_topic_graph_projection.py` 按原始文件断言只用了行内形式。
+- 命名空间提示：此处的 `prerequisites` 与
+  [`docs/standards/stage-admission-gates.json`](../docs/standards/stage-admission-gates.json) 中**阶段**的
+  `prerequisites` 同词不同义，不要混用。
+
 ## 写作规范
 
 - **精炼**：只写核心概念、推导、易错点、例题。大段原文抄录不入库，遇到扩展内容链接到原始资料。

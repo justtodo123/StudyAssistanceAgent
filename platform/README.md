@@ -75,6 +75,7 @@ platform/
 │   ├── plan_lifecycle.py  # M9 采纳/进度事件/偏差触发的版本化重规划
 │   ├── mastery_projection.py # M9 只读 mastery 投影（跨会话答题聚合到知识条目路径）
 │   ├── source_summary_projection.py # M9 只读 Source 摘要投影（usable 规则 + 懒装配）
+│   ├── topic_graph_projection.py # M9 只读先修关系投影（frontmatter prerequisites → 同目录兄弟边）
 │   └── static/workbench/    # 最小学习工作台（HTML/CSS/JS）
 ├── tests/
 │   ├── test_retrieval.py  # 检索链路冒烟测试（6 个用例）

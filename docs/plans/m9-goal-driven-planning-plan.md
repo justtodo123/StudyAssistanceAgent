@@ -120,7 +120,7 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | --- | --- | --- |
 | 1 冻结 planner input / plan / mastery / progress event schema | 已完成 | `tests/M9/test_goal_planner.py`；mastery schema 已落到只读投影 `MasteryProjectionService.mastery_by_file()`（attempt / correct / last_mastered），见 `tests/M9/test_mastery_projection.py` |
 | 2 确定性规则生成最小计划 + 验证 API/SQLite 兼容 | 已完成 | `tests/M9/test_goal_planner.py`、`tests/M9/test_plan_lifecycle.py` |
-| 3 只读 mastery snapshot / topic graph / Source 摘要 | 部分 | mastery 投影已完成并接入确定性 Planner：`platform/app/mastery_projection.py`、`tests/M9/test_mastery_projection.py`；授权 Source 摘要已完成：`platform/app/source_summary_projection.py`、`tests/M9/test_source_summary_projection.py`；**topic graph 仍缺** |
+| 3 只读 mastery snapshot / topic graph / Source 摘要 | 已完成 | mastery 投影：`platform/app/mastery_projection.py`、`tests/M9/test_mastery_projection.py`；授权 Source 摘要：`platform/app/source_summary_projection.py`、`tests/M9/test_source_summary_projection.py`；topic graph（先修关系）：`platform/app/topic_graph_projection.py`、`tests/M9/test_topic_graph_projection.py`。三者均已接入确定性 Planner |
 | 4 按需受限检索与 stale/deleted Source 拒绝 | 未开始 | 属 M9 后续增量，未获批前不实现 |
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
 | 6 可选外部 AI adapter 与冻结任务集比较 | 未开始 | 外部 AI 在 `m9-plan-lifecycle-v1` 范围外 |
@@ -175,7 +175,7 @@ mastery 只读投影实现约定：投影在 `platform/app/mastery_projection.py
 
 授权 Source 摘要实现约定：投影在 `platform/app/source_summary_projection.py`，与 `mastery_projection.py` 同形
 ——纯读、不写 Source 生命周期、不写会话状态、不构建 chunk 索引、不读 chunk 正文；权威写入仍是
-`SourceLifecycleService` / 领域仓储。步骤 3 的状态因此**仍为 `部分`**（topic graph 仍缺）。
+`SourceLifecycleService` / 领域仓储。步骤 3 的第三个投影（topic graph）随后已交付，见下文「先修关系实现约定」。
 
 (a) **「可用」规则**：`is_usable_for_retrieval(record)` = `published_generation is not None and state in
 {READY, DEGRADED}`，逐字对齐 `source_offline.py` 的离线取快照前置判断（那是规范来源）。该规则在
@@ -223,6 +223,87 @@ sha256(f"{plan_id}|{task_id}|{event}")[:16]` 配 `INSERT OR IGNORE`，而 `_plan
 区分。未传 principal 时 `summary` 与接入前逐字节一致；`_plan_id` / `_derived_digest` 未改动，故目录变化
 不 churn 计划身份（与「摘要只覆盖本计划范围内任务」同一原则）。本次**未新增任何公开路由**，
 `PUBLIC_API_PATHS` 与路由 docstring 均未改动。
+
+先修关系（topic graph）实现约定：投影在 `platform/app/topic_graph_projection.py`（`TopicGraphProjection`），与
+`mastery_projection.py` 同形——纯读、不写知识库、不写会话状态、不构建 chunk 索引、不读 chunk 正文；权威写入仍是
+知识条目自身（frontmatter 由人工维护）。**不需要走 §4 的 `REVOKED` 过渡**：§1.1 已把「课程/topic graph」明确列为
+Planner 允许的输入之一，且 `M9-PLANNER-INPUT-SCHEMA` 只要求「输入有界、不随 chunk 总量线性膨胀」——本投影只读
+frontmatter 一行，满足该约束，决策值未变。
+
+(a) **数据载体**：条目 frontmatter 新增 `prerequisites:`，值是**与依赖条目同目录的兄弟文件 stem**（不含 `.md`、
+不含路径分隔符）。**刻意不做跨目录/跨课程解析**：`knowledge/interview/co/` 是嵌套目录，全树有 4 个 basename 撞名
+（`cache-mapping`、`heap-priority-queue`、`sorting`、`stack-queue`），而 `GoalPlanRequest.course` 默认 `None` 覆盖全部
+课程——按课程解析会把 `co` 的先修**确定性地**连到 `interview/co` 的同名文件上，且因为是确定性的，不会有任何
+flaky 测试来暴露它。同目录解析无歧义。**丢弃而非补**：目标不存在、自环、越界 stem、`_templates`/`_inbox`、无
+`title` 的文件一律丢弃该边，不猜测——与 `mastery_projection` 的「不可映射则排除」同一纪律。边由人工拟定、owner
+审 diff，**不**从 tags 共现或 README 顺序推导。
+
+(b) **只支持行内方括号形式**（残留陷阱）：`markdown_parser._YAML_FIELD_RE` 不匹配块状 YAML（后续行写 `- a`），
+故块状形式会被**静默**解析成空列表——不报错、不告警。`tests/M9/test_topic_graph_projection.py` 因此按**原始文件**
+断言 60 条只用行内形式，并逐条断言「声明的 stem 数 == 解析出的边数」，拼错一个词即失败。
+`parse_frontmatter` 只对 `tags` 与 `prerequisites` 做列表解码，其余键一律保留为字符串——刻意不「看到方括号就当
+列表」，那会改变既有消费方对未知键的取值形态；`tags` 行为逐字节不变。
+
+(c) **`unorderable()` ≠ 精确 SCC**：它返回 Kahn 剩余集 = **参与环 ∪ 环下游**，故不叫 `cyclic`——与
+`source_summary_projection` 把集合叫 `usable` 而不叫 `authorized` 同一纪律。它是**图级**诊断，与 Planner 侧按本计划
+任务集算出的强制释放集**不同名同义**，调用方不要混用。`graph()` 的键是全部在场条目（无边者为空集），边已与在场
+条目求交（指向不存在条目的先修在本投影里不存在，而不是留一个悬空引用）。
+
+(d) **Planner 接入**：构造函数的可空活对象依赖 `topic_graph` **追加在参数末尾**——插在 `source_summary` 之前会
+静默重绑位置参数调用方。`_graph()` 未注入时返回 `{}`，与 `_mastery()`/`_source_scope()` 同形：依赖缺省是守卫，
+不是错误。`generate()` 里**整轮只读一次**图（生成途中图若变化，排序与违反计数会基于不同快照）。排序改为
+**Kahn 拓扑排序 + 确定性堆**，堆键是既有的 4 元组 `(reviewed, mastery 桶, 难度优先级, file)`；必须用 `heapq`
+而不是队列（队列会让输出依赖邻接表插入顺序），且 `file` 唯一故堆元组全序、`heapq` 永不比较 `GoalPlanTask` 对象。
+三处要害：
+
+1. **入度必须与本计划任务集求交**（`_present_edges`）：先修若被 `excluded_topics` 移除，它在任务集里就不存在，
+   该边在本计划内也不存在。用原始计数会让入度永远 > 0，把「先修缺失」**伪装成「环」**，再被强制释放机制吞掉。
+   求交同时确立了「用户显式排除优先于图边」这一优先级裁定。
+2. **空图显式短路**：`if not graph: return sorted(tasks, key=_order_key)`。把「逐字节相同」从「Kahn 在空图上恰好
+   退化」升级为可指认的性质，并让 `None` 与 `{}` 走同一条路径、不会各自漂移。
+3. **环上节点按堆键顺序强制释放并继续**，保证输出是全序且确定性；Planner 不静默修复环——环本身由图投影的
+   `unorderable()` 报告，计划侧只保证终止与可重放。
+
+(e) **置顶语义（owner 裁定：先修优先）**：必选主题 ∪ 其**传递**先修闭包构成置顶块。闭包必须传递——块对先修
+封闭 ⇒ 没有边从块外进入 ⇒ 整块前移不可能违反任何边；一级闭包会让「先修的先修」留在块外，静默破坏全局序。
+块内**必须再跑一次拓扑排序**：朴素按用户优先级排是错的（required `[B(0), A(1)]` 而 A 是 B 的先修时会产出
+`[B, A]`）。内层 Kahn 的键用 `(用户优先级, 入参下标)`，**不是 `file`**——今日靠 `sorted` 的稳定性处理同名必选主题，
+改用 `file` 会在那一刻偏离。闭包遍历带 `seen`，否则环上死循环。
+
+**本增量修掉一处实现缺陷（由新增用例发现）**：块内短路分支原先的门是「闭包没新增节点」
+（`len(pinned) == len(user_rank)`），这是错的——必选主题**互为先修**时闭包恰好只含这两个节点，但块内**存在**边，
+走 `sorted` 就产出 `[B, A]` 并违反那条边。门已改为 **`not edges`**（无先修边，含未注入图）；无先修边时 `pinned`
+恒等于必选主题集且内层 Kahn 的键退化为 `(用户优先级, 入参下标)`，与 `sorted` 的稳定排序结果逐字符相同，故该短路
+纯属可指认的优化，不改变接入前的行为。`test_pin_required_respects_prerequisites_inside_the_block` 钉住修复后的语义，
+`test_unrelated_required_topics_keep_the_user_rank_order` 钉住短路被跳过时块内顺序仍与接入前一致。
+
+(f) **`summary["prerequisites"] = {"edges": N, "violations": M}`**，仅在注入图时出现（键的出现取决于**输入**，
+与 `summary["sources"]` 同一规则），未注入时 `summary` 逐字节不变。`N` = 本计划任务集内的先修边数；`M` = **最终
+顺序违反的边数**（依赖任务排在先修之前）。`violations` 刻意定义为「最终顺序违反的边数」而**不是**「置顶块冲突数」：
+它只从最终顺序算出，所以「同一 `plan_id` ⇒ 相同 `summary`」这条不变量**结构上**成立（顺序相同则违反集相同），
+不需要把图折进 `_derived_digest`；它同时把环、被排除的先修、置顶冲突三种成因统一成一个可测量的数，直接度量
+`M9-EVALUATION` 的「先修违反=0」。**`unorderable` 刻意不进 `summary`**：它是图级诊断，放进来会让两个顺序相同但
+环剩余集不同的计划共用 `plan_id` 却带不同 `summary`，削弱上述不变量。
+
+(g) **内容**：`knowledge/{os,ds,co}/` 各 20 条共 60 条新增 `prerequisites:`，一次到位；每条同时按
+`knowledge/README.md` 的「更新驱动」约定 bump `updated`。诚实记录副作用：`updated` 属于 `_safe_metadata` 白名单，
+因而**会**改变 `_fingerprint_chunks` 的输入面，触发一次索引 generation 变化（`EXPECTED_DEFAULT_PACK_REVISION` 未设
+环境变量故无门禁）。检索结果**不受影响**：`markdown_pack.py` 在切块前用 `_FRONTMATTER_RE.sub("", text)` 剥掉整个
+frontmatter 块，`document_id` = `sha256(source_id + logical_uri)` 也不含 frontmatter。实测 90 题离线 BM25
+Recall@5 = 0.989、Recall@3 = 0.978，与改动前基线逐位相同。`network/`（candidate 语料，不在默认包）与
+`interview/` 不在本次范围，无图。
+
+(h) **显式残留（不夸大）**：① 不给 `GoalPlanTask` 加先修字段——关系只经最终顺序可观察，加字段还须同步改
+`_response_to_record` 的逐字段列举（已知静默丢字段陷阱）与 `_derived_digest`；② 不实现跨目录/跨课程先修；
+③ `unorderable` 是图级诊断，不进计划 `summary`；④ 「先修违反=0」只对**计划任务集内的边**成立，被显式排除的
+先修不计违反；⑤ 期考复盘类条目不声明先修（它们是复习产物，不是有先修关系的知识主题），因此图**不会**把复盘条目
+推到末尾——注入图后它们因无入度而可能比接入前更早出现，这是本增量未解决的一处排序退化；⑥ 步骤 4（检索路径
+隔离）与评测 workload 仍需 owner 另行扩范围授权，本增量不触碰。
+
+(i) **命名空间提示**：此处的 `prerequisites`（知识条目 frontmatter）与
+`docs/standards/stage-admission-gates.json` 中 per-stage 的 `prerequisites` 同词不同义，文档中显式记一笔避免日后
+grep 混用。本次**未新增任何公开路由**，`PUBLIC_API_PATHS` 与路由 docstring 均未改动；**未 bump
+`SCHEMA_VERSION`**（记录 schema 未变）。`tests/M9` 自本次起 125 → 187 项。
 
 计划身份修复：`_plan_id` 原先只哈希 `goal|target|course|required|excluded`，而任务顺序与 `summary`
 的 reviewed 计数依赖复习状态、分日依赖 `hours_per_day`。两处碰撞均已实测证实：同一 `plan_id`
