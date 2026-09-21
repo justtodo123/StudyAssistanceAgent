@@ -19,6 +19,14 @@ PUBLIC_API_PATHS = {
     "/api/v1/review-log",
     "/api/v1/review-due",
     "/api/v1/review-plan",
+    # M9 plan lifecycle routes. The allowlist is the registry of *intentional*
+    # public surface, so a deliberate new stage registers its paths here; the
+    # assertion below still fails on any path nobody registered.
+    "/api/v1/plans",
+    "/api/v1/plans/{plan_id}",
+    "/api/v1/plans/{plan_id}/adopt",
+    "/api/v1/plans/{plan_id}/progress",
+    "/api/v1/plans/{plan_id}/replan",
     "/api/v1/study-sessions",
     "/api/v1/study-sessions/{session_id}",
     "/api/v1/study-sessions/{session_id}/answers",
