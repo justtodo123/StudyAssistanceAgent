@@ -199,6 +199,25 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
 | 6 可选外部 AI adapter 与冻结任务集比较（`m9.external-ai`，**窄口径**） | 已完成（**窄口径**） | v1.4 批准（见 §4.2）；实现见 `platform/app/plan_ai_adapter.py`、`tests/M9/test_plan_ai_adapter.py`；冻结任务集比较见 `tests/M9/test_plan_ai_benchmark.py`。**步骤 6 整体未闭合**：10K/100K 容量验证逐字记为 M8（`BLOCKED`）/ M11（拟议）依赖，本次不触碰；`M9-EVALUATION` 未动，延迟/成本仍 `DEFERRED`，评测 workload 未冻结 |
 
+**步骤 6 窄口径的实现约定（含一处跨阶段只读耦合，逐字登记）**：
+
+- **跨阶段只读耦合（M9 → M7）**：`tests/M9/test_plan_ai_benchmark.py` 只读复用 M7 的
+  `tools/run_m7_benchmark.py` 的 `build_corpus` 与 `publish_sources`（`sources=1, documents=100, units=10`
+  = 1000 chunks），以及其 `_install_unit_parser`（用后**恢复**，避免全局替换泄漏到同进程其他测试）。
+  M7 已 `ADMITTED / COMPLETE` 且 `m7.1k-3k-benchmark-implementation` 本在其批准范围内，故该复用不需要
+  新批准；**本增量不修改 M7 的任何生产文件**，只在测试进程内调用其生成器。语料物化到临时目录、
+  **不落任何二进制、不持久化、不触碰 M8 数据面**。
+- **不新增公开路由**：AI 路径经既有 `POST /api/v1/plans` 可达，故 `PUBLIC_API_PATHS` 与路由 docstring
+  均不改（`tests/TEST_PLAN.md` §5.2 记录：后续阶段新增默认公开路由没有合法登记渠道）。
+- **AI 产出完整替代计划，但采纳权在确定性侧**：`plan_id` 由**最终任务序**重算，故两条路径的身份天然
+  不同——这正是 §7 要求比较的两个对象。校验器保证 AI 计划**不会更差**：置换成员、先修序、必选置顶
+  在 AI 提出之后**重新施加**。
+- **Planner 不 import adapter**：`goal_planner._ai_order` 按鸭子类型取 `task_id` / `topic` / `difficulty` /
+  `tags`，使 Planner 的源码级护栏（不得出现 `llm_client` / `content` / `split_headings`）**结构上**成立，
+  而不是靠措辞回避。
+- **默认关闭是恒等操作**：未设 `SA_PLAN_AI_ENABLED` 时不构造 proposer（连 token 都不读），
+  `generate()` 输出与接入前**逐字节相同**（含 `plan_id`）；CI 不设该 env。
+
 偏差信号实现约定：逾期复用 `ReviewSchedulerService.overdue_by_file()` 的 `days_overdue`（只读复习历史，
 不构建 chunk 索引，保持 Planner 输入有界）；偏差按 task_id 去重后计数，跳过与逾期不重复计入同一任务；
 `replan` 记录 `replan_reason` 以便审计重规划由何触发。Plan 记录自描述（回显 `course` / `hours_per_day` /
