@@ -560,8 +560,15 @@ def test_planner_reports_zero_rather_than_omitting_the_key(tmp_path: Path) -> No
     assert plan.summary["sources"] == {"usable": 0}
 
 
-def test_principal_does_not_change_plan_identity_or_tasks(tmp_path: Path) -> None:
-    """摘要不进入任务载荷、分日或 `_plan_id`：目录变化不 churn 正在采纳中的计划。"""
+def test_principal_does_not_change_tasks_or_days(tmp_path: Path) -> None:
+    """摘要不进入任务载荷与分日：**目录内容**变化不 churn 正在采纳中的计划内容。
+
+    本用例原为 `test_principal_does_not_change_plan_identity_or_tasks`，同时断言
+    `anonymous.plan_id == scoped.plan_id`。步骤 4b 证伪了该断言：`plan_lifecycle` 的
+    `event_id` 是 `(plan_id, task_id, event)` 的哈希、不含 principal 成分，两个 principal 生成
+    同一 Goal 会撞同一 `plan_id`，后者的进度事件被 `INSERT OR IGNORE` 静默去重、污染前者状态。
+    故身份断言**有意**反转，见 `test_plan_identity.py`；此处保留内容侧不变量。
+    """
     _, service = _service(tmp_path)
     _to_ready(service, SOURCE_ID)
     planner = GoalPlannerService(source_summary=SourceSummaryProjection(service))
@@ -569,7 +576,6 @@ def test_principal_does_not_change_plan_identity_or_tasks(tmp_path: Path) -> Non
     anonymous = planner.generate(_request())
     scoped = planner.generate(_request(), principal_id=PRINCIPAL)
 
-    assert anonymous.plan_id == scoped.plan_id
     assert anonymous.revisions[0].days == scoped.revisions[0].days
     assert {k: v for k, v in scoped.summary.items() if k != "sources"} == anonymous.summary
 

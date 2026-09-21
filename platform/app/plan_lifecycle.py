@@ -26,6 +26,11 @@ DEVIATION_EVENTS = frozenset({"skipped", "overdue"})
 REPLAN_DEVIATION_THRESHOLD = 3
 # 消费台账：追加式，每个产生的 revision 一条，放在 plans.payload 里（无 DDL）
 DEVIATION_LEDGER_KEY = "deviation_ledger"
+# 生成该计划的 principal。**内部记录键**：`replan` 靠它保真还原源范围，但它是隔离边界，
+# 不是用户可见字段，故经 `_public_plan` 在所有读取路径上剥离，绝不进 HTTP 响应体。
+PRINCIPAL_RECORD_KEY = "principal_id"
+# 读取路径上必须剥离的内部记录键。新增内部键时加到这里，而不是在各个返回点手写过滤。
+INTERNAL_RECORD_KEYS = frozenset({PRINCIPAL_RECORD_KEY})
 
 
 class PlanNotFoundError(LookupError):
@@ -48,7 +53,7 @@ class PlanLifecycleService:
     # ── 查询 ────────────────────────────────────────────────────────────────
 
     def get(self, plan_id: str) -> dict[str, Any]:
-        return self._require_plan(plan_id)
+        return _public_plan(self._require_plan(plan_id))
 
     # ── 采纳 ────────────────────────────────────────────────────────────────
 
@@ -58,7 +63,8 @@ class PlanLifecycleService:
         plan["adopted_at"] = datetime.now().isoformat()
         plan["updated_at"] = plan["adopted_at"]
         self._store.save_plan(plan)
-        return plan
+        # 落盘用完整记录（含内部键），返回给调用方的必须是剥离后的视图
+        return _public_plan(plan)
 
     # ── 进度 ────────────────────────────────────────────────────────────────
 
@@ -97,17 +103,19 @@ class PlanLifecycleService:
         plan = self._require_plan(plan_id)
         events = self._store.list_progress_events(plan_id)
         current = _plan_to_request(plan)
+        # principal 是隔离边界：重规划必须沿用它，否则会以「无 principal」重新生成，源范围静默改变。
+        principal = plan.get(PRINCIPAL_RECORD_KEY)
         target = _apply_override(current, req)
         changed = target != current
         deviated = self._deviated_task_ids(plan, events)
         unconsumed = deviated - _consumed_task_ids(plan)
         if not changed and len(unconsumed) < REPLAN_DEVIATION_THRESHOLD:
             # 阈值未到，不重规划，返回当前计划
-            return plan
+            return _public_plan(plan)
 
         # 用与首次生成相同的记录形状，避免重规划后的记录丢失 goal / tasks 等字段
-        generated = self._planner.generate(target)
-        record = _response_to_record(generated)
+        generated = self._planner.generate(target, principal_id=principal)
+        record = _response_to_record(generated, principal)
         previous = _current_revision(plan)
         record["plan_id"] = plan_id
         record["state"] = "replanned"
@@ -131,7 +139,7 @@ class PlanLifecycleService:
             plan, previous + 1, record["replan_reason"], newly_consumed
         )
         self._store.save_plan(record)
-        return record
+        return _public_plan(record)
 
     def _deviated_task_ids(
         self, plan: dict[str, Any], events: list[dict[str, Any]]
@@ -157,7 +165,9 @@ class PlanLifecycleService:
 
     # ── 内部 ────────────────────────────────────────────────────────────────
 
-    def persist_generated(self, response: GoalPlanResponse) -> None:
+    def persist_generated(
+        self, response: GoalPlanResponse, principal_id: str | None = None
+    ) -> None:
         """把首次生成的计划持久化（state=generated），供采纳/进度/重规划使用。
 
         幂等：plan_id 由 goal + 目标日期 + 课程 + 每日学时 + 约束，再叠加**派生输入摘要**
@@ -168,7 +178,7 @@ class PlanLifecycleService:
         """
         if self._store.get_plan(response.plan_id) is not None:
             return
-        record = _response_to_record(response)
+        record = _response_to_record(response, principal_id)
         self._store.save_plan(record)
 
     def _require_plan(self, plan_id: str) -> dict[str, Any]:
@@ -176,6 +186,15 @@ class PlanLifecycleService:
         if plan is None:
             raise PlanNotFoundError(f"plan {plan_id!r} not found")
         return plan
+
+
+def _public_plan(plan: dict[str, Any]) -> dict[str, Any]:
+    """剥离内部记录键后的计划视图——即所有 HTTP 返回路径的响应形状。
+
+    单点定义：`get` / `adopt` / `replan` 都返回这个函数的产物，故「principal 不进响应体」是
+    结构保证，而不是每个返回点各写一遍过滤（那种写法漏一处就静默泄露）。落盘仍用完整记录。
+    """
+    return {k: v for k, v in plan.items() if k not in INTERNAL_RECORD_KEYS}
 
 
 def _current_revision(plan: dict[str, Any]) -> int:
@@ -236,7 +255,9 @@ def _apply_override(
     return GoalPlanRequest.model_validate({**request.model_dump(), **updates})
 
 
-def _response_to_record(response: GoalPlanResponse) -> dict[str, Any]:
+def _response_to_record(
+    response: GoalPlanResponse, principal_id: str | None = None
+) -> dict[str, Any]:
     revision = response.revisions[0] if response.revisions else None
     tasks = []
     if revision is not None:
@@ -259,7 +280,7 @@ def _response_to_record(response: GoalPlanResponse) -> dict[str, Any]:
                     }
                 )
     now = datetime.now().isoformat()
-    return {
+    record: dict[str, Any] = {
         "plan_id": response.plan_id,
         "schema_version": response.schema_version,
         "state": response.state,
@@ -273,6 +294,9 @@ def _response_to_record(response: GoalPlanResponse) -> dict[str, Any]:
         "course": response.course,
         "hours_per_day": response.hours_per_day,
         "constraints": response.constraints.model_dump(),
+        # 生成时已落盘的 summary。此前**没有**这个键，于是 plan["tasks"] 与 plan["revisions"]
+        # 两处表示不一致（后者由 model_dump() 带 summary，前者不带），读回记录拿不到 summary。
+        "summary": response.summary,
         "parent_revision_id": response.parent_revision_id,
         "adopted_at": response.adopted_at,
         "created_at": now,
@@ -280,6 +304,11 @@ def _response_to_record(response: GoalPlanResponse) -> dict[str, Any]:
         "revisions": [r.model_dump() for r in response.revisions],
         "tasks": tasks,
     }
+    if principal_id is not None:
+        # 仅在非 None 时落键：未传 principal 的记录与接入前**逐字节相同**。
+        # 该键是**内部记录键**，经 `_public_plan` 在读取路径上剥离，不进 HTTP 响应体。
+        record[PRINCIPAL_RECORD_KEY] = principal_id
+    return record
 
 
 def _plan_to_request(plan: dict[str, Any]) -> GoalPlanRequest:

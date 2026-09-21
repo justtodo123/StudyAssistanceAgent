@@ -85,9 +85,14 @@ class GoalPlannerService:
     ) -> GoalPlanResponse:
         """根据 Goal 请求生成版本化计划。
 
-        `principal_id` 只影响 `summary["sources"]` 这一处只读计数：它不进入任务载荷、不进入
-        分日、也不进入 `_plan_id`。刻意如此——Source 目录变化不改变计划内容，让它 churn 计划身份
-        会让正在采纳中的计划被无谓孤立（与 `_derived_digest` 只摘要计划范围内任务同一原则）。
+        `principal_id` 影响两处：`summary["sources"]` 这一处只读计数，以及 `_plan_id` 的身份键。
+        它**不**进入任务载荷、**不**进入分日、也**不**进入 `summary` 的其他字段。
+
+        身份必须含 principal：`plan_lifecycle` 的 `event_id` 是 `(plan_id, task_id, event)` 的哈希、
+        不含 principal 成分，故两个 principal 生成同一 Goal 会撞同一 `plan_id`，后者的 `completed`
+        被 `INSERT OR IGNORE` 静默去重，把前者的任务标成完成。这与「Source 目录变化不 churn 计划
+        身份」不冲突：churn 的是 principal 这个**隔离边界**，不是目录内容——`_derived_digest` 仍只
+        摘要计划范围内的任务。
         """
         # 1. 载入条目并去重到 topic（file）粒度，保持稳定顺序
         entries = self._load_entries(req.course)
@@ -113,7 +118,13 @@ class GoalPlannerService:
         days = self._distribute(tasks, today, total_days, daily_minutes)
         # 6. 确定性 plan_id（goal 归一化 + 目标日期 + 课程 + 每日学时 + 约束 + 派生输入摘要）
         plan_id = self._plan_id(
-            req.goal, target, req.course, req.constraints, req.hours_per_day, tasks
+            req.goal,
+            target,
+            req.course,
+            req.constraints,
+            req.hours_per_day,
+            tasks,
+            principal_id=principal_id,
         )
         total_task_minutes = sum(t.estimated_minutes for t in tasks)
         summary: dict[str, Any] = {
@@ -424,14 +435,17 @@ class GoalPlannerService:
         constraints: GoalPlanConstraints | None = None,
         hours_per_day: float = 2.0,
         tasks: list[GoalPlanTask] | None = None,
+        principal_id: str | None = None,
     ) -> str:
-        """计划身份：请求字段 + 最终任务列表的派生输入摘要。
+        """计划身份：请求字段 + 最终任务列表的派生输入摘要（+ 非 None 时的 principal）。
 
         身份必须覆盖所有影响任务集合、排序与分日的输入，否则：
           - 同名 Goal 配不同约束会撞同一 plan_id，后生成的计划被 `persist_generated`
             的幂等分支静默丢弃；
           - 同一请求在复习/mastery 状态变化后会撞同一 plan_id，已存计划永远停在旧排序上
-            （本增量修复的已证实缺陷）。
+            （本增量修复的已证实缺陷）；
+          - 不同 principal 的同一 Goal 会撞同一 plan_id，后者的进度事件被 `INSERT OR IGNORE`
+            静默去重，污染前者的任务状态（本增量修复的已证实缺陷）。
 
         `hours_per_day` 属请求字段却经 `_distribute` 决定分日，漏掉它会让「顺序对、分日错」的
         计划共用身份，故并入请求键。刻意**不含生成日期**：它只影响分日日期锚点与 total_days，
@@ -449,6 +463,12 @@ class GoalPlannerService:
                 ",".join(constraints.excluded_topics),
             ]
         )
+        if principal_id is not None:
+            # 仅在非 None 时追加，故 `principal_id=None` 的身份与接入前**逐字节相同**，既有
+            # 计划 id 不 churn（沿用「未注入时逐字节一致」的纪律）。
+            # 用**带标签**的段而非裸值：goal 是自由文本、可含 `|`，裸追加会与无 principal 的键空间
+            # 产生歧义（`key1` 与 `key2|principal` 无法区分）。
+            key = f"{key}|principal={principal_id}"
         return hashlib.sha256(
             f"{key}|{_derived_digest(tasks or [])}".encode("utf-8")
         ).hexdigest()[:16]
