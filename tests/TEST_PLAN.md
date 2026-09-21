@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-09-06（M7 correctness 收口；`tests/M7/` 当前收集 270 项；Python 3.13.3 下 3 个 TXT 用例按精确 parser 合同 fail closed；`m7_exit=true` 不是 M7 阶段退出）；2026-09-20（M8 selected-scope hardening：`tests/M8_metadata_discovery/` 收集 74 项、74 passed；历史 replay 88/88 与 77/77 通过且明确 non-gating）；2026-09-21（M9 只读 mastery 投影 + 计划身份修复：`tests/M9/` 收集 83 项、83 passed，并修复 `test_planner_does_not_write_state` 的空转缺陷；`tests/M8_metadata_discovery/` 与 `tests/M9/` 均纳入 CI）；2026-09-21（M9 只读 Source 摘要投影：`tests/M9/` 收集 125 项、125 passed；全量 1042 collected、1038 passed、1 skipped、3 failed）；2026-09-21（M9 先修关系 topic graph 投影：`tests/M9/` 收集 187 项、187 passed；全量 1104 collected、1100 passed、1 skipped、3 failed）
+> 起始日期：2026-08-17 · 更新：2026-09-06（M7 correctness 收口；`tests/M7/` 当前收集 270 项；Python 3.13.3 下 3 个 TXT 用例按精确 parser 合同 fail closed；`m7_exit=true` 不是 M7 阶段退出）；2026-09-20（M8 selected-scope hardening：`tests/M8_metadata_discovery/` 收集 74 项、74 passed；历史 replay 88/88 与 77/77 通过且明确 non-gating）；2026-09-21（M9 只读 mastery 投影 + 计划身份修复：`tests/M9/` 收集 83 项、83 passed，并修复 `test_planner_does_not_write_state` 的空转缺陷；`tests/M8_metadata_discovery/` 与 `tests/M9/` 均纳入 CI）；2026-09-21（M9 只读 Source 摘要投影：`tests/M9/` 收集 125 项、125 passed；全量 1042 collected、1038 passed、1 skipped、3 failed）；2026-09-21（M9 先修关系 topic graph 投影：`tests/M9/` 收集 187 项、187 passed；全量 1104 collected、1100 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4a 受限检索接缝：`tests/M9/` 收集 219 项、219 passed；全量 1136 collected、1132 passed、1 skipped、3 failed）
 
 ## 一、测试策略总览
 
@@ -147,7 +147,7 @@ tests/
 │   ├── test_metadata_discovery_governance.py # schema、Git binding、intent 与 fail-closed 边界
 │   └── test_metadata_discovery_scope_governance.py # selected pypdf scope 与独立审查边界
 │
-├── M9/                     # M9 目标驱动计划（生成 / 生命周期 / 偏差 / 只读 mastery、Source 摘要与先修关系投影）
+├── M9/                     # M9 目标驱动计划（生成 / 生命周期 / 偏差 / 只读 mastery、Source 摘要与先修关系投影 / 受限检索接缝）
 │   ├── README.md           # 范围、排除项与运行命令
 │   ├── conftest.py         # 空复习历史的确定性 Planner fixture
 │   ├── test_goal_planner.py           # 确定性生成、身份、只读与输入有界
@@ -216,7 +216,7 @@ selected-scope 测试文件已登记在 `tests/M8_metadata_discovery/`，与历�
 | `tests/M6a/` | 124 项 | 2026-08-28：124 passed | 含 worker topology、generation 分离、缓存生命周期与 API/OpenAPI/链接收口 |
 | `tests/M7/` | 270 项 | 当前 collect-only：270 项；Python 3.13.3 执行 267 passed / 3 failed（TXT 精确 `cpython-textio==3.11.9` 合同导致的预期 `PARSER_UNAVAILABLE`，非代码放宽项）；2026-09-06 Python 3.11.9 精确依赖环境的五格式 100×20 冻结协议独立全 PASS | source-local FTS5+vector identity、delete/isolation、Search/QA internal overlay、M7-2 snapshot cache、M7-4 exact-query/query-encode、M7-5 READY/CURRENT 与 correctness 收口；parser 证据报告只写系统临时目录且不入库 |
 | `tests/M8_metadata_discovery/` | 75 项 | 2026-09-21：75 passed（孤立运行）；全量运行时曾出现的 15 项跨阶段失败已于同日修复，见下方 2026-09-21 记录 | 离线治理；generic unresolved intent 仍为 `METADATA_DISCOVERY_INTENT_OWNER_SELECTION_REQUIRED`；pypdf==6.0.0 selected-scope 的 bounded Git reader、六阶段 dispatch-rooted chain、single-parent policy、provenance fail-closed 与最大 `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW` 均已覆盖 |
-| `tests/M9/` | 187 项 | 2026-09-21：187 passed（孤立运行）；同日三个增量前基线分别为 44 项、83 项与 125 项 | 确定性生成、计划身份（含派生输入摘要）、采纳/进度/重规划、跳过+逾期偏差与消费台账、只读 mastery 投影（跨会话聚合、知识条目 file 路径映射三分支与 `_log_review` 同序、不可映射排除、真只读守卫、输入有界）、只读 Source 摘要投影（`usable` 规则 7 态 × 有无 generation 矩阵、隐藏态排除、恰好一次 bulk 读、懒装配不建库、principal 守卫、有界输入、Planner 接缝）、只读先修关系投影（行内列表解析含块状形式静默丢弃陷阱、同目录兄弟边与嵌套目录不跨目录连边、丢弃规则、环与环下游诊断、零写入与每条目恰好解析一次、空图等价于无图的逐字节不变量、真图拓扑序与 `violations` 三种成因、置顶闭包交互、60 条语料数据完整性）；自 2026-09-21 起纳入 CI |
+| `tests/M9/` | 219 项 | 2026-09-21：219 passed（孤立运行）；同日四个增量前基线分别为 44 项、83 项、125 项与 187 项 | 确定性生成、计划身份（含派生输入摘要）、采纳/进度/重规划、跳过+逾期偏差与消费台账、只读 mastery 投影（跨会话聚合、知识条目 file 路径映射三分支与 `_log_review` 同序、不可映射排除、真只读守卫、输入有界）、只读 Source 摘要投影（`usable` 规则 7 态 × 有无 generation 矩阵、隐藏态排除、恰好一次 bulk 读、懒装配不建库、principal 守卫、有界输入、Planner 接缝）、只读先修关系投影（行内列表解析含块状形式静默丢弃陷阱、同目录兄弟边与嵌套目录不跨目录连边、丢弃规则、环与环下游诊断、零写入与每条目恰好解析一次、空图等价于无图的逐字节不变量、真图拓扑序与 `violations` 三种成因、置顶闭包交互、60 条语料数据完整性）；自 2026-09-21 起纳入 CI |
 | `tests/source_inventory/` | 21 项 | 2026-08-27：21 passed | 外部资料只读盘点；tmp_path 迷你树，不扫描真实外部目录，不构成 M7 开工 |
 | `tests/regression/`（含 slow） | 62 项 | 2026-09-06 当前 checkout 离线 keyword mode：62 passed | 含 SSE、结构化 CI、准入治理、导航与生产树契约；含显式 active-delivery 开工授权门禁 |
 | `tests/regression/test_rag_quality.py` slow | 3 项 | 2026-09-01 复测：3 passed；2026-08-28：3 passed | 默认 OS/DS/CO 90 题 Recall@3 门禁 |
@@ -225,8 +225,8 @@ selected-scope 测试文件已登记在 `tests/M8_metadata_discovery/`，与历�
 > 本表各行（含根级行）是各范围在**各自标注日期**的读数，且阶段行均为**孤立运行**。全量运行的跨阶段差异以
 > 下方 2026-09-21 记录为准——M8 的 15 项失败正是只在全量运行中出现、孤立运行全绿，单看本表无法发现。
 
-**2026-09-21 当前全量读数**（CPython 3.13.3，`pytest tests/ -q`，M9 先修关系增量后）：**1104 collected、
-1100 passed、1 skipped、3 failed**。（同一日更早的读数 1042 项已被本条取代：mastery 增量 +39、Source 摘要增量 +42、
+**2026-09-21 当前全量读数**（CPython 3.13.3，`pytest tests/ -q`，M9 步骤 4a 受限检索接缝增量后）：**1136 collected、
+1132 passed、1 skipped、3 failed**。（同一日更早的读数 1042 项已被本条取代：mastery 增量 +39、Source 摘要增量 +42、
 先修关系增量 +62。）3 failed 仍是 `tests/M7/test_parser_matrix.py` 与 `test_normalized_document.py` 的 TXT 用例
 （3.11.9 精确 parser 合同下的预期 fail-closed），与上一读数逐项相同。
 
@@ -240,7 +240,7 @@ M8 的离线治理套件（`tests/M8_metadata_discovery/`，75 项）自 2026-09
 补入 CI 后，同一类 `sys.path` 污染交互会在 CI 中直接暴露。CI 的 3.12 与 metadata-discovery 套件无版本耦合
 （带 Python 版本断言的 `m8_probe_s1_environment_v3.py`、`m8_validate_minimal_1k_protocol*.py` 等属
 minimal-1k/S1 家族，不在该套件的 import 闭包内），但该结论是静态推断，本地 3.13.3 无法验证 3.12 行为。
-`tests/M9`（187 项）同样自 2026-09-21 起纳入该步骤；`tests/M7`（270 项）仍不在 CI 中，因其 3 项 TXT 用例
+`tests/M9`（219 项）同样自 2026-09-21 起纳入该步骤；`tests/M7`（270 项）仍不在 CI 中，因其 3 项 TXT 用例
 是 3.11.9 精确合同下的预期 fail-closed，需另建钉住 Python 3.11.9 的独立 job 才能合法纳入。
 
 **2026-09-21 增量（M9 只读 mastery 投影 + 计划身份修复）**：新增 `tests/M9/test_mastery_projection.py`（39 项），
@@ -594,8 +594,8 @@ fail-closed 合同的 `tests/M7/` 已独立落地，技术测试本身不产生�
 | M6b 只读预览 | `tests/M6b/`（`m6b`）+ blocking offline benchmark | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 默认 90 题；真实 provider smoke 仅手工可选 |
 | 外部资料只读盘点 | `tests/source_inventory/`（`source_inventory`） | 不要求 | 使用 tmp_path 迷你树 | 不建索引、不计入 RAG 门禁 |
 | M7 lifecycle + FTS5/vector/offline + Search/QA overlay | `tests/M7/`（`m7`，270 项） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 证明 source-local 合同、generation-bound vector identity、Search/QA 的受信任内部 principal overlay、M7-2 snapshot identity/LRU、M7-4 exact-query/query-encode、M7-5 READY/CURRENT 指针一致性、M7-6 真实五格式 parser/normalized-document 与 lifecycle/provenance E2E；不证明 preview 用户源或 M7 阶段退出。`m7_exit=true` 只覆盖 `sa.source.benchmark.v1` |
-| M8–M10 准入准备 | 不创建 `tests/M8/`、`tests/M10/` 等阶段生产测试树；M8 离线治理套件 `tests/M8_metadata_discovery/`（75 项）与 M9 套件 `tests/M9/`（187 项）均自 2026-09-21 起纳入 CI | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
-| M9 目标驱动计划（生成 / 生命周期 / 偏差 / 只读 mastery、Source 摘要与先修关系投影） | `tests/M9/`（`m9`，187 项，2026-09-21 起纳入 CI） | `tests/regression/` + `tests/M0_M2/` | `platform/tests/` + `tests/M5b/` + `tests/M5c/` | 证明确定性生成、计划身份含派生输入摘要（复习/mastery/每日学时）、采纳/进度/重规划与消费台账、只读 mastery 投影的 file 路径映射与零写入、只读 Source 摘要的 `usable` 规则与懒装配不建库、只读先修关系投影的同目录兄弟边解析与先修合法顺序（真语料 `violations == 0`）；不证明外部 AI、mastery 写入、Source 过滤的端到端检索隔离或评测 workload，也不构成 M9 阶段退出 |
+| M8–M10 准入准备 | 不创建 `tests/M8/`、`tests/M10/` 等阶段生产测试树；M8 离线治理套件 `tests/M8_metadata_discovery/`（75 项）与 M9 套件 `tests/M9/`（219 项）均自 2026-09-21 起纳入 CI | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
+| M9 目标驱动计划（生成 / 生命周期 / 偏差 / 只读 mastery、Source 摘要与先修关系投影） | `tests/M9/`（`m9`，219 项，2026-09-21 起纳入 CI） | `tests/regression/` + `tests/M0_M2/` | `platform/tests/` + `tests/M5b/` + `tests/M5c/` | 证明确定性生成、计划身份含派生输入摘要（复习/mastery/每日学时）、采纳/进度/重规划与消费台账、只读 mastery 投影的 file 路径映射与零写入、只读 Source 摘要的 `usable` 规则与懒装配不建库、只读先修关系投影的同目录兄弟边解析与先修合法顺序（真语料 `violations == 0`）；4a 起在**服务层接缝**上证明 stale/deleted 源拒绝（未新增公开路由，故**不是**公共 API 上的端到端隔离）；不证明外部 AI、mastery 写入、计划身份往返保真或评测 workload，也不构成 M9 阶段退出 |
 
 ## 四、pytest 配置
 

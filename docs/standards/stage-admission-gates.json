@@ -330,14 +330,14 @@
         {"id": "M9-EVALUATION", "status": "RESOLVED", "value": "PREREQUISITE_VIOLATION_ZERO__STALE_DELETED_SOURCE_ENTRY_ZERO__DETERMINISTIC_REPLAY_100__BOUNDED_INPUT_PROVABLE__ADHERENCE_QUALITATIVE_FIRST_LATENCY_COST_DEFERRED", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]},
         {"id": "M9-COMPATIBILITY", "status": "RESOLVED", "value": "REVIEW_PLAN_AND_STUDY_SESSION_APIS_UNCHANGED__SQLITE_RECOVERABLE_MIGRATABLE_NO_HISTORY_REWRITE__90_QUESTION_NO_REGRESSION__FALLBACK_TO_DETERMINISTIC_REVIEW_PLAN", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]}
       ],
-      "approval": {"approved_by": "justtodo123", "approved_at": "2026-09-21", "approval_reference": "User instruction: 批准 M9 偏差触发语义由累计改为未消费（消费台账按 revision 追加，仅在阈值真正触发时消费，纯目标/约束变化不消费）；外部 AI 与 mastery 写入仍在范围外", "plan_revision": "v1.2", "decision_set_version": "m9-decision-set-v1"},
+      "approval": {"approved_by": "justtodo123", "approved_at": "2026-09-21", "approval_reference": "User instruction: 授权 M9 步骤 4（按需受限检索 + stale/deleted Source 拒绝），拆为 4a（受限检索接缝与预算）与 4b（principal 内部接缝与计划身份往返保真）；principal_id 保持内部接缝、不开公开请求字段；4a 为纯只读 accessor；范围扩张不写 admission_history；外部 AI 与 mastery 写入仍在范围外", "plan_revision": "v1.3", "decision_set_version": "m9-decision-set-v1"},
       "admission_history": [
         {"from": "ADMITTED", "to": "REVOKED", "at": "2026-09-21", "reason": "M9-EXECUTION-DEVIATION 决策值在 plan_revision v1.2 实质变更，v1.1 批准条件失效", "reference": "docs/plans/m9-goal-driven-planning-plan.md"},
         {"from": "REVOKED", "to": "ADMITTED", "at": "2026-09-21", "reason": "owner 记录 plan_revision v1.2 批准后重新准入", "reference": "docs/plans/m9-goal-driven-planning-plan.md"}
       ],
       "approval_scope": {
         "scope_id": "m9-plan-lifecycle-v1",
-        "included": ["m9.goal-plan-generation", "m9.plan-adoption", "m9.progress-event", "m9.replanning"],
+        "included": ["m9.goal-plan-generation", "m9.plan-adoption", "m9.progress-event", "m9.replanning", "m9.bounded-grounding-retrieval", "m9.plan-identity-fidelity"],
         "excluded": ["m9.external-ai", "m9.mastery-write"]
       },
       "implementation_start": {"status": "AUTHORIZED", "authorized_by": "justtodo123", "authorized_at": "2026-09-20", "authorization_reference": "User instruction: 批准 M9 确定性 Planner 先行并扩展到计划生命周期（生成+采纳+进度+重规划；外部 AI 与 mastery 写入除外）"}

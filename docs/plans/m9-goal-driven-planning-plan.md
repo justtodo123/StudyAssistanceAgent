@@ -70,13 +70,38 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 | --- | --- |
 | approved_by | justtodo123 |
 | approved_at | 2026-09-21 |
-| approval_reference | User instruction: 批准 M9 偏差触发语义由累计改为未消费（消费台账按 revision 追加，仅在阈值真正触发时消费，纯目标/约束变化不消费）；外部 AI 与 mastery 写入仍在范围外 |
-| plan_revision | v1.2 |
+| approval_reference | User instruction: 授权 M9 步骤 4（按需受限检索 + stale/deleted Source 拒绝），拆为 4a（受限检索接缝与预算）与 4b（principal 内部接缝与计划身份往返保真）；principal_id 保持内部接缝、不开公开请求字段；4a 为纯只读 accessor；范围扩张不写 admission_history；外部 AI 与 mastery 写入仍在范围外 |
+| plan_revision | v1.3 |
 | decision_set_version | m9-decision-set-v1 |
 
+**批准历史**（`approval` 字段只承载当前批准，故历史在此保留；登记表侧的历史见 `admission_history`）：
+
+| plan_revision | 批准引用 |
+| --- | --- |
+| v1.1 | （v1.2 之前的准入批准，原文未单独留存；其条件已由 v1.2 的实质变更取代，见 `admission_history`） |
+| v1.2 | User instruction: 批准 M9 偏差触发语义由累计改为未消费（消费台账按 revision 追加，仅在阈值真正触发时消费，纯目标/约束变化不消费）；外部 AI 与 mastery 写入仍在范围外 |
+| v1.3 | User instruction: 授权 M9 步骤 4（按需受限检索 + stale/deleted Source 拒绝），拆为 4a（受限检索接缝与预算）与 4b（principal 内部接缝与计划身份往返保真）；principal_id 保持内部接缝、不开公开请求字段；4a 为纯只读 accessor；范围扩张不写 admission_history；外部 AI 与 mastery 写入仍在范围外 |
+
 批准范围 `m9-plan-lifecycle-v1`：含 `m9.goal-plan-generation`、`m9.plan-adoption`、`m9.progress-event`、
-`m9.replanning`；排除外部 AI 与 mastery 写入。`M9-M7-EXIT` 与 `M9-M8-EXIT` 均已满足，八项强制决策全部
+`m9.replanning`、`m9.bounded-grounding-retrieval`、`m9.plan-identity-fidelity`；排除外部 AI 与 mastery 写入。
+`M9-M7-EXIT` 与 `M9-M8-EXIT` 均已满足，八项强制决策全部
 `RESOLVED`；`ADMITTED / IN_PROGRESS` 覆盖确定性计划生成与计划生命周期。
+
+### 4.1 v1.3 范围扩张为何不触发 §4 撤销
+
+`approval_scope` 按 [`stage-admission-gates.md`](../standards/stage-admission-gates.md) §4 只用于**缩小**边界，
+故步骤 4 此前不在 `included` 内，本次属**显式范围扩张**，需要新的 owner 批准记录（v1.3）。
+
+**不需要 `REVOKED` 过渡**：§4 要求撤销的前提是「强制决策、前置证据或兼容不变量发生实质变化」，本次三者均未变——
+
+- `M9-EVALUATION` 早已携带 `STALE_DELETED_SOURCE_ENTRY_ZERO`（步骤 4 是**兑现**该判据，不是改判据）；
+- `M9-PLANNER-INPUT-SCHEMA` 与本计划 §1.1 早已允许「原始 chunk 正文只经受限检索按需获取，受 top-k、
+  token、来源数、时间和成本预算控制」；
+- `M9-COMPATIBILITY` 的继承不变量不变（未改 review-plan / study-sessions API，未 bump `SCHEMA_VERSION`）。
+
+**未登记 `admission_history` 条目**：该字段的 `from` / `to` 语义是准入状态
+（`BLOCKED` / `ADMITTED` / `REVOKED`），而本次准入状态未变（`ADMITTED` → `ADMITTED`）；写入会造成语义错配。
+范围扩张的留痕改由批准字段、本表与 §5.1 承担。
 
 批准范围沿用 `m9-plan-lifecycle-v1`，但 `M9-EXECUTION-DEVIATION` 的触发语义在 v1.2 由「累计偏差 ≥ 3」
 改为「未消费偏差 ≥ 3」。这是对已 `RESOLVED` 强制决策的**实质变更**，按
@@ -121,7 +146,8 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | 1 冻结 planner input / plan / mastery / progress event schema | 已完成 | `tests/M9/test_goal_planner.py`；mastery schema 已落到只读投影 `MasteryProjectionService.mastery_by_file()`（attempt / correct / last_mastered），见 `tests/M9/test_mastery_projection.py` |
 | 2 确定性规则生成最小计划 + 验证 API/SQLite 兼容 | 已完成 | `tests/M9/test_goal_planner.py`、`tests/M9/test_plan_lifecycle.py` |
 | 3 只读 mastery snapshot / topic graph / Source 摘要 | 已完成 | mastery 投影：`platform/app/mastery_projection.py`、`tests/M9/test_mastery_projection.py`；授权 Source 摘要：`platform/app/source_summary_projection.py`、`tests/M9/test_source_summary_projection.py`；topic graph（先修关系）：`platform/app/topic_graph_projection.py`、`tests/M9/test_topic_graph_projection.py`。三者均已接入确定性 Planner |
-| 4 按需受限检索与 stale/deleted Source 拒绝 | 未开始 | 属 M9 后续增量，未获批前不实现 |
+| 4a 受限检索接缝与四类预算（`m9.bounded-grounding-retrieval`） | 已完成 | `platform/app/plan_grounding.py`、`tests/M9/test_plan_grounding.py`；装配于 `main.py` |
+| 4b principal 内部接缝与计划身份往返保真（`m9.plan-identity-fidelity`） | 未开始 | 已获 v1.3 授权，尚未实施 |
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
 | 6 可选外部 AI adapter 与冻结任务集比较 | 未开始 | 外部 AI 在 `m9-plan-lifecycle-v1` 范围外 |
 
@@ -304,6 +330,62 @@ Recall@5 = 0.989、Recall@3 = 0.978，与改动前基线逐位相同。`network/
 `docs/standards/stage-admission-gates.json` 中 per-stage 的 `prerequisites` 同词不同义，文档中显式记一笔避免日后
 grep 混用。本次**未新增任何公开路由**，`PUBLIC_API_PATHS` 与路由 docstring 均未改动；**未 bump
 `SCHEMA_VERSION`**（记录 schema 未变）。`tests/M9` 自本次起 125 → 187 项。
+
+受限检索接缝（grounding）实现约定：模块在 `platform/app/plan_grounding.py`
+（`PlanGroundingService`），与三个只读投影同形——纯读、不写 Source 生命周期、不写会话状态、
+不写计划状态、不构建 chunk 索引。**不新建检索实现**：复用 `MultiRecallService.recall`，只在外面
+加四类预算与一道独立的交叉校验。
+
+(a) **问题定性（本增量最重要的一条）**：M7 **已经**在检索路径端到端强制了 stale/deleted 拒绝——
+可用性谓词在 `source_offline.py` 内联、generation 绑定贯穿 index 校验 / search / hydrate / hit 过滤、
+隐藏态由 `list_sources` 的 WHERE 构造性排除、principal 作用域结果绕过外层结果缓存、末道
+`ensure_user_provenance` fail-closed。因此 `M9-EVALUATION` 的 `STALE_DELETED_SOURCE_ENTRY_ZERO`
+缺的**不是实现**，而是 **Planner 根本没接上检索路径**——计划此前只由目录 / frontmatter / mastery
+生成，没有 grounded 检索这一步，故该判据在端到端上无证据可测。本增量补的是这条接缝与它的证据。
+
+(b) **预算按 UTF-8 字节计，不按 token 计**：本仓没有本地 tokenizer。M6b 对同类问题用的是
+`max_prompt_bytes` / `max_answer_bytes`（`preview_agent.py`）。凭空写一个「token 数」是估算冒充计量，
+故 §5 步骤 4 里的「token 预算」由 `max_evidence_bytes` 兑现，**不改**该步骤的意图，只改计量单位。
+
+(c) **`timeout_seconds` 是事后截止检查，不是硬中断**：`recall` 是同步调用且没有取消通道，一次已经
+卡住的召回无法被抢占。该预算约束的是 Planner **接受**多少证据，不是检索路径**做**多少工作；
+超时即返回**空证据**并标注 `truncated=("timeout",)`，不返回部分结果。
+
+(d) **fail-closed 交叉校验**：召回后，任何 `user://{source_id}/…` chunk 的 `source_id` 不在
+`summaries(principal_id)` 的可用集合内即丢弃。可用集合在三种「不确定」下都收敛到**空集**——
+未注入投影、无 principal、控制面抛异常——因此这三种情况都**丢弃全部用户源**，而不是放行。
+畸形 `user://` 的 `source_id` 必然不在集合内，同样被丢弃，不会被误当作默认包。默认知识包不是
+生命周期门控对象，不受该校验约束。
+
+(e) **预算只能收紧**：`GROUNDING_BUDGET_CEILING` 即字段默认值，任何维度超过上限即抛
+`GroundingBudgetError` 且**不触达检索路径**；裁剪顺序固定为 `top_k` → 来源数 → 字节，保证同一
+输入 + 同一预算下可重放。
+
+(f) **grounding 刻意不进计划身份、也不进 `summary`**：其结果依赖索引 generation，折进 `plan_id`
+会让每次 reindex 都 churn 计划身份（违反 §1.1「索引重建不得无故改变计划身份」）；折进 `summary`
+会让同一 `plan_id` 因 reindex 得到不同 `summary`，破坏「同一 `plan_id` ⇒ 相同 `summary`」这条
+结构性不变量——`unorderable` 被排除在 `summary` 外正是同一纪律。§1.1 的原文恰好支持这一拆分：
+「PlanTask 优先引用稳定 topic/source identity；引用 chunk 时必须绑定 revision/generation」。
+
+(g) **不新增任何公开路由**：`PUBLIC_API_PATHS` 与路由 docstring 均未改动，
+`test_openapi_public_paths_remain_exact` 保持绿。`tests/TEST_PLAN.md` §5.2 记录的「新增默认公开
+路由无合法登记渠道」这一缺口**本次不触碰**——按 §5.2 自己给出的规避方式，把能力留在服务层接缝上。
+**未 bump `SCHEMA_VERSION`**（记录 schema 未变）。
+
+(h) **已装配、生产休眠（如实记录）**：`main.py` 构造了 `_plan_grounding` 并注入 `_source_summary`，
+但**没有任何路由把 principal 传进来**——principal 按设计是内部边界（与 M7 公共 Search/QA 不接受
+caller-selected `principal_id` 一致），与 `_user_source_search` 同一形态。它刻意**不**注入
+`_goal_planner`：按 (f)，注入也不会改变计划内容。
+
+(i) **`STALE_DELETED_SOURCE_ENTRY_ZERO` 的证明边界**：本增量在**服务层接缝**上证明它——
+`tests/M9/test_plan_grounding.py` 用**真 registry + 真生命周期转移 + 真投影**覆盖未发布 / 同步中 /
+禁用 / 待删 / 已删五种形态，而非 mock 状态字符串。它**不**经 HTTP 路由（见 (h)），因此**不是**
+「公共 API 上的端到端隔离」；M7 内层路径的自身证据仍留在 `tests/M7/`，本增量不重复也不替代它。
+该守卫做过变异检查：把可用性判断改成空操作会让 32 项中的 10 项失败，故不是空转。
+
+(j) **仍未闭合**：评测 workload 冻结（§5 步骤 6）与外部 AI 仍在 `m9-plan-lifecycle-v1` 之外，
+`M9-EVALUATION` 的 `ADHERENCE_QUALITATIVE_FIRST` 与延迟 / 成本维度仍暂缓；本增量不使 M9 达到退出条件。
+`tests/M9` 自本次起 187 → 219 项。
 
 计划身份修复：`_plan_id` 原先只哈希 `goal|target|course|required|excluded`，而任务顺序与 `summary`
 的 reviewed 计数依赖复习状态、分日依赖 `hours_per_day`。两处碰撞均已实测证实：同一 `plan_id`
