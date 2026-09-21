@@ -77,7 +77,9 @@ STAGE_PRODUCTION_SURFACES = {
     },
     "M9": {
         "paths": ("tests/M9",),
-        "identifiers": (),
+        # 外部 AI 路径的 opt-in 开关：登记后该 env 面受 M9 门禁管辖——若 M9 哪天不再是
+        # production-started，这个标识符出现在生产树里就会被判红。M9 现为 AUTHORIZED，故不触发。
+        "identifiers": ("SA_PLAN_AI_ENABLED",),
         "api_paths": (),
         "requirements": (),
     },
