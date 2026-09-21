@@ -62,7 +62,9 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 
 - [x] M7/M8 数据、scope、revision 和存储契约退出证据有效；
 - [x] 八项强制决策全部 `RESOLVED`，schema 与 authority 不冲突；
-- [ ] 外部 AI 最小披露、失败和无 LLM fallback 可验证；
+- [x] 外部 AI 最小披露、失败和无 LLM fallback 可验证（v1.4 窄口径兑现：`tests/M9/test_plan_ai_adapter.py`
+  逐字段断言载荷白名单、每一类失败收敛为回退、关闭时与无 adapter 逐字节相同；**注意**这只覆盖 1K 与
+  stub provider，真实 provider 的延迟/成本/失败模式仍未验证）；
 - [ ] evaluation workload、样本、阈值和人工评审口径冻结；
 - [ ] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表一致；
 - [ ] 用户或项目负责人完成批准。
@@ -195,7 +197,7 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | 4c 复习历史活投影（`m9.review-history-projection`）——步骤 3 已记录残留的修复，**非**范围扩张 | 已完成 | `platform/app/review_history_projection.py`、`tests/M9/test_review_history_projection.py`；装配于 `main.py` |
 | 4d 准入留痕字段覆盖（`m9.admission-history-reference-coverage`）——关闭 §4 已记录缺口，**纯治理测试硬化、非能力** | 已完成 | `tests/regression/test_governance_contract.py` 的 `_registry_references` 与 `test_admission_history_records_are_well_formed` |
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
-| 6 可选外部 AI adapter 与冻结任务集比较（`m9.external-ai`，**窄口径**） | 进行中 | v1.4 批准（见 §4.2）；实现见 `platform/app/plan_ai_adapter.py`、`tests/M9/test_plan_ai_adapter.py`；冻结任务集比较见 `tests/M9/test_plan_ai_benchmark.py` |
+| 6 可选外部 AI adapter 与冻结任务集比较（`m9.external-ai`，**窄口径**） | 已完成（**窄口径**） | v1.4 批准（见 §4.2）；实现见 `platform/app/plan_ai_adapter.py`、`tests/M9/test_plan_ai_adapter.py`；冻结任务集比较见 `tests/M9/test_plan_ai_benchmark.py`。**步骤 6 整体未闭合**：10K/100K 容量验证逐字记为 M8（`BLOCKED`）/ M11（拟议）依赖，本次不触碰；`M9-EVALUATION` 未动，延迟/成本仍 `DEFERRED`，评测 workload 未冻结 |
 
 偏差信号实现约定：逾期复用 `ReviewSchedulerService.overdue_by_file()` 的 `days_overdue`（只读复习历史，
 不构建 chunk 索引，保持 Planner 输入有界）；偏差按 task_id 去重后计数，跳过与逾期不重复计入同一任务；

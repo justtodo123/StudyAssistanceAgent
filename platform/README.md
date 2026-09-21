@@ -533,6 +533,31 @@ immutable revision 才是 published generation 的权威，且重复请求与无
 Preview 的 model、官方 endpoint、TLS 校验、tool allowlist、capacity=2、应用级最大一次 retry、thinking、
 价格表和 trace retention 均不可由环境变量覆盖。配置布尔值、数字或“只能收紧”约束无效时启动即 fail closed。
 
+### M9 可选外部 AI 计划路径（`m9.external-ai`，默认关闭）
+
+`SA_PLAN_AI_ENABLED=true` 且 `SA_PLAN_AI_TOKEN`（或 `ANTHROPIC_API_KEY`）至少 32 个 UTF-8 字节时，
+`POST /api/v1/plans` 生成计划前会让外部 AI 在**同一有界条目集**内提出一个排序，再由既有确定性校验器裁决。
+**不新增路由**：该路径经既有端点可达，默认 OpenAPI 不变。
+
+| 环境变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `SA_PLAN_AI_ENABLED` | `false` | 启用外部 AI 排序路径；关闭时计划输出与接入前**逐字节相同** |
+| `SA_PLAN_AI_TOKEN` | 空（回退 `ANTHROPIC_API_KEY`） | 启用时至少 32 个 UTF-8 字节，否则启动即 fail closed |
+| `SA_PLAN_AI_DEADLINE_SECONDS` | `30` | 桥接线程外层 deadline；只能收紧 |
+| `SA_PLAN_AI_MODEL_TIMEOUT_SECONDS` | `20` | 单次 `create_turn` timeout；只能收紧 |
+| `SA_PLAN_AI_MAX_INPUT_TOKENS` | `8000` | input token 上限；只能收紧 |
+| `SA_PLAN_AI_MAX_OUTPUT_TOKENS` | `2048` | output token 上限；只能收紧 |
+| `SA_PLAN_AI_MAX_COST_USD` | `0.10` | 冻结价格表估算费用**硬上限**；只能收紧 |
+| `SA_PLAN_AI_MAX_PROMPT_BYTES` | `16384` | UTF-8 prompt 字节上限；只能收紧 |
+| `SA_PLAN_AI_MAX_ANSWER_BYTES` | `16384` | UTF-8 回复字节上限；只能收紧 |
+
+model 与 retry 次数不可由环境变量覆盖（沿用 Preview 的“应用级固定”纪律）。**最小披露是结构性的**：
+载荷类型上没有 `file` 字段、没有 per-file mastery 值、没有 `principal_id`。任何超时、超预算、非 JSON、
+或不是原集合**置换**的回复都逐字回退确定性计划，**不产生半成品计划**，也不落库。
+
+> 范围：本路径只跑 **1K** 冻结比较，证明**输入有界**（prompt 不随语料规模增长），**不是**容量声明；
+> 10K/100K 属 M8（`BLOCKED`）/ M11（拟议）依赖，延迟/成本维度仍 `DEFERRED`。
+
 ## M6/M7 边界
 
 M6a 已完成 Source/存储职责/Tool/Runner 薄适配、启动期静态额外源、default/combined generation 分离、单进程拓扑门禁和文档收口。
@@ -554,6 +579,8 @@ M7 当前为 `ADMITTED / COMPLETE`。独立 Source Registry、source-local manif
 | Preview provider key 缺失 | 认证后返回结构化 503；Search/QA/session 不受影响 |
 | Preview 过载 | 最多等待 250 ms，随后返回 429 与 `Retry-After: 1` |
 | Preview loop 失败或预算耗尽 | 返回稳定 `terminated` envelope，不降级为正式状态机或写操作 |
+| 外部 AI 计划路径未启用 | 不构造 proposer（连 token 都不读），`generate()` 与接入前逐字节相同 |
+| 外部 AI 超时 / 超预算 / 输出非法 | 逐字回退确定性计划，附稳定原因码；不产生半成品计划，不落库 |
 
 **核心原则：保证总是有输出。**
 

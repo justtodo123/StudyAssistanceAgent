@@ -2,10 +2,13 @@
 
 验证确定性 Planner 的完整链路：Goal + 约束 + 四个只读投影（**复习历史** / **mastery** / 授权 **Source 摘要** /
 **先修关系 topic graph**）→ 版本化、可重放的分日计划，以及采纳 / 进度事件 / 偏差触发的版本化重规划。
-四个投影都是纯读（不写领域状态、不构建 chunk 索引、不读原始 chunk 正文，不引入外部 AI），
+四个投影都是纯读（不写领域状态、不构建 chunk 索引、不读原始 chunk 正文），
 且都以**活对象**注入，使计划身份与排序随答题 / 复习状态刷新。
 `test_plan_grounding.py` 覆盖其后的**受限检索接缝**：Planner 按需取回有界 grounding 证据，
 并在接缝上独立交叉校验用户源可用性。
+
+`test_plan_ai_adapter.py` / `test_plan_ai_benchmark.py` 覆盖 **`m9.external-ai`（v1.4 窄口径，
+默认关闭）**：可选外部 AI 排序路径，以及冻结工作负载上确定性与 AI 两条路径的比较。
 
 ## 文件
 
@@ -21,6 +24,8 @@
 | `test_plan_grounding.py` | 受限检索接缝：四类预算各自生效与放宽被拒、stale/deleted/未发布/未就绪/禁用/待删源在接缝上被丢弃（真 registry + 真投影端到端）、无 principal 与投影不可用时的 fail-closed、畸形 provenance、真只读守卫、证据有界 |
 | `test_plan_identity.py` | 计划身份按 principal 分隔（带标签段、7 例参数化、`goal` 伪造 `\|principal=` 段不碰撞）与反 churn 逐字节护栏（对合成任务对比旧公式，不依赖语料）、进度事件不跨 principal 污染、`summary` 落记录、replan 还原 principal 与源范围、principal 不出现在任何读取路径、源码级单点剥离护栏 |
 | `test_review_history_projection.py` | 复习历史活投影：只返回成员资格（不交 payload）、刻意不缓存、恰好一次批量读、无写面（import 级 AST 扫描 + 连接级 `total_changes` 审计 + 库快照比对）、**构造 Planner 之后落的复习必须可见**（旧代码下必失败的缺陷证明）、快照参数仍冻结、`plan_id` 随复习变化、`main.py` 装配护栏 |
+| `test_plan_ai_adapter.py` | 外部 AI 排序路径（默认关闭）：最小披露的**字段级**白名单（prompt 里没有路径 / chunk 正文 / `principal_id` / per-file mastery）、预算只允许收紧与非正数被拒、每一类失败收敛为 `order=None` + 稳定原因码、关闭时与无 adapter 逐字节相同（含 `plan_id`）、失败不落库（写入口全 fail + 连接级审计 + 库快照比对）、先修闸门与必选置顶**非空转**（同 adapter 同提案：注入图被拒、不注入图被采纳；置顶断言传递闭包块是前缀） |
+| `test_plan_ai_benchmark.py` | 冻结工作负载上两条路径的比较（`m9_benchmark`，1K 语料）：语料**只读复用** M7 生成器且 chunk 数**量出来**（10 vs 1000，源真的发布过且可检索）、输入有界（两种规模下 prompt 字节数与条目数逐字相同）、两条路径先修违反均为 0、确定性可重放、合法相邻对换被采纳而非法对换被拒（两条臂都非空转）、报告独占创建 + 双摘要 |
 
 ## 七条关键约定
 
@@ -62,11 +67,27 @@
   快照，故既有调用方行为逐字节不变。**该守卫必须钉在 `main.py` 的装配上**——本目录其余用例直接构造
   `GoalPlannerService`，把装配改回快照它们仍然全绿，而缺陷原本就长在装配上。
 
+- **外部 AI 路径默认关闭，且「最小披露」是结构性的**：载荷由 `PlanAIRequest` / `PlanAITaskSummary`
+  两个冻结 dataclass 定义，`PlanAITaskSummary` **没有 `file` 字段**，`task_id` 是 `sha256(file)[:16]`
+  （不透明、不含路径），mastery 只送**聚合计数**，`principal_id` 根本不在载荷里——故「不送路径」不是靠
+  渲染时过滤，而是类型上就没有那个字段可送。**AI 只提出排序，采纳由既有确定性校验器裁决**：置换校验在
+  Planner 侧**再做一遍**（adapter 是可注入接缝，只在接缝一侧校验等于没校验），先修违反即整体回退，
+  必选主题置顶由确定性侧**重新施加**。任何超时 / 超预算 / 非法输出都返回**入参本身**（逐字回退），
+  不落库、不改 `revision_id`，故不产生半成品计划。**不新增公开路由**：该路径经既有
+  `POST /api/v1/plans` 可达。Planner **不 import** adapter 模块（鸭子类型），以保持其源码级护栏
+  （不含 `llm_client` / `content` / `split_headings` 字样）成立。
+- **1K 比较是窄口径证据，不是容量声明**：`test_plan_ai_benchmark.py` 只跑 **1K**（M7 生成器，
+  `sources=1, documents=100, units=10`），证明的是**输入有界**——送往 AI 的 prompt 不随语料规模增长。
+  M9 既不存储也不索引 1K chunks，故这不是容量通过。**10K/100K 逐字记为 M8（`BLOCKED`）/ M11（拟议）
+  依赖**；`M9-EVALUATION` 未动，延迟/成本维度仍 `DEFERRED`，评测 workload **未**冻结；CI 里 AI 路径由
+  **确定性 stub** 驱动，真实 provider 的延迟 / 成本 / 失败模式**未在 CI 验证**。
+
 ## 命令
 
 ```bash
 ./platform/.venv/Scripts/python -m pytest tests/M9 -v
 ./platform/.venv/Scripts/python -m pytest tests/M9 -m m9 -q
+./platform/.venv/Scripts/python -m pytest tests/M9 -m m9_benchmark -q   # 冻结 1K 比较（已排除在阶段步骤外）
 ```
 
 自 2026-09-21 起本套件已纳入 `.github/workflows/offline-ci.yml` 的阶段测试步骤。
