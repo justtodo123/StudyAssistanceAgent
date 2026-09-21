@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from m8_git_object_reader import GitObjectReader
-    from m8_metadata_discovery_schema import (
+    from tools.m8_git_object_reader import GitObjectReader
+    from tools.m8_metadata_discovery_schema import (
         CANONICALIZATION_ID,
         SCOPE_BUILDER_ID,
         SCOPE_CANDIDATE_FORMAT,
@@ -25,8 +25,8 @@ try:
         validate_scope_candidate,
     )
 except ImportError:  # pragma: no cover
-    from tools.m8_git_object_reader import GitObjectReader
-    from tools.m8_metadata_discovery_schema import (
+    from m8_git_object_reader import GitObjectReader
+    from m8_metadata_discovery_schema import (
         CANONICALIZATION_ID,
         SCOPE_BUILDER_ID,
         SCOPE_CANDIDATE_FORMAT,

@@ -12,13 +12,13 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from m8_metadata_discovery_schema import (
+    from tools.m8_metadata_discovery_schema import (
         CANONICALIZATION_ID,
         canonical_bytes,
         validate_candidate,
     )
 except ImportError:  # pragma: no cover - supports package-style imports
-    from tools.m8_metadata_discovery_schema import (
+    from m8_metadata_discovery_schema import (
         CANONICALIZATION_ID,
         canonical_bytes,
         validate_candidate,

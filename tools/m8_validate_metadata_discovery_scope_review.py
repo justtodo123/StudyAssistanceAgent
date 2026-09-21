@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from m8_metadata_discovery_schema import (
+    from tools.m8_metadata_discovery_schema import (
         CANONICALIZATION_ID,
         SCOPE_CANDIDATE_VALIDATED,
         SCOPE_REVIEW_FORMAT,
@@ -34,7 +34,7 @@ try:
         SCOPE_READY_FOR_EXTERNAL_REVIEW,
     )
 except ImportError:  # pragma: no cover
-    from tools.m8_metadata_discovery_schema import (
+    from m8_metadata_discovery_schema import (
         CANONICALIZATION_ID,
         SCOPE_CANDIDATE_VALIDATED,
         SCOPE_REVIEW_FORMAT,
@@ -58,9 +58,9 @@ except ImportError:  # pragma: no cover
     )
 
 try:
-    from m8_git_object_reader import GitObjectReader
-except ImportError:  # pragma: no cover
     from tools.m8_git_object_reader import GitObjectReader
+except ImportError:  # pragma: no cover
+    from m8_git_object_reader import GitObjectReader
 
 ROOT = Path(__file__).resolve().parents[1]
 CANDIDATE_PATH = "m8/metadata-discovery/scope-candidate.json"

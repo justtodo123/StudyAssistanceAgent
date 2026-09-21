@@ -22,36 +22,6 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from m8_build_metadata_discovery_scope_candidate import build_scope_candidate
-    from m8_git_object_reader import GitObjectReader
-    from m8_metadata_discovery_schema import (
-        CANONICALIZATION_ID,
-        SCOPE_CHAIN_FORMAT,
-        SCOPE_CHAIN_PATHS,
-        SCOPE_CHAIN_PREDECESSORS,
-        SCOPE_CHAIN_STAGES,
-        SCOPE_CYCLE_ID,
-        SCOPE_DISPATCH_FORMAT,
-        SCOPE_EXECUTION_KEYS,
-        SCOPE_LIMIT_KEYS,
-        SCOPE_READY_FOR_EXTERNAL_REVIEW,
-        SCOPE_REVIEW_PROMPT_FORMAT,
-        SCOPE_REVIEW_PROTOCOL,
-        SCOPE_REVIEW_PROTOCOL_ID,
-        SCOPE_REVIEW_PROTOCOL_SHA256,
-        SCOPE_REVIEW_REQUIRED,
-        SCOPE_REVIEW_REQUIRED_CHECKS,
-        SCOPE_REVIEW_REQUEST_FORMAT,
-        SCOPE_REVIEW_ROLE,
-        SCOPE_REVIEW_TARGET_FORMAT,
-        SCOPE_SELF_CHECK_DECISION,
-        SCOPE_SELF_CHECK_FORMAT,
-        SCOPE_SINGLE_PARENT_POLICY,
-        canonical_bytes,
-        validate_scope_stage_payload,
-    )
-    from m8_validate_metadata_discovery_scope_review import validate_dispatch_publication
-except ImportError:  # pragma: no cover
     from tools.m8_build_metadata_discovery_scope_candidate import build_scope_candidate
     from tools.m8_git_object_reader import GitObjectReader
     from tools.m8_metadata_discovery_schema import (
@@ -81,6 +51,36 @@ except ImportError:  # pragma: no cover
         validate_scope_stage_payload,
     )
     from tools.m8_validate_metadata_discovery_scope_review import validate_dispatch_publication
+except ImportError:  # pragma: no cover
+    from m8_build_metadata_discovery_scope_candidate import build_scope_candidate
+    from m8_git_object_reader import GitObjectReader
+    from m8_metadata_discovery_schema import (
+        CANONICALIZATION_ID,
+        SCOPE_CHAIN_FORMAT,
+        SCOPE_CHAIN_PATHS,
+        SCOPE_CHAIN_PREDECESSORS,
+        SCOPE_CHAIN_STAGES,
+        SCOPE_CYCLE_ID,
+        SCOPE_DISPATCH_FORMAT,
+        SCOPE_EXECUTION_KEYS,
+        SCOPE_LIMIT_KEYS,
+        SCOPE_READY_FOR_EXTERNAL_REVIEW,
+        SCOPE_REVIEW_PROMPT_FORMAT,
+        SCOPE_REVIEW_PROTOCOL,
+        SCOPE_REVIEW_PROTOCOL_ID,
+        SCOPE_REVIEW_PROTOCOL_SHA256,
+        SCOPE_REVIEW_REQUIRED,
+        SCOPE_REVIEW_REQUIRED_CHECKS,
+        SCOPE_REVIEW_REQUEST_FORMAT,
+        SCOPE_REVIEW_ROLE,
+        SCOPE_REVIEW_TARGET_FORMAT,
+        SCOPE_SELF_CHECK_DECISION,
+        SCOPE_SELF_CHECK_FORMAT,
+        SCOPE_SINGLE_PARENT_POLICY,
+        canonical_bytes,
+        validate_scope_stage_payload,
+    )
+    from m8_validate_metadata_discovery_scope_review import validate_dispatch_publication
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUEST_ID = "m8-scope-review-request-20260920-r02"

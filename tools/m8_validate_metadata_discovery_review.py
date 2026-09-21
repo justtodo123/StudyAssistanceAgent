@@ -10,14 +10,14 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from m8_metadata_discovery_schema import (
+    from tools.m8_metadata_discovery_schema import (
         MetadataGovernanceError,
         canonical_bytes,
         parse_canonical_document,
         validate_candidate,
     )
 except ImportError:  # pragma: no cover
-    from tools.m8_metadata_discovery_schema import (
+    from m8_metadata_discovery_schema import (
         MetadataGovernanceError,
         canonical_bytes,
         parse_canonical_document,

@@ -8,13 +8,13 @@ import subprocess
 from pathlib import Path
 
 try:
-    from m8_metadata_discovery_schema import (
+    from tools.m8_metadata_discovery_schema import (
         MAX_CHAIN_BYTES,
         MAX_DOCUMENT_BYTES,
         MetadataGovernanceError,
     )
 except ImportError:  # pragma: no cover
-    from tools.m8_metadata_discovery_schema import (
+    from m8_metadata_discovery_schema import (
         MAX_CHAIN_BYTES,
         MAX_DOCUMENT_BYTES,
         MetadataGovernanceError,
