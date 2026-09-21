@@ -52,9 +52,15 @@
 
 ## 5. `M9-EXECUTION-DEVIATION`
 
-- **事件类型**：`completed`、`skipped`、`overdue`、`replanned`。
+> v1.2 语义变更（2026-09-21 批准）：触发条件由「跳过/逾期**累计**超过阈值」改为
+> 「**自上次重规划以来未消费**的跳过/逾期累计超过阈值」；`replanned` 由追加式消费台账
+> （`plans.payload` 的 `deviation_ledger`，每个产生的 revision 一条）落地，不再只是文档里
+> 点名的事件类型——`progress_events` 词表仍只有 `completed` / `skipped` / `overdue`。
+
+- **事件类型**：`completed`、`skipped`、`overdue`、`replanned`（`replanned` 见上：由台账条目落地）。
 - **偏差指标**：完成率、跳过率、逾期天数、与目标日期的漂移。
-- **重规划触发**：跳过/逾期累计超过阈值，或目标日期/约束变化，触发生成新 PlanRevision。
+- **重规划触发**：未消费的跳过/逾期累计超过阈值（默认 3），或目标日期/约束变化，触发生成新 PlanRevision。
+- **消费**：触发时把本次未消费的偏差 task_id 追加进台账；纯目标/约束变化写空集；未触发不写盘。
 - **版本关系**：新 revision 明确 `parent_revision_id`，形成不可变前向链；并发事件按时间戳 + 幂等键合并。
 
 ## 6. `M9-EXTERNAL-AI`

@@ -337,8 +337,15 @@ GET /api/v1/plans/{plan_id}
 
 - `adopt`：显式采纳（`generated` → `adopted`），不自动激活
 - `progress`：`event` 取 `completed` / `skipped` / `overdue`；同 plan + task + event 幂等
-- `replan`：偏差任务（跳过 + 逾期）≥ 3，或请求体中任何与已存计划不同的字段（目标/约束变化）即触发；
-  生成 `parent_revision_id` 前向链的新 revision，`replan_reason` 记录触发原因；未触发时原样返回当前计划
+- `replan`：**未消费**的偏差任务（跳过 + 逾期）≥ 3，或请求体中任何与已存计划不同的字段
+  （目标/约束变化）即触发；生成 `parent_revision_id` 前向链的新 revision，`replan_reason` 记录触发原因；
+  未触发时原样返回当前计划且**不写盘**——因此重复调用不会持续追加内容相同的新 revision
+- 偏差消费台账：触发时把本次未消费的偏差 `task_id` 追加为 `deviation_ledger` 的一条
+  （`{revision_id, trigger, consumed_task_ids}`，只追加不改写，`consumed_task_ids` 有序）；
+  纯目标/约束变化的重规划不消费未达阈值的偏差。消费是单调的：已消费的任务再次逾期不再触发
+- 响应 payload 说明：`/api/v1/plans/{plan_id}` 与 `replan` 路由返回裸 dict、无 `response_model`，
+  因此新增的 `deviation_ledger` 键会出现在 API 响应里（additive，不影响既有字段）；旧库无该键时
+  首次重规划会多产生一个 revision，写入台账后收敛
 - 逾期信号复用复习排程的 `days_overdue`（只读复习历史，不构建 chunk 索引）
 - `GET`：查询当前 revision、状态与进度事件
 - 旧 revision 只读保留在 `revisions` 列表，新 revision 追加为链尾；同一 Goal/课程/约束重复

@@ -46,7 +46,7 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 | `M9-PLAN-SCHEMA` | `RESOLVED` | 版本化 Plan/PlanRevision/PlanTask/ProgressEvent；task 按 topic 粒度稳定标识；显式采纳、不自动激活；确定性可重放 |
 | `M9-MASTERY-SCHEMA` | `RESOLVED` | 粗粒度两段式（topic 的 attempt/correct/last_mastered 计数）；暂不引入连续浮点等级、置信度与时间衰减 |
 | `M9-MASTERY-AUTHORITY` | `RESOLVED` | `StudySessionService`/领域仓储唯一写；Planner 建议隔离；先粗粒度 mastery；采纳由 SessionService 记录 |
-| `M9-EXECUTION-DEVIATION` | `RESOLVED` | completed/skipped/overdue/replanned 事件；跳过+逾期≥3 或目标/约束变化触发重规划；parent_revision 前向链；复用 review_scheduler 的 days_overdue |
+| `M9-EXECUTION-DEVIATION` | `RESOLVED` | completed/skipped/overdue/replanned 事件；**未消费的**跳过+逾期≥3 或目标/约束变化触发重规划；触发时按 revision 追加消费台账；parent_revision 前向链；复用 review_scheduler 的 days_overdue |
 | `M9-EXTERNAL-AI` | `RESOLVED` | 默认关闭、显式 opt-in；最小披露（不送 chunk 正文/用户数据/路径/凭据）；硬超时+成本预算；确定性 fallback |
 | `M9-EVALUATION` | `RESOLVED` | 先修违反=0、stale/deleted Source 进入=0、确定性可重放=100%、输入有界可证明；遵循度先定性，延迟/成本暂缓 |
 | `M9-COMPATIBILITY` | `RESOLVED` | review-plan/study-session API 不变；SQLite 可恢复可迁移不回写历史；90 题不退化；关闭时回退确定性 review-plan |
@@ -69,14 +69,19 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 | 批准字段 | 当前值 |
 | --- | --- |
 | approved_by | justtodo123 |
-| approved_at | 2026-09-20 |
-| approval_reference | User instruction: 批准 M9 确定性 Planner 先行并扩展到计划生命周期（生成+采纳+进度+重规划；外部 AI 与 mastery 写入除外） |
-| plan_revision | v1.1 |
+| approved_at | 2026-09-21 |
+| approval_reference | User instruction: 批准 M9 偏差触发语义由累计改为未消费（消费台账按 revision 追加，仅在阈值真正触发时消费，纯目标/约束变化不消费）；外部 AI 与 mastery 写入仍在范围外 |
+| plan_revision | v1.2 |
 | decision_set_version | m9-decision-set-v1 |
 
 批准范围 `m9-plan-lifecycle-v1`：含 `m9.goal-plan-generation`、`m9.plan-adoption`、`m9.progress-event`、
 `m9.replanning`；排除外部 AI 与 mastery 写入。`M9-M7-EXIT` 与 `M9-M8-EXIT` 均已满足，八项强制决策全部
 `RESOLVED`；`ADMITTED / IN_PROGRESS` 覆盖确定性计划生成与计划生命周期。
+
+批准范围沿用 `m9-plan-lifecycle-v1`，但 `M9-EXECUTION-DEVIATION` 的触发语义在 v1.2 由「累计偏差 ≥ 3」
+改为「未消费偏差 ≥ 3」——这是对已 `RESOLVED` 决策的实质变更，按
+[`stage-admission-gates.md`](../standards/stage-admission-gates.md) 的登记规则原地替换触发子句并升
+`plan_revision`，准入状态保持 `ADMITTED / IN_PROGRESS`（该决策仍是同一决策，未被撤销）。
 
 ## 5. 获准后的拟实施顺序
 
@@ -100,7 +105,7 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | 2 确定性规则生成最小计划 + 验证 API/SQLite 兼容 | 已完成 | `tests/M9/test_goal_planner.py`、`tests/M9/test_plan_lifecycle.py` |
 | 3 只读 mastery snapshot / topic graph / Source 摘要 | 未开始 | 逾期投影已接入复习排程，mastery 投影仍缺 |
 | 4 按需受限检索与 stale/deleted Source 拒绝 | 未开始 | 属 M9 后续增量，未获批前不实现 |
-| 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放 |
+| 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
 | 6 可选外部 AI adapter 与冻结任务集比较 | 未开始 | 外部 AI 在 `m9-plan-lifecycle-v1` 范围外 |
 
 偏差信号实现约定：逾期复用 `ReviewSchedulerService.overdue_by_file()` 的 `days_overdue`（只读复习历史，
@@ -109,9 +114,23 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 `constraints`），重规划据此保真还原范围；旧 revision 只读保留，`revision_id` 与 `parent_revision_id`
 构成前向链。`persist_generated` 幂等：同一 plan_id 重复生成不重置已存计划状态。
 
-已知未决项（不阻塞当前范围，需 owner 决定后再改触发语义）：偏差是累计而非「自上次重规划以来」，
-因此在偏差未消解时反复调用 `replan` 会持续产生内容相同的新 revision。当前按已 `RESOLVED` 的
-`M9-EXECUTION-DEVIATION` 字面实现（偏差 ≥ 3 即触发）。
+消费约定（v1.2 语义）：偏差触发条件不是「累计 ≥ 3」而是「**未消费** ≥ 3」——未消费 = 当前偏差
+task_id 集合减去台账里已消费的并集。台账键 `deviation_ledger` 落在 `plans.payload`（无 DDL），
+**追加式**，每个产生的 revision 恰好一条，条目含 `revision_id` / `trigger` / `consumed_task_ids`
+（`sorted` 以保证 payload 字节稳定，重放可比对）；消费只在偏差阈值**真正**被满足时发生，
+纯目标/约束变化的重规划写空集，因此不会吞掉未达阈值的 1~2 个偏差；未触发的 `replan` 调用
+**不写盘**，所以也不消费任何东西——这是结构保证而非额外分支判断。
+
+刻意的取舍：消费是单调的，已消费的偏差任务即使后来再次逾期也不再触发（宁可漏报「复发偏差」，
+也不产内容相同的幻影 revision），`tests/M9/test_deviation_consumption.py` 用测试钉住这条取舍。
+残留上限：偏差不进入 `generate()`，因此偏差触发的重规划内容仍与上一个 revision 逐字节相同，
+本语义只能把幻影 revision 限制为「每批新偏差最多一个」，不能归零；已膨胀的存量 revision 链
+不会回填修复（append-only），只是停止增长。整条 record 的字节级重放仍做不到（`generated_at` /
+`created_at` / `updated_at` 取 `datetime.now()`，逾期投影依赖 `datetime.now().date()`）；
+保证的是决策确定性 + 内容确定性 + 台账字节稳定。
+
+升级行为：改造前的旧库没有 `deviation_ledger` 键，缺键即空集，因此首次重规划会按「累计」语义
+多产生一个 revision，写入台账后即收敛到新语义；不需要回填迁移。
 
 跨阶段登记：M9 的 5 条公开路由（`/api/v1/plans` 与 `{plan_id}` 的查询/采纳/进度/重规划）已补登到
 `tests/M6a/test_closeout_contracts.py` 的 `PUBLIC_API_PATHS`。该集合是「有意公开面」的登记表，
