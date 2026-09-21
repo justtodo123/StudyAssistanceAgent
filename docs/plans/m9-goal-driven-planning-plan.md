@@ -1,6 +1,6 @@
 # M9 目标驱动学习计划准备计划
 
-> 当前状态：`ADMITTED / IN_PROGRESS`；确定性 Planner + 计划生命周期（生成/采纳/进度/重规划 + 跳过/逾期偏差信号；外部 AI、mastery 写入除外）
+> 当前状态：`ADMITTED / IN_PROGRESS`；确定性 Planner + 计划生命周期（生成/采纳/进度/重规划 + 跳过/逾期偏差信号；可选外部 AI 路径默认关闭；mastery 写入除外）
 > 前置：M7 用户源生命周期与 M8 存储契约退出证据
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
@@ -10,8 +10,8 @@
 M9 规划基于 Goal、目标日期、用户等级、掌握度与授权 Source scope 生成版本化学习计划，按正式学习事件跟踪完成、
 跳过、偏差和重规划。Planner 只能提出计划和建议，不成为第二套 mastery 或会话状态权威。
 
-本阶段不实现写工具自主循环、checkpoint/EffectLedger 或 MCP；这些属于 M10。计划文件存在不批准外部 AI 接入、
-新 API、schema migration 或正式状态路径修改。
+本阶段不实现写工具自主循环、checkpoint/EffectLedger 或 MCP；这些属于 M10。计划文件存在本身不批准新 API、
+schema migration 或正式状态路径修改；可选外部 AI 接入的批准见 §4 的 v1.4 记录（默认关闭、窄口径）。
 
 ### 1.1 10K/100K 规模感知边界
 
@@ -25,7 +25,8 @@ M9 必须在 M8 的 100K capacity 能力上保持输入有界，但不把 100K c
 - embedding profile 或 SQLite/LanceDB 数据面切换不得改变 mastery 和计划状态语义；
 - 无专业后端、无网络或无外部 AI 时，确定性目录/规则路径仍须可运行。
 
-本节不批准 100K 真实数据、外部 AI 或专业后端；真实 10K 数据属于拟议 M11，云端 profile 属于拟议 M12。
+本节不批准 100K 真实数据或专业后端；真实 10K 数据属于拟议 M11，云端 profile 属于拟议 M12。可选外部 AI 的
+批准见 §4 的 v1.4 记录（默认关闭、窄口径），且**不改变本节的输入有界约束**——AI 路径的输入与确定性路径同样有界。
 
 ## 2. 前置证据与继承不变量
 
@@ -70,8 +71,8 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 | --- | --- |
 | approved_by | justtodo123 |
 | approved_at | 2026-09-21 |
-| approval_reference | User instruction: 授权 M9 步骤 4（按需受限检索 + stale/deleted Source 拒绝），拆为 4a（受限检索接缝与预算）与 4b（principal 内部接缝与计划身份往返保真）；principal_id 保持内部接缝、不开公开请求字段；4a 为纯只读 accessor；范围扩张不写 admission_history；外部 AI 与 mastery 写入仍在范围外 |
-| plan_revision | v1.3 |
+| approval_reference | User instruction: 快速推进授权扩张范围到步骤 6；经裁定取窄口径（外部 AI + 仅 1K）——把 m9.external-ai 从 excluded 移入 included，在冻结任务集上比较确定性与 AI 路径，容量只在 1K 跑；不动 M9-EVALUATION（延迟/成本保持 deferred），故不需要 REVOKED；10K/100K 逐字记为 M8/M11 依赖、不触碰；mastery 写入仍在范围外 |
+| plan_revision | v1.4 |
 | decision_set_version | m9-decision-set-v1 |
 
 **批准历史**（`approval` 字段只承载当前批准，故历史在此保留；登记表侧的历史见 `admission_history`）：
@@ -81,9 +82,18 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 | v1.1 | （v1.2 之前的准入批准，原文未单独留存；其条件已由 v1.2 的实质变更取代，见 `admission_history`） |
 | v1.2 | User instruction: 批准 M9 偏差触发语义由累计改为未消费（消费台账按 revision 追加，仅在阈值真正触发时消费，纯目标/约束变化不消费）；外部 AI 与 mastery 写入仍在范围外 |
 | v1.3 | User instruction: 授权 M9 步骤 4（按需受限检索 + stale/deleted Source 拒绝），拆为 4a（受限检索接缝与预算）与 4b（principal 内部接缝与计划身份往返保真）；principal_id 保持内部接缝、不开公开请求字段；4a 为纯只读 accessor；范围扩张不写 admission_history；外部 AI 与 mastery 写入仍在范围外 |
+| v1.4 | User instruction: 快速推进授权扩张范围到步骤 6；经裁定取窄口径（外部 AI + 仅 1K）——把 m9.external-ai 从 excluded 移入 included，在冻结任务集上比较确定性与 AI 路径，容量只在 1K 跑；不动 M9-EVALUATION（延迟/成本保持 deferred），故不需要 REVOKED；10K/100K 逐字记为 M8/M11 依赖、不触碰；mastery 写入仍在范围外 |
+
+**v1.4 批准的具体依据**（供审计；不得拔高为「步骤 6 已完成」或「评测 workload 已冻结」）：owner 的
+指令原文为「快速推进授权扩张范围到步骤 6（含外部 AI 接入与 1K/10K/100K 容量验证，后者触及 M8 尚阻断的
+数据面）」；因完整口径不可准入（理由见 §4.2），owner 在二选一裁定中选择**窄口径「外部 AI + 仅 1K」**，
+其选项描述为「把 `m9.external-ai` 从 `excluded` 移入 `included`，冻结任务集上做确定性 vs AI 路径比较，
+容量只在 1K 跑。不动 `M9-EVALUATION`（延迟/成本保持 deferred），故不需要 `REVOKED`，一次批准即可实施。
+10K/100K 逐字记为 M8/M11 依赖，不触碰」。本批准**仅覆盖该窄口径**。
 
 批准范围 `m9-plan-lifecycle-v1`：含 `m9.goal-plan-generation`、`m9.plan-adoption`、`m9.progress-event`、
-`m9.replanning`、`m9.bounded-grounding-retrieval`、`m9.plan-identity-fidelity`；排除外部 AI 与 mastery 写入。
+`m9.replanning`、`m9.bounded-grounding-retrieval`、`m9.plan-identity-fidelity`、`m9.external-ai`；
+**排除项只剩 mastery 写入**。
 `M9-M7-EXIT` 与 `M9-M8-EXIT` 均已满足，八项强制决策全部
 `RESOLVED`；`ADMITTED / IN_PROGRESS` 覆盖确定性计划生成与计划生命周期。
 
@@ -126,6 +136,37 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 仓库内可移植路径」的人工约束。现已折进同一白名单——`§7` 已明文要求该字段是可移植仓库路径，故复用既有校验器
 即可，不另写一套。详见下方「准入留痕字段覆盖（步骤 4d）」。
 
+### 4.2 v1.4 范围扩张为何不触发 §4 撤销
+
+§4.1 的三条理由**专属于步骤 4**，不能照搬到外部 AI；本节给出 v1.4 自己的理由。
+
+**完整口径不可准入**（owner 原始指令含 1K/10K/100K 容量验证）。三条独立理由：
+
+1. [`stage-admission-gates.md`](../standards/stage-admission-gates.md) 记录 M6a 合并硬上限为 2,000 chunks，
+   且 §5 明文禁止「通过提高限制或绕过生产 builder 伪造通过」——10K/100K 会直接撞上该上限；
+2. 1K/10K/100K 分级是 **M8 自己的强制决策 `M8-BENCHMARK`**，而 M8 为 `BLOCKED / NOT_STARTED`、
+   `approval_scope: null`、`implementation_start: null`；10K 真实数据属拟议 M11（同为 `BLOCKED`）；
+3. §4 禁止 `approval_scope` 把被排除的数据、后端或下游阶段**隐式提升**为已批准。
+
+另有决策冲突：原指令要求验证延迟与成本，而 `M9-EVALUATION` 的 `RESOLVED` 值以
+`ADHERENCE_QUALITATIVE_FIRST_LATENCY_COST_DEFERRED` 结尾——解除该暂缓属对已 `RESOLVED` 决策的**实质变更**，
+按 §4 会强制 `REVOKED`。owner 遂裁定取**窄口径**，**不动** `M9-EVALUATION`。
+
+**窄口径为何仍不需要 `REVOKED`**：§4 的撤销前提是「强制决策、前置证据或兼容不变量发生实质变化」，本次三者均未变——
+
+- `M9-EXTERNAL-AI` 早已 `RESOLVED`，且其值（默认关闭 / 最小披露 / 硬超时+成本预算 / 确定性 fallback）
+  正是本次要实现的内容——本次是**兑现**它，不是改判据；
+- `M9-EVALUATION` **原值不动**，延迟/成本维度仍 `DEFERRED`；
+- `M9-COMPATIBILITY` 的继承不变量不变（未改 review-plan / study-sessions API，未 bump `SCHEMA_VERSION`，
+  默认关闭时确定性路径逐字节可运行）。
+
+**未登记 `admission_history` 条目**：与 §4.1 同理——`from` / `to` 的语义是准入状态，本次为
+`ADMITTED` → `ADMITTED`，写入会造成语义错配（且会被
+`test_admission_history_records_are_well_formed` 的 `from != to` 断言判红）。留痕由批准字段、批准历史表与本节承担。
+
+**本次明确不做**（逐字记为后续阶段依赖，不触碰）：10K/100K 容量验证（M8 / M11）、`M9-EVALUATION` 的
+延迟/成本维度解冻、评测 workload 的整体冻结、mastery 写入。
+
 ## 5. 获准后的拟实施顺序
 
 1. 先冻结 planner input、plan、mastery 和 progress event schema；
@@ -133,7 +174,9 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 3. 接入只读 mastery snapshot、topic graph 和授权 Source 摘要，不复制领域写入，并验证输入规模不随 chunk 总量线性增长；
 4. 接入按需受限检索，冻结 top-k/token/source/time 预算和 stale/deleted Source 拒绝行为；
 5. 实现偏差事件与版本化重规划，再增加可选外部 AI adapter；
-6. 在冻结任务集上比较确定性与 AI 路径，并在 1K/10K/100K capacity 元数据规模下验证计划延迟与输入预算，达标后才扩大 rollout。
+6. 在冻结任务集上比较确定性与 AI 路径，并在 1K capacity 规模下验证输入预算，达标后才扩大 rollout。
+   **10K/100K 与延迟/成本维度不在 v1.4 范围内**（见 §4.2）：前者是 M8（`BLOCKED`）/ M11 依赖，后者需先对
+   `M9-EVALUATION` 作实质变更并走 §4 撤销流程。
 
 拟新增 `tests/M9/` 覆盖 schema、authority、deviation/replan、provider privacy/failure、fallback 和兼容；评测必须验证
 source grounding 与先修关系，而非只检查 JSON 可解析。退出条件包括正式 mastery 只有一个写入权威、计划可重放、
@@ -152,7 +195,7 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | 4c 复习历史活投影（`m9.review-history-projection`）——步骤 3 已记录残留的修复，**非**范围扩张 | 已完成 | `platform/app/review_history_projection.py`、`tests/M9/test_review_history_projection.py`；装配于 `main.py` |
 | 4d 准入留痕字段覆盖（`m9.admission-history-reference-coverage`）——关闭 §4 已记录缺口，**纯治理测试硬化、非能力** | 已完成 | `tests/regression/test_governance_contract.py` 的 `_registry_references` 与 `test_admission_history_records_are_well_formed` |
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
-| 6 可选外部 AI adapter 与冻结任务集比较 | 未开始 | 外部 AI 在 `m9-plan-lifecycle-v1` 范围外 |
+| 6 可选外部 AI adapter 与冻结任务集比较（`m9.external-ai`，**窄口径**） | 进行中 | v1.4 批准（见 §4.2）；实现见 `platform/app/plan_ai_adapter.py`、`tests/M9/test_plan_ai_adapter.py`；冻结任务集比较见 `tests/M9/test_plan_ai_benchmark.py` |
 
 偏差信号实现约定：逾期复用 `ReviewSchedulerService.overdue_by_file()` 的 `days_overdue`（只读复习历史，
 不构建 chunk 索引，保持 Planner 输入有界）；偏差按 task_id 去重后计数，跳过与逾期不重复计入同一任务；
@@ -388,6 +431,9 @@ caller-selected `principal_id` 一致），与 `_user_source_search` 同一形�
 
 (j) **仍未闭合**：评测 workload 冻结（§5 步骤 6）与外部 AI 仍在 `m9-plan-lifecycle-v1` 之外，
 `M9-EVALUATION` 的 `ADHERENCE_QUALITATIVE_FIRST` 与延迟 / 成本维度仍暂缓；本增量不使 M9 达到退出条件。
+
+> **v1.4 更新**（不修改上述历史记录）：外部 AI 已由 §4.2 的窄口径纳入 `included`；
+> **评测 workload 冻结与延迟 / 成本暂缓两条仍然成立**。
 `tests/M9` 自本次起 187 → 219 项；步骤 4b 再追加 26 项，共 245 项。
 
 计划身份修复：`_plan_id` 原先只哈希 `goal|target|course|required|excluded`，而任务顺序与 `summary`
@@ -463,6 +509,9 @@ mastery 投影是实时的——两条同源只读输入一个冻结一个实时
 (j) **仍未闭合**：与 4a 同——评测 workload 冻结（§5 步骤 6）与外部 AI 仍在 `m9-plan-lifecycle-v1` 之外，
 本增量不使 M9 达到退出条件。`tests/M9` 自本次起 219 → 245 项。
 
+> **v1.4 更新**（不修改上述历史记录）：外部 AI 已由 §4.2 的窄口径纳入 `included`；
+> **评测 workload 冻结仍然成立**。
+
 复习历史活投影（步骤 4c）实现约定：
 
 (a) **这不是范围扩张**：步骤 3 交付时已把「`main.py` 仍在 import 时把 `all_reviews()` 冻结成快照」逐字
@@ -502,6 +551,9 @@ mastery 投影是实时的——两条同源只读输入一个冻结一个实时
 (i) **仍未闭合**：与 4a / 4b 同——评测 workload 冻结（§5 步骤 6）与外部 AI 仍在 `m9-plan-lifecycle-v1`
 之外，本增量不使 M9 达到退出条件。`tests/M9` 自本次起 245 → 263 项。
 
+> **v1.4 更新**（不修改上述历史记录）：外部 AI 已由 §4.2 的窄口径纳入 `included`；
+> **评测 workload 冻结仍然成立**。
+
 准入留痕字段覆盖（步骤 4d）实现约定：
 
 (a) **这是关闭一条已记录缺口，不是范围扩张**：缺口原文逐字记在本文件 §4（「`admission_history[].reference`
@@ -530,6 +582,9 @@ mastery 投影是实时的——两条同源只读输入一个冻结一个实时
 (e) **仍未闭合**：与 4a / 4b / 4c 同——评测 workload 冻结（§5 步骤 6）与外部 AI 仍在
 `m9-plan-lifecycle-v1` 之外，本增量不使 M9 达到退出条件。本增量**不改 `tests/M9` 计数**（263 项不变），
 `tests/regression` 由 15 → 16 项。
+
+> **v1.4 更新**（不修改上述历史记录）：外部 AI 已由 §4.2 的窄口径纳入 `included`；
+> **评测 workload 冻结仍然成立**。
 
 跨阶段登记（owner 已追认）：M9 的 5 条公开路由已补登到 `tests/M6a/test_closeout_contracts.py` 的
 `PUBLIC_API_PATHS`，逐项为 `/api/v1/plans`、`/api/v1/plans/{plan_id}`、`/api/v1/plans/{plan_id}/adopt`、
