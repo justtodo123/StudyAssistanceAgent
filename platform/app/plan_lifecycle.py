@@ -160,9 +160,11 @@ class PlanLifecycleService:
     def persist_generated(self, response: GoalPlanResponse) -> None:
         """把首次生成的计划持久化（state=generated），供采纳/进度/重规划使用。
 
-        幂等：plan_id 由 goal + 目标日期 + 课程 + 约束确定性派生，同一请求重复生成会
-        命中同一 ID。此时保留已存记录（含采纳状态、进度与 revision 链），不覆盖——
-        否则重复提交同一 Goal 会静默重置计划状态，而 progress_events 仍留在表里。
+        幂等：plan_id 由 goal + 目标日期 + 课程 + 每日学时 + 约束，再叠加**派生输入摘要**
+        （最终有序任务的 task_id / reviewed / mastery 序列）确定性派生。因此幂等的前提是
+        「派生输入未变」——复习或 mastery 状态变化会得到**新的** plan_id，旧记录保留原 id
+        只读不覆盖（含采纳状态、进度与 revision 链）。同一请求重复生成仍命中同一 ID，此时
+        保留已存记录，否则重复提交同一 Goal 会静默重置计划状态，而 progress_events 仍留在表里。
         """
         if self._store.get_plan(response.plan_id) is not None:
             return
@@ -249,6 +251,11 @@ def _response_to_record(response: GoalPlanResponse) -> dict[str, Any]:
                         "estimated_minutes": task.estimated_minutes,
                         "priority": task.priority,
                         "reviewed": task.reviewed,
+                        # mastery 只读投影：必须逐字段列举，否则会被静默丢弃出 plan["tasks"]，
+                        # 而 plan["revisions"] 用 model_dump() 会保留，两处表示不一致。
+                        "mastery_attempts": task.mastery_attempts,
+                        "mastery_correct": task.mastery_correct,
+                        "mastery_last_mastered": task.mastery_last_mastered,
                     }
                 )
     now = datetime.now().isoformat()
