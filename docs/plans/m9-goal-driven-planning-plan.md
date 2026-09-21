@@ -432,8 +432,10 @@ mastery 投影是实时的，因此计划身份与排序仍会随答题变化刷
 (d) **principal 不进响应体，且这是结构保证**：`get` / `adopt` / `replan` 的每个返回点都过单点函数
 `_public_plan`（按 `INTERNAL_RECORD_KEYS` 剥离），而不是各写一遍过滤——后者漏一处就静默泄露。落盘仍用
 完整记录；`main.py` 不直接读计划 store，故不存在绕过路径。源码级用例
-`test_service_returns_go_through_public_plan` 扫公开方法里的每一处 `return`，并有
-`test_public_returning_methods_actually_return_something` 防止方法名单被改空而让前者空转。
+`test_service_returns_go_through_public_plan` 扫公开方法里的每一处 `return`，且扫描集合由
+`_public_methods()` **动态枚举**类上所有非下划线开头的可调用属性——初版写成硬编码
+`("get", "adopt", "replan")`，新增一个 `def summarize(self): return plan` 即可绕过，已改。
+`test_public_method_scan_covers_the_routes` 防止扫描集合被改空而让前者空转。
 
 (e) **未新增公开路由、未改请求体**：principal 仍是内部接缝，`GoalPlanRequest` / `GoalPlanResponse` 都
 没有该字段，因此它也不进 OpenAPI schema。能力经既有 `POST /api/v1/plans` 与 `replan` 可达，
