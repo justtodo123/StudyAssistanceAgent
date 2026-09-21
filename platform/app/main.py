@@ -40,6 +40,7 @@ from .models import (
 from .learning_store import ReviewHistoryRepositoryAdapter, SqliteLearningStore
 from .goal_planner import GoalPlannerService
 from .mastery_projection import MasteryProjectionService
+from .plan_grounding import PlanGroundingService
 from .plan_lifecycle import (
     IllegalPlanProgressEventError,
     PlanLifecycleService,
@@ -99,6 +100,12 @@ _mastery_projection = MasteryProjectionService(_learning_store)
 _source_summary = LazySourceSummaryProjection(config.SOURCE_REGISTRY_PATH)
 # 先修关系只读投影：只读 frontmatter，构造无副作用（不建库、不 mkdir），故不需要懒装配。
 _topic_graph = TopicGraphProjection()
+# M9 受限检索接缝（grounding）：复用 _recall，不新建检索实现。
+# **已装配、生产休眠**——principal 按设计是内部边界（公共请求体不接受 caller-selected
+# principal_id），故没有任何路由把 principal 传进来，与 `_user_source_search` 同一形态。
+# 它刻意**不**注入 `_goal_planner`：grounding 结果依赖索引 generation，进入计划身份或
+# `summary` 会分别破坏「索引重建不改变计划身份」与「同一 plan_id ⇒ 相同 summary」。
+_plan_grounding = PlanGroundingService(_recall, source_summary=_source_summary)
 _goal_planner = GoalPlannerService(
     review_history=_learning_store.all_reviews(),
     mastery_projection=_mastery_projection,
