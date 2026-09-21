@@ -157,6 +157,13 @@ def _registry_references(registry: dict):
         if completion is not None:
             yield from completion.get("evidence", [])
             yield completion["approval_reference"]
+        # §7 requires every admission-history reference to be a portable repo path, but this
+        # field was previously unenumerated, so that requirement rested on human discipline
+        # alone. Fold it into the same allowlist rather than validating it separately.
+        for record in stage.get("admission_history", []):
+            reference = record.get("reference")
+            if reference is not None:
+                yield reference
 
 
 def test_registry_references_use_closed_portable_allowlist(repo_root):
@@ -182,6 +189,29 @@ def test_registry_references_use_closed_portable_allowlist(repo_root):
 def test_registry_reference_allowlist_rejects_invalid_forms(repo_root, reference):
     with pytest.raises(AssertionError):
         _assert_registry_reference(reference, repo_root)
+
+
+ADMISSION_STATUSES = {"BLOCKED", "ADMITTED", "REVOKED"}
+
+
+def test_admission_history_records_are_well_formed(repo_root):
+    """§7 规定每条准入过渡留痕恰好是 from / to / at / reason / reference 五键。
+
+    这同时是上面那条 allowlist 用例的**非空性护栏**：`admission_history` 目前只有 M9 登记，
+    若哪天被清空，`_registry_references` 里新增的那段就变成空转，而那条用例仍会全绿。
+    """
+    records = [
+        record
+        for stage in _load_registry(repo_root)["stages"]
+        for record in stage.get("admission_history", [])
+    ]
+
+    assert records, "no admission_history is registered; the allowlist coverage is vacuous"
+    for record in records:
+        assert set(record) == {"from", "to", "at", "reason", "reference"}, record
+        assert record["from"] in ADMISSION_STATUSES, record
+        assert record["to"] in ADMISSION_STATUSES, record
+        assert record["from"] != record["to"], record
 
 
 
