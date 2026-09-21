@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-09-06（M7 correctness 收口；`tests/M7/` 当前收集 270 项；Python 3.13.3 下 3 个 TXT 用例按精确 parser 合同 fail closed；`m7_exit=true` 不是 M7 阶段退出）；2026-09-20（M8 selected-scope hardening：`tests/M8_metadata_discovery/` 收集 74 项、74 passed；历史 replay 88/88 与 77/77 通过且明确 non-gating）；2026-09-21（M9 只读 mastery 投影 + 计划身份修复：`tests/M9/` 收集 83 项、83 passed，并修复 `test_planner_does_not_write_state` 的空转缺陷；`tests/M8_metadata_discovery/` 与 `tests/M9/` 均纳入 CI）；2026-09-21（M9 只读 Source 摘要投影：`tests/M9/` 收集 125 项、125 passed；全量 1042 collected、1038 passed、1 skipped、3 failed）；2026-09-21（M9 先修关系 topic graph 投影：`tests/M9/` 收集 187 项、187 passed；全量 1104 collected、1100 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4a 受限检索接缝：`tests/M9/` 收集 219 项、219 passed；全量 1136 collected、1132 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4b 计划身份往返保真：`tests/M9/` 收集 245 项、245 passed；全量 1162 collected、1158 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4c 复习历史活投影：`tests/M9/` 收集 263 项、263 passed；全量 1180 collected、1176 passed、1 skipped、3 failed）
+> 起始日期：2026-08-17 · 更新：2026-09-06（M7 correctness 收口；`tests/M7/` 当前收集 270 项；Python 3.13.3 下 3 个 TXT 用例按精确 parser 合同 fail closed；`m7_exit=true` 不是 M7 阶段退出）；2026-09-20（M8 selected-scope hardening：`tests/M8_metadata_discovery/` 收集 74 项、74 passed；历史 replay 88/88 与 77/77 通过且明确 non-gating）；2026-09-21（M9 只读 mastery 投影 + 计划身份修复：`tests/M9/` 收集 83 项、83 passed，并修复 `test_planner_does_not_write_state` 的空转缺陷；`tests/M8_metadata_discovery/` 与 `tests/M9/` 均纳入 CI）；2026-09-21（M9 只读 Source 摘要投影：`tests/M9/` 收集 125 项、125 passed；全量 1042 collected、1038 passed、1 skipped、3 failed）；2026-09-21（M9 先修关系 topic graph 投影：`tests/M9/` 收集 187 项、187 passed；全量 1104 collected、1100 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4a 受限检索接缝：`tests/M9/` 收集 219 项、219 passed；全量 1136 collected、1132 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4b 计划身份往返保真：`tests/M9/` 收集 245 项、245 passed；全量 1162 collected、1158 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4c 复习历史活投影：`tests/M9/` 收集 263 项、263 passed；全量 1180 collected、1176 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4d 准入留痕字段覆盖：`tests/M9/` 263 项不变、`tests/regression/` 62 → 79 项；全量 1181 collected、1177 passed、1 skipped、3 failed）
 
 ## 一、测试策略总览
 
@@ -218,16 +218,16 @@ selected-scope 测试文件已登记在 `tests/M8_metadata_discovery/`，与历�
 | `tests/M8_metadata_discovery/` | 75 项 | 2026-09-21：75 passed（孤立运行）；全量运行时曾出现的 15 项跨阶段失败已于同日修复，见下方 2026-09-21 记录 | 离线治理；generic unresolved intent 仍为 `METADATA_DISCOVERY_INTENT_OWNER_SELECTION_REQUIRED`；pypdf==6.0.0 selected-scope 的 bounded Git reader、六阶段 dispatch-rooted chain、single-parent policy、provenance fail-closed 与最大 `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW` 均已覆盖 |
 | `tests/M9/` | 263 项 | 2026-09-21：263 passed（孤立运行）；同日六个增量前基线分别为 44 项、83 项、125 项、187 项、219 项与 245 项 | 确定性生成、计划身份（含派生输入摘要）、采纳/进度/重规划、跳过+逾期偏差与消费台账、只读 mastery 投影（跨会话聚合、知识条目 file 路径映射三分支与 `_log_review` 同序、不可映射排除、真只读守卫、输入有界）、只读 Source 摘要投影（`usable` 规则 7 态 × 有无 generation 矩阵、隐藏态排除、恰好一次 bulk 读、懒装配不建库、principal 守卫、有界输入、Planner 接缝）、只读先修关系投影（行内列表解析含块状形式静默丢弃陷阱、同目录兄弟边与嵌套目录不跨目录连边、丢弃规则、环与环下游诊断、零写入与每条目恰好解析一次、空图等价于无图的逐字节不变量、真图拓扑序与 `violations` 三种成因、置顶闭包交互、60 条语料数据完整性、受限检索接缝（四类预算与放宽拒绝、stale/deleted/未发布/未就绪/禁用/待删源在接缝上被丢弃、fail-closed、真只读守卫、证据有界）、计划身份按 principal 分隔与记录往返保真（`summary` 落记录、replan 还原 principal 与源范围、principal 不出现在任何读取路径、身份反 churn 逐字节护栏、源码级单点剥离护栏，动态枚举公开方法）、只读复习历史投影（只返回成员资格、刻意不缓存、恰好一次批量读、无写面、构造 Planner 之后落的复习必须可见、快照参数仍冻结、`plan_id` 随复习变化、`main.py` 装配护栏））；自 2026-09-21 起纳入 CI |
 | `tests/source_inventory/` | 21 项 | 2026-08-27：21 passed | 外部资料只读盘点；tmp_path 迷你树，不扫描真实外部目录，不构成 M7 开工 |
-| `tests/regression/`（含 slow） | 62 项 | 2026-09-06 当前 checkout 离线 keyword mode：62 passed | 含 SSE、结构化 CI、准入治理、导航与生产树契约；含显式 active-delivery 开工授权门禁 |
+| `tests/regression/`（含 slow） | 79 项 | 2026-09-21：79 passed；2026-09-06 当前 checkout 离线 keyword mode：62 项 / 62 passed（历史读数） | 含 SSE、结构化 CI、准入治理、导航与生产树契约；含显式 active-delivery 开工授权门禁；2026-09-21 起 `_registry_references` 白名单**同时枚举 `admission_history[].reference`**，并有非空性护栏与五键键集断言 |
 | `tests/regression/test_rag_quality.py` slow | 3 项 | 2026-09-01 复测：3 passed；2026-08-28：3 passed | 默认 OS/DS/CO 90 题 Recall@3 门禁 |
 | `platform/tests/` | 40 项 | 2026-09-06 当前 checkout 离线 keyword mode：40 passed | 受保护的原始平台冒烟/功能测试，不由根级测试取代，且本轮无 tracked diff |
 
 > 本表各行（含根级行）是各范围在**各自标注日期**的读数，且阶段行均为**孤立运行**。全量运行的跨阶段差异以
 > 下方 2026-09-21 记录为准——M8 的 15 项失败正是只在全量运行中出现、孤立运行全绿，单看本表无法发现。
 
-**2026-09-21 当前全量读数**（CPython 3.13.3，`pytest tests/ -q`，M9 步骤 4c 复习历史活投影增量后）：**1180 collected、
-1176 passed、1 skipped、3 failed**。（同一日更早的读数 1042 项已被本条取代：mastery 增量 +39、Source 摘要增量 +42、
-先修关系增量 +62、受限检索接缝增量 +32、计划身份往返保真增量 +26、复习历史活投影增量 +18。）3 failed 仍是 `tests/M7/test_parser_matrix.py` 与 `test_normalized_document.py` 的 TXT 用例
+**2026-09-21 当前全量读数**（CPython 3.13.3，`pytest tests/ -q`，M9 步骤 4d 准入留痕字段覆盖增量后）：**1181 collected、
+1177 passed、1 skipped、3 failed**。（同一日更早的读数 1042 项已被本条取代：mastery 增量 +39、Source 摘要增量 +42、
+先修关系增量 +62、受限检索接缝增量 +32、计划身份往返保真增量 +26、复习历史活投影增量 +18、准入留痕字段覆盖增量 +1。）3 failed 仍是 `tests/M7/test_parser_matrix.py` 与 `test_normalized_document.py` 的 TXT 用例
 （3.11.9 精确 parser 合同下的预期 fail-closed），与上一读数逐项相同。
 
 3 项失败全部是 `tests/M7/` 的 TXT 真实 parser 用例，属精确 `cpython-textio==3.11.9` 合同下的**预期 fail-closed**：
@@ -287,6 +287,19 @@ minimal-1k/S1 家族，不在该套件的 import 闭包内），但该结论是�
 `SCHEMA_VERSION`**、**不改批准字段与 `admission_history`**（步骤 3 已把该残留逐字记录，本次是修复而非范围
 扩张）。装配护栏单独存在是必要的：其余用例直接构造 `GoalPlannerService`，把装配改回快照它们仍然全绿，而缺陷
 原本就长在装配上。变异验证：改回冻结快照 → 恰好 1 项失败（装配护栏本身）；`_reviews()` 改回恒读快照 → 4 项失败。
+
+**2026-09-21 增量（M9 步骤 4d 准入留痕字段覆盖）**：关闭 M9 计划 §4 已记录的覆盖缺口。`stage-admission-gates.md`
+§7 明文要求 `admission_history[].reference`「必须是仓库内可移植路径」，但该字段此前**未纳入**
+`tests/regression/test_governance_contract.py` 的 `_registry_references` 白名单枚举，只靠人工约束。修法是把它
+折进**同一**白名单（`approval_reference` / `authorization_reference` 走的就是这条规则，复用一个校验器胜过并行
+维护两套），而非另写校验器——这也正是缺口原文所说的「补入枚举需改存量测试」。**补了非空性护栏**：
+`admission_history` 目前只有 M9 登记，若被清空，新增的那段 yield 就空转，而 allowlist 用例仍会全绿；故
+`test_admission_history_records_are_well_formed` 先断言 `records` 非空，再逐条断言键集恰为 §7 的
+`from`/`to`/`at`/`reason`/`reference` 五键、`from`/`to` 属 `{BLOCKED, ADMITTED, REVOKED}` 且不相等（键集断言是
+本次**新增**的覆盖，不在缺口原文范围内）。**只紧不松**：未放宽任何既有断言，未改批准字段与
+`admission_history` 内容，未新增能力 / 路由 / 字段。变异验证：`reference` 换成宿主绝对路径 → allowlist 用例
+**恰好 1 项**失败；整个 `admission_history` 删掉 → allowlist 用例**仍然全绿**、只有键集用例变红（后者正是护栏的
+存在理由）。`tests/M9` 263 项不变，`tests/regression` 62 → 79 项（含同日既有增量）。
 
 **2026-09-21 修复（M8 跨阶段双导入）**：`tests/M8_metadata_discovery/` 在全量运行中的 15 项失败已修复。
 根因是 `tools/m8_*.py` 的双路径导入（`try: from m8_x … except ImportError: from tools.m8_x …`）：当

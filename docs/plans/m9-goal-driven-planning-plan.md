@@ -121,9 +121,10 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 门禁。owner 的重新批准与决策变更同时发生，阶段从未处于「停止实施」的运行状态，因此 `admission_history` 记录
 §4 要求留痕的判定序列，`admission_status` 继续表达当前权威状态。
 
-已知覆盖缺口：`admission_history[].reference` 尚未纳入 `tests/regression/test_governance_contract.py` 的
-`_registry_references` 白名单枚举，因此该字段目前只受「必须是仓库内可移植路径」的人工约束；补入枚举需改存量
-测试，未在本增量执行。
+已知覆盖缺口（**已于步骤 4d 关闭**）：`admission_history[].reference` 此前未纳入
+`tests/regression/test_governance_contract.py` 的 `_registry_references` 白名单枚举，因此该字段只受「必须是
+仓库内可移植路径」的人工约束。现已折进同一白名单——`§7` 已明文要求该字段是可移植仓库路径，故复用既有校验器
+即可，不另写一套。详见下方「准入留痕字段覆盖（步骤 4d）」。
 
 ## 5. 获准后的拟实施顺序
 
@@ -149,6 +150,7 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | 4a 受限检索接缝与四类预算（`m9.bounded-grounding-retrieval`） | 已完成 | `platform/app/plan_grounding.py`、`tests/M9/test_plan_grounding.py`；装配于 `main.py` |
 | 4b principal 内部接缝与计划身份往返保真（`m9.plan-identity-fidelity`） | 已完成 | `tests/M9/test_plan_identity.py`；`platform/app/goal_planner.py` 的身份键与 `platform/app/plan_lifecycle.py` 的往返保真 |
 | 4c 复习历史活投影（`m9.review-history-projection`）——步骤 3 已记录残留的修复，**非**范围扩张 | 已完成 | `platform/app/review_history_projection.py`、`tests/M9/test_review_history_projection.py`；装配于 `main.py` |
+| 4d 准入留痕字段覆盖（`m9.admission-history-reference-coverage`）——关闭 §4 已记录缺口，**纯治理测试硬化、非能力** | 已完成 | `tests/regression/test_governance_contract.py` 的 `_registry_references` 与 `test_admission_history_records_are_well_formed` |
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
 | 6 可选外部 AI adapter 与冻结任务集比较 | 未开始 | 外部 AI 在 `m9-plan-lifecycle-v1` 范围外 |
 
@@ -499,6 +501,35 @@ mastery 投影是实时的——两条同源只读输入一个冻结一个实时
 
 (i) **仍未闭合**：与 4a / 4b 同——评测 workload 冻结（§5 步骤 6）与外部 AI 仍在 `m9-plan-lifecycle-v1`
 之外，本增量不使 M9 达到退出条件。`tests/M9` 自本次起 245 → 263 项。
+
+准入留痕字段覆盖（步骤 4d）实现约定：
+
+(a) **这是关闭一条已记录缺口，不是范围扩张**：缺口原文逐字记在本文件 §4（「`admission_history[].reference`
+尚未纳入 `_registry_references` 白名单枚举」）。本次只是把它关掉，故批准字段、`approval_scope` 与
+`admission_history` 内容**均未改动**，也**未新增任何能力、路由或字段**。
+
+(b) **修法：折进既有白名单，不另写校验器**。`stage-admission-gates.md` §7 已明文要求该字段「必须是仓库内
+可移植路径」，与 `approval_reference` / `authorization_reference` 同一条规则，故只需让 `_registry_references`
+多 yield 一段——复用一个校验器胜过并行维护两套。未新增测试文件，改动落在既有
+`tests/regression/test_governance_contract.py`（这正是缺口原文所说的「补入枚举需改存量测试」）。
+
+(c) **补了非空性护栏**：`admission_history` 目前**只有 M9 登记**。若哪天被清空，新增的那段 yield 就变成空转，
+而 `test_registry_references_use_closed_portable_allowlist` 仍会**全绿**。故
+`test_admission_history_records_are_well_formed` 先断言 `records` 非空，再逐条断言键集恰为
+`from` / `to` / `at` / `reason` / `reference`（§7 的五键）、`from` / `to` 属
+`{BLOCKED, ADMITTED, REVOKED}` 且不相等。键集断言是**本次新增的覆盖**，不在缺口原文范围内——原文只说
+`reference`；记在此处以免日后被当成「本来就有的」。它同样只紧不松：§7 已枚举这五个字段。
+
+(d) **变异验证**：把 `admission_history[0].reference` 换成宿主绝对路径 → `test_registry_references_use_closed_portable_allowlist`
+**恰好 1 项**失败（`assert_local_markdown_target` 报 `absolute reference`）；把
+`admission_history` 整个删掉 → 那条 allowlist 用例**仍然全绿**，只有
+`test_admission_history_records_are_well_formed` 变红。后者正是 (c) 存在的理由，两次变异都实测过。
+（注：变异用的宿主路径**不逐字写进本文件**——`tests/regression/test_path_privacy.py` 会扫描治理文档并拒绝
+宿主绝对路径，初版本节照抄了报错原文，导致该用例失败。护栏是对的，改的是文档。）
+
+(e) **仍未闭合**：与 4a / 4b / 4c 同——评测 workload 冻结（§5 步骤 6）与外部 AI 仍在
+`m9-plan-lifecycle-v1` 之外，本增量不使 M9 达到退出条件。本增量**不改 `tests/M9` 计数**（263 项不变），
+`tests/regression` 由 15 → 16 项。
 
 跨阶段登记（owner 已追认）：M9 的 5 条公开路由已补登到 `tests/M6a/test_closeout_contracts.py` 的
 `PUBLIC_API_PATHS`，逐项为 `/api/v1/plans`、`/api/v1/plans/{plan_id}`、`/api/v1/plans/{plan_id}/adopt`、
