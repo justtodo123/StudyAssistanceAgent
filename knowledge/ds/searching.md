@@ -3,8 +3,9 @@ title: 查找（顺序 / 折半 / BST / AVL / B 树 / 哈希）
 course: ds
 tags: [查找, 折半查找, BST, AVL, B树, 哈希表]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [tree-binary-tree]
 ---
 
 ## 一句话概括

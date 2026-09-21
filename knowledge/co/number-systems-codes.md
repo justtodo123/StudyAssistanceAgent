@@ -3,8 +3,9 @@ title: 数制、编码与定点数表示
 course: co
 tags: [数制, 补码, 移码, BCD, 定点数]
 difficulty: 入门
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [co-intro]
 ---
 
 ## 一句话概括（TL;DR）

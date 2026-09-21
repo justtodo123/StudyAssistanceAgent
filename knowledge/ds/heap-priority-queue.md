@@ -3,8 +3,9 @@ title: 堆与优先队列（大根堆 / 小根堆 / 堆排序 / 建堆）
 course: ds
 tags: [堆, 优先队列, 堆排序, 完全二叉树, 大根堆, 小根堆]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [tree-binary-tree]
 ---
 
 ## 一句话概括

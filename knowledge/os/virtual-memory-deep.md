@@ -3,8 +3,9 @@ title: 虚拟内存深入
 course: os
 tags: [虚拟内存, 请求分页, 写时复制, 工作集, 抖动]
 difficulty: 进阶
-updated: 2026-08-12
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [segmentation-paging]
 ---
 
 ## 一句话概括

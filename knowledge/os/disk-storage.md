@@ -3,8 +3,9 @@ title: 磁盘存储管理
 course: os
 tags: [磁盘, 调度, RAID, 格式化, 交换空间]
 difficulty: 中等
-updated: 2026-08-12
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [file-system]
 ---
 
 ## 一句话概括

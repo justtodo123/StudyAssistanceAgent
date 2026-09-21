@@ -3,8 +3,9 @@ title: 操作系统接口
 course: os
 tags: [接口, Shell, 系统调用, 命令解释器]
 difficulty: 入门
-updated: 2026-08-12
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [os-overview]
 ---
 
 ## 一句话概括

@@ -3,8 +3,9 @@ title: 进程管理与进程通信
 course: os
 tags: [进程, 线程, PCB, 进程通信]
 difficulty: 中等
-updated: 2026-08-10
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [os-overview]
 ---
 
 ## 一句话概括

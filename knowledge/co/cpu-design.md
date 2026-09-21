@@ -3,8 +3,9 @@ title: CPU 设计（数据通路 / 控制器 / 流水线 / 冒险）
 course: co
 tags: [CPU, 数据通路, 控制器, 流水线, 冒险]
 difficulty: 进阶
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [instruction-system, alu]
 ---
 
 ## 一句话概括

@@ -3,8 +3,9 @@ title: 补码除法与恢复余数算法
 course: co
 tags: [恢复余数, 不恢复余数, 补码除法, 商, 余数]
 difficulty: 进阶
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [alu]
 ---
 
 ## 一句话概括（TL;DR）

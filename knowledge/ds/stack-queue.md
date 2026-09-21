@@ -3,8 +3,9 @@ title: 栈与队列
 course: ds
 tags: [栈, 队列, 线性结构, 递归]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [linear-list]
 ---
 
 ## 一句话概括

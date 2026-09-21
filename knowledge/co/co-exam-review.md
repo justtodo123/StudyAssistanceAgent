@@ -3,8 +3,9 @@ title: 计算机组成原理期考复盘
 course: co
 tags: [真题, 复盘, 高频考点]
 difficulty: 进阶
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: []
 ---
 
 ## 一句话概括

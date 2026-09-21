@@ -3,8 +3,9 @@ title: 操作系统概述
 course: os
 tags: [概述, 体系结构, 系统调用, 中断, 内核]
 difficulty: 入门
-updated: 2026-08-12
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: []
 ---
 
 ## 一句话概括

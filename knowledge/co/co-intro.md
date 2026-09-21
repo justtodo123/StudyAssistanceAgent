@@ -3,8 +3,9 @@ title: 计算机组成原理概述
 course: co
 tags: [概述, 冯诺依曼, 层次结构, 性能]
 difficulty: 入门
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: []
 ---
 
 ## 一句话概括

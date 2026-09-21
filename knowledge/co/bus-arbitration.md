@@ -3,8 +3,9 @@ title: 总线仲裁与总线时序
 course: co
 tags: [总线, 总线仲裁, 集中式仲裁, 分布式仲裁, 同步异步]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [bus-io]
 ---
 
 ## 一句话概括（TL;DR）

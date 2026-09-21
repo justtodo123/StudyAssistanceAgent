@@ -3,8 +3,9 @@ title: 实时调度与优先级反转
 course: os
 tags: [实时系统, RMS, EDF, 截止时间, 优先级反转]
 difficulty: 进阶
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [process-scheduling]
 ---
 
 ## 一句话概括（TL;DR）

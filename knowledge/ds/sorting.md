@@ -3,8 +3,9 @@ title: 排序（插入 / 交换 / 选择 / 归并 / 基数 / 外部）
 course: ds
 tags: [排序, 快速排序, 堆排序, 归并排序, 稳定性]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [linear-list, recursion-divide-conquer]
 ---
 
 ## 一句话概括

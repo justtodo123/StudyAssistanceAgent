@@ -3,8 +3,9 @@ title: 文件系统
 course: os
 tags: [文件系统, 目录, 文件分配, inode, 空闲空间]
 difficulty: 中等
-updated: 2026-08-10
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [memory-management]
 ---
 
 ## 一句话概括

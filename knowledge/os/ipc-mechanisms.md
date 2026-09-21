@@ -3,8 +3,9 @@ title: 进程间通信机制
 course: os
 tags: [IPC, 管道, 消息队列, 共享内存, Socket]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [process-management]
 ---
 
 ## 一句话概括（TL;DR）

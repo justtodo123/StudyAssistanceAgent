@@ -3,8 +3,9 @@ title: 串、数组与广义表
 course: ds
 tags: [串, KMP, 数组, 压缩存储, 广义表]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [linear-list]
 ---
 
 ## 一句话概括

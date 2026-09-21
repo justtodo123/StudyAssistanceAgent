@@ -3,8 +3,9 @@ title: Cache 地址映射与命中率
 course: co
 tags: [Cache, 直接映射, 组相联, 标记位, 命中率]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [memory-system]
 ---
 
 ## 一句话概括（TL;DR）

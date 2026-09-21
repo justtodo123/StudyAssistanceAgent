@@ -3,8 +3,9 @@ title: 线性表（顺序表与链表）
 course: ds
 tags: [线性表, 顺序表, 链表, 算法]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [ds-intro]
 ---
 
 ## 一句话概括

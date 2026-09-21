@@ -3,8 +3,9 @@ title: 递归与分治算法
 course: ds
 tags: [递归, 分治, 递推式, 主定理, 复杂度]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [ds-intro]
 ---
 
 ## 一句话概括（TL;DR）

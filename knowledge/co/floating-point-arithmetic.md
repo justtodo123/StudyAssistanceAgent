@@ -3,8 +3,9 @@ title: 浮点数运算（加减 / 乘除 / 舍入 / 溢出处理）
 course: co
 tags: [浮点数, IEEE754, 浮点加法, 舍入, 对阶, 溢出]
 difficulty: 进阶
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [data-representation, alu]
 ---
 
 ## 一句话概括

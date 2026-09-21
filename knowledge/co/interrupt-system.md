@@ -3,8 +3,9 @@ title: 中断系统与中断响应
 course: co
 tags: [中断, 中断向量, 优先级, 可屏蔽中断, 异常]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [instruction-system]
 ---
 
 ## 一句话概括（TL;DR）

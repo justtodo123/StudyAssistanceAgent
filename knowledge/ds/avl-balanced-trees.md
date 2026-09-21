@@ -3,8 +3,9 @@ title: AVL 树与平衡维护
 course: ds
 tags: [AVL, 平衡因子, 左旋, 右旋, BST]
 difficulty: 进阶
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [tree-binary-tree]
 ---
 
 ## 一句话概括（TL;DR）

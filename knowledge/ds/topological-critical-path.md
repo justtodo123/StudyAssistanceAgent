@@ -3,8 +3,9 @@ title: 拓扑排序与关键路径
 course: ds
 tags: [拓扑排序, AOE 网络, AOV 网络, 关键路径, 入度]
 difficulty: 进阶
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [graph]
 ---
 
 ## 一句话概括（TL;DR）

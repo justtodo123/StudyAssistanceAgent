@@ -3,8 +3,9 @@ title: 数据表示（进制 / 补码 / 浮点数 / 校验码）
 course: co
 tags: [数据表示, 补码, IEEE754, 浮点数, 校验码]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [number-systems-codes]
 ---
 
 ## 一句话概括

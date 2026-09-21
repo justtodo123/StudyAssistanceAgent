@@ -3,8 +3,9 @@ title: 虚拟地址转换与 TLB
 course: co
 tags: [虚拟地址, 页表, TLB, 多级页表, 有效访问时间]
 difficulty: 进阶
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [cache-mapping]
 ---
 
 ## 一句话概括（TL;DR）

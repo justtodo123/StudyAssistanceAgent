@@ -3,8 +3,9 @@ title: 指令系统（指令格式 / 寻址方式 / CISC vs RISC）
 course: co
 tags: [指令系统, 寻址方式, CISC, RISC, 指令格式]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [co-intro]
 ---
 
 ## 一句话概括

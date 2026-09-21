@@ -3,8 +3,9 @@ title: 总线与 I/O 系统
 course: co
 tags: [总线, I/O, 中断, DMA, 程序查询]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [co-intro]
 ---
 
 ## 一句话概括

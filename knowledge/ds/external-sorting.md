@@ -3,8 +3,9 @@ title: 外部排序与多路归并
 course: ds
 tags: [外部排序, 置换选择, 多路归并, 磁盘 I/O, 败者树]
 difficulty: 进阶
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [sorting]
 ---
 
 ## 一句话概括（TL;DR）

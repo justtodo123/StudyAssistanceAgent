@@ -3,8 +3,9 @@ title: 计算机性能指标与 Amdahl 定律
 course: co
 tags: [CPU 时间, CPI, 时钟周期, MIPS, Amdahl 定律]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [co-intro]
 ---
 
 ## 一句话概括（TL;DR）

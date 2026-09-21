@@ -3,8 +3,9 @@ title: 树与二叉树（遍历 / 线索 / 森林 / 哈夫曼）
 course: ds
 tags: [二叉树, 遍历, 线索二叉树, 哈夫曼树, WPL]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [linear-list, recursion-divide-conquer]
 ---
 
 ## 一句话概括

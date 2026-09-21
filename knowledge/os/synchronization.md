@@ -3,8 +3,9 @@ title: 进程同步与互斥
 course: os
 tags: [信号量, 互斥, 同步, PV操作, 经典问题]
 difficulty: 进阶
-updated: 2026-08-10
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [process-management, thread-management]
 ---
 
 ## 一句话概括

@@ -3,8 +3,9 @@ title: 内存管理（分页/分段/虚拟存储/置换）
 course: os
 tags: [内存管理, 分页, 分段, 虚拟内存, 页面置换]
 difficulty: 进阶
-updated: 2026-08-10
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [os-overview]
 ---
 
 ## 一句话概括

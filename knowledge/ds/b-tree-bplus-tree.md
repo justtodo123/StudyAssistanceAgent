@@ -3,8 +3,9 @@ title: B 树与 B+ 树
 course: ds
 tags: [B 树, B+ 树, 多路搜索树, 数据库索引, 磁盘 I/O]
 difficulty: 进阶
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [avl-balanced-trees]
 ---
 
 ## 一句话概括（TL;DR）

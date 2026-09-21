@@ -3,8 +3,9 @@ title: 绪论：数据结构与算法复杂度
 course: ds
 tags: [绪论, 复杂度, 基本概念]
 difficulty: 入门
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: []
 ---
 
 ## 一句话概括

@@ -3,8 +3,9 @@ title: 并查集与连通性维护
 course: ds
 tags: [并查集, Union-Find, 路径压缩, 按秩合并, 连通分量]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [tree-binary-tree]
 ---
 
 ## 一句话概括（TL;DR）

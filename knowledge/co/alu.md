@@ -3,8 +3,9 @@ title: 运算器（加法器 / 乘法 / 除法 / 溢出检测）
 course: co
 tags: [ALU, 加法器, 补码乘法, 除法, 溢出]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [data-representation]
 ---
 
 ## 一句话概括

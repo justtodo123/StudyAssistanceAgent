@@ -3,8 +3,9 @@ title: 线程管理与多线程模型
 course: os
 tags: [线程, TCB, 用户级线程, 内核级线程, 上下文切换]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [process-management]
 ---
 
 ## 一句话概括（TL;DR）

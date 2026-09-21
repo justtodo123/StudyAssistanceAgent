@@ -3,8 +3,9 @@ title: 图（存储 / 遍历 / MST / 最短路 / 拓扑 / 关键路径）
 course: ds
 tags: [图, DFS, BFS, Prim, Dijkstra, 拓扑排序, 关键路径]
 difficulty: 进阶
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [tree-binary-tree, stack-queue]
 ---
 
 ## 一句话概括

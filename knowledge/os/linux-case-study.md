@@ -3,8 +3,9 @@ title: Linux 操作系统实例
 course: os
 tags: [Linux, 内核, 进程调度, 内存管理, 文件系统]
 difficulty: 中等
-updated: 2026-08-12
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [process-management, file-system]
 ---
 
 ## 一句话概括

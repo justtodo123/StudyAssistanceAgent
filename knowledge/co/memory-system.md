@@ -3,8 +3,9 @@ title: 存储系统（Cache / 虚拟存储器 / 替换算法）
 course: co
 tags: [Cache, 虚拟存储器, 替换算法, 局部性, 命中率]
 difficulty: 中等
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [co-intro]
 ---
 
 ## 一句话概括

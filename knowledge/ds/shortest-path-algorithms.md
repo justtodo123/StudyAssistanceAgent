@@ -3,8 +3,9 @@ title: 最短路径算法选型
 course: ds
 tags: [Dijkstra, Bellman-Ford, Floyd, 最短路径, 负权边]
 difficulty: 进阶
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [graph, heap-priority-queue]
 ---
 
 ## 一句话概括（TL;DR）

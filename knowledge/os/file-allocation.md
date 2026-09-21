@@ -3,8 +3,9 @@ title: 文件分配与空闲空间管理
 course: os
 tags: [文件分配, 连续分配, 链接分配, 索引分配, 位示图]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [file-system]
 ---
 
 ## 一句话概括（TL;DR）

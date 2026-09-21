@@ -3,8 +3,9 @@ title: 设备管理与驱动程序
 course: os
 tags: [设备管理, 设备控制器, 驱动程序, 缓冲, DMA]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [io-system]
 ---
 
 ## 一句话概括（TL;DR）

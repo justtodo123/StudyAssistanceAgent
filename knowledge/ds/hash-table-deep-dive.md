@@ -3,8 +3,9 @@ title: 哈希表冲突处理与性能分析
 course: ds
 tags: [哈希表, 冲突, 开放定址, 链地址, 装填因子]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [linear-list]
 ---
 
 ## 一句话概括（TL;DR）

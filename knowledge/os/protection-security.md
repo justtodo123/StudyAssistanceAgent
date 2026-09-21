@@ -3,8 +3,9 @@ title: 保护与安全
 course: os
 tags: [安全, 保护, 访问控制, 认证, 威胁]
 difficulty: 中等
-updated: 2026-08-12
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [process-management, memory-management]
 ---
 
 ## 一句话概括

@@ -3,8 +3,9 @@ title: 操作系统期考复盘与高频错题
 course: os
 tags: [考试, 真题, 错题, 高频考点, 期末]
 difficulty: 进阶
-updated: 2026-08-12
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: []
 ---
 
 ## 一句话概括

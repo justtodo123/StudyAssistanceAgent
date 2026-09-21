@@ -3,8 +3,9 @@ title: 控制器与微程序控制
 course: co
 tags: [控制器, 硬布线控制器, 微程序, 控制信号, 微指令]
 difficulty: 进阶
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [cpu-design]
 ---
 
 ## 一句话概括（TL;DR）

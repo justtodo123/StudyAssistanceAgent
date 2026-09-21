@@ -3,8 +3,9 @@ title: 流水线性能与冒险处理
 course: co
 tags: [流水线, 吞吐率, 加速比, 数据冒险, 分支预测]
 difficulty: 进阶
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [cpu-design]
 ---
 
 ## 一句话概括（TL;DR）

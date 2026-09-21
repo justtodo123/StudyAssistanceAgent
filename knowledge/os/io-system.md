@@ -3,8 +3,9 @@ title: I/O 系统
 course: os
 tags: [I/O, DMA, 缓冲, SPOOLing, 设备驱动]
 difficulty: 中等
-updated: 2026-08-12
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [disk-storage]
 ---
 
 ## 一句话概括

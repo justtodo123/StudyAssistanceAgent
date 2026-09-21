@@ -3,8 +3,9 @@ title: 动态规划与最优子结构
 course: ds
 tags: [动态规划, 最优子结构, 重叠子问题, 状态转移, 复杂度]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [recursion-divide-conquer]
 ---
 
 ## 一句话概括（TL;DR）

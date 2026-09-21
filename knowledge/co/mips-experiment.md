@@ -3,8 +3,9 @@ title: MIPS CPU 设计实验复盘
 course: co
 tags: [MIPS, Logisim, CPU设计, 实验]
 difficulty: 进阶
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [cpu-design]
 ---
 
 ## 一句话概括

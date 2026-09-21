@@ -3,8 +3,9 @@ title: 进程调度算法
 course: os
 tags: [进程管理, 调度, 算法]
 difficulty: 中等
-updated: 2026-08-10
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [process-management]
 ---
 
 ## 一句话概括

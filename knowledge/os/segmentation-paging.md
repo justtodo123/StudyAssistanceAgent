@@ -3,8 +3,9 @@ title: 段页式存储管理
 course: os
 tags: [分段, 分页, 段页式, 地址转换, x86]
 difficulty: 进阶
-updated: 2026-08-12
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [memory-management]
 ---
 
 ## 一句话概括

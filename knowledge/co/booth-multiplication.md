@@ -3,8 +3,9 @@ title: Booth 有符号乘法
 course: co
 tags: [Booth 算法, 补码乘法, 有符号数, 移位, 乘法器]
 difficulty: 进阶
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/co.md
+prerequisites: [alu]
 ---
 
 ## 一句话概括（TL;DR）

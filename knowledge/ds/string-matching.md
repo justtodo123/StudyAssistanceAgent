@@ -3,8 +3,9 @@ title: 字符串匹配与 KMP
 course: ds
 tags: [字符串, 模式匹配, KMP, next 数组, 前缀函数]
 difficulty: 中等
-updated: 2026-08-18
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: [string-array-glist]
 ---
 
 ## 一句话概括（TL;DR）

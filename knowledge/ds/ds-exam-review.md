@@ -3,8 +3,9 @@ title: 2017 春数据结构 A 卷真题复盘
 course: ds
 tags: [真题, 复盘, 时间复杂度, KMP, 哈夫曼, DEAP]
 difficulty: 进阶
-updated: 2026-08-17
+updated: 2026-09-21
 source: docs/reference/ds.md
+prerequisites: []
 ---
 
 ## 一句话概括

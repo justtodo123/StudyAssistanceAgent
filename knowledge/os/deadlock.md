@@ -3,8 +3,9 @@ title: 死锁
 course: os
 tags: [死锁, 银行家算法, 资源分配, 必要条件]
 difficulty: 中等
-updated: 2026-08-10
+updated: 2026-09-21
 source: docs/reference/os.md
+prerequisites: [synchronization]
 ---
 
 ## 一句话概括
