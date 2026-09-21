@@ -56,8 +56,8 @@ class GoalPlannerService:
         # 5. 贪心分日
         daily_minutes = int(req.hours_per_day * 60)
         days = self._distribute(tasks, today, total_days, daily_minutes)
-        # 6. 确定性 plan_id（goal 归一化 + 目标日期）
-        plan_id = self._plan_id(req.goal, target)
+        # 6. 确定性 plan_id（goal 归一化 + 目标日期 + 课程 + 约束）
+        plan_id = self._plan_id(req.goal, target, req.course, req.constraints)
         total_task_minutes = sum(t.estimated_minutes for t in tasks)
         return GoalPlanResponse(
             plan_id=plan_id,
@@ -80,6 +80,10 @@ class GoalPlannerService:
                 "unreviewed": sum(1 for t in tasks if not t.reviewed),
                 "by_difficulty": _count_by(tasks, "difficulty"),
             },
+            # 请求回显：计划自描述，重规划按此还原范围，不依赖调用方另传上下文
+            course=req.course,
+            hours_per_day=req.hours_per_day,
+            constraints=req.constraints,
         )
 
     # ── 内部方法 ──────────────────────────────────────────────────────────────
@@ -215,9 +219,28 @@ class GoalPlannerService:
         return days
 
     @staticmethod
-    def _plan_id(goal: str, target) -> str:
+    def _plan_id(
+        goal: str,
+        target,
+        course: str | None = None,
+        constraints: GoalPlanConstraints | None = None,
+    ) -> str:
+        """计划身份：goal 归一化 + 目标日期 + 课程 + 约束（保持列出顺序）。
+
+        身份必须覆盖所有影响任务集合与排序的输入；否则同名 Goal 配不同约束会撞同一
+        plan_id，后生成的计划会覆盖已存记录，采纳/进度也会落到错误的计划上。
+        """
+        constraints = constraints or GoalPlanConstraints()
         normalized = re.sub(r"\s+", " ", goal.strip()).lower()
-        key = f"{normalized}|{target.isoformat()}"
+        key = "|".join(
+            [
+                normalized,
+                target.isoformat(),
+                course or "",
+                ",".join(constraints.required_topics),
+                ",".join(constraints.excluded_topics),
+            ]
+        )
         return hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
 
 

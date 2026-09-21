@@ -305,6 +305,10 @@ class GoalPlanResponse(BaseModel):
     total_hours: float
     revisions: list[GoalPlanRevision]
     summary: dict[str, Any]
+    # 请求回显：让 Plan 记录自描述，重规划时可保真还原课程/学时/约束而不丢范围。
+    course: str | None = None
+    hours_per_day: float = 2.0
+    constraints: GoalPlanConstraints = Field(default_factory=GoalPlanConstraints)
     state: str = "generated"
     parent_revision_id: int | None = None
     adopted_at: str | None = None
@@ -336,3 +340,16 @@ class PlanProgressEvent(BaseModel):
     task_id: str
     event: str
     occurred_at: str
+
+
+class PlanReplanRequest(BaseModel):
+    """重规划的显式覆盖：任何与已存计划不同的字段都构成「目标/约束变化」。
+
+    全部字段可选；缺省表示只按进度偏差判断是否重规划。
+    """
+
+    goal: str | None = Field(default=None, min_length=1, max_length=2000, description="新的学习目标")
+    course: str | None = Field(default=None, description="新的课程简称")
+    target_date: str | None = Field(default=None, description="新的目标日期 YYYY-MM-DD")
+    hours_per_day: float | None = Field(default=None, ge=0.5, le=8.0, description="新的每日学时")
+    constraints: GoalPlanConstraints | None = Field(default=None, description="新的话题约束")

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -85,20 +85,12 @@ class ReviewSchedulerService:
                     continue
 
             last_str = record.get("last_reviewed", "")
-            next_str = record.get("next_review", "")
+            state = _schedule_state(record, today)
+            if state is None:
+                continue
+            next_dt, days_overdue = state
             count = record.get("review_count", 0)
             interval = record.get("interval_days", 1)
-
-            if not last_str:
-                continue
-
-            last_dt = datetime.fromisoformat(last_str)
-            if next_str:
-                next_dt = datetime.fromisoformat(next_str)
-            else:
-                next_dt = last_dt + timedelta(days=interval)
-
-            days_overdue = (today - next_dt.date()).days
 
             meta = entry_meta.get(file_key, {})
             entry = ReviewEntry(
@@ -138,6 +130,24 @@ class ReviewSchedulerService:
                 else "当前没有待复习条目，继续保持！",
             },
         )
+
+    def overdue_by_file(self) -> dict[str, int]:
+        """只读逾期投影：`file → 逾期天数`，只保留已逾期（> 0）的条目。
+
+        与 `get_due` 共用同一套 `days_overdue` 推导，但不构建知识索引：
+        M9 计划路径只允许读复习历史，不得把 chunk 索引拉进计划生成/重规划。
+        """
+        history = self._load_history()
+        today = datetime.now().date()
+        overdue: dict[str, int] = {}
+        for file_key, record in history.items():
+            state = _schedule_state(record, today)
+            if state is None:
+                continue
+            _next_dt, days_overdue = state
+            if days_overdue > 0:
+                overdue[file_key] = days_overdue
+        return overdue
 
     # ── 内部方法 ──────────────────────────────────────────────────────────────
 
@@ -212,3 +222,21 @@ class ReviewSchedulerService:
             if c.file not in meta:
                 meta[c.file] = {"title": c.title, "course": c.course}
         return meta
+
+
+def _schedule_state(record: dict[str, Any], today: date) -> tuple[datetime, int] | None:
+    """从复习记录推导 `(下次复习时间, 逾期天数)`；缺少 `last_reviewed` 时返回 None。
+
+    逾期天数正数表示已逾期、0 表示今天到期、负数表示未到期。`get_due` 与
+    `overdue_by_file` 共用本函数，保证两条路径的 days_overdue 语义一致。
+    """
+    last_str = record.get("last_reviewed", "")
+    if not last_str:
+        return None
+    last_dt = datetime.fromisoformat(last_str)
+    next_str = record.get("next_review", "")
+    if next_str:
+        next_dt = datetime.fromisoformat(next_str)
+    else:
+        next_dt = last_dt + timedelta(days=int(record.get("interval_days", 1)))
+    return next_dt, (today - next_dt.date()).days

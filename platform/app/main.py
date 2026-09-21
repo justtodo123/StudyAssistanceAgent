@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -22,6 +22,7 @@ from .models import (
     PlanAdoptRequest,
     PlanProgressEvent,
     PlanProgressRequest,
+    PlanReplanRequest,
     QaRequest,
     QaResponse,
     QuizRequest,
@@ -38,7 +39,11 @@ from .models import (
 )
 from .learning_store import ReviewHistoryRepositoryAdapter, SqliteLearningStore
 from .goal_planner import GoalPlannerService
-from .plan_lifecycle import PlanLifecycleService
+from .plan_lifecycle import (
+    IllegalPlanProgressEventError,
+    PlanLifecycleService,
+    PlanNotFoundError,
+)
 from .qa import QaService
 from .quiz import QuizService
 from .retrieval import MultiRecallService, RetrievalScope
@@ -81,10 +86,14 @@ _qa = QaService(_recall, scope=RetrievalScope.DEFAULT_PLUS_EXTRAS)
 _review_plan = ReviewPlanService()
 _quiz = QuizService()
 _learning_store = SqliteLearningStore(config.LEARNING_STORE_PATH)
-_goal_planner = GoalPlannerService(review_history=_learning_store.all_reviews())
-_plan_lifecycle = PlanLifecycleService(_learning_store, _goal_planner)
 _review_scheduler = ReviewSchedulerService(
     repository=ReviewHistoryRepositoryAdapter(_learning_store)
+)
+_goal_planner = GoalPlannerService(review_history=_learning_store.all_reviews())
+_plan_lifecycle = PlanLifecycleService(
+    _learning_store,
+    _goal_planner,
+    review_scheduler=_review_scheduler,
 )
 _study_sessions = StudySessionService(
     qa_service=QaService(_recall, scope=RetrievalScope.DEFAULT_ONLY),
@@ -231,6 +240,13 @@ def review_plan(req: ReviewPlanRequest) -> ReviewPlanResponse:
     return _review_plan.generate(req)
 
 
+def _plan_error(exc: Exception) -> HTTPException:
+    """把计划生命周期领域异常映射为稳定错误码，避免用户输入错误变成 500。"""
+    if isinstance(exc, PlanNotFoundError):
+        return http_error(ErrorCode.PLAN_NOT_FOUND, str(exc))
+    return http_error(ErrorCode.ILLEGAL_PLAN_PROGRESS_EVENT, str(exc))
+
+
 @app.post("/api/v1/plans", response_model=GoalPlanResponse)
 def goal_plan(req: GoalPlanRequest) -> GoalPlanResponse:
     """生成目标驱动学习计划（M9 确定性 Planner，仅生成、不写状态）。"""
@@ -242,25 +258,37 @@ def goal_plan(req: GoalPlanRequest) -> GoalPlanResponse:
 @app.post("/api/v1/plans/{plan_id}/adopt")
 def adopt_plan(plan_id: str) -> dict[str, Any]:
     """采纳一个已生成的目标驱动计划。"""
-    return _plan_lifecycle.adopt(plan_id)
+    try:
+        return _plan_lifecycle.adopt(plan_id)
+    except PlanNotFoundError as exc:
+        raise _plan_error(exc) from exc
 
 
 @app.post("/api/v1/plans/{plan_id}/progress", response_model=PlanProgressEvent)
 def record_plan_progress(plan_id: str, req: PlanProgressRequest) -> PlanProgressEvent:
-    """记录一个计划任务的进度事件（completed / skipped）。"""
-    return _plan_lifecycle.record_progress(req)
+    """记录一个计划任务的进度事件（completed / skipped / overdue）。"""
+    try:
+        return _plan_lifecycle.record_progress(req)
+    except (PlanNotFoundError, IllegalPlanProgressEventError) as exc:
+        raise _plan_error(exc) from exc
 
 
 @app.post("/api/v1/plans/{plan_id}/replan")
-def replan(plan_id: str) -> dict[str, Any]:
-    """按进度偏差（跳过 ≥ 3）确定性重规划，生成新 revision。"""
-    return _plan_lifecycle.replan(plan_id)
+def replan(plan_id: str, req: PlanReplanRequest | None = None) -> dict[str, Any]:
+    """按偏差（跳过 + 逾期 ≥ 3）或目标/约束变化确定性重规划，生成新 revision。"""
+    try:
+        return _plan_lifecycle.replan(plan_id, req)
+    except PlanNotFoundError as exc:
+        raise _plan_error(exc) from exc
 
 
 @app.get("/api/v1/plans/{plan_id}")
 def get_plan(plan_id: str) -> dict[str, Any]:
     """查询一个目标驱动计划的当前状态。"""
-    return _plan_lifecycle._require_plan(plan_id)
+    try:
+        return _plan_lifecycle.get(plan_id)
+    except PlanNotFoundError as exc:
+        raise _plan_error(exc) from exc
 
 
 @app.post("/api/v1/study-sessions", response_model=StudySessionResponse)
