@@ -22,8 +22,10 @@ from .models import (
 # 进度事件词表：completed 是完成，skipped / overdue 是偏差信号
 RECORDED_EVENTS = frozenset({"completed", "skipped", "overdue"})
 DEVIATION_EVENTS = frozenset({"skipped", "overdue"})
-# 偏差任务数达到该阈值即触发重规划（跳过 + 逾期）
+# 未消费的偏差任务数达到该阈值即触发重规划（跳过 + 逾期）
 REPLAN_DEVIATION_THRESHOLD = 3
+# 消费台账：追加式，每个产生的 revision 一条，放在 plans.payload 里（无 DDL）
+DEVIATION_LEDGER_KEY = "deviation_ledger"
 
 
 class PlanNotFoundError(LookupError):
@@ -83,10 +85,14 @@ class PlanLifecycleService:
     # ── 重规划 ──────────────────────────────────────────────────────────────
 
     def replan(self, plan_id: str, req: PlanReplanRequest | None = None) -> dict[str, Any]:
-        """按偏差（跳过 + 逾期任务 ≥ 3）或目标/约束变化确定性重规划。
+        """按未消费偏差（跳过 + 逾期任务 ≥ 3）或目标/约束变化确定性重规划。
 
         `req` 提供显式覆盖；任何与已存计划不同的字段都构成「目标/约束变化」，
         单独即可触发重规划。两个条件都不满足时原样返回当前计划。
+
+        「未消费」= 当前偏差任务集减去历史 revision 已消费的 task_id 并集。触发阈值
+        时把本次未消费的偏差记进台账；未触发时**不写盘**，因此也不会消费任何东西——
+        这是结构保证，不是额外判断。
         """
         plan = self._require_plan(plan_id)
         events = self._store.list_progress_events(plan_id)
@@ -94,7 +100,8 @@ class PlanLifecycleService:
         target = _apply_override(current, req)
         changed = target != current
         deviated = self._deviated_task_ids(plan, events)
-        if not changed and len(deviated) < REPLAN_DEVIATION_THRESHOLD:
+        unconsumed = deviated - _consumed_task_ids(plan)
+        if not changed and len(unconsumed) < REPLAN_DEVIATION_THRESHOLD:
             # 阈值未到，不重规划，返回当前计划
             return plan
 
@@ -113,7 +120,16 @@ class PlanLifecycleService:
         record["revisions"] = list(plan.get("revisions", [])) + record["revisions"]
         record["revisions"][-1]["revision_id"] = previous + 1
         record["progress_events"] = events
-        record["replan_reason"] = _replan_reason(changed, len(deviated))
+        record["replan_reason"] = _replan_reason(changed, len(unconsumed))
+        # 只在偏差阈值真正被满足时消费：纯目标/约束变化的重规划不吞掉未达阈值的偏差，
+        # 否则那 1~2 个偏差会被静默永久原谅。写空集不改变闸门结果（consumed ∪
+        # unconsumed ⊇ deviated），只让台账诚实。
+        newly_consumed = (
+            unconsumed if len(unconsumed) >= REPLAN_DEVIATION_THRESHOLD else set()
+        )
+        record[DEVIATION_LEDGER_KEY] = _append_deviation_entry(
+            plan, previous + 1, record["replan_reason"], newly_consumed
+        )
         self._store.save_plan(record)
         return record
 
@@ -163,6 +179,34 @@ class PlanLifecycleService:
 def _current_revision(plan: dict[str, Any]) -> int:
     """当前修订号；早期记录未持久化 revision_id 时回落到 1。"""
     return int(plan.get("revision_id", 1))
+
+
+def _consumed_task_ids(plan: dict[str, Any]) -> set[str]:
+    """已被历史 revision 消费（回答）的偏差 task_id 并集。
+
+    台账只追加，所以这个并集单调不减。改造前生成的旧记录没有该键 → 空集 → 行为与
+    改造前完全一致，首次重规划写入台账后自愈。
+    """
+    consumed: set[str] = set()
+    for entry in plan.get(DEVIATION_LEDGER_KEY) or []:
+        consumed.update(entry.get("consumed_task_ids") or [])
+    return consumed
+
+
+def _append_deviation_entry(
+    plan: dict[str, Any], revision_id: int, trigger: str, consumed: set[str]
+) -> list[dict[str, Any]]:
+    """在既有台账后追加一条消费记录（永不改写既有条目）。"""
+    ledger = list(plan.get(DEVIATION_LEDGER_KEY) or [])
+    ledger.append(
+        {
+            "revision_id": revision_id,
+            "trigger": trigger,
+            # sorted 保证 payload 字节稳定，重放可比对
+            "consumed_task_ids": sorted(consumed),
+        }
+    )
+    return ledger
 
 
 def _replan_reason(changed: bool, deviated_count: int) -> str:
