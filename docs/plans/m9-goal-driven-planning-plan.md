@@ -79,9 +79,18 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 `RESOLVED`；`ADMITTED / IN_PROGRESS` 覆盖确定性计划生成与计划生命周期。
 
 批准范围沿用 `m9-plan-lifecycle-v1`，但 `M9-EXECUTION-DEVIATION` 的触发语义在 v1.2 由「累计偏差 ≥ 3」
-改为「未消费偏差 ≥ 3」——这是对已 `RESOLVED` 决策的实质变更，按
-[`stage-admission-gates.md`](../standards/stage-admission-gates.md) 的登记规则原地替换触发子句并升
-`plan_revision`，准入状态保持 `ADMITTED / IN_PROGRESS`（该决策仍是同一决策，未被撤销）。
+改为「未消费偏差 ≥ 3」。这是对已 `RESOLVED` 强制决策的**实质变更**，而
+[`stage-admission-gates.md`](../standards/stage-admission-gates.md) §4 规定「任何强制决策、前置证据或兼容
+不变量发生实质变化后，准入必须改为 `REVOKED`；在重新澄清和批准前不得继续生产实施」。本次由 owner 在
+同一变更中重新澄清并批准（`approval_reference` + `plan_revision` v1.2 + `approved_at` 2026-09-21），
+§4 的保护目的——不得在失效批准下继续生产实施——已满足；但登记表**未按 §4 字面登记 `REVOKED` 过渡**，
+且 §7（登记和维护）只要求同步阶段计划、登记表与 `docs/PLAN.md` 并通过一致性回归，并未授权「原地替换
+已 `RESOLVED` 决策值」。因此这是一条**待 owner 裁定的登记口径问题**，不是已成立的惯例：
+
+- (a) 认可「同一变更内重新澄清 + 批准」可替代 `REVOKED` 过渡，并把该口径写入 §4；
+- (b) 严格按 §4 执行：登记 `REVOKED` 后按 v1.2 重新准入。
+
+裁定前本阶段状态保持 `ADMITTED / IN_PROGRESS`，且不新增生产实施范围。
 
 ## 5. 获准后的拟实施顺序
 
@@ -120,6 +129,11 @@ task_id 集合减去台账里已消费的并集。台账键 `deviation_ledger` �
 （`sorted` 以保证 payload 字节稳定，重放可比对）；消费只在偏差阈值**真正**被满足时发生，
 纯目标/约束变化的重规划写空集，因此不会吞掉未达阈值的 1~2 个偏差；未触发的 `replan` 调用
 **不写盘**，所以也不消费任何东西——这是结构保证而非额外分支判断。
+
+关于决策文本里的 `replanned` 事件：它**不在** `progress_events` 词表内（词表仍只有 `completed` /
+`skipped` / `overdue`），而是由台账条目落地——每个产生的 revision 恰好一条台账记录，
+`trigger` 字段即该次重规划的原因。`M9-EXECUTION-DEVIATION` 的值仍保留 `REPLANNED_EVENTS` 记号，
+指的是这条落地路径，不是 `progress_events` 里的一行。
 
 刻意的取舍：消费是单调的，已消费的偏差任务即使后来再次逾期也不再触发（宁可漏报「复发偏差」，
 也不产内容相同的幻影 revision），`tests/M9/test_deviation_consumption.py` 用测试钉住这条取舍。

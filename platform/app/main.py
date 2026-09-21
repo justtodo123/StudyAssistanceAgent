@@ -275,7 +275,10 @@ def record_plan_progress(plan_id: str, req: PlanProgressRequest) -> PlanProgress
 
 @app.post("/api/v1/plans/{plan_id}/replan")
 def replan(plan_id: str, req: PlanReplanRequest | None = None) -> dict[str, Any]:
-    """按偏差（跳过 + 逾期 ≥ 3）或目标/约束变化确定性重规划，生成新 revision。"""
+    """按未消费偏差（跳过 + 逾期 ≥ 3）或目标/约束变化确定性重规划，生成新 revision。
+
+    已消费的偏差不再触发；未触发时不写盘，因此重复调用不会持续追加内容相同的新 revision。
+    """
     try:
         return _plan_lifecycle.replan(plan_id, req)
     except PlanNotFoundError as exc:
