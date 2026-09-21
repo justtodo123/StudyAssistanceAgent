@@ -28,6 +28,28 @@ def test_plan_is_deterministic_and_versioned(goal_planner_service):
     assert first.revisions[0].days == second.revisions[0].days
 
 
+def test_plan_identity_separates_course_and_constraints(goal_planner_service):
+    """同名 Goal 配不同课程/约束必须得到不同 plan_id，否则已存计划会被互相覆盖。"""
+    base = goal_planner_service.generate(_request(course="os"))
+    other_course = goal_planner_service.generate(_request(course="ds"))
+    other_excluded = goal_planner_service.generate(
+        _request(course="os", constraints=GoalPlanConstraints(excluded_topics=["死锁"]))
+    )
+    assert len({base.plan_id, other_course.plan_id, other_excluded.plan_id}) == 3
+
+
+def test_plan_response_echoes_request_scope(goal_planner_service):
+    req = _request(
+        course="os",
+        hours_per_day=1.5,
+        constraints=GoalPlanConstraints(required_topics=["死锁"]),
+    )
+    plan = goal_planner_service.generate(req)
+    assert plan.course == "os"
+    assert plan.hours_per_day == 1.5
+    assert plan.constraints.required_topics == ["死锁"]
+
+
 def test_excluded_topics_are_removed(goal_planner_service):
     req = _request(constraints=GoalPlanConstraints(excluded_topics=["死锁"]))
     plan = goal_planner_service.generate(req)
