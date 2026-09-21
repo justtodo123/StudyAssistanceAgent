@@ -331,6 +331,10 @@
         {"id": "M9-COMPATIBILITY", "status": "RESOLVED", "value": "REVIEW_PLAN_AND_STUDY_SESSION_APIS_UNCHANGED__SQLITE_RECOVERABLE_MIGRATABLE_NO_HISTORY_REWRITE__90_QUESTION_NO_REGRESSION__FALLBACK_TO_DETERMINISTIC_REVIEW_PLAN", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]}
       ],
       "approval": {"approved_by": "justtodo123", "approved_at": "2026-09-21", "approval_reference": "User instruction: 批准 M9 偏差触发语义由累计改为未消费（消费台账按 revision 追加，仅在阈值真正触发时消费，纯目标/约束变化不消费）；外部 AI 与 mastery 写入仍在范围外", "plan_revision": "v1.2", "decision_set_version": "m9-decision-set-v1"},
+      "admission_history": [
+        {"from": "ADMITTED", "to": "REVOKED", "at": "2026-09-21", "reason": "M9-EXECUTION-DEVIATION 决策值在 plan_revision v1.2 实质变更，v1.1 批准条件失效", "reference": "docs/plans/m9-goal-driven-planning-plan.md"},
+        {"from": "REVOKED", "to": "ADMITTED", "at": "2026-09-21", "reason": "owner 记录 plan_revision v1.2 批准后重新准入", "reference": "docs/plans/m9-goal-driven-planning-plan.md"}
+      ],
       "approval_scope": {
         "scope_id": "m9-plan-lifecycle-v1",
         "included": ["m9.goal-plan-generation", "m9.plan-adoption", "m9.progress-event", "m9.replanning"],
