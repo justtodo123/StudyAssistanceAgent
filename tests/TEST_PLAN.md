@@ -205,11 +205,30 @@ selected-scope 测试文件已登记在 `tests/M8_metadata_discovery/`，与历�
 | `tests/M6b/` | 129 项 | 2026-08-29 当前：普通套件 126 passed、3 deselected；benchmark 3 passed；2026-08-28 首轮：111 passed | fake provider；native tool loop、API/auth、隐私、零写入与独立 blocking benchmark |
 | `tests/M6a/` | 124 项 | 2026-08-28：124 passed | 含 worker topology、generation 分离、缓存生命周期与 API/OpenAPI/链接收口 |
 | `tests/M7/` | 270 项 | 当前 collect-only：270 项；Python 3.13.3 执行 267 passed / 3 failed（TXT 精确 `cpython-textio==3.11.9` 合同导致的预期 `PARSER_UNAVAILABLE`，非代码放宽项）；2026-09-06 Python 3.11.9 精确依赖环境的五格式 100×20 冻结协议独立全 PASS | source-local FTS5+vector identity、delete/isolation、Search/QA internal overlay、M7-2 snapshot cache、M7-4 exact-query/query-encode、M7-5 READY/CURRENT 与 correctness 收口；parser 证据报告只写系统临时目录且不入库 |
-| `tests/M8_metadata_discovery/` | 74 项 | 2026-09-20：74 passed | 离线治理；generic unresolved intent 仍为 `METADATA_DISCOVERY_INTENT_OWNER_SELECTION_REQUIRED`；pypdf==6.0.0 selected-scope 的 bounded Git reader、六阶段 dispatch-rooted chain、single-parent policy、provenance fail-closed 与最大 `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW` 均已覆盖 |
+| `tests/M8_metadata_discovery/` | 75 项 | 2026-09-21：75 passed（孤立运行）；全量运行时曾出现的 15 项跨阶段失败已于同日修复，见下方 2026-09-21 记录 | 离线治理；generic unresolved intent 仍为 `METADATA_DISCOVERY_INTENT_OWNER_SELECTION_REQUIRED`；pypdf==6.0.0 selected-scope 的 bounded Git reader、六阶段 dispatch-rooted chain、single-parent policy、provenance fail-closed 与最大 `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW` 均已覆盖 |
 | `tests/source_inventory/` | 21 项 | 2026-08-27：21 passed | 外部资料只读盘点；tmp_path 迷你树，不扫描真实外部目录，不构成 M7 开工 |
 | `tests/regression/`（含 slow） | 62 项 | 2026-09-06 当前 checkout 离线 keyword mode：62 passed | 含 SSE、结构化 CI、准入治理、导航与生产树契约；含显式 active-delivery 开工授权门禁 |
 | `tests/regression/test_rag_quality.py` slow | 3 项 | 2026-09-01 复测：3 passed；2026-08-28：3 passed | 默认 OS/DS/CO 90 题 Recall@3 门禁 |
 | `platform/tests/` | 40 项 | 2026-09-06 当前 checkout 离线 keyword mode：40 passed | 受保护的原始平台冒烟/功能测试，不由根级测试取代，且本轮无 tracked diff |
+
+> 本表各行（含根级行）是各范围在**各自标注日期**的读数，且阶段行均为**孤立运行**。全量运行的跨阶段差异以
+> 下方 2026-09-21 记录为准——M8 的 15 项失败正是只在全量运行中出现、孤立运行全绿，单看本表无法发现。
+
+**2026-09-21 当前全量读数**（CPython 3.13.3，`pytest tests/ -q`）：**961 collected、957 passed、1 skipped、3 failed**。
+
+3 项失败全部是 `tests/M7/` 的 TXT 真实 parser 用例，属精确 `cpython-textio==3.11.9` 合同下的**预期 fail-closed**：
+`platform/app/parser_matrix.py` 的 `_installed_version()` 对 `cpython-textio` 返回 `platform.python_version()`，
+本机为 3.13.3，与冻结值不符即 `PARSER_UNAVAILABLE`。**不得放宽为通过**——该合同是已冻结的治理结论，
+放宽会改变 parser identity 语义；在 CPython 3.11.9 精确环境下这 3 项通过（825 passed、0 failed）。
+另注：`offline-ci.yml` 使用 Python 3.12 且**不运行** `tests/M7` 与 `tests/M8`，故上述读数差异不进入 CI。
+
+**2026-09-21 修复（M8 跨阶段双导入）**：`tests/M8_metadata_discovery/` 在全量运行中的 15 项失败已修复。
+根因是 `tools/m8_*.py` 的双路径导入（`try: from m8_x … except ImportError: from tools.m8_x …`）：当
+`tests/M5a`、`tests/M5e`、`tests/M6_crawler` 的 conftest 把 `TOOLS_DIR` 放进 `sys.path` 后，`try` 分支胜出，
+于是同一个 schema 模块产生**第二个模块对象**与**第二个 `MetadataGovernanceError` 类**，测试的 `except`
+无法捕获工具抛出的异常。修复方式：把这 6 个文件的导入顺序改为优先 `tools.m8_x`（以脚本方式从 `tools/` 内
+直接执行时仍回退到裸名，两条路径均已验证），使模块身份与测试的 `from tools import …` 一致。
+修复后 `tests/M5a + tests/M8_metadata_discovery` 由 15 failed 变为 101 passed，全量读数由 18 failed 变为 3 failed。
 | 合并 `tests platform/tests` | 866 项 | 2026-09-06 collect-only：866 项；根级与受保护平台套件分别验证后的合计口径为 862 passed、1 skipped、3 failed，本次单次 combined run 未取得完整终态 | 三个失败仅为 TXT 精确 parser contract；唯一 skip 为显式 online crawler smoke；历史 850 项及其通过数不代表当前 checkout |
 | `tests/M6_crawler/` 离线 | 52 项 + 1 deselected | 2026-08-28：52 passed | `m6_crawler and not online` |
 | `tests/M0_M2/` | 18 项 | 2026-09-01 复测：18 passed；2026-08-28：18 passed | 基线回归 |
