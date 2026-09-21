@@ -185,6 +185,12 @@ source grounding 与先修关系，而非只检查 JSON 可解析。退出条件
 Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入、默认学习闭环与 90 题不退化、无 LLM 路径可
 运行，以及冻结评测达标。
 
+**退出条件的挣得情况**（截至 2026-09-21）：已挣得——正式 mastery 只有一个写入权威
+（`tests/M9/test_mastery_write_authority.py`，见 §5.1 末行）、计划可重放、Planner 输入不随 chunk 总量线性膨胀
+（1K 规模已证）、stale/deleted Source 零进入、默认学习闭环与 90 题不退化、无 LLM 路径可运行。
+**未挣得——冻结评测达标**（`M9-EVALUATION` 的延迟/成本维度仍 `DEFERRED`，解冻构成实质变更并强制 `REVOKED`）。
+因此 M9 **尚不具备退出条件**，任何 closeout 提法在此不成立。
+
 ### 5.1 实现进度
 
 | 步骤 | 状态 | 证据 |
@@ -198,6 +204,7 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | 4d 准入留痕字段覆盖（`m9.admission-history-reference-coverage`）——关闭 §4 已记录缺口，**纯治理测试硬化、非能力** | 已完成 | `tests/regression/test_governance_contract.py` 的 `_registry_references` 与 `test_admission_history_records_are_well_formed` |
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
 | 6 可选外部 AI adapter 与冻结任务集比较（`m9.external-ai`，**窄口径**） | 已完成（**窄口径**） | v1.4 批准（见 §4.2）；实现见 `platform/app/plan_ai_adapter.py`、`tests/M9/test_plan_ai_adapter.py`；冻结任务集比较见 `tests/M9/test_plan_ai_benchmark.py`。**步骤 6 整体未闭合**：10K/100K 容量验证逐字记为 M8（`BLOCKED`）/ M11（拟议）依赖，本次不触碰；`M9-EVALUATION` 未动，延迟/成本仍 `DEFERRED`，评测 workload 未冻结 |
+| **退出条件证据**：唯一写权威（**非步骤、非能力、非范围扩张**） | 已交付 | `tests/M9/test_mastery_write_authority.py`：动态枚举 `platform/app/` 全部源文件（当前 60 个）后断言写 `study_sessions`/`answer_attempts` 的模块**恰好**是 `learning_store.py`，且 M9 的 8 个模块与写权威**导入不可达**（AST 闭包断言）。**它不新增任何写路径**——`m9.mastery-write` 仍在 `excluded`，本增量只把 §1/§2 的继承不变量从当前事实钉成可测不变量，故**不改 `plan_revision`、不写 `admission_history`** |
 
 **步骤 6 窄口径的实现约定（含一处跨阶段只读耦合，逐字登记）**：
 
