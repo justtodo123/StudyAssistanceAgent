@@ -40,10 +40,15 @@ class GoalPlannerService:
         mastery_projection: Any | None = None,
         source_summary: Any | None = None,
         topic_graph: Any | None = None,
+        review_history_projection: Any | None = None,
     ) -> None:
-        # review_history 是 file -> {review_count,...} 的只读投影，仅用于排序优先；
+        # review_history 是 file -> {review_count,...} 的**快照**，仅用于排序优先；
         # 不写回、不新建表。缺省空表表示“全部未复习”。
+        # **它是构造时求值一次的**，故只在没有活投影时作为回落使用（见 `_reviews`）。
         self._review_history = review_history or {}
+        # 复习历史只读活投影（只需实现 reviewed_files()）。与 `_mastery` 同形：传活对象而非快照，
+        # 否则同一进程内新记录的复习永不反映到计划上。追加在**末尾**——插在中间会静默重绑位置参数调用方。
+        self._review_history_projection = review_history_projection
         # 权威 mastery 只读投影（只需实现 mastery_by_file()）。传**活对象**而非快照：
         # 快照会让 mastery 在进程生命周期内不更新，派生摘要永不变化，过期计划被幂等分支静默保留。
         self._mastery_projection = mastery_projection
@@ -59,6 +64,16 @@ class GoalPlannerService:
         if self._mastery_projection is None:
             return {}
         return self._mastery_projection.mastery_by_file()
+
+    def _reviews(self) -> frozenset[str]:
+        """已复习条目的 file 键集合。注入了活投影就每轮重读，否则回落到构造时的快照。
+
+        与 `_mastery` 同形：依赖缺省是守卫，不是错误。未注入投影时与接入前的行为逐字节相同
+        （快照语义不变），故既有调用方不受影响。
+        """
+        if self._review_history_projection is None:
+            return frozenset(self._review_history)
+        return self._review_history_projection.reviewed_files()
 
     def _source_scope(self, principal_id: str | None) -> dict[str, dict[str, Any]]:
         """授权 Source 只读摘要；投影未注入或 principal 为假时返回空表。
@@ -99,11 +114,14 @@ class GoalPlannerService:
         # 2. 应用话题约束：先排除，再确定排序，最后置顶必选（保持置顶不被排序破坏）
         entries = self._exclude(entries, req.constraints.excluded_topics)
         mastery = self._mastery()  # 整轮只读一次：保证确定性，且只查一次库
+        # 复习历史同样整轮只读一次：生成途中若有新复习落库，不同任务会看到不同的 reviewed，
+        # 排序与派生摘要就基于两个快照了。
+        reviews = self._reviews()
         # 授权 Source 摘要：同样整轮只读一次。它不参与任务构造与排序，只落进 summary 计数。
         source_scope = self._source_scope(principal_id)
         # 先修图同样整轮只读一次：生成途中图若变化，排序与违反计数会基于不同快照。
         graph = self._graph()
-        tasks = self._build_tasks(entries, mastery)
+        tasks = self._build_tasks(entries, mastery, reviews)
         tasks = self._stable_order(tasks, graph)
         tasks = self._pin_required(tasks, req.constraints.required_topics, graph)
         # 4. 解析目标日期
@@ -266,14 +284,16 @@ class GoalPlannerService:
         self,
         entries: list[dict[str, Any]],
         mastery: dict[str, dict[str, Any]] | None = None,
+        reviews: frozenset[str] | None = None,
     ) -> list[GoalPlanTask]:
         mastery = mastery or {}
+        reviews = reviews or frozenset()
         tasks: list[GoalPlanTask] = []
         for e in entries:
             diff = e["difficulty"]
             minutes = DIFFICULTY_TIME.get(diff, 35)
             priority = DIFFICULTY_PRIORITY.get(diff, "medium")
-            reviewed = e["file"] in self._review_history
+            reviewed = e["file"] in reviews
             evidence = mastery.get(e["file"]) or {}
             tasks.append(
                 GoalPlanTask(

@@ -47,6 +47,7 @@ from .plan_lifecycle import (
     PlanNotFoundError,
 )
 from .qa import QaService
+from .review_history_projection import ReviewHistoryProjection
 from .quiz import QuizService
 from .retrieval import MultiRecallService, RetrievalScope
 from .snapshot_publisher import CombinedSnapshotPublisher
@@ -106,11 +107,15 @@ _topic_graph = TopicGraphProjection()
 # 它刻意**不**注入 `_goal_planner`：grounding 结果依赖索引 generation，进入计划身份或
 # `summary` 会分别破坏「索引重建不改变计划身份」与「同一 plan_id ⇒ 相同 summary」。
 _plan_grounding = PlanGroundingService(_recall, source_summary=_source_summary)
+# 复习历史只读活投影：与 `_mastery_projection` 同形。此前这里传的是
+# `_learning_store.all_reviews()`——**构造时求值一次**的快照，于是同一进程内新记录的复习永不反映到
+# 计划上（`reviewed` 标志、排序优先级，以及经 `_derived_digest` 参与 `plan_id` 的身份）。
+_plan_review_history = ReviewHistoryProjection(_learning_store)
 _goal_planner = GoalPlannerService(
-    review_history=_learning_store.all_reviews(),
     mastery_projection=_mastery_projection,
     source_summary=_source_summary,
     topic_graph=_topic_graph,
+    review_history_projection=_plan_review_history,
 )
 _plan_lifecycle = PlanLifecycleService(
     _learning_store,
