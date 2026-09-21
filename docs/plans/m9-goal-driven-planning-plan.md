@@ -147,7 +147,7 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | 2 确定性规则生成最小计划 + 验证 API/SQLite 兼容 | 已完成 | `tests/M9/test_goal_planner.py`、`tests/M9/test_plan_lifecycle.py` |
 | 3 只读 mastery snapshot / topic graph / Source 摘要 | 已完成 | mastery 投影：`platform/app/mastery_projection.py`、`tests/M9/test_mastery_projection.py`；授权 Source 摘要：`platform/app/source_summary_projection.py`、`tests/M9/test_source_summary_projection.py`；topic graph（先修关系）：`platform/app/topic_graph_projection.py`、`tests/M9/test_topic_graph_projection.py`。三者均已接入确定性 Planner |
 | 4a 受限检索接缝与四类预算（`m9.bounded-grounding-retrieval`） | 已完成 | `platform/app/plan_grounding.py`、`tests/M9/test_plan_grounding.py`；装配于 `main.py` |
-| 4b principal 内部接缝与计划身份往返保真（`m9.plan-identity-fidelity`） | 未开始 | 已获 v1.3 授权，尚未实施 |
+| 4b principal 内部接缝与计划身份往返保真（`m9.plan-identity-fidelity`） | 已完成 | `tests/M9/test_plan_identity.py`；`platform/app/goal_planner.py` 的身份键与 `platform/app/plan_lifecycle.py` 的往返保真 |
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
 | 6 可选外部 AI adapter 与冻结任务集比较 | 未开始 | 外部 AI 在 `m9-plan-lifecycle-v1` 范围外 |
 
@@ -385,7 +385,7 @@ caller-selected `principal_id` 一致），与 `_user_source_search` 同一形�
 
 (j) **仍未闭合**：评测 workload 冻结（§5 步骤 6）与外部 AI 仍在 `m9-plan-lifecycle-v1` 之外，
 `M9-EVALUATION` 的 `ADHERENCE_QUALITATIVE_FIRST` 与延迟 / 成本维度仍暂缓；本增量不使 M9 达到退出条件。
-`tests/M9` 自本次起 187 → 219 项。
+`tests/M9` 自本次起 187 → 219 项；步骤 4b 再追加 26 项，共 245 项。
 
 计划身份修复：`_plan_id` 原先只哈希 `goal|target|course|required|excluded`，而任务顺序与 `summary`
 的 reviewed 计数依赖复习状态、分日依赖 `hours_per_day`。两处碰撞均已实测证实：同一 `plan_id`
@@ -408,6 +408,55 @@ mastery 字段**只落 payload**，不给 `plan_tasks` 表加列（该表只写�
 连接级 `total_changes` 审计 + 库快照比对的真守卫，用例名保留。残留（不在本次范围，如实记录）：
 `main.py` 仍在 import 时把 `all_reviews()` 冻结成快照，故 `reviewed` 在进程生命周期内不更新；
 mastery 投影是实时的，因此计划身份与排序仍会随答题变化刷新。
+
+计划身份往返保真（步骤 4b）实现约定：
+
+(a) **两处已证实缺陷**（步骤 3 记录、本增量修复）：① `_plan_id` 的身份键不含 principal，而 `event_id`
+是 `(plan_id, task_id, event)` 的哈希、同样不含 principal 成分 → 两个 principal 生成同一 Goal 会撞同一
+`plan_id`，后者的 `completed` 被 `INSERT OR IGNORE` 静默去重，把前者的任务标成完成；②
+`_response_to_record` 没有 `summary` 键，`_plan_to_request` 只还原 5 个请求字段 → principal 一旦进入计划
+路径，`replan` 会以「无 principal」重新生成，源范围静默改变。
+
+(b) **修法（身份）**：`_plan_id` 追加一段**带标签**的 principal（`...|principal={id}`），且**仅在非 None
+时追加**。两条理由：只有非 None 才追加，`principal_id=None` 的身份才与接入前**逐字节相同**，既有计划 id
+不 churn（沿用「未注入时逐字节一致」的纪律）；用带标签的段而非裸值，是因为 `goal` 是自由文本、可含 `|`，
+裸追加会让「goal 结尾恰好拼出 `|principal=p`」的请求与「goal 去掉该后缀 + principal=p」撞同一键——
+`test_goal_text_cannot_forge_a_principal_segment` 钉住这一点。反 churn 护栏用**合成任务列表**直接调
+`_plan_id` 并对比逐字复刻的旧公式，故不依赖知识库语料（语料一变就会变成误报源，而不是守卫）。
+
+(c) **修法（往返）**：`_response_to_record` 补 `summary` 键，消除 `plan["tasks"]` 与 `plan["revisions"]`
+两处表示不一致；principal 落 payload 供还原，`replan` 以 `plan.get(PRINCIPAL_RECORD_KEY)` 取回并传给
+`generate`。证据是 `summary["sources"]` 键——它只在「有 principal 且注入了投影」时出现，故重规划后它
+仍在，即证明 principal 被还原（去掉还原会让该用例 `KeyError: 'sources'`）。
+
+(d) **principal 不进响应体，且这是结构保证**：`get` / `adopt` / `replan` 的每个返回点都过单点函数
+`_public_plan`（按 `INTERNAL_RECORD_KEYS` 剥离），而不是各写一遍过滤——后者漏一处就静默泄露。落盘仍用
+完整记录；`main.py` 不直接读计划 store，故不存在绕过路径。源码级用例
+`test_service_returns_go_through_public_plan` 扫公开方法里的每一处 `return`，并有
+`test_public_returning_methods_actually_return_something` 防止方法名单被改空而让前者空转。
+
+(e) **未新增公开路由、未改请求体**：principal 仍是内部接缝，`GoalPlanRequest` / `GoalPlanResponse` 都
+没有该字段，因此它也不进 OpenAPI schema。能力经既有 `POST /api/v1/plans` 与 `replan` 可达，
+`PUBLIC_API_PATHS` 与路由 docstring 均未改动。
+
+(f) **未 bump `SCHEMA_VERSION`**：记录 schema 未变——payload 是 JSON blob，无 DDL、无新列。
+
+(g) **迁移语义（诚实残留）**：非 None principal 下的**旧 id 不再匹配新生成结果**；旧记录仍可
+`GET` / `adopt` / `progress` / `replan`（主键查找，读时不重算），**不回填、不改写**。
+`principal_id=None` 的既有计划 id 逐字节不变，不受影响。
+
+(h) **同阶段测试的断言有意反转**：`tests/M9/test_source_summary_projection.py` 的
+`test_principal_does_not_change_plan_identity_or_tasks` 原断言 `anonymous.plan_id == scoped.plan_id`，
+那正是步骤 3 记录的立场，也正是本增量证伪的。该断言**有意反转**并改名为
+`test_principal_does_not_change_tasks_or_days`，内容侧不变量（任务、分日、除 `sources` 外的 `summary`）
+全部保留，身份断言迁至 `tests/M9/test_plan_identity.py`。这不是「把存量测试改绿」：被删掉的是一条已被
+证伪的断言，替代它的断言更强（见 (b) 的 7 例参数化分隔用例）。
+
+(i) **变异验证**：关掉剥离 → 2 项失败；去掉身份里的 principal 段 → 10 项失败；去掉 replan 的 principal
+还原 → 1 项失败；去掉 `summary` 落记录 → 4 项失败。四道守卫都不是空转。
+
+(j) **仍未闭合**：与 4a 同——评测 workload 冻结（§5 步骤 6）与外部 AI 仍在 `m9-plan-lifecycle-v1` 之外，
+本增量不使 M9 达到退出条件。`tests/M9` 自本次起 219 → 245 项。
 
 跨阶段登记（owner 已追认）：M9 的 5 条公开路由已补登到 `tests/M6a/test_closeout_contracts.py` 的
 `PUBLIC_API_PATHS`，逐项为 `/api/v1/plans`、`/api/v1/plans/{plan_id}`、`/api/v1/plans/{plan_id}/adopt`、

@@ -150,7 +150,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
 | M7 | `ADMITTED` | `COMPLETE` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策、保护基线、Source lifecycle/delete/isolation/fallback、冻结 1k/3k BGE 与五格式 100×20 parser/normalized/lifecycle 证据已闭合。原 2026-08-31 准入与开工授权保持不变；justtodo123 于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内独立批准 `M7 COMPLETE`。技术证据本身不产生批准；M6b preview、Quiz、Review Plan 与 study-sessions 仍不含用户源 |
 | M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | 八项 Decision 已 `RESOLVED`；`draft-0.10` P3 拒绝链冻结；`draft-0.11` 独立 P3 已 `REJECTED / stop`，失败链冻结；执行、后端选择和 admission 未授权；100K 专业化存储容量验证暂缓，现有 SQLite 线性余弦 + BM25 满足当前个人规模 |
-| M9 | `ADMITTED` | `IN_PROGRESS` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT`、`M9-M8-EXIT`（维持当前 SQLite/BM25 后端）均已 `SATISFIED`；八项强制决策全部 `RESOLVED`；justtodo123 于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内批准开工（生成 + 采纳 + 进度 + 偏差重规划；外部 AI 与 mastery 写入除外）。确定性 Planner、计划生命周期与跳过/逾期偏差信号已实现；`M9-EXECUTION-DEVIATION` 决策值在 v1.2 实质变更，撤销与重新准入过渡已登记在 `admission_history`；步骤 3 的三个只读投影（mastery、授权 Source 摘要、先修关系 topic graph）均已实现并接入确定性 Planner（计划身份含派生输入摘要；先修违反由 `summary.prerequisites.violations` 可测，真语料实测为 0）；2026-09-21 owner 以 v1.3 扩张范围至步骤 4（拆为 4a/4b），4a 受限检索接缝（`PlanGroundingService`，四类预算 + fail-closed 交叉校验）已完成，4b 与评测 workload 尚未完成 |
+| M9 | `ADMITTED` | `IN_PROGRESS` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT`、`M9-M8-EXIT`（维持当前 SQLite/BM25 后端）均已 `SATISFIED`；八项强制决策全部 `RESOLVED`；justtodo123 于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内批准开工（生成 + 采纳 + 进度 + 偏差重规划；外部 AI 与 mastery 写入除外）。确定性 Planner、计划生命周期与跳过/逾期偏差信号已实现；`M9-EXECUTION-DEVIATION` 决策值在 v1.2 实质变更，撤销与重新准入过渡已登记在 `admission_history`；步骤 3 的三个只读投影（mastery、授权 Source 摘要、先修关系 topic graph）均已实现并接入确定性 Planner（计划身份含派生输入摘要；先修违反由 `summary.prerequisites.violations` 可测，真语料实测为 0）；2026-09-21 owner 以 v1.3 扩张范围至步骤 4（拆为 4a/4b），4a 受限检索接缝（`PlanGroundingService`，四类预算 + fail-closed 交叉校验）与 4b 计划身份往返保真（principal 进身份键与记录 payload、经单点 `_public_plan` 剥离后不进响应体）均已完成，评测 workload 尚未完成 |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | `M10-M7-EXIT=SATISFIED`；仍等待 M8/M9，写授权、恢复、rollout 与独立批准仍 `OPEN` |
 | M11 | `BLOCKED` | `NOT_STARTED` | [`m11-data-scaling-plan.md`](plans/m11-data-scaling-plan.md) | 拟议真实数据规模化阶段；正式退出目标为 10K approved chunks，3K 为先行 Gate，全部 Decision 与批准 `OPEN` |
 | M12 | `BLOCKED` | `NOT_STARTED` | [`m12-cloud-deployment-plan.md`](plans/m12-cloud-deployment-plan.md) | 拟议可选云端单用户部署；本地离线仍为默认，服务器 baseline、十三项 Decision 与批准全部 `OPEN` |
@@ -281,8 +281,18 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
   grounding 刻意**不进** `plan_id`、也**不进** `summary`（前者会让 reindex churn 计划身份，后者会破坏
   「同一 `plan_id` ⇒ 相同 `summary`」）。**未新增任何公开路由**，`PUBLIC_API_PATHS` 未改动；
   能力装配于 `main.py` 但**生产休眠**（principal 按设计是内部边界，无路由传它），
-  故该判据在**服务层接缝**上证明，不是公共 API 上的端到端隔离。**4b（principal 内部接缝与计划身份
-  往返保真）与评测 workload 尚未完成**。
+  故该判据在**服务层接缝**上证明，不是公共 API 上的端到端隔离。
+  **4b 已完成**：修掉步骤 3 记录的两处已证实缺陷——① `_plan_id` 身份键不含 principal，而 `event_id`
+  是 `(plan_id, task_id, event)` 的哈希、同样不含 principal 成分，两个 principal 生成同一 Goal 会撞同一
+  `plan_id`，后者的 `completed` 被 `INSERT OR IGNORE` 静默去重、把前者的任务标成完成；②
+  `_response_to_record` 无 `summary` 键、`_plan_to_request` 只还原 5 个请求字段，principal 进入计划路径后
+  `replan` 会以「无 principal」重新生成、源范围静默改变。身份键追加**带标签**的 principal 段且**仅在非
+  None 时**追加，故 `principal_id=None` 的身份与接入前逐字节相同、既有计划 id 不 churn；principal 是
+  **内部记录键**，经单点 `_public_plan` 在所有读取路径上剥离，不进任何 HTTP 响应体（`GoalPlanRequest` /
+  `GoalPlanResponse` 均无该字段，故也不进 OpenAPI schema）。**仍未新增任何公开路由**，`PUBLIC_API_PATHS`
+  与路由 docstring 未改动；**未 bump `SCHEMA_VERSION`**（payload 是 JSON blob，无 DDL）。
+  迁移语义：非 None principal 下的旧 id 不再匹配新生成结果，旧记录仍可 `GET`/`adopt`/`progress`/`replan`
+  （主键查找，读时不重算），不回填、不改写。**评测 workload 冻结（步骤 6）与外部 AI 仍在范围外**。
 - ⬜ **M10 完整自主 Runner 与 Harness 对外**：准备计划见
   [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md)；在 M7–M9 退出后仍须先闭合写授权、
   checkpoint、幂等、EffectLedger、恢复、Agent 评测、manifest、MCP 和 rollout。状态机继续作为正式默认和
@@ -321,7 +331,12 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.26（不是产品发布版本）· 更新：2026-09-21（M9 步骤 4a：owner 以
+*创建：2026-08-10 · PLAN 文档修订：v2.27（不是产品发布版本）· 更新：2026-09-21（M9 步骤 4b：计划身份
+按 principal 分隔（带标签段、仅非 None 时追加，故 `principal_id=None` 的身份逐字节不变），
+`_response_to_record` 补 `summary`、`replan` 保真还原 principal 与源范围；principal 是内部记录键，经单点
+`_public_plan` 在所有读取路径上剥离，不进 HTTP 响应体；`tests/M9` 219 → 245 项；未新增公开路由，
+外部 AI 与评测 workload 仍未完成）
+· 上一修订 2026-09-21（M9 步骤 4a：owner 以
 plan_revision v1.3 显式扩张 `m9-plan-lifecycle-v1` 范围至步骤 4（拆为 4a/4b），受限检索接缝
 `PlanGroundingService` 与四类预算、fail-closed 交叉校验已交付；`STALE_DELETED_SOURCE_ENTRY_ZERO` 首次在
 服务层接缝上有端到端证据，`tests/M9` 187 → 219 项；未新增公开路由，外部 AI、评测 workload 与 4b 未完成）

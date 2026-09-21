@@ -18,8 +18,9 @@
 | `test_source_summary_projection.py` | 「可用」规则 7 态 × 有无 generation 矩阵、隐藏态排除、恰好一次 bulk 读、只读守卫、懒装配不建库、principal 守卫、有界输入、与 Planner 的接缝 |
 | `test_topic_graph_projection.py` | frontmatter 行内列表解析（含块状形式被静默丢弃的陷阱）、同目录兄弟边解析与嵌套目录不跨目录连边、丢弃规则、环与环下游诊断、零写入与每条目恰好解析一次、空图等价于无图的逐字节不变量、真图拓扑序与 `violations` 三种成因、置顶闭包交互、60 条语料数据完整性 |
 | `test_plan_grounding.py` | 受限检索接缝：四类预算各自生效与放宽被拒、stale/deleted/未发布/未就绪/禁用/待删源在接缝上被丢弃（真 registry + 真投影端到端）、无 principal 与投影不可用时的 fail-closed、畸形 provenance、真只读守卫、证据有界 |
+| `test_plan_identity.py` | 计划身份按 principal 分隔（带标签段、7 例参数化、`goal` 伪造 `\|principal=` 段不碰撞）与反 churn 逐字节护栏（对合成任务对比旧公式，不依赖语料）、进度事件不跨 principal 污染、`summary` 落记录、replan 还原 principal 与源范围、principal 不出现在任何读取路径、源码级单点剥离护栏 |
 
-## 五条关键约定
+## 六条关键约定
 
 - **聚合身份是知识条目的 file 路径**，不是 `study_sessions.topic` 那样的自由文本。解析顺序与
   `StudySessionService._log_review` 一致（检索出处 → 出题出处 → `knowledge/{course}/{topic}.md` 回退）；
@@ -43,6 +44,13 @@
   `principal_id`，故不经 HTTP 路由，`STALE_DELETED_SOURCE_ENTRY_ZERO` 只在**接缝**上取证。
   预算按 **UTF-8 字节**计不按 token 计（本仓无本地 tokenizer，沿用 M6b 的 `max_prompt_bytes` 口径）；
   `timeout_seconds` 是**事后截止检查**，不是硬中断（`recall` 无取消通道）。
+- **principal 进身份键与记录 payload，但不进响应体**：`_plan_id` 追加一段**带标签**的 principal
+  （`...|principal={id}`）且**仅在非 None 时**追加——`event_id` 是 `(plan_id, task_id, event)` 的哈希、
+  不含 principal 成分，不同 principal 撞同一 `plan_id` 会让后者的 `completed` 被 `INSERT OR IGNORE`
+  静默去重、把前者的任务标成完成；只在非 None 时追加则 `principal_id=None` 的身份**逐字节不变**，
+  既有计划 id 不 churn。principal 是**内部记录键**，`get` / `adopt` / `replan` 的每个返回点都过单点
+  函数 `_public_plan`，故「不进响应体」是结构保证而非逐点过滤；`GoalPlanRequest` / `GoalPlanResponse`
+  都没有该字段，因此也不进 OpenAPI schema。
 
 ## 命令
 

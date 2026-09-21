@@ -76,6 +76,7 @@ platform/
 │   ├── mastery_projection.py # M9 只读 mastery 投影（跨会话答题聚合到知识条目路径）
 │   ├── source_summary_projection.py # M9 只读 Source 摘要投影（usable 规则 + 懒装配）
 │   ├── topic_graph_projection.py # M9 只读先修关系投影（frontmatter prerequisites → 同目录兄弟边）
+│   ├── plan_grounding.py  # M9 受限检索接缝（四类预算 + fail-closed 交叉校验；已装配、生产休眠）
 │   └── static/workbench/    # 最小学习工作台（HTML/CSS/JS）
 ├── tests/
 │   ├── test_retrieval.py  # 检索链路冒烟测试（6 个用例）
