@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .plan_ai_adapter import PlanAILimits
     from .preview_agent import PreviewLimits
 
 from dotenv import load_dotenv
@@ -182,3 +183,43 @@ def _preview_limits() -> PreviewLimits:
 
 
 AGENT_PREVIEW_LIMITS = _preview_limits()
+
+
+# ===== M9 可选外部 AI 计划路径（`m9.external-ai`，默认关闭）=====
+# 与 preview 同一套纪律：显式 opt-in、默认关闭；只有资源预算可配置，且每项只能**收紧**。
+# provider 身份、重试次数、容量与定价保持冻结。
+
+PLAN_AI_ENABLED = _strict_bool("SA_PLAN_AI_ENABLED")
+PLAN_AI_TOKEN = os.getenv("SA_PLAN_AI_TOKEN", "") or ANTHROPIC_API_KEY
+
+if PLAN_AI_ENABLED and len(PLAN_AI_TOKEN.encode("utf-8")) < 32:
+    raise ValueError(
+        "SA_PLAN_AI_TOKEN (or ANTHROPIC_API_KEY) must contain at least 32 UTF-8 bytes "
+        "when the external AI planning path is enabled"
+    )
+
+_PLAN_AI_LIMIT_ENV: dict[str, tuple[str, str]] = {
+    "deadline_seconds": ("SA_PLAN_AI_DEADLINE_SECONDS", "float"),
+    "model_timeout_seconds": ("SA_PLAN_AI_MODEL_TIMEOUT_SECONDS", "float"),
+    "max_input_tokens": ("SA_PLAN_AI_MAX_INPUT_TOKENS", "int"),
+    "max_output_tokens": ("SA_PLAN_AI_MAX_OUTPUT_TOKENS", "int"),
+    "max_cost_usd": ("SA_PLAN_AI_MAX_COST_USD", "float"),
+    "max_prompt_bytes": ("SA_PLAN_AI_MAX_PROMPT_BYTES", "int"),
+    "max_answer_bytes": ("SA_PLAN_AI_MAX_ANSWER_BYTES", "int"),
+}
+
+
+def plan_ai_limits() -> PlanAILimits:
+    from .plan_ai_adapter import PlanAILimits, _validate_limits
+
+    defaults = PlanAILimits()
+    values = {field.name: getattr(defaults, field.name) for field in fields(defaults)}
+    for field_name, (env_name, kind) in _PLAN_AI_LIMIT_ENV.items():
+        default = getattr(defaults, field_name)
+        if kind == "float":
+            values[field_name] = _tight_float(env_name, default)
+        else:
+            values[field_name] = _tight_int(env_name, default)
+    limits = PlanAILimits(**values)
+    _validate_limits(limits)
+    return limits

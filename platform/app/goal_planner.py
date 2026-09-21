@@ -41,6 +41,7 @@ class GoalPlannerService:
         source_summary: Any | None = None,
         topic_graph: Any | None = None,
         review_history_projection: Any | None = None,
+        plan_ai: Any | None = None,
     ) -> None:
         # review_history 是 file -> {review_count,...} 的**快照**，仅用于排序优先；
         # 不写回、不新建表。缺省空表表示“全部未复习”。
@@ -58,6 +59,10 @@ class GoalPlannerService:
         # 先修关系只读投影（只需实现 graph()）。追加在**末尾**——插在 source_summary 之前会
         # 静默重绑位置参数调用方。缺省即不产出 `summary["prerequisites"]`，排序退回接入前的形态。
         self._topic_graph = topic_graph
+        # 可选外部 AI 排序路径（`m9.external-ai`，默认关闭）。追加在**末尾**，同上。传**活对象且可空**：
+        # 缺省即完全不走 AI 路径，接入前所有调用方的输出逐字节不变。本类**不** import 该模块——
+        # 只需 `enabled` 与 `propose_for` 两个成员，这同时让本模块保持不含 provider 标识符。
+        self._plan_ai = plan_ai
 
     def _mastery(self) -> dict[str, dict[str, Any]]:
         """权威 mastery 只读投影；未注入时返回空表（等价于接入前的行为）。"""
@@ -95,6 +100,48 @@ class GoalPlannerService:
             return {}
         return self._topic_graph.graph()
 
+    def _ai_order(
+        self,
+        tasks: list[GoalPlanTask],
+        req: GoalPlanRequest,
+        graph: dict[str, frozenset[str]],
+    ) -> list[GoalPlanTask]:
+        """可选外部 AI 排序路径；**任何**不确定都返回入参 `tasks` 本身。
+
+        「AI 提出、确定性校验器裁决」：AI 只能在**同一有界条目集**内提出一个置换，该置换须先通过先修
+        合法性闸门，再由 `_pin_required` 强制必选主题置顶。故两条路径受同一组不变量约束，
+        `summary.prerequisites.violations` 在两条路径上都是 0——这正是 `M9-EVALUATION` 的判据。
+
+        回退是**逐字**的：返回入参本身，不重排、不落库、不改 `revision_id`，故不产生半成品计划。
+        """
+        adapter = self._plan_ai
+        if adapter is None or not getattr(adapter, "enabled", False):
+            return tasks
+        if not tasks:
+            return tasks
+        outcome = adapter.propose_for(
+            goal=req.goal,
+            course=req.course,
+            hours_per_day=req.hours_per_day,
+            required_topics=req.constraints.required_topics,
+            excluded_topics=req.constraints.excluded_topics,
+            mastery_counts=_mastery_counts(tasks),
+            tasks=tasks,
+        )
+        order = outcome.order
+        if order is None:
+            return tasks
+        by_id = {task.task_id: task for task in tasks}
+        # 置换校验在此**再做一遍**，不依赖 adapter 已经校验过：adapter 是可注入接缝，
+        # 只在接缝的一侧做校验等于没做。
+        if len(order) != len(tasks) or set(order) != set(by_id):
+            return tasks
+        reordered = [by_id[task_id] for task_id in order]
+        # 先修合法性是**闸门**（违反即回退），不是排序步骤——重排会抹掉 AI 提出的顺序本身。
+        if _prerequisite_report(reordered, graph)["violations"]:
+            return tasks
+        return self._pin_required(reordered, req.constraints.required_topics, graph)
+
     def generate(
         self, req: GoalPlanRequest, principal_id: str | None = None
     ) -> GoalPlanResponse:
@@ -124,6 +171,9 @@ class GoalPlannerService:
         tasks = self._build_tasks(entries, mastery, reviews)
         tasks = self._stable_order(tasks, graph)
         tasks = self._pin_required(tasks, req.constraints.required_topics, graph)
+        # 可选外部 AI 路径（默认关闭）：在**同一有界条目集**内提出排序，再由确定性校验器裁决。
+        # 未注入 adapter 时本行是恒等操作，输出与接入前逐字节相同。
+        tasks = self._ai_order(tasks, req, graph)
         # 4. 解析目标日期
         today = datetime.now().date()
         if req.target_date:
@@ -151,11 +201,7 @@ class GoalPlannerService:
             "unreviewed": sum(1 for t in tasks if not t.reviewed),
             "by_difficulty": _count_by(tasks, "difficulty"),
             # 只读 mastery 投影的粗粒度分布；与 _stable_order 共用 _mastery_rank 这一处定义
-            "mastery": {
-                "no_evidence": sum(1 for t in tasks if _mastery_rank(t) == 0),
-                "attempted": sum(1 for t in tasks if _mastery_rank(t) == 1),
-                "mastered": sum(1 for t in tasks if _mastery_rank(t) == 2),
-            },
+            "mastery": _mastery_counts(tasks),
         }
         # 出现条件取决于**输入**（有 principal 且注入了投影），不取决于结果是否有可用源：否则
         # 「键不存在」会同时意味着「没传 principal」和「传了但一个可用源都没有」，调用方无法区分。
@@ -505,6 +551,19 @@ def _order_key(task: GoalPlanTask):
         _DIFFICULTY_RANK.get(task.priority, 1),
         task.file,
     )
+
+
+def _mastery_counts(tasks: list[GoalPlanTask]) -> dict[str, int]:
+    """mastery **聚合**桶计数；与 `_stable_order` 共用 `_mastery_rank` 这一处定义。
+
+    同时是送往外部 AI 路径的 mastery 摘要——只送桶大小，**不送** per-file 值（见 `m9.external-ai`
+    的最小披露清单）。
+    """
+    return {
+        "no_evidence": sum(1 for t in tasks if _mastery_rank(t) == 0),
+        "attempted": sum(1 for t in tasks if _mastery_rank(t) == 1),
+        "mastered": sum(1 for t in tasks if _mastery_rank(t) == 2),
+    }
 
 
 def _prerequisite_report(

@@ -40,6 +40,7 @@ from .models import (
 from .learning_store import ReviewHistoryRepositoryAdapter, SqliteLearningStore
 from .goal_planner import GoalPlannerService
 from .mastery_projection import MasteryProjectionService
+from .plan_ai_adapter import PlanAIAdapter, build_anthropic_proposer
 from .plan_grounding import PlanGroundingService
 from .plan_lifecycle import (
     IllegalPlanProgressEventError,
@@ -111,11 +112,25 @@ _plan_grounding = PlanGroundingService(_recall, source_summary=_source_summary)
 # `_learning_store.all_reviews()`——**构造时求值一次**的快照，于是同一进程内新记录的复习永不反映到
 # 计划上（`reviewed` 标志、排序优先级，以及经 `_derived_digest` 参与 `plan_id` 的身份）。
 _plan_review_history = ReviewHistoryProjection(_learning_store)
+# M9 可选外部 AI 排序路径（`m9.external-ai`，默认关闭）。**不新增公开路由**——该路径经既有
+# `POST /api/v1/plans` 可达（`tests/TEST_PLAN.md` §5.2 记录：后续阶段新增默认公开路由没有合法登记渠道）。
+# 关闭时不构造 proposer（连 token 都不读），adapter 的 `enabled` 为假，`_ai_order` 直接短路，
+# 计划输出与接入前逐字节相同。
+_plan_ai = PlanAIAdapter(
+    proposer=(
+        build_anthropic_proposer(token=config.PLAN_AI_TOKEN)
+        if config.PLAN_AI_ENABLED
+        else None
+    ),
+    limits=config.plan_ai_limits(),
+    enabled=config.PLAN_AI_ENABLED,
+)
 _goal_planner = GoalPlannerService(
     mastery_projection=_mastery_projection,
     source_summary=_source_summary,
     topic_graph=_topic_graph,
     review_history_projection=_plan_review_history,
+    plan_ai=_plan_ai,
 )
 _plan_lifecycle = PlanLifecycleService(
     _learning_store,
