@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
+import sqlite3
+from contextlib import contextmanager
+
 import pytest
 
 from app.goal_planner import SCHEMA_VERSION, GoalPlannerService
+from app.learning_store import SqliteLearningStore
 from app.models import GoalPlanConstraints, GoalPlanRequest
 
 
@@ -103,19 +108,54 @@ def test_planner_does_not_read_chunk_bodies(goal_planner_service):
     assert "content" not in source
 
 
-def test_planner_does_not_write_state(goal_planner_service, monkeypatch):
-    # 注入一个会记录写入调用的只读 store，断言 planner 不触发任何 save。
-    class Spy:
-        def __init__(self):
-            self.saves = 0
+def test_planner_does_not_write_state(tmp_path, monkeypatch):
+    # 真守卫：真 store + 写入口全部 fail + 连接级 total_changes 审计 + 库快照比对。
+    # 本用例此前是**空转**的——它构造了 Spy 却从未注入服务，`spy.saves == 0` 恒真；
+    # 与 tests/M9/test_mastery_projection.py 的复合路径守卫互补。
+    store = SqliteLearningStore(tmp_path / "learning.sqlite3")
+    store.save(
+        {
+            "session_id": "seed",
+            "course": "os",
+            "topic": "process",
+            "state": "completed",
+            "created_at": "2026-09-01T08:00:00",
+            "updated_at": "2026-09-01T08:00:00",
+            "answer_records": [
+                {
+                    "question_id": "q1",
+                    "attempt_count": 1,
+                    "answer_normalized": "seed",
+                    "correct": True,
+                    "feedback": "",
+                    "created_at": "2026-09-01T08:01:00",
+                }
+            ],
+        }
+    )
+    observer = sqlite3.connect(str(store.db_path))
+    observer.execute("PRAGMA query_only=ON")
+    before = "\n".join(observer.iterdump())
+    deltas: list[int] = []
+    original_connect = store._connect
 
-        def save(self, *a, **k):
-            self.saves += 1
+    @contextmanager
+    def audited_connect():
+        with original_connect() as connection:
+            started = connection.total_changes
+            yield connection
+            deltas.append(connection.total_changes - started)
 
-        def save_review(self, *a, **k):
-            self.saves += 1
+    monkeypatch.setattr(store, "_connect", audited_connect)
+    for name in ("save", "save_review", "save_plan", "save_progress_event"):
+        monkeypatch.setattr(
+            SqliteLearningStore, name, lambda *a, **k: pytest.fail("planner wrote state")
+        )
 
-    spy = Spy()
-    monkeypatch.setattr(goal_planner_service, "_review_history", {})
-    goal_planner_service.generate(_request(course="os"))
-    assert spy.saves == 0
+    planner = GoalPlannerService(review_history=store.all_reviews())
+    planner.generate(_request(course="os"))
+
+    after = "\n".join(observer.iterdump())
+    observer.close()
+    assert hashlib.sha256(before.encode()).digest() == hashlib.sha256(after.encode()).digest()
+    assert all(delta == 0 for delta in deltas)
