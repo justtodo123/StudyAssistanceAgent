@@ -220,7 +220,12 @@ selected-scope 测试文件已登记在 `tests/M8_metadata_discovery/`，与历�
 `platform/app/parser_matrix.py` 的 `_installed_version()` 对 `cpython-textio` 返回 `platform.python_version()`，
 本机为 3.13.3，与冻结值不符即 `PARSER_UNAVAILABLE`。**不得放宽为通过**——该合同是已冻结的治理结论，
 放宽会改变 parser identity 语义；在 CPython 3.11.9 精确环境下这 3 项通过（825 passed、0 failed）。
-另注：`offline-ci.yml` 使用 Python 3.12 且**不运行** `tests/M7` 与 `tests/M8`，故上述读数差异不进入 CI。
+另注：`offline-ci.yml` 使用 Python 3.12 且**不运行** `tests/M7`，故上述 3 项 TXT 读数差异不进入 CI。
+M8 的离线治理套件（`tests/M8_metadata_discovery/`，75 项）自 2026-09-21 起已纳入 CI 的 stage 测试步骤。
+此前该套件不在 CI 中——这正是那 15 项「只在全量运行出现、孤立运行全绿」的跨阶段失败无法被 CI 发现的原因；
+补入 CI 后，同一类 `sys.path` 污染交互会在 CI 中直接暴露。CI 的 3.12 与 metadata-discovery 套件无版本耦合
+（带 Python 版本断言的 `m8_probe_s1_environment_v3.py`、`m8_validate_minimal_1k_protocol*.py` 等属
+minimal-1k/S1 家族，不在该套件的 import 闭包内），但该结论是静态推断，本地 3.13.3 无法验证 3.12 行为。
 
 **2026-09-21 修复（M8 跨阶段双导入）**：`tests/M8_metadata_discovery/` 在全量运行中的 15 项失败已修复。
 根因是 `tools/m8_*.py` 的双路径导入（`try: from m8_x … except ImportError: from tools.m8_x …`）：当
@@ -541,7 +546,7 @@ fail-closed 合同的 `tests/M7/` 已独立落地，技术测试本身不产生�
 | M6b 只读预览 | `tests/M6b/`（`m6b`）+ blocking offline benchmark | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 默认 90 题；真实 provider smoke 仅手工可选 |
 | 外部资料只读盘点 | `tests/source_inventory/`（`source_inventory`） | 不要求 | 使用 tmp_path 迷你树 | 不建索引、不计入 RAG 门禁 |
 | M7 lifecycle + FTS5/vector/offline + Search/QA overlay | `tests/M7/`（`m7`，270 项） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 证明 source-local 合同、generation-bound vector identity、Search/QA 的受信任内部 principal overlay、M7-2 snapshot identity/LRU、M7-4 exact-query/query-encode、M7-5 READY/CURRENT 指针一致性、M7-6 真实五格式 parser/normalized-document 与 lifecycle/provenance E2E；不证明 preview 用户源或 M7 阶段退出。`m7_exit=true` 只覆盖 `sa.source.benchmark.v1` |
-| M8–M10 准入准备 | 不创建阶段测试目录；当前仅治理一致性门禁 | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
+| M8–M10 准入准备 | 不创建 `tests/M8/`、`tests/M10/` 等阶段生产测试树；M8 离线治理套件 `tests/M8_metadata_discovery/`（75 项，2026-09-21 起纳入 CI） | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
 
 ## 四、pytest 配置
 

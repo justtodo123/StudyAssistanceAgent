@@ -38,7 +38,7 @@ jobs:
 
       - name: Run stage tests and regression
         run: |
-          python -m pytest tests/M0_M2 tests/M3a tests/M3b tests/M3c tests/M3d tests/M4 tests/M5a tests/M5b tests/M5c tests/M5d tests/M5e tests/M6a tests/M6b tests/regression -q --tb=short -m "not slow and not m6b_benchmark"
+          python -m pytest tests/M0_M2 tests/M3a tests/M3b tests/M3c tests/M3d tests/M4 tests/M5a tests/M5b tests/M5c tests/M5d tests/M5e tests/M6a tests/M6b tests/M8_metadata_discovery tests/regression -q --tb=short -m "not slow and not m6b_benchmark"
 
       - name: Run blocking M6b offline preview benchmark
         env:
