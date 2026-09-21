@@ -120,7 +120,7 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | --- | --- | --- |
 | 1 冻结 planner input / plan / mastery / progress event schema | 已完成 | `tests/M9/test_goal_planner.py`；mastery schema 已落到只读投影 `MasteryProjectionService.mastery_by_file()`（attempt / correct / last_mastered），见 `tests/M9/test_mastery_projection.py` |
 | 2 确定性规则生成最小计划 + 验证 API/SQLite 兼容 | 已完成 | `tests/M9/test_goal_planner.py`、`tests/M9/test_plan_lifecycle.py` |
-| 3 只读 mastery snapshot / topic graph / Source 摘要 | 部分 | mastery 投影已完成并接入确定性 Planner：`platform/app/mastery_projection.py`、`tests/M9/test_mastery_projection.py`；**topic graph 与授权 Source 摘要仍缺** |
+| 3 只读 mastery snapshot / topic graph / Source 摘要 | 部分 | mastery 投影已完成并接入确定性 Planner：`platform/app/mastery_projection.py`、`tests/M9/test_mastery_projection.py`；授权 Source 摘要已完成：`platform/app/source_summary_projection.py`、`tests/M9/test_source_summary_projection.py`；**topic graph 仍缺** |
 | 4 按需受限检索与 stale/deleted Source 拒绝 | 未开始 | 属 M9 后续增量，未获批前不实现 |
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
 | 6 可选外部 AI adapter 与冻结任务集比较 | 未开始 | 外部 AI 在 `m9-plan-lifecycle-v1` 范围外 |
@@ -172,6 +172,57 @@ mastery 只读投影实现约定：投影在 `platform/app/mastery_projection.py
 `mastery_attempts` / `mastery_correct` / `mastery_last_mastered`；`_stable_order` 在 `reviewed` 之后、
 难度优先级之前插入一档粗粒度 `_mastery_rank`（0 无证据 / 1 有尝试未答对 / 2 已答对）；`summary.mastery`
 给出三档计数。依赖注入为**活对象且可空**：未注入时全部任务落在桶 0，排序与接入前逐字节一致。
+
+授权 Source 摘要实现约定：投影在 `platform/app/source_summary_projection.py`，与 `mastery_projection.py` 同形
+——纯读、不写 Source 生命周期、不写会话状态、不构建 chunk 索引、不读 chunk 正文；权威写入仍是
+`SourceLifecycleService` / 领域仓储。步骤 3 的状态因此**仍为 `部分`**（topic graph 仍缺）。
+
+(a) **「可用」规则**：`is_usable_for_retrieval(record)` = `published_generation is not None and state in
+{READY, DEGRADED}`，逐字对齐 `source_offline.py` 的离线取快照前置判断（那是规范来源）。该规则在
+`source_offline.py` 内**联**、没有可 import 的谓词，本次选择在新模块内定义并**记录这份重复**，而不改 M7
+生产文件——两处若分歧以 `source_offline.py` 为准。规则矩阵（7 态 × 有无 generation = 14 例）由
+`tests/M9/test_source_summary_projection.py` 钉住。其中 `DEGRADED + 无 generation` 是**唯一**能由生命周期自然
+到达的 DEGRADED 形态（`transition_source` 只在 `target_state is READY` 时接受 revision，带 generation 的
+DEGRADED 只经 `begin_sync_run` 的过期租约回收产生），因此「DEGRADED ≠ 可用」是实测结论而非猜测。
+
+(b) **`usable` ≠ M7 的 `authorized_source_ids`**：后者等于「`list_sources` 减去隐藏态」，**包含** REGISTERED /
+SYNCING / DISABLED；本投影的集合严格更小。故输出字段一律叫 `usable`，不叫 `authorized`——混用会让
+「已注册但未发布」的源被当成可检索源。
+
+(c) **摘要今天不影响任何计划内容**：registry 只能存 `user-<uuid7>`（`SourceRecord.__post_init__` 校验
+`source_type == "user_registered"`），知识包 id `knowledge-pack` 不在 `source_records` 里，而 `PlanTask.file`
+恒为 `knowledge/{rel}`——两个命名空间之间**没有映射**；且本仓 checkout 下 `platform/.cache/` 没有
+`source_registry.sqlite3`，懒守卫因此恒返回空表，计数在实践中结构性为 0。本增量交付的是**规则层证据 +
+步骤 4 的输入接缝**，不是「计划内容因此变干净了」：它证明 `usable` 规则在 Source 会进入的那条边界上正确
+排除了未发布 / 未就绪 / 禁用 / 待删 / 已删，而**不是**端到端的检索隔离。
+
+(d) **无公开 scope 选择通道**（残留）：`GoalPlanRequest` **未**新增 `principal_id`，`generate()` 只多了一个
+可选关键字参数，`main.py` 的既有路由不传它——即「已装配但生产休眠」，与 `LazyUserSourceSearch` 已接入
+`MultiRecallService` 而无任何路由传 principal 的既有形态一致。之所以不开该通道：`event_id =
+sha256(f"{plan_id}|{task_id}|{event}")[:16]` 配 `INSERT OR IGNORE`，而 `_plan_id` 不含 principal，两个 principal
+生成同一 Goal 会撞同一 `plan_id` 与同一行计划，B 的 `completed` 与 A 的字节相同而被静默去重、把 A 的任务
+标成完成；且 `_response_to_record` **没有 `summary` 键**、`_plan_to_request` 只还原 5 个字段，principal 一旦
+进入计划路径，`replan` 会以无 principal 重新生成、源范围静默改变，违反上一增量写进本节的不变量「Plan 记录
+自描述…重规划据此保真还原范围」。该通道与检索预算一起延后到步骤 4 处理。
+
+(e) **只读边界**：本模块只声称**领域级**只读（不写生命周期、不写会话、不构建 chunk 索引、不读正文），
+**不**声称文件系统零变更——`SqliteSourceRegistry._configure` 对每条连接都执行 `PRAGMA journal_mode=WAL`，
+`_initialize_or_validate` 会 `mkdir` 且可能建表。因此懒装配把 `is_file()` 守卫放在构造**之前**
+（`SqliteSourceRegistry.__init__` 会建库），测试用「构造即失败」的 monkeypatch 钉住它，并断言
+`platform/.cache/source_registry.sqlite3` 在整套测试后仍未被创建。
+
+(f) **不得改用整数计数捷径**（残留陷阱）：`count_non_deleted_sources` 是第二个 bulk 读，其 WHERE 为
+`state != DELETED`，**包含** `DELETE_PENDING`；测试用 monkeypatch 让它一旦被调用即失败。另有残留：隐藏态由
+`list_sources` 的 WHERE 构造性排除，故投影**无法报告**被排除的计数——凭空补一个 0 会把「没读」伪装成
+「读了且为空」，证据改由测试提供。该用例的 `DELETE_PENDING` / `DELETED` 必须用**直接 SQL** 种入（经服务层
+种用例是空转的），且它钉的是 M7 既有 WHERE 子句，**不是**本增量新增的证据。
+
+`M9-EVALUATION` **未**因此有进展：其 `STALE_DELETED_SOURCE_ENTRY_ZERO` 是**检索路径**判据，本增量只到规则层。
+接缝语义：`summary["sources"] = {"usable": N}` 只在「传了 principal 且注入了投影」时出现——键的出现取决于
+**输入**而非结果，否则「键不存在」会同时意味着「没传 principal」和「传了但一个可用源都没有」，调用方无法
+区分。未传 principal 时 `summary` 与接入前逐字节一致；`_plan_id` / `_derived_digest` 未改动，故目录变化
+不 churn 计划身份（与「摘要只覆盖本计划范围内任务」同一原则）。本次**未新增任何公开路由**，
+`PUBLIC_API_PATHS` 与路由 docstring 均未改动。
 
 计划身份修复：`_plan_id` 原先只哈希 `goal|target|course|required|excluded`，而任务顺序与 `summary`
 的 reviewed 计数依赖复习状态、分日依赖 `hours_per_day`。两处碰撞均已实测证实：同一 `plan_id`

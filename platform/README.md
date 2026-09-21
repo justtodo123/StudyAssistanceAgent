@@ -71,6 +71,10 @@ platform/
 │   ├── review_scheduler.py # 复习排程服务（遗忘曲线间隔重复）
 │   ├── study_session.py   # 学习会话编排（状态机 + 工具轨迹）
 │   ├── learning_store.py   # SQLite 会话/复习仓储
+│   ├── goal_planner.py    # M9 确定性目标驱动计划生成（分日 + 稳定排序 + 计划身份）
+│   ├── plan_lifecycle.py  # M9 采纳/进度事件/偏差触发的版本化重规划
+│   ├── mastery_projection.py # M9 只读 mastery 投影（跨会话答题聚合到知识条目路径）
+│   ├── source_summary_projection.py # M9 只读 Source 摘要投影（usable 规则 + 懒装配）
 │   └── static/workbench/    # 最小学习工作台（HTML/CSS/JS）
 ├── tests/
 │   ├── test_retrieval.py  # 检索链路冒烟测试（6 个用例）
@@ -320,6 +324,11 @@ file 路径**，解析顺序与 `StudySessionService._log_review` 一致（检�
 回退）；无法映射或条目不存在的会话被**排除**而非猜测。`summary.mastery` 给出
 `no_evidence` / `attempted` / `mastered` 三档粗粒度计数，且 mastery 只在同一 `reviewed` 桶内细化排序，
 不会盖过 `reviewed` 主键。
+
+`summary.sources`（`{"usable": N}`，只读 Source 摘要投影）**不在本 API 的响应里**：它只在调用方显式传入
+`principal_id` 且注入了投影时出现，而上述路由都不传 principal（与用户源 Search overlay 同样是「已装配、
+生产休眠」）。因此默认公开面无 Source 过滤语义——`usable` 规则（已发布 generation 且状态为 READY / DEGRADED）
+目前只在规则层被验证，受限检索属于 M9 步骤 4。
 
 ```
 POST /api/v1/plans/{plan_id}/adopt
