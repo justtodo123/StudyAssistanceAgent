@@ -853,7 +853,13 @@ def test_mastery_reorders_within_the_same_reviewed_bucket(tmp_path: Path) -> Non
 
 
 def test_mastery_never_outranks_the_reviewed_flag(tmp_path: Path) -> None:
-    """reviewed 仍是排序主键：已掌握但未复习的任务仍排在已复习任务之后。"""
+    """reviewed 仍是排序主键：已掌握但未复习的任务仍排在已复习任务之后。
+
+    **范围限于「未注入先修图」**。注入图后 reviewed 不再是全局主键——拓扑序要求已复习的先修排在
+    未复习的依赖之前，这是刻意引入的新语义，由
+    `test_topic_graph_projection.py::test_prerequisite_outranks_the_base_ordering_keys` 钉住。
+    本用例今天仍会通过（不注入图），但不得被读成全局保证。
+    """
     store = SqliteLearningStore(tmp_path / "learning.sqlite3")
     store.save(
         _record(
