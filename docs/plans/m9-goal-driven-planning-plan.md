@@ -118,9 +118,9 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 
 | 步骤 | 状态 | 证据 |
 | --- | --- | --- |
-| 1 冻结 planner input / plan / mastery / progress event schema | 部分 | `tests/M9/test_goal_planner.py`；mastery schema 尚未落到只读投影 |
+| 1 冻结 planner input / plan / mastery / progress event schema | 已完成 | `tests/M9/test_goal_planner.py`；mastery schema 已落到只读投影 `MasteryProjectionService.mastery_by_file()`（attempt / correct / last_mastered），见 `tests/M9/test_mastery_projection.py` |
 | 2 确定性规则生成最小计划 + 验证 API/SQLite 兼容 | 已完成 | `tests/M9/test_goal_planner.py`、`tests/M9/test_plan_lifecycle.py` |
-| 3 只读 mastery snapshot / topic graph / Source 摘要 | 未开始 | 逾期投影已接入复习排程，mastery 投影仍缺 |
+| 3 只读 mastery snapshot / topic graph / Source 摘要 | 部分 | mastery 投影已完成并接入确定性 Planner：`platform/app/mastery_projection.py`、`tests/M9/test_mastery_projection.py`；**topic graph 与授权 Source 摘要仍缺** |
 | 4 按需受限检索与 stale/deleted Source 拒绝 | 未开始 | 属 M9 后续增量，未获批前不实现 |
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
 | 6 可选外部 AI adapter 与冻结任务集比较 | 未开始 | 外部 AI 在 `m9-plan-lifecycle-v1` 范围外 |
@@ -129,7 +129,9 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 不构建 chunk 索引，保持 Planner 输入有界）；偏差按 task_id 去重后计数，跳过与逾期不重复计入同一任务；
 `replan` 记录 `replan_reason` 以便审计重规划由何触发。Plan 记录自描述（回显 `course` / `hours_per_day` /
 `constraints`），重规划据此保真还原范围；旧 revision 只读保留，`revision_id` 与 `parent_revision_id`
-构成前向链。`persist_generated` 幂等：同一 plan_id 重复生成不重置已存计划状态。
+构成前向链。`persist_generated` 幂等：同一 plan_id 重复生成不重置已存计划状态。plan_id 现在包含
+**派生输入摘要**，因此该幂等性成立的前提是「派生输入未变」——复习/mastery 状态变化会得到新的 plan_id，
+旧计划记录不被覆盖、不被回填，只是不再被重新生成命中（详见下文「计划身份修复」）。
 
 消费约定（v1.2 语义）：偏差触发条件不是「累计 ≥ 3」而是「**未消费** ≥ 3」——未消费 = 当前偏差
 task_id 集合减去台账里已消费的并集。台账键 `deviation_ledger` 落在 `plans.payload`（无 DDL），
@@ -153,6 +155,45 @@ task_id 集合减去台账里已消费的并集。台账键 `deviation_ledger` �
 
 升级行为：改造前的旧库没有 `deviation_ledger` 键，缺键即空集，因此首次重规划会按「累计」语义
 多产生一个 revision，写入台账后即收敛到新语义；不需要回填迁移。
+
+mastery 只读投影实现约定：投影在 `platform/app/mastery_projection.py`（`MasteryProjectionService`），
+与 `ReviewSchedulerService.overdue_by_file()` 同形——纯读、不写 mastery、不写会话状态、不构建 chunk
+索引、不读 chunk 正文；权威写入仍是 `StudySessionService` / 领域仓储（`M9-MASTERY-AUTHORITY` 未变）。
+聚合身份是**知识条目的 file 路径**，不是 `study_sessions.topic` 那样的自由文本。解析**三分支**，
+逐字对齐 `StudySessionService._log_review`：`sources[0].file` → `questions[0].question.source_file`
+→ 回退 `knowledge/{course}/{topic}.md`。中间分支不是可选项：漏掉它会让「无检索出处但有出题出处」的会话
+把 mastery 记到与复习历史**不同**的文件上，正是「不猜」要防的失效模式；两者不能共享代码（`_log_review`
+必须**记录**不可映射的回退，投影必须**丢弃**它），故等价性由 `test_resolution_matches_log_review_rule`
+按三种输入形态钉住。三个分支的候选键都要过 `entry_exists` 校验：`sources[0].file` 可能是 `extra://…`
+这类非知识库标识，回退键由自由文本 topic 拼出（须挡住 `../` 越界与非法后缀）。不可映射或条目不存在的
+会话**排除而非补 0**。输入有界：一次 join 聚合语句（跨界只有两个短出处字符串，不读整份 payload）+
+每个去重候选键一次 stat。数据面新增 `SqliteLearningStore.aggregate_attempts_by_session()`（跨会话读取，
+既有 `list_answer_attempts` 只按单会话读）。Planner 侧：`GoalPlanTask` 增补带默认值的
+`mastery_attempts` / `mastery_correct` / `mastery_last_mastered`；`_stable_order` 在 `reviewed` 之后、
+难度优先级之前插入一档粗粒度 `_mastery_rank`（0 无证据 / 1 有尝试未答对 / 2 已答对）；`summary.mastery`
+给出三档计数。依赖注入为**活对象且可空**：未注入时全部任务落在桶 0，排序与接入前逐字节一致。
+
+计划身份修复：`_plan_id` 原先只哈希 `goal|target|course|required|excluded`，而任务顺序与 `summary`
+的 reviewed 计数依赖复习状态、分日依赖 `hours_per_day`。两处碰撞均已实测证实：同一 `plan_id`
+（`e0a2a24d83470a9e`）下任务顺序与 `summary.reviewed` 由 0 变 10；同一 `plan_id`（`3c3bc9f6a24005bd`）
+下 `total_days` 15 vs 2、首日任务 1 vs 11。修复后身份 = 请求字段（含 `hours_per_day`）+ **派生输入摘要**
+（按最终顺序排列的 `task_id`/`reviewed`/mastery 序列，见 `_derived_digest`）。摘要只覆盖本计划范围内的
+任务，故范围外条目的状态变化不会无谓 churn `plan_id`。刻意**不含生成日期**：它只影响分日日期锚点，
+含它会让正在采纳中的计划每天被孤立——残留是旧计划的日期锚定在生成时刻。**未 bump `SCHEMA_VERSION`**：
+记录 schema 未变（纯增量带默认值字段），只有身份派生方式变了。迁移语义：旧 `plan_id` 仍可
+`GET`/`adopt`/`progress`/`replan`（主键查找，读时不重算），只是不再匹配新生成的 id；**不回填、不改写**；
+`replan` 不改写身份（保留 parent revision 链与已采纳状态）。副作用须诚实记录：状态变化后同一内容可能
+同时存在于旧（已采纳）与新两个 id 下——不要靠「让 replan 重算身份」来消除它，那会打断 revision 链并
+孤立进度事件。同时修掉 `_response_to_record` 对任务**逐字段列举**导致的静默丢字段：新增的 mastery 字段
+若不加进该列举会从 `plan["tasks"]` 消失，而 `plan["revisions"]` 用 `model_dump()` 会保留，两处表示不一致。
+mastery 字段**只落 payload**，不给 `plan_tasks` 表加列（该表只写不读，且仓库无 `ALTER TABLE`/`user_version`
+迁移机制，`CREATE TABLE IF NOT EXISTS` 对既有库不会补列）。本次**未新增任何公开路由**：能力经既有
+`POST /api/v1/plans` 与 `replan` 可达，`PUBLIC_API_PATHS` 未改动。`tests/M9` 自本次起纳入
+`.github/workflows/offline-ci.yml` 的阶段命令。同阶段测试修复：`tests/M9/test_goal_planner.py::test_planner_does_not_write_state`
+此前是**空转**的（构造了 Spy 却从未注入，`spy.saves == 0` 恒真），已改为真 store + 写入口全 fail +
+连接级 `total_changes` 审计 + 库快照比对的真守卫，用例名保留。残留（不在本次范围，如实记录）：
+`main.py` 仍在 import 时把 `all_reviews()` 冻结成快照，故 `reviewed` 在进程生命周期内不更新；
+mastery 投影是实时的，因此计划身份与排序仍会随答题变化刷新。
 
 跨阶段登记（owner 已追认）：M9 的 5 条公开路由已补登到 `tests/M6a/test_closeout_contracts.py` 的
 `PUBLIC_API_PATHS`，逐项为 `/api/v1/plans`、`/api/v1/plans/{plan_id}`、`/api/v1/plans/{plan_id}/adopt`、

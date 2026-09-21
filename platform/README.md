@@ -284,8 +284,8 @@ GET /api/v1/review-due?course=os
 
 ### 目标驱动学习计划（M9）
 
-确定性 Planner：输入 Goal + 可选约束，输出版本化分日计划。不写 mastery、不写学习会话状态、
-不读 chunk 正文、不引入外部 AI。
+确定性 Planner：输入 Goal + 可选约束，输出版本化分日计划。**只读**权威 mastery 投影与复习历史，
+不写 mastery、不写学习会话状态、不读 chunk 正文、不引入外部 AI。
 
 ```
 POST /api/v1/plans
@@ -309,9 +309,17 @@ Content-Type: application/json
 - `hours_per_day`：可选（0.5-8.0），默认 2.0
 - `constraints.required_topics`：置顶必选话题；`constraints.excluded_topics`：排除话题
 
-响应字段：`plan_id`（由 goal + 目标日期 + 课程 + 约束确定性派生）、`schema_version`（`m9-goal-plan-v1`）、
+响应字段：`plan_id`（由 goal + 目标日期 + 课程 + 每日学时 + 约束，再加**派生输入摘要**——即最终任务
+列表的 `task_id`/`reviewed`/mastery 序列——确定性派生）、`schema_version`（`m9-goal-plan-v1`）、
 `revision_id`、`revisions[].days`、`summary`，以及请求回显 `course` / `hours_per_day` / `constraints`
 和状态字段 `state` / `parent_revision_id` / `adopted_at` / `progress_events`。
+
+任务字段另含只读 mastery 投影：`mastery_attempts` / `mastery_correct`（该条目答题尝试与答对次数，
+无记录为 0）、`mastery_last_mastered`（最近一次答对时间 ISO，无记录为 `null`）。聚合身份是**知识条目的
+file 路径**，解析顺序与 `StudySessionService._log_review` 一致（检索出处 → 出题出处 → `knowledge/{course}/{topic}.md`
+回退）；无法映射或条目不存在的会话被**排除**而非猜测。`summary.mastery` 给出
+`no_evidence` / `attempted` / `mastered` 三档粗粒度计数，且 mastery 只在同一 `reviewed` 桶内细化排序，
+不会盖过 `reviewed` 主键。
 
 ```
 POST /api/v1/plans/{plan_id}/adopt
@@ -348,8 +356,10 @@ GET /api/v1/plans/{plan_id}
   首次重规划会多产生一个 revision，写入台账后收敛
 - 逾期信号复用复习排程的 `days_overdue`（只读复习历史，不构建 chunk 索引）
 - `GET`：查询当前 revision、状态与进度事件
-- 旧 revision 只读保留在 `revisions` 列表，新 revision 追加为链尾；同一 Goal/课程/约束重复
-  `POST /api/v1/plans` 命中同一 `plan_id`，不重置已存计划的采纳状态与进度
+- 旧 revision 只读保留在 `revisions` 列表，新 revision 追加为链尾；同一请求且**派生输入未变**时重复
+  `POST /api/v1/plans` 命中同一 `plan_id`，不重置已存计划的采纳状态与进度。派生输入（复习记录 / mastery）
+  变化会得到**新的** `plan_id`：旧计划记录只读保留、不回填不改写，仍可 `GET` / `adopt` / `progress` / `replan`，
+  只是不再被重新生成命中。`replan` 不改写身份，因此已采纳计划重规划时其 `plan_id` 与 revision 链保持稳定
 - 错误码：`PLAN_NOT_FOUND`（404）、`ILLEGAL_PLAN_PROGRESS_EVENT`（400），见
   [runtime-contracts.md](../docs/standards/runtime-contracts.md)
 

@@ -45,7 +45,7 @@ M7 完成不批准 Network，也不改变其 `review / candidate / unresolved` �
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 目标驱动 Planner 已按 Goal + 约束确定性生成版本化计划 |
 | 用户数据源 | 自定义知识目录，真实数据当前→3K→10K，30K/100K 分级扩展 | ✅ M7 Source Registry、FTS5/vector/offline、delete/isolation 与 Search/QA 的受信任内部 principal overlay 已完成；preview/quiz/sessions 仍不含用户源。冻结技术证据通过，随后于 2026-09-06 取得独立人工完成批准，当前为 `ADMITTED / COMPLETE` |
 | 专业化存储 | SQLite/M7 控制面；M8 验证 100K capacity，LanceDB 为单机第一候选，Qdrant 为云端条件候选 | ⬜ M8（八项 Decision 已 `RESOLVED`；`draft-0.10` P3 拒绝链冻结；`draft-0.11` 已 P0/P1/P2、等待独立 P3；执行、后端选择与 admission 未授权） |
-| 计划执行监控 | 按计划选题并跟踪偏差 | 🔄 M9 `ADMITTED / IN_PROGRESS`：确定性生成 + 显式采纳 + 进度事件 + 跳过/逾期偏差触发重规划已实现（API 层）；工作台接入与 mastery 只读投影未完成 |
+| 计划执行监控 | 按计划选题并跟踪偏差 | 🔄 M9 `ADMITTED / IN_PROGRESS`：确定性生成 + 显式采纳 + 进度事件 + 跳过/逾期偏差触发重规划已实现（API 层）；工作台接入未完成；mastery 只读投影已接入 Planner |
 | Harness 框架 | M6a/M6b/M7 已收口；完整 Runner、真实数据规模化与云部署未实现 | ✅ M6a/M6b/M7 `ADMITTED / COMPLETE`；M9 `ADMITTED / IN_PROGRESS`；M8 与 M10–M12 `BLOCKED / NOT_STARTED` |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
