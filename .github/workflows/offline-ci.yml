@@ -38,7 +38,7 @@ jobs:
 
       - name: Run stage tests and regression
         run: |
-          python -m pytest tests/M0_M2 tests/M3a tests/M3b tests/M3c tests/M3d tests/M4 tests/M5a tests/M5b tests/M5c tests/M5d tests/M5e tests/M6a tests/M6b tests/M8_metadata_discovery tests/M9 tests/regression -q --tb=short -m "not slow and not m6b_benchmark"
+          python -m pytest tests/M0_M2 tests/M3a tests/M3b tests/M3c tests/M3d tests/M4 tests/M5a tests/M5b tests/M5c tests/M5d tests/M5e tests/M6a tests/M6b tests/M8_metadata_discovery tests/M9 tests/regression -q --tb=short -m "not slow and not m6b_benchmark and not m9_benchmark"
 
       - name: Run blocking M6b offline preview benchmark
         env:
@@ -52,6 +52,22 @@ jobs:
         with:
           name: m6b-offline-preview-benchmark-${{ github.run_id }}-${{ github.run_attempt }}
           path: reports/m6b-offline-preview-benchmark-${{ github.run_id }}-${{ github.run_attempt }}.json
+          if-no-files-found: error
+
+      # 1K only: the external AI path is driven by a deterministic stub, so this step needs no
+      # network and no credentials. 10K/100K capacity is NOT covered here (M8 BLOCKED / M11).
+      - name: Run blocking M9 plan-path benchmark at 1K
+        env:
+          M9_BENCHMARK_EVIDENCE_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          M9_BENCHMARK_REPORT: reports/m9-plan-ai-benchmark-${{ github.run_id }}-${{ github.run_attempt }}.json
+        run: |
+          python -m pytest tests/M9 -q --tb=short -m m9_benchmark
+
+      - name: Upload sanitized M9 plan-path benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: m9-plan-ai-benchmark-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/m9-plan-ai-benchmark-${{ github.run_id }}-${{ github.run_attempt }}.json
           if-no-files-found: error
 
       - name: Run full RAG quality gate
