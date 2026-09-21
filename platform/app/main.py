@@ -49,6 +49,7 @@ from .qa import QaService
 from .quiz import QuizService
 from .retrieval import MultiRecallService, RetrievalScope
 from .snapshot_publisher import CombinedSnapshotPublisher
+from .source_summary_projection import LazySourceSummaryProjection
 from .user_source_search import LazyUserSourceSearch
 from .worker_topology import (
     ServiceLock,
@@ -92,9 +93,13 @@ _review_scheduler = ReviewSchedulerService(
 )
 # mastery 只读投影：传活对象而非快照，使计划身份与排序随答题状态刷新（与 _review_scheduler 同形）
 _mastery_projection = MasteryProjectionService(_learning_store)
+# 授权 Source 只读摘要：懒装配。registry 库不存在时不打开控制面，且绝不因缺库而建库
+# （`SqliteSourceRegistry.__init__` 会 mkdir 建表，故守卫必须在构造之前）。
+_source_summary = LazySourceSummaryProjection(config.SOURCE_REGISTRY_PATH)
 _goal_planner = GoalPlannerService(
     review_history=_learning_store.all_reviews(),
     mastery_projection=_mastery_projection,
+    source_summary=_source_summary,
 )
 _plan_lifecycle = PlanLifecycleService(
     _learning_store,
