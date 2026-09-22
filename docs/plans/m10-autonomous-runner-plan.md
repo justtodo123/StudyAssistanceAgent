@@ -122,11 +122,14 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 - [x] 十一项强制决策全部 `RESOLVED`（2026-09-22 闭合批次 ① 两项 + ②③ 九项），authority、authorization、
   ledger 和 recovery 一致——四项相互引用的约束已交叉核对（独立 SQLite 文件 ⇒ 无跨库事务 ⇒ outbox/reconcile
   必需 ⇒ 台账行先落 `pending`；单 worker ⇒ crash 矩阵只需单进程）；
-- [ ] 写副作用 crash-point、越权和重放测试方案可执行——**已由 `M10-RECOVERY` 的 10 点矩阵、`M10-WRITE-AUTHORIZATION`
-  的越权/令牌重放阈值与 `M10-IDEMPOTENCY` 的冲突语义指定**，但具体测试方案（文件、fixture、每点如何行使）
-  尚未落盘，故本项**保持未勾选**；
-- [ ] Agent 评测任务集、样本、硬件/provider、成本与发布阈值冻结——**阈值已由 `M10-EVALUATION` 冻结为 0 容忍组**，
-  两臂分工亦已冻结；但**任务集本身尚未冻结成文件**，故本项**保持未勾选**；
+- [x] 写副作用 crash-point、越权和重放测试方案可执行（方案见
+  [`references/m10-test-plan-v1.md`](references/m10-test-plan-v1.md)：10 点 crash matrix 的注入方式与断言、
+  越权矩阵、重放/冲突、台账与 reconcile、零写入的机械证明形态、恒等操作与隔离，以及每条用例的非空转与
+  变异要求）；
+- [x] Agent 评测任务集、样本、硬件/provider、成本与发布阈值冻结（**阈值**已由 `M10-EVALUATION` 冻结为 0 容忍组，
+  两臂分工沿用 M9；**任务集形状**见 [`references/m10-test-plan-v1.md`](references/m10-test-plan-v1.md) §10——
+  冻结的是**任务类别 × 期望终态 × 越权探针**，**刻意不冻结具体语料**：Runner 尚不存在，此时冻结语料是把未验证的
+  假设写成事实；实施时物化为机器可读文件并钉住摘要）；
 - [x] MCP/manifest 的认证、兼容和 conformance 边界明确（`M10-MCP` 与 `M10-MANIFEST` 已 `RESOLVED`，含
   stdio-only、token ≥32 字节、首个发布不含写工具，以及 manifest digest 的 canonicalization 前置）；
 - [x] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表一致（由
@@ -142,9 +145,9 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 | plan_revision | — |
 | decision_set_version | — |
 
-**准入还差两项可执行的落盘物**（上表第 3、4 项）：写副作用 crash-point / 越权 / 重放的**测试方案**，以及
-**冻结的 Agent 评测任务集**。二者在决策层已指定（矩阵、阈值、两臂分工），但方案与任务集尚未写成文件；
-它们**不需要新的 owner 裁定**，属于可在准入前直接交付的准备物。
+**准入检查表六项已全部勾选**，只剩 owner 的独立准入批准。第 3、4 两项由准备物
+[`references/m10-test-plan-v1.md`](references/m10-test-plan-v1.md) 关闭——它给出可执行的测试方案与冻结的
+评测任务集**形状**，但**不创建 `tests/M10/`**、不写生产物件、不产生性能声明。
 
 批准为空，M10 保持 `BLOCKED / NOT_STARTED`。三项前置（`M10-M7-EXIT` / `M10-M8-EXIT` / `M10-M9-EXIT`）
 自 2026-09-22 起均已 `SATISFIED`，**阻断项只剩 §3 的十一项强制决策与 owner 的独立准入批准**；
