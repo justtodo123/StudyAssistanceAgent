@@ -284,6 +284,19 @@ def test_real_provider_reading_is_opt_in_and_sanitized() -> None:
 
     assert rows, "the opt-in smoke attempted no case"
     assert all(row["reason"] in _KNOWN_REASONS for row in rows), rows
+    # **承重断言：必须真的读到了 provider。** 本烟测的全部价值就在于此，而
+    # `provider_unavailable` **也在** `_KNOWN_REASONS` 里——若一次都没触达（token 失效、网络不通、
+    # 模型名写错），下面每条断言都照样通过，报告看起来像一次成功读数，实际什么都没测到，owner 却
+    # 以为拿到了真实读数。故显式要求「至少有一次调用真正回来了」，并以 provider **自报**的 usage
+    # 为证据（本地无从伪造）：触达过 ⇒ input_tokens 必大于 0。
+    reached = [row for row in rows if row["reason"] != REASON_PROVIDER_UNAVAILABLE]
+    assert reached, (
+        "no case reached the provider: every call returned provider_unavailable, "
+        "so this run is not a provider reading"
+    )
+    assert report["usage"]["input_tokens_total"] > 0, (
+        "provider-reported usage is all zero: no call actually returned"
+    )
     assert spent <= cap + _SINGLE_CALL_WORST_CASE_USD, report["spend"]
     assert p95 < limits.deadline_seconds * 1000.0, "provider p95 exceeded the hard deadline"
     assert len(report["report_digest"]) == 64
