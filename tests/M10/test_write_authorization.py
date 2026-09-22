@@ -51,13 +51,20 @@ def _registry(**kwargs) -> RunnerWriteRegistry:
     return RunnerWriteRegistry({"log_review"}, **kwargs)
 
 
-def test_the_production_allowlist_is_empty_so_nothing_can_be_registered() -> None:
-    """Deny by default is the frozen starting state, not a configuration."""
-    assert RUNNER_WRITE_TOOL_ALLOWLIST == frozenset()
+def test_the_production_allowlist_admits_only_the_owner_approved_tool() -> None:
+    """Deny by default still holds — the approved set is what changed.
+
+    Step 1 froze the allowlist empty; the owner then approved exactly one write
+    tool (2026-09-22). The property is unchanged: anything not on the list is
+    refused, and the list is short enough to be read at a glance.
+    """
+    assert RUNNER_WRITE_TOOL_ALLOWLIST == frozenset({"log_review"})
     registry = RunnerWriteRegistry()
+    # A perfectly well-formed write tool that nobody approved is still refused.
     with pytest.raises(RunnerAuthorityError) as caught:
-        registry.register(_write_spec())
+        registry.register(_write_spec(name="delete_everything"))
     assert caught.value.code == "WRITE_TOOL_NOT_ALLOWED"
+    assert registry.get("delete_everything") is None
 
 
 def test_the_write_allowlist_must_be_disjoint_from_the_preview_allowlist() -> None:

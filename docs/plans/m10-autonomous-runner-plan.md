@@ -193,8 +193,8 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 
 ## 5. 获准后的拟实施顺序
 
-> **实施进度**：步骤 1–5 **已完成**（2026-09-22）。步骤 5 的「扩大写工具集合」一项**未做**——它需要
-> owner 批准具体写工具（见 §5 步骤 5）。其余两步未开始。
+> **实施进度**：步骤 1–6 **已完成**（2026-09-22）。步骤 7（manifest 与最小 MCP surface）未开始。
+> 步骤 5 的「扩大写工具集合」已由 owner 于 2026-09-22 批准 `log_review` 一项（见 §5 步骤 5/6）。
 
 1. ✅ 冻结 authority、capability 和 EffectLedger schema，先实现拒绝路径
    （2026-09-22）：`platform/app/runner_authority.py`（写 allowlist **与只读 preview 不相交**、
@@ -269,7 +269,25 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
    **「扩大写工具集合」为何未做**：它要把具体写工具放进 `RUNNER_WRITE_TOOL_ALLOWLIST`，按
    `M10-WRITE-AUTHORIZATION` 那是一次**治理动作**（不是代码改动），需 owner 批准该具体工具。步骤 5 的
    机制部分（reconcile / 人工介入 / 不可补偿）**不需要**它，故先交付机制、把该动作留给 owner；
-6. 接入默认关闭的可选 Runner，并保持状态机路径与数据兼容；
+6. ✅ 接入默认关闭的可选 Runner，并保持状态机路径与数据兼容（2026-09-22）：新增
+   `platform/app/runner_service.py`（`RunnerService`）与 `config.RUNNER_ENABLED = _strict_bool("SA_RUNNER")`；
+   `main.py` **条件注册** `/api/v1/autonomous-runs`——**默认关闭是结构性的**（开关未设时服务不构造、路由不注册、
+   该路径不出现在默认 OpenAPI 文档中；它在 `tests/M6a/test_closeout_contracts.py` 里本就是保留的 *forbidden*
+   前缀）。写经**既有** `ReviewSchedulerService.log_review`，Runner 不新增领域权威；**确认令牌由服务端按本次
+   请求的精确参数签发**，不接受调用方令牌（调用方令牌可能描述与本次提交不同的写）；**kill switch 在每个效果
+   边界生效**，写前叫停 ⇒ 领域零调用、写中叫停 ⇒ 效果**保持未决**交给 reconcile（不替它编答案）。
+   `RUNNER_WRITE_TOOL_ALLOWLIST` 由空集变为 `{"log_review"}`——**owner 于 2026-09-22 以「允许」批准该具体工具**
+   （批准引用逐字记在 `platform/app/runner_authority.py` 的常量旁）。
+   证据见 `tests/M10/test_runner_service.py`（14 项）。变异验证：`check()` 不再调用 kill 守卫 / Runner 路由
+   无条件注册 / 不再注册已批准写工具，各自判红对应用例（第二项同时触发 M6a 的精确公开面契约）。
+   **本步骤暴露并修掉三处我自己写的问题**：① kill switch 的异常被 `SyntheticJobRunner` 的 `except Exception`
+   吞成 `step-failed`——操作者**分不清「我叫停的」和「它坏了」**，已把 kill 接成 `JobEnvelope.check()` 的
+   `guard` 并复用既有原因码映射；② 首版路由写成**空壳**（永远返回 `RUNNER_NOT_WIRED_TO_A_TOOL`），是占位符
+   假装成功能，已接上真实领域服务；③ **测试隔离**：在进程内 import 启用态的 `app.main` 会把它留在
+   `sys.modules`，后续阶段要么看到不该有的路由（M6a 的精确公开面契约），要么——更隐蔽——**依赖替换打在另一个
+   模块对象上而真实服务照跑**（M5b 模块级 `from app.main import app` + 字符串 `patch("app.main._study_sessions")`）。
+   **还原必须放回原模块对象，重新 import 不够**（那会造出第二个对象）。已改为 fixture 每次用完还原，全量
+   因此从 6 failed 回到 3 failed；
 7. 在冻结 Agent 任务集达标后，分阶段交付 manifest 和最小 MCP surface。
 
 拟新增 `tests/M10/` 覆盖 authorization、checkpoint、idempotency、effect ledger、recovery、offline default、rollout、

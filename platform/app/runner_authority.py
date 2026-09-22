@@ -28,9 +28,15 @@ from typing import Any
 from .protocols import SideEffect, ToolCapability, ToolSpec
 from .tool_registry import PREVIEW_TOOL_ALLOWLIST
 
-# Deny by default. Empty until an owner decision approves a specific write tool;
-# adding a name here is a governance act, not a code change (M10-WRITE-AUTHORIZATION).
-RUNNER_WRITE_TOOL_ALLOWLIST: frozenset[str] = frozenset()
+# Deny by default. Adding a name here is a governance act, not a code change
+# (M10-WRITE-AUTHORIZATION), so each entry carries the owner decision that put it
+# here.
+#
+# `log_review` — approved 2026-09-22 (owner instruction 「允许」, answering
+# 「写工具是否批准」). It calls `ReviewSchedulerService.log_review`, the same
+# domain service the existing `POST /api/v1/review-log` route calls, so the
+# Runner gains no second path to domain state.
+RUNNER_WRITE_TOOL_ALLOWLIST: frozenset[str] = frozenset({"log_review"})
 
 
 class RunnerAuthorityError(ValueError):

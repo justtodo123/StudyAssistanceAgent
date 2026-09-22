@@ -133,6 +133,11 @@ def _strict_bool(name: str, default: bool = False) -> bool:
     raise ValueError(f"{name} must be a strict boolean")
 
 
+# The M10 autonomous Runner. Default off, and off is an **identity** operation:
+# the service is not constructed and its router is not registered, so the default
+# public surface and the state-machine path are unchanged (M10-ROLLOUT).
+RUNNER_ENABLED = _strict_bool("SA_RUNNER")
+
 AGENT_PREVIEW_ENABLED = _strict_bool("SA_AGENT_PREVIEW_ENABLED")
 AGENT_PREVIEW_TOKEN = os.getenv("SA_AGENT_PREVIEW_TOKEN", "")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")

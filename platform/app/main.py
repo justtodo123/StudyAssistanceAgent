@@ -165,6 +165,51 @@ if config.AGENT_PREVIEW_ENABLED:
     app.include_router(build_preview_router(_preview_service))
 
 
+# The M10 autonomous Runner. Registered only when `SA_RUNNER` is on, so
+# `/api/v1/autonomous-runs` — a reserved *forbidden* prefix in the M6a closeout
+# contracts — never appears in the default OpenAPI document. The domain write is
+# the same `ReviewSchedulerService.log_review` the existing review-log route
+# calls; the Runner gets no second path to domain state (M10-AUTHORITY).
+if config.RUNNER_ENABLED:
+    from .runner_authority import RunnerWriteRegistry, argument_digest
+    from .runner_service import RUNNER_PATH, RunnerService
+
+    _runner_service = RunnerService(
+        store_path=config.LEARNING_STORE_PATH.parent / "runner_state.sqlite3",
+        authority=RunnerWriteRegistry(),
+    )
+
+    @app.post(RUNNER_PATH)
+    def autonomous_run(req: dict[str, Any]) -> dict[str, Any]:
+        """可选自主 Runner（默认关闭）：提交**一次**受控复习记录写。
+
+        写经既有 `ReviewSchedulerService.log_review`，Runner 不新增领域权威；kill switch 在
+        每个效果边界生效；确认令牌由服务端按本次请求的精确参数签发，故不接受调用方提供的令牌。
+        """
+        job_id = str(req.get("job_id") or "")
+        file_key = req.get("file")
+        if not job_id or not isinstance(file_key, str) or not file_key:
+            return {"terminal": "refused", "reason": "RUNNER_REQUEST_INVALID"}
+        if _runner_service.killed:
+            return {"terminal": "cancelled", "reason": "RUNNER_KILLED"}
+
+        arguments = {"file": file_key, "course": str(req.get("course") or ""),
+                     "source_session_id": str(req.get("source_session_id") or "")}
+        if _runner_service.status(job_id) is None:
+            _runner_service.start_job(job_id=job_id, scope_id="m10-autonomous-runner-v1",
+                                      learner_id=str(req.get("learner_id") or "local"))
+
+        def domain_write() -> str:
+            """The domain write, through the same service the review-log route uses."""
+            _review_scheduler.log_review(ReviewLogRequest(**arguments))
+            return argument_digest(arguments)
+
+        outcome = _runner_service.log_review(job_id=job_id, arguments=arguments,
+                                             apply=domain_write)
+        return {"terminal": outcome.terminal.value, "reason": outcome.reason,
+                "effect_id": outcome.effect_id, "replayed": outcome.replayed}
+
+
 def _initialize_runtime() -> None:
     """Take the single-worker lock and publish one complete snapshot."""
     enforce_single_worker_topology()

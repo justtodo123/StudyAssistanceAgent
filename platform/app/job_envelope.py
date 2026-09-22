@@ -184,6 +184,12 @@ class JobEnvelope:
     scope_id: str
     budget: JobBudget
     workspace: Path | None = None
+    #: Optional extra boundary guard, run on every `check()` after cancellation.
+    #: The kill switch lives here rather than inside the step callable: a stop
+    #: raised from inside `work` would be caught by the runner's generic failure
+    #: handler and reported as a broken step, so an operator could not tell
+    #: "I stopped it" from "it broke".
+    guard: Callable[[], None] | None = None
     progress: JobProgress = field(default_factory=JobProgress)
     terminal: JobTerminal | None = None
     reason: str = ""
@@ -214,6 +220,8 @@ class JobEnvelope:
         """
         if self._cancelled:
             raise JobBudgetError("JOB_CANCELLED", "the job was cancelled.")
+        if self.guard is not None:
+            self.guard()
         if time.monotonic() - self._wall_start > self.budget.wall_clock_seconds:
             raise JobBudgetError("JOB_DEADLINE_EXCEEDED", "the wall-clock budget is exhausted.")
         if time.process_time() - self._cpu_start > self.budget.cpu_seconds:
@@ -271,6 +279,7 @@ class SyntheticJobRunner:
         except JobBudgetError as exc:
             envelope.terminal = {
                 "JOB_CANCELLED": JobTerminal.CANCELLED,
+                "JOB_KILLED": JobTerminal.CANCELLED,
                 "JOB_DEADLINE_EXCEEDED": JobTerminal.DEADLINE_EXCEEDED,
             }.get(exc.code, JobTerminal.BUDGET_EXCEEDED)
             envelope.reason = exc.code

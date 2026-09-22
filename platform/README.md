@@ -48,6 +48,7 @@ platform/
 │   ├── job_envelope.py    # M10 通用异步 job：预算（每项标注执行点）、进度、取消、终态（未接入，合成长任务验证）
 │   ├── generation_publication.py # M10 manifest 绑定 checkpoint 与原子发布门禁：读取方复验，杜绝半发布 generation（未接入）
 │   ├── effect_reconcile.py # M10 reconcile / 补偿 / 人工介入：幂等 sweep、有界升级、升级后不再自动收敛（未接入）
+│   ├── runner_service.py  # M10 可选自主 Runner：默认关闭、kill switch 逐边界生效、写经领域服务（`SA_RUNNER`）
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）
 │   ├── source_manifest.py # M7 用户源文件 manifest、格式接纳与 canonical digest
 │   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析（含墙钟上界）
@@ -412,6 +413,32 @@ Content-Type: application/json
 - 非法状态转换返回 409，未知会话返回 404；`detail` 为 `{code, message, retryable}`。
 - 会话、答题记录和复习历史默认写入 `platform/.cache/learning_state.sqlite3`；服务重启后可按 `session_id` 恢复未完成会话。现有 `review_history.json` 仍可兼容读取。
 
+### 自主 Runner（M10，默认关闭）
+
+M10 提供**可选**的受控写路径。**默认关闭是恒等操作**：`SA_RUNNER` 未设时服务不被构造、
+路由不注册，`/api/v1/autonomous-runs` **不出现在默认 OpenAPI 文档中**（该前缀在
+`tests/M6a/test_closeout_contracts.py` 里是保留的 *forbidden* 前缀，正是为此）。只有
+`SA_RUNNER=true` 时才注册：
+
+```
+POST /api/v1/autonomous-runs
+Content-Type: application/json
+
+{ "job_id": "demo-1", "file": "knowledge/os/process-management.md", "course": "os" }
+```
+
+三条约束是承重的：
+
+- **Runner 自己不写领域状态**：写经**既有** `ReviewSchedulerService.log_review`（与
+  `POST /api/v1/review-log` 同一条），故不新增第二套权威（`M10-AUTHORITY`）；
+- **kill switch 在每个效果边界生效**，不是只在 job 开始时检查一次——长任务因此可被叫停；
+- **确认令牌由服务端按本次请求的精确参数签发**，不接受调用方提供的令牌：调用方令牌可能描述
+  与本次提交**不同**的写，而那正是 `M10-WRITE-AUTHORIZATION` 要拒绝的重放形态。
+
+写权限 allowlist `RUNNER_WRITE_TOOL_ALLOWLIST` **默认拒绝**，当前只含 owner 于 2026-09-22 批准的
+`log_review` 一项（登记在 `platform/app/runner_authority.py`，含批准引用）。Runner 自有状态落在
+**独立**的 `platform/.cache/runner_state.sqlite3`，不触碰 `learning_state.sqlite3`。
+
 ### Agent Preview（M6b，默认关闭）
 
 M6b 提供独立的只读 native tool-call preview，不替代正式学习会话，也不调用
@@ -518,6 +545,7 @@ immutable revision 才是 published generation 的权威，且重复请求与无
 | `SA_EXTRA_SOURCES` | `[]` | 启动期静态额外 Markdown 源，最多 3 个；只进 Search/QA |
 | `SA_EXTRA_SOURCES_STRICT` | `true` | 额外源失败时拒绝整次发布 |
 | `SA_EXPECTED_DEFAULT_PACK_REVISION` | 空 | 默认包大幅缩减时的精确 revision 确认 |
+| `SA_RUNNER` | `false` | 启动期注册 M10 自主 Runner 的受控写路由；**默认路由与 OpenAPI 均不存在**（关闭是恒等操作） |
 | `SA_AGENT_PREVIEW_ENABLED` | `false` | 启动期注册只读 Agent Preview；默认路由与 OpenAPI 均不存在 |
 | `SA_AGENT_PREVIEW_TOKEN` | 空 | Preview Bearer secret；启用时至少 32 个 UTF-8 字节 |
 | `ANTHROPIC_API_KEY` | 空 | Preview 专用服务端 Anthropic 凭据；不复用 `SA_LLM_API_KEY` |

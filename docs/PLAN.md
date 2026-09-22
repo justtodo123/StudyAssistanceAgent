@@ -389,7 +389,21 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.45（不是产品发布版本）· 更新：2026-09-22（**M10 实施步骤 5 完成——
+*创建：2026-08-10 · PLAN 文档修订：v2.46（不是产品发布版本）· 更新：2026-09-22（**M10 实施步骤 6 完成——
+可选 Runner 接线**：owner 以「允许」批准具体写工具 `log_review`，`RUNNER_WRITE_TOOL_ALLOWLIST` 由空集变为
+`{"log_review"}`——它走**既有** `ReviewSchedulerService.log_review`（与 `POST /api/v1/review-log` 同一条），
+Runner 不新增领域权威。新增 `platform/app/runner_service.py` 与 `config.RUNNER_ENABLED = _strict_bool("SA_RUNNER")`；
+`main.py` **条件注册** `/api/v1/autonomous-runs`——**默认关闭是结构性的**（开关未设时服务不构造、路由不注册、
+该路径不出现在默认 OpenAPI 文档中，它本就是 M6a 契约里的保留 *forbidden* 前缀）。**kill switch 在每个效果
+边界生效**：写前叫停 ⇒ 领域零调用；写中叫停 ⇒ 效果**保持未决**交给 reconcile，不替它编答案。新增
+`tests/M10/test_runner_service.py`（14 项），`tests/M10/` 101 → 115 项；全量 1383 → 1397 collected、
+1378 → 1392 passed、2 skipped、3 failed。**修掉三处真实问题**：① kill switch 的异常被 `SyntheticJobRunner`
+的 `except Exception` 吞成 `step-failed`——**分不清「我叫停的」和「它坏了」**，已把 kill 接成
+`JobEnvelope.check()` 的 `guard` 并复用既有原因码映射；② 首版路由是**空壳**（永远返回 `RUNNER_NOT_WIRED_TO_A_TOOL`），
+占位符假装成功能；③ **测试隔离**——在进程内 import 启用态 `app.main` 会把它留在 `sys.modules`，后续阶段要么
+看到不该有的路由（M6a 精确公开面），要么更隐蔽地**让依赖替换打在另一个模块对象上而真实服务照跑**
+（M5b 模块级 `from app.main import app` + 字符串 `patch("app.main._study_sessions")`）；**还原必须放回原模块
+对象，重新 import 不够**（会造出第二个对象）。全量因此从 6 failed 回到 3 failed）· 上一修订 v2.45（2026-09-22：**M10 实施步骤 5 完成——
 reconcile / 补偿 / 人工介入**（「扩大写工具集合」一项**未做**）：新增 `platform/app/effect_reconcile.py`。
 present ⇒ applied、absent ⇒ failed、**unknown ⇒ defer 而非猜**；**第二次 sweep 无事可做**（幂等性以可观测
 性质表述）；**重复 defer 有界升级**而非死循环；**已升级的 effect 不会被后续 sweep 收敛**——否则升级就只是
