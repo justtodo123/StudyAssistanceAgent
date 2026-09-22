@@ -730,12 +730,20 @@ M9 外部 AI 路径（`m9.external-ai`）**，**不是**全项目评测，也**�
    同轮 200 样本为 p50 1.15 / p95 1.56 / max 1.90 ms，而同日更早一次本地探针为 p50 2.16 / p95 3.40 /
    max 10.76 ms —— **同一冻结负载下相差数倍**，这本身就是「它不是稳定 SLA」的实证。成本同理，由脚本化
    usage 算出，非计量。
-2. **三项预算无本地执行点**：`max_input_tokens`（本仓无本地 tokenizer，本地用的是字节预算）、
-   `model_timeout_seconds`、`max_output_tokens`（**累积**值）仅传给 provider。报告 `not_enforced_locally`
-   是这条的机器可读证据。**注意别读成「output 预算整体无本地执行点」**：自 2026-09-22 起
-   `max_turn_output_tokens`（单轮值，默认 1024）**在本地执行**——它是传给 `create_turn` 的 `max_tokens`，
-   `llm_client` 硬拒超限值。修复前累积值被当单轮值传下去，默认配置下每次调用都在发出任何 HTTP 请求之前
-   抛 `ValueError` 并被收敛成 `provider_unavailable`，即整条外部 AI 路径静默失效（M9 计划 §4.4）。
+2. **两项预算不在本地执行，另有一项累积值没有运行期执行点**：`max_input_tokens`（本仓无本地 tokenizer，
+   本地用的是字节预算）与 `model_timeout_seconds`（仅传给 provider）**不在本地执行**；`max_output_tokens`
+   （**累积**值）不属同一类——它**没有运行期执行点**（**既不送给 provider，也没有用量累计核验**，见下），
+   但**构造期被校验**。报告 `not_enforced_locally` 是这条的机器可读证据。**注意别读成
+   「output 预算整体无本地执行点」**：自 2026-09-22 起 `max_turn_output_tokens`（单轮值，默认 1024）
+   **在本地执行**——它是传给 `create_turn` 的 `max_tokens`，`llm_client` 硬拒超限值。修复前累积值被当
+   单轮值传下去，默认配置下每次调用都在发出任何 HTTP 请求之前抛 `ValueError` 并被收敛成
+   `provider_unavailable`，即整条外部 AI 路径静默失效（M9 计划 §4.4）。
+   **累积值自身**：修复把唯一的送出点（旧 `max_tokens=limits.max_output_tokens`）换成了单轮值，故
+   `max_output_tokens` 现在**没有运行期执行点**——provider 的请求体里没有「累积产出上限」这种参数，
+   也没有 `preview_agent.py:226` 那样的用量累计检查。**但它并非完全无人读**：`_validate_limits` 在每次
+   构造 `PlanAIAdapter` 时校验它（正整数、不超过冻结默认、且不得大于 `max_input_tokens`），并据此给
+   单轮值定上界。本路径每个计划只发一次调用，故单轮值在效果上也是总量上界；那是**单次调用的后果**，
+   不是设计保证。
 3. **`deadline_seconds` 的守卫放弃线程而非取消它**：挂住的 provider 调用可以活过 deadline。
 4. **arm B 本次未运行**：真实 provider 的延迟 / 成本 / 失败模式**仍未验证**。运行它需要 owner 的 key
    与真实花费（opt-in 命令、默认 $1.00 上限与「最坏为 cap + 单次调用」的说明见 `tests/M9/README.md`）。

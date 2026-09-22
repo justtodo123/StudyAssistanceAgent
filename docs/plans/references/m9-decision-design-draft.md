@@ -71,15 +71,20 @@
 - **隐私/保留**：不落 provider 侧日志/trace；本地只留脱敏审计。
 - **timeout/cost**：硬超时、token/成本预算；失败即回退确定性路径，不产生半成品 Plan。
   **口径澄清（v1.5）**：本仓无本地 tokenizer，故「token 预算」在本地实为 **UTF-8 字节预算**
-  （`max_prompt_bytes` / `max_answer_bytes`，在调用 provider **之前**判定）；`max_input_tokens` /
-  `max_output_tokens` / `model_timeout_seconds` 只传给 provider、**没有本地执行点**。真正的硬闸门是
+  （`max_prompt_bytes` / `max_answer_bytes`，在调用 provider **之前**判定）；`max_input_tokens` 与
+  `model_timeout_seconds` 只传给 provider、**没有本地执行点**。真正的硬闸门是
   `max_cost_usd`（硬上限，合法输出照样丢弃）与 `deadline_seconds`（`_run_blocking` 强制，但**放弃**线程
   而非取消它）。逐项清单见评测报告 `m9-plan-ai-evaluation-v2` 的 `enforced_locally` / `not_enforced_locally`。
-  **补充（2026-09-22）**：output 预算拆成**两个**字段——`max_output_tokens` 仍是累积值、仅 provider 侧，
-  而新增的 `max_turn_output_tokens`（默认 `MAX_TURN_OUTPUT_TOKENS` = 1024）是传给 `create_turn` 的
-  `max_tokens`，`llm_client` 硬拒超限值，故它**在本地执行**。修复前累积值被直接当单轮值传下去，默认配置下
-  每次调用都在发出任何 HTTP 请求之前抛 `ValueError` 并被收敛成 `provider_unavailable`——即上述
-  `HARD_TIMEOUT_COST_BUDGET` 子句当时**没有执行点**，本次是**兑现**它，不是改判据（M9 计划 §4.4）。
+  **补充（2026-09-22）**：output 预算拆成**两个**字段——新增的 `max_turn_output_tokens`（默认
+  `MAX_TURN_OUTPUT_TOKENS` = 1024）是传给 `create_turn` 的 `max_tokens`，`llm_client` 硬拒超限值，
+  故它**在本地执行**；而 `max_output_tokens` 仍是累积值，**没有运行期执行点**（修复前它被当作单轮值
+  送出，修复把那个送出点换成了单轮值；provider 的请求体里也没有「累积产出上限」这种参数，本地亦无
+  `preview_agent.py:226` 那样的累计检查）。**但它并非无人读**：`_validate_limits` 在构造期校验它
+  （正整数、≤ 冻结默认、≤ `max_input_tokens`），并据此给单轮值定上界。修复前累积值被直接当单轮值
+  传下去，默认配置下每次调用都在发出任何 HTTP 请求之前抛 `ValueError` 并被收敛成
+  `provider_unavailable`——即上述 `HARD_TIMEOUT_COST_BUDGET` 子句的 **token 部分在生产默认配置下从未
+  生效**（该子句的 cost 与 deadline 部分一直在执行，见 §7.1 的冻结读数），本次是**兑现**它，不是改判据
+  （M9 计划 §4.4）。
 - **确定性 fallback**：无 LLM 时产出规则化 Plan，schema 与正确性要求不变。
 
 ## 7. `M9-EVALUATION`
@@ -109,8 +114,10 @@
   `p95 <= 1000ms` **且** `p95 < deadline_seconds * 1000`（魔数绑在冻结预算上）。
 - **本地 vs provider 侧执行划分**：本地执行 `max_prompt_bytes` / `max_answer_bytes` / `max_cost_usd` /
   `deadline_seconds` / `max_turn_output_tokens`（**2026-09-22 起**：它是传给 `create_turn` 的 `max_tokens`，
-  `llm_client` 硬拒超限值）；**不**本地执行 `max_input_tokens`（无本地 tokenizer）/ `model_timeout_seconds` /
-  `max_output_tokens`（**累积**值，仅 provider 侧）。该划分在报告里是机器可读字段。
+  `llm_client` 硬拒超限值；但冻结矩阵的 `_StubClient` 丢掉该值，故矩阵不行使它，证据在
+  `tests/M9/test_plan_ai_adapter.py`）；**不**本地执行 `max_input_tokens`（无本地 tokenizer）/
+  `model_timeout_seconds`（仅 provider 侧）/ `max_output_tokens`（**累积**值，**无任何执行点**）。
+  该划分在报告里是机器可读字段。
 - **诚实边界**：stub 下没有任何性能读数——延迟是桥接开销，成本由脚本化 usage 算出；arm B 本次**未运行**，
   真实 provider 的延迟/成本/失败模式**仍未验证**；本次**不启动 M9 收口**。
 

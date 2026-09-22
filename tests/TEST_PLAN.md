@@ -1,6 +1,6 @@
 # 迭代测试计划 · StudyAssistanceAgent
 
-> 起始日期：2026-08-17 · 更新：2026-09-06（M7 correctness 收口；`tests/M7/` 当前收集 270 项；Python 3.13.3 下 3 个 TXT 用例按精确 parser 合同 fail closed；`m7_exit=true` 不是 M7 阶段退出）；2026-09-20（M8 selected-scope hardening：`tests/M8_metadata_discovery/` 收集 74 项、74 passed；历史 replay 88/88 与 77/77 通过且明确 non-gating）；2026-09-21（M9 只读 mastery 投影 + 计划身份修复：`tests/M9/` 收集 83 项、83 passed，并修复 `test_planner_does_not_write_state` 的空转缺陷；`tests/M8_metadata_discovery/` 与 `tests/M9/` 均纳入 CI）；2026-09-21（M9 只读 Source 摘要投影：`tests/M9/` 收集 125 项、125 passed；全量 1042 collected、1038 passed、1 skipped、3 failed）；2026-09-21（M9 先修关系 topic graph 投影：`tests/M9/` 收集 187 项、187 passed；全量 1104 collected、1100 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4a 受限检索接缝：`tests/M9/` 收集 219 项、219 passed；全量 1136 collected、1132 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4b 计划身份往返保真：`tests/M9/` 收集 245 项、245 passed；全量 1162 collected、1158 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4c 复习历史活投影：`tests/M9/` 收集 263 项、263 passed；全量 1180 collected、1176 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4d 准入留痕字段覆盖：`tests/M9/` 263 项不变、`tests/regression/` 62 → 79 项；全量 1181 collected、1177 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 6 窄口径：默认关闭的外部 AI 排序路径 + 冻结任务集 1K 比较；`tests/M9/` 263 → 316 项（`m9` 313 + `m9_benchmark` 3），`tests/regression/` 79 项不变（`test_ci_contract.py` 为**就地扩写**既有用例，非新增）；全量 1234 collected、1230 passed、1 skipped、3 failed。**该增量不证明容量**：1K 读数只证明输入有界，10K/100K 仍属 M8（`BLOCKED`）/ M11；`M9-EVALUATION` 未动、评测 workload 未冻结）；2026-09-21（M9 **退出条件证据**——唯一写权威：新增 `tests/M9/test_mastery_write_authority.py`（8 项），`tests/M9/` 316 → 324 项（`m9` 313 → 321 + `m9_benchmark` 3）；全量 1242 collected、1238 passed、1 skipped、3 failed。该增量**不新增写路径**、不改 `plan_revision`、不写 `admission_history`、未新增公开路由；M9 退出条件中仅「冻结评测达标」仍未挣得）；2026-09-22（M9 解冻 `M9-EVALUATION` 的延迟/成本维度，plan_revision v1.5，并因此触发 §4 撤销过渡：arm A **就地扩写** `tests/M9/test_plan_ai_benchmark.py`（6 场景冻结预算矩阵，无新增 marker、无新增 CI 步骤），arm B 新增 `tests/M9/test_plan_ai_provider_smoke.py`（3 项，`online` + skip 门控、**非门禁**、本次未运行）；`tests/M9/` 324 → 327 项（`m9` 321 → 324 + `m9_benchmark` 3），`tests/regression/` 79 项不变；全量 1245 collected、1240 passed、2 skipped、3 failed。**该增量不证明性能**：arm A 证明的是预算被**强制执行**（stub 下延迟是桥接开销、成本由脚本化 usage 算出），真实 provider 的延迟/成本/失败模式**仍未验证**，冻结范围**仅限 M9 外部 AI 路径**，遵循度仍为定性；10K/100K 仍属 M8（`BLOCKED`）/ M11；本次**未**启动 M9 收口）；2026-09-22（M9 两处**缺陷修正**，均**不触发 §4 撤销**：外部 AI 路径的单轮 output 预算（累积值曾被当单轮值传给 `create_turn`，默认配置下每次调用都在发出任何 HTTP 请求前抛 `ValueError` 并收敛成 `provider_unavailable`，整条路径静默失效而既有测试全绿）+ 分日的每日容量（`_distribute` 曾把余量一次性倾倒进一个不设上限的溢出天，默认请求下 114 个任务 / 3890 分钟对可用 110 分钟）；新增 `tests/M9/test_day_distribution.py`（18 项）并就地扩写 `tests/M9/test_plan_ai_adapter.py`（+8 项，含驱动**真实桥**的回归与配置层接线）；`tests/M9/` 327 → 353 项（`m9` 353；`m9_benchmark` 3 与 `online` 3 均为其**子集**，不另计），`tests/regression/` 79 项不变；全量 1245 → 1271 collected、1266 passed、2 skipped、3 failed（3 项为 M7 TXT parser 按设计 fail closed）。另修**标记卫生**：`tests/M9/test_mastery_write_authority.py` 缺 `pytestmark`，致 `-m m9` 少收集 8 项而文档按 324 报数（实际 319）。**残留**：单条任务超容量时该天仍会超出（保证是「每天至多一个任务造成超出」），且与 `review_plan.py` 刻意分叉——该服务有同一缺陷但 `platform/tests/test_review_plan.py` 明确容忍且该套件冻结不动）
+> 起始日期：2026-08-17 · 更新：2026-09-06（M7 correctness 收口；`tests/M7/` 当前收集 270 项；Python 3.13.3 下 3 个 TXT 用例按精确 parser 合同 fail closed；`m7_exit=true` 不是 M7 阶段退出）；2026-09-20（M8 selected-scope hardening：`tests/M8_metadata_discovery/` 收集 74 项、74 passed；历史 replay 88/88 与 77/77 通过且明确 non-gating）；2026-09-21（M9 只读 mastery 投影 + 计划身份修复：`tests/M9/` 收集 83 项、83 passed，并修复 `test_planner_does_not_write_state` 的空转缺陷；`tests/M8_metadata_discovery/` 与 `tests/M9/` 均纳入 CI）；2026-09-21（M9 只读 Source 摘要投影：`tests/M9/` 收集 125 项、125 passed；全量 1042 collected、1038 passed、1 skipped、3 failed）；2026-09-21（M9 先修关系 topic graph 投影：`tests/M9/` 收集 187 项、187 passed；全量 1104 collected、1100 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4a 受限检索接缝：`tests/M9/` 收集 219 项、219 passed；全量 1136 collected、1132 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4b 计划身份往返保真：`tests/M9/` 收集 245 项、245 passed；全量 1162 collected、1158 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4c 复习历史活投影：`tests/M9/` 收集 263 项、263 passed；全量 1180 collected、1176 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 4d 准入留痕字段覆盖：`tests/M9/` 263 项不变、`tests/regression/` 62 → 79 项；全量 1181 collected、1177 passed、1 skipped、3 failed）；2026-09-21（M9 步骤 6 窄口径：默认关闭的外部 AI 排序路径 + 冻结任务集 1K 比较；`tests/M9/` 263 → 316 项（`m9` 313 + `m9_benchmark` 3），`tests/regression/` 79 项不变（`test_ci_contract.py` 为**就地扩写**既有用例，非新增）；全量 1234 collected、1230 passed、1 skipped、3 failed。**该增量不证明容量**：1K 读数只证明输入有界，10K/100K 仍属 M8（`BLOCKED`）/ M11；`M9-EVALUATION` 未动、评测 workload 未冻结）；2026-09-21（M9 **退出条件证据**——唯一写权威：新增 `tests/M9/test_mastery_write_authority.py`（8 项），`tests/M9/` 316 → 324 项（`m9` 313 → 321 + `m9_benchmark` 3）；全量 1242 collected、1238 passed、1 skipped、3 failed。该增量**不新增写路径**、不改 `plan_revision`、不写 `admission_history`、未新增公开路由；M9 退出条件中仅「冻结评测达标」仍未挣得）；2026-09-22（M9 解冻 `M9-EVALUATION` 的延迟/成本维度，plan_revision v1.5，并因此触发 §4 撤销过渡：arm A **就地扩写** `tests/M9/test_plan_ai_benchmark.py`（6 场景冻结预算矩阵，无新增 marker、无新增 CI 步骤），arm B 新增 `tests/M9/test_plan_ai_provider_smoke.py`（3 项，`online` + skip 门控、**非门禁**、本次未运行）；`tests/M9/` 324 → 327 项（`m9` 321 → 324 + `m9_benchmark` 3），`tests/regression/` 79 项不变；全量 1245 collected、1240 passed、2 skipped、3 failed。**该增量不证明性能**：arm A 证明的是预算被**强制执行**（stub 下延迟是桥接开销、成本由脚本化 usage 算出），真实 provider 的延迟/成本/失败模式**仍未验证**，冻结范围**仅限 M9 外部 AI 路径**，遵循度仍为定性；10K/100K 仍属 M8（`BLOCKED`）/ M11；本次**未**启动 M9 收口）；2026-09-22（M9 三处**缺陷修正**，均**不触发 §4 撤销**：外部 AI 路径的单轮 output 预算（累积值曾被当单轮值传给 `create_turn`，默认配置下每次调用都在发出任何 HTTP 请求前抛 `ValueError` 并收敛成 `provider_unavailable`，整条路径静默失效而既有测试全绿）+ 分日的每日容量（`_distribute` 曾把余量一次性倾倒进一个不设上限的溢出天，默认请求下 114 个任务 / 3890 分钟对可用 110 分钟）+ 预算环境变量清单的宣传面（`limit_env_names()` 按字段名推导，曾宣传配置层**不兑现**的 `SA_PLAN_AI_MAX_RETRIES`，操作者照它设值会静默无效）；新增 `tests/M9/test_day_distribution.py`（18 项）并就地扩写 `tests/M9/test_plan_ai_adapter.py`（+9 项，含驱动**真实桥**的回归、配置层接线与「宣传的预算环境变量名 == 兑现的」护栏）；`tests/M9/` 327 → 354 项（`m9` 354；`m9_benchmark` 3 与 `online` 3 均为其**子集**，不另计），`tests/regression/` 79 项不变；全量 1245 → 1272 collected、1267 passed、2 skipped、3 failed（3 项为 M7 TXT parser 按设计 fail closed）。另修**标记卫生**：`tests/M9/test_mastery_write_authority.py` 缺 `pytestmark`，致 `-m m9` 少收集 8 项而文档按 324 报数（实际 319）。**残留**：单条任务超容量时该天仍会超出（保证是「每天至多一个任务造成超出」），且**第 2 天起**当 `hours_per_day × 60 − 10 < 25`（即 `hours_per_day < 35/60 ≈ 0.5833`）时该保证**完全空转**（第 1 天不扣复习缓冲，容量是 `hours_per_day × 60`，要靠最小任务保证则需 `hours_per_day < 25/60 ≈ 0.4167`）；另与 `review_plan.py` 刻意分叉——该服务有同一缺陷但 `platform/tests/test_review_plan.py` 明确容忍且该套件冻结不动）
 
 ## 一、测试策略总览
 
@@ -216,7 +216,7 @@ selected-scope 测试文件已登记在 `tests/M8_metadata_discovery/`，与历�
 | `tests/M6a/` | 124 项 | 2026-08-28：124 passed | 含 worker topology、generation 分离、缓存生命周期与 API/OpenAPI/链接收口 |
 | `tests/M7/` | 270 项 | 当前 collect-only：270 项；Python 3.13.3 执行 267 passed / 3 failed（TXT 精确 `cpython-textio==3.11.9` 合同导致的预期 `PARSER_UNAVAILABLE`，非代码放宽项）；2026-09-06 Python 3.11.9 精确依赖环境的五格式 100×20 冻结协议独立全 PASS | source-local FTS5+vector identity、delete/isolation、Search/QA internal overlay、M7-2 snapshot cache、M7-4 exact-query/query-encode、M7-5 READY/CURRENT 与 correctness 收口；parser 证据报告只写系统临时目录且不入库 |
 | `tests/M8_metadata_discovery/` | 75 项 | 2026-09-21：75 passed（孤立运行）；全量运行时曾出现的 15 项跨阶段失败已于同日修复，见下方 2026-09-21 记录 | 离线治理；generic unresolved intent 仍为 `METADATA_DISCOVERY_INTENT_OWNER_SELECTION_REQUIRED`；pypdf==6.0.0 selected-scope 的 bounded Git reader、六阶段 dispatch-rooted chain、single-parent policy、provenance fail-closed 与最大 `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW` 均已覆盖 |
-| `tests/M9/` | 353 项（`m9` 标记覆盖全部 353 项；其中 `m9_benchmark` 3 项，已排除在阶段步骤外、作为独立 CI 步骤运行；另有 `online` 3 项为 opt-in、默认 skip、**非门禁**。后两者均为 `m9` 的**子集**，故不另计） | 2026-09-22：352 passed、1 skipped（孤立运行；skip 即 arm B 的 opt-in 门控）；同日前基线分别为 44 项、83 项、125 项、187 项、219 项、245 项、263 项、316 项、324 项、327 项 | 确定性生成、计划身份（含派生输入摘要）、采纳/进度/重规划、跳过+逾期偏差与消费台账、只读 mastery 投影（跨会话聚合、知识条目 file 路径映射三分支与 `_log_review` 同序、不可映射排除、真只读守卫、输入有界）、只读 Source 摘要投影（`usable` 规则 7 态 × 有无 generation 矩阵、隐藏态排除、恰好一次 bulk 读、懒装配不建库、principal 守卫、有界输入、Planner 接缝）、只读先修关系投影（行内列表解析含块状形式静默丢弃陷阱、同目录兄弟边与嵌套目录不跨目录连边、丢弃规则、环与环下游诊断、零写入与每条目恰好解析一次、空图等价于无图的逐字节不变量、真图拓扑序与 `violations` 三种成因、置顶闭包交互、60 条语料数据完整性、受限检索接缝（四类预算与放宽拒绝、stale/deleted/未发布/未就绪/禁用/待删源在接缝上被丢弃、fail-closed、真只读守卫、证据有界）、计划身份按 principal 分隔与记录往返保真（`summary` 落记录、replan 还原 principal 与源范围、principal 不出现在任何读取路径、身份反 churn 逐字节护栏、源码级单点剥离护栏，动态枚举公开方法）、只读复习历史投影（只返回成员资格、刻意不缓存、恰好一次批量读、无写面、构造 Planner 之后落的复习必须可见、快照参数仍冻结、`plan_id` 随复习变化、`main.py` 装配护栏）、**默认关闭的外部 AI 排序路径**（载荷字段级白名单、预算只允许收紧、每类失败收敛为回退、关闭时逐字节相同、失败不落库、先修闸门与必选置顶非空转）、**冻结任务集 1K 比较**（语料只读复用 M7 生成器且 chunk 数实测、输入有界、两路径先修违反为 0、确定性可重放、合法/非法对换两臂均非空转）、**唯一写权威证据**（动态枚举 `platform/app/` 全部 60 个源文件后断言写者恰好唯一、M9 模块与写权威导入不可达、检测器正反对照与表名上游契约钉桩）、**v1.5 冻结预算矩阵**（6 场景 × 稳定原因码，驱动**真实** `build_anthropic_proposer(client_factory=…)` 接缝而非 `proposer=` 注入，断言 `prompt` 预算在调用 provider **之前**返回、`cost` 预算在收到**合法**置换时仍丢弃、`deadline` 被强制，并钉住价目表常量不漂移与 stub 延迟上界绑在冻结 `deadline_seconds` 之下）、**真实 provider 读数**（`online` + `M9_PROVIDER_SMOKE` skip 门控、显式 opt-in、**非门禁**、本次未运行；只记脱敏字段、花费上限事后累加、报告先落盘再断言））；自 2026-09-21 起纳入 CI |
+| `tests/M9/` | 354 项（`m9` 标记覆盖全部 354 项；其中 `m9_benchmark` 3 项，已排除在阶段步骤外、作为独立 CI 步骤运行；另有 `online` 3 项为 opt-in、默认 skip、**非门禁**。后两者均为 `m9` 的**子集**，故不另计） | 2026-09-22：353 passed、1 skipped（孤立运行；skip 即 arm B 的 opt-in 门控）；同日前基线分别为 44 项、83 项、125 项、187 项、219 项、245 项、263 项、316 项、324 项、327 项 | 确定性生成、**分日每日容量**（任何一天的任务分钟数不得超出当日容量、追加的天与窗口内的天同受容量约束且日期连续、窗口够用时不追加、`total_days`/`total_hours` 与逐日明细自洽、空任务集仍是 1 个空天、分日确定性；**第 2 天起** `hours_per_day < 35/60 ≈ 0.5833` 时保证**完全空转**，第 1 天不扣缓冲、要靠最小任务保证需 `hours_per_day < 25/60 ≈ 0.4167`，被钉成可见事实而非留白）、计划身份（含派生输入摘要）、采纳/进度/重规划、跳过+逾期偏差与消费台账、只读 mastery 投影（跨会话聚合、知识条目 file 路径映射三分支与 `_log_review` 同序、不可映射排除、真只读守卫、输入有界）、只读 Source 摘要投影（`usable` 规则 7 态 × 有无 generation 矩阵、隐藏态排除、恰好一次 bulk 读、懒装配不建库、principal 守卫、有界输入、Planner 接缝）、只读先修关系投影（行内列表解析含块状形式静默丢弃陷阱、同目录兄弟边与嵌套目录不跨目录连边、丢弃规则、环与环下游诊断、零写入与每条目恰好解析一次、空图等价于无图的逐字节不变量、真图拓扑序与 `violations` 三种成因、置顶闭包交互、60 条语料数据完整性、受限检索接缝（四类预算与放宽拒绝、stale/deleted/未发布/未就绪/禁用/待删源在接缝上被丢弃、fail-closed、真只读守卫、证据有界）、计划身份按 principal 分隔与记录往返保真（`summary` 落记录、replan 还原 principal 与源范围、principal 不出现在任何读取路径、身份反 churn 逐字节护栏、源码级单点剥离护栏，动态枚举公开方法）、只读复习历史投影（只返回成员资格、刻意不缓存、恰好一次批量读、无写面、构造 Planner 之后落的复习必须可见、快照参数仍冻结、`plan_id` 随复习变化、`main.py` 装配护栏）、**默认关闭的外部 AI 排序路径**（载荷字段级白名单、预算只允许收紧、每类失败收敛为回退、关闭时逐字节相同、失败不落库、先修闸门与必选置顶非空转）、**冻结任务集 1K 比较**（语料只读复用 M7 生成器且 chunk 数实测、输入有界、两路径先修违反为 0、确定性可重放、合法/非法对换两臂均非空转）、**唯一写权威证据**（动态枚举 `platform/app/` 全部 60 个源文件后断言写者恰好唯一、M9 模块与写权威导入不可达、检测器正反对照与表名上游契约钉桩）、**v1.5 冻结预算矩阵**（6 场景 × 稳定原因码，驱动**真实** `build_anthropic_proposer(client_factory=…)` 接缝而非 `proposer=` 注入，断言 `prompt` 预算在调用 provider **之前**返回、`cost` 预算在收到**合法**置换时仍丢弃、`deadline` 被强制，并钉住价目表常量不漂移与 stub 延迟上界绑在冻结 `deadline_seconds` 之下）、**真实 provider 读数**（`online` + `M9_PROVIDER_SMOKE` skip 门控、显式 opt-in、**非门禁**、本次未运行；只记脱敏字段、花费上限事后累加、报告先落盘再断言））；自 2026-09-21 起纳入 CI |
 | `tests/source_inventory/` | 21 项 | 2026-08-27：21 passed | 外部资料只读盘点；tmp_path 迷你树，不扫描真实外部目录，不构成 M7 开工 |
 | `tests/regression/`（含 slow） | 79 项 | 2026-09-21：79 passed；2026-09-06 当前 checkout 离线 keyword mode：62 项 / 62 passed（历史读数） | 含 SSE、结构化 CI、准入治理、导航与生产树契约；含显式 active-delivery 开工授权门禁；2026-09-21 起 `_registry_references` 白名单**同时枚举 `admission_history[].reference`**，并有非空性护栏与五键键集断言 |
 | `tests/regression/test_rag_quality.py` slow | 3 项 | 2026-09-01 复测：3 passed；2026-08-28：3 passed | 默认 OS/DS/CO 90 题 Recall@3 门禁 |
@@ -225,12 +225,13 @@ selected-scope 测试文件已登记在 `tests/M8_metadata_discovery/`，与历�
 > 本表各行（含根级行）是各范围在**各自标注日期**的读数，且阶段行均为**孤立运行**。全量运行的跨阶段差异以
 > 下方 2026-09-21 记录为准——M8 的 15 项失败正是只在全量运行中出现、孤立运行全绿，单看本表无法发现。
 
-**2026-09-22 当前全量读数**（CPython 3.13.3，`pytest tests/ -q`，M9 v1.5 评测解冻增量后）：**1245 collected、
-1240 passed、2 skipped、3 failed**。（2026-09-21 的前一读数 1242 collected / 1238 passed / 1 skipped / 3 failed 已被
-本条取代：mastery 增量 +39、Source 摘要增量 +42、先修关系增量 +62、受限检索接缝增量 +32、计划身份往返保真增量 +26、
-复习历史活投影增量 +18、准入留痕字段覆盖增量 +1、外部 AI 路径增量 +53（`test_plan_ai_adapter.py` 50 +
-`test_plan_ai_benchmark.py` 3）、唯一写权威证据增量 +8；本增量 +3 全部来自 arm B 的
-`test_plan_ai_provider_smoke.py`，arm A 为**就地扩写**故 collected 不变；skipped 由 1 → 2，新增的那 1 项即 arm B
+**2026-09-22 当前全量读数**（CPython 3.13.3，`pytest tests/ -q`，M9 三处缺陷修正 + 标记卫生后）：**1272 collected、
+1267 passed、2 skipped、3 failed**。同日的两个更早读数已被本条取代：v1.5 评测解冻后为 1245 collected / 1240 passed
+（本次三处缺陷修正 +27：`test_day_distribution.py` 18 项 + `test_plan_ai_adapter.py` 9 项，后者 50 → 59），
+2026-09-21 为 1242 / 1238 / 1 skipped / 3 failed。各增量：mastery +39、Source 摘要 +42、先修关系 +62、
+受限检索接缝 +32、计划身份往返保真 +26、复习历史活投影 +18、准入留痕字段覆盖 +1、外部 AI 路径 +53
+（`test_plan_ai_adapter.py` 50 + `test_plan_ai_benchmark.py` 3）、唯一写权威证据 +8；arm B 的
+`test_plan_ai_provider_smoke.py` +3 使 skipped 由 1 → 2，arm A 为**就地扩写**故 collected 不变
 文件内**唯一**受 `M9_PROVIDER_SMOKE` 门控的用例（该文件另两项为 run-id 与报告独占创建的离线用例，不受门控）。）
 3 failed 仍是 `tests/M7/test_parser_matrix.py` 与 `test_normalized_document.py` 的 TXT 用例
 （3.11.9 精确 parser 合同下的预期 fail-closed），与上一读数逐项相同。
@@ -245,7 +246,7 @@ M8 的离线治理套件（`tests/M8_metadata_discovery/`，75 项）自 2026-09
 补入 CI 后，同一类 `sys.path` 污染交互会在 CI 中直接暴露。CI 的 3.12 与 metadata-discovery 套件无版本耦合
 （带 Python 版本断言的 `m8_probe_s1_environment_v3.py`、`m8_validate_minimal_1k_protocol*.py` 等属
 minimal-1k/S1 家族，不在该套件的 import 闭包内），但该结论是静态推断，本地 3.13.3 无法验证 3.12 行为。
-`tests/M9`（353 项，其中 `m9_benchmark` 3 项由**独立步骤**运行，另有 `online` 3 项 opt-in 且默认 skip；两者均为 `m9` 标记集的子集）同样自
+`tests/M9`（354 项，其中 `m9_benchmark` 3 项由**独立步骤**运行，另有 `online` 3 项 opt-in 且默认 skip；两者均为 `m9` 标记集的子集）同样自
 2026-09-21 起纳入该步骤；**该步骤不排除 `online` 标记**，故「真实 provider 默认不跑」完全靠
 `M9_PROVIDER_SMOKE` 未设时的 `pytest.skip`（该 skip 门控是**承重**的），且真实 provider 臂**不得**被加进 CI；
 `tests/M7`（270 项）仍不在 CI 中，因其 3 项 TXT 用例
@@ -309,30 +310,56 @@ minimal-1k/S1 家族，不在该套件的 import 闭包内），但该结论是�
 **恰好 1 项**失败；整个 `admission_history` 删掉 → allowlist 用例**仍然全绿**、只有键集用例变红（后者正是护栏的
 存在理由）。`tests/M9` 263 项不变，`tests/regression` 62 → 79 项（含同日既有增量）。
 
-**2026-09-22 增量（M9 两处缺陷修正 + 标记卫生）**：两个各自独立、都已实测证实的缺陷。
+**2026-09-22 增量（M9 三处缺陷修正 + 标记卫生）**：三个各自独立、都已实测证实的缺陷。
 
 *① 外部 AI 路径的单轮 output 预算。* `PlanAILimits.max_output_tokens`（累积，2048）曾被直接当作
 `create_turn` 的 `max_tokens` 传下去，而 `llm_client.create_turn` 硬拒大于 `MAX_TURN_OUTPUT_TOKENS`(1024)
 的值。于是**默认配置下**每次调用都在发出任何 HTTP 请求之前抛 `ValueError`，被 `propose` 的回退路径收敛成
-`provider_unavailable`——整条外部 AI 路径静默失效，**而既有 50 项 adapter 测试全绿**：它们一律经 `proposer=`
-注入，完全绕过那个调用点（「守卫必须长在缺陷所在处」）。修法是照搬 `preview_agent` 的房屋模式，拆成两个
-字段：`max_output_tokens` 保持累积、只送 provider；新增 `max_turn_output_tokens`（默认
-`MAX_TURN_OUTPUT_TOKENS`）才是传给 `create_turn` 的值，并校验 `单轮 ≤ 累积`。故回归用例**必须驱动真实桥**
+`provider_unavailable`——整条外部 AI 路径静默失效，**而既有 50 项 adapter 测试全绿**：其中凡是构造 adapter
+的都经 `proposer=` 注入同步 stub（其余只碰 dataclass / 载荷 / 解析 / 预算校验等接缝，根本不构造 adapter），
+故没有一项触到那个调用点（「守卫必须长在缺陷所在处」）。**但这不是全貌**：修复前**默认运行**的真实桥驱动者
+`test_plan_ai_benchmark.py` **穿过**了那个调用点却仍全绿，因为它的 `_StubClient.create_turn` 把 `max_tokens`
+丢掉（`del … max_tokens …`），超限的 2048 照样通过（`test_plan_ai_provider_smoke.py` 同样走真实桥，但默认
+skip）。故真教训是**桥接 stub 必须复刻客户端的硬拒**，
+不只是「`proposer=` 注入会绕过调用点」。修法是照搬 `preview_agent` 的房屋模式，拆成两个字段：新增
+`max_turn_output_tokens`（默认 `MAX_TURN_OUTPUT_TOKENS`）才是传给 `create_turn` 的值，并校验 `单轮 ≤ 累积`；
+`max_output_tokens` 保持累积，但修复把唯一送出它的调用点换成了单轮值，故它**此后没有运行期执行点**
+（不送 provider，也无用量累计核验）——**但它并非无人读**：`_validate_limits` 在构造期校验它（正整数、
+≤ 冻结默认、≤ `max_input_tokens`）并据此给单轮值定上界。故回归用例**必须驱动真实桥**
 `build_anthropic_proposer(client_factory=…)`，另加一条配置层用例钉住 `SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS`
 真被读且只能收紧。变异验证：把调用点改回 `max_tokens=limits.max_output_tokens` → 新增用例**恰好 2 项**失败
-（`seen == []`，客户端根本没被调用；原因码为 `provider_unavailable`）。
+（`seen == []`，客户端根本没被调用；原因码为 `provider_unavailable`）；同一变异下 `-m m9_benchmark`
+**仍 3 项全绿**，这就是上面那个盲区的实证。
 
 *② 分日的每日容量。* `_distribute` 把 `total_days`（请求窗口）当成硬截断，排不完的任务被**一次性倾倒**进一个
 不设上限的「第 `total_days + 1` 天」：默认请求下该天 114 个任务 / 3890 分钟，而当日可用容量 110 分钟；全部
-课程 / 1 小时下 128 个任务 / 4590 分钟对可用 50 分钟。判据取自声明而非自造——`hours_per_day` 是每日**容量**、
+课程 / 1 小时下 128 个任务 / 4590 分钟对可用 50 分钟。倍数**依赖分母口径**，引用须连分母一起：默认请求对
+当日可用容量（`hours_per_day × 60 − 10`）是 35.4 倍、对 `hours_per_day × 60` 是 32.4 倍；探针集内最高是
+`0.5 小时/天` 的 4590/20 = **229.5 倍**（`8 小时/天` 下窗口内就排完，不触发）。判据取自声明而非自造——
+`hours_per_day` 是每日**容量**、
 `target_date` 是**视野**，超出**窗口**本就合法（`review_plan.py` 的「剩余任务追加到最后一天（如果超出天数）」
 是唯一的正面声明，M9 逐字继承），违反声明的是**每日容量**。修法是**逐天追加**，追加的天受同一容量约束。
 新增 `tests/M9/test_day_distribution.py`（18 项）钉住不变量：任何一天的任务分钟数不得超出当日容量，**唯一
-例外**是单条任务本身就装不下且该天**恰好只装一个**任务（`and day_tasks` 守卫的必然结果——保证是「每天至多
-一个任务造成超出」，不是「绝不超出」，这条残留被写成可见事实而非被掩盖）。变异验证：把 `_distribute` 换回旧
-实现 → 三种请求各**恰好 1 天**违反容量（分别是第 15 天的 3890/110、4590/50、190/50）。
+例外**是单条任务本身就装不下且该天**恰好只装一个**任务（`and day_tasks` 守卫的必然结果）。这条残留必须按
+准确口径读：最小原子任务 25 分钟，故**第 2 天起**（当日容量扣了复习缓冲，`hours_per_day × 60 − 10 < 25`，
+即 `hours_per_day < 35/60 ≈ 0.5833`）**每一天**都踩到守卫，容量保证在该区间内**完全空转**；**第 1 天不扣
+缓冲**（`if d > 0` 才减 `REVIEW_BUFFER_MINUTES`），容量是 `hours_per_day × 60`，只有当日首条任务本身就超过
+它时才超出——要靠最小任务保证则需 `hours_per_day < 25/60 ≈ 0.4167`。`0.5 小时/天`（合法下界）下默认请求
+（全部课程）实测 142 天，其中 **120 天**超出声明的每日上界（40 分钟），最大 60 分钟，第 1 天也在其中
+（该请求首条任务 50 分钟 > 30）。残留的准确表述是「每天至多**一条**任务造成超出」，不是「绝不超出」。变异验证：把 `_distribute` 换回旧实现 → 8 项失败（5 个参数化的容量用例 + 溢出天用例 +
+窗口用例 + 空转用例；`os-2.0` / `os-8.0` / `None-8.0` 三个参数**仍绿**，因为它们的任务集在窗口内就排完，
+旧实现从不进入那个溢出天分支，故对本次修正不构成证据）。
 
-**两者均不触发 §4 撤销**（M9 计划 §4.4）：`M9-EXTERNAL-AI` 的决策值不含任何数字，2048/1024 是实现常量；
+*③ 预算环境变量清单的宣传面。* `limit_env_names()`（步骤 6 引入，docstring 自述「供配置层与测试共用同一份
+清单」）按 `PlanAILimits` 的**字段名**推导，于是把 `SA_PLAN_AI_MAX_RETRIES` 也列进了「可收紧的预算环境
+变量」——而配置层**真正兑现**的 `config._PLAN_AI_LIMIT_ENV` 里**没有**这一项（`max_retries` 有字段但刻意
+不可由环境变量覆盖，见 `platform/README.md`「model 与 retry 次数不可由环境变量覆盖」）。操作者照该清单设值
+会**静默无效**：配置层不报错，预算也不收紧。实测（`git stash` 回旧代码后直接调用）宣传清单 9 项、兑现清单
+8 项，差集恰为 `SA_PLAN_AI_MAX_RETRIES`。修法是改为直接取自 `config._PLAN_AI_LIMIT_ENV`，使「宣传的清单」
+与「兑现的清单」**同源**；护栏用例断言两者逐个相同，并断言宣传清单**非空**（否则「相等」会因两边都空而
+平凡成立）。影响面是三者中最小的一处：该函数**当前无生产调用方**，故运行期行为不变。
+
+**三者均不触发 §4 撤销**（M9 计划 §4.4）：`M9-EXTERNAL-AI` 的决策值不含任何数字，2048/1024 是实现常量；
 两个冻结摘要（`_workload_digest` / `_budget_scenario_digest`）修正后重算**逐字节不变**，故 1K 与预算矩阵的
 历史读数继续可比；`plan_id` 不随分日变化（把 `_distribute` 换成只产出一个空天的桩，`plan_id` 逐字节不变），
 计划身份这一兼容不变量未被触碰。故属**兑现**既有决策而非**改判据**。
@@ -342,7 +369,7 @@ minimal-1k/S1 家族，不在该套件的 import 闭包内），但该结论是�
 `goal_planner.py`，两个服务在这一点上**有意不一致**，不得被读成遗漏。
 
 **标记卫生**：`tests/M9/test_mastery_write_authority.py` 缺 `pytestmark`，致 `-m m9` 少收集 8 项，而文档按
-324 报数（实际 319）。现补上，`tests/M9` 353 项**全部**带 `m9` 标记；另更正一处长期误报：`m9_benchmark` 3 项
+324 报数（实际 319）。现补上，`tests/M9` 354 项**全部**带 `m9` 标记；另更正一处长期误报：`m9_benchmark` 3 项
 与 `online` 3 项**都是** `m9` 标记集的子集，文档此前按「`m9` N + `m9_benchmark` 3 + `online` 3」相加是
 **重复计数**。CI 不受影响（阶段步骤按**路径**选 `tests/M9` 并用 `-m "not slow and not m6b_benchmark and not
 m9_benchmark"`，该排除串由 `test_ci_contract.py:39` 逐字钉住）。
@@ -666,8 +693,8 @@ fail-closed 合同的 `tests/M7/` 已独立落地，技术测试本身不产生�
 | M6b 只读预览 | `tests/M6b/`（`m6b`）+ blocking offline benchmark | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 默认 90 题；真实 provider smoke 仅手工可选 |
 | 外部资料只读盘点 | `tests/source_inventory/`（`source_inventory`） | 不要求 | 使用 tmp_path 迷你树 | 不建索引、不计入 RAG 门禁 |
 | M7 lifecycle + FTS5/vector/offline + Search/QA overlay | `tests/M7/`（`m7`，270 项） | `tests/regression/` | `tests/M0_M2/` + `platform/tests/` | 证明 source-local 合同、generation-bound vector identity、Search/QA 的受信任内部 principal overlay、M7-2 snapshot identity/LRU、M7-4 exact-query/query-encode、M7-5 READY/CURRENT 指针一致性、M7-6 真实五格式 parser/normalized-document 与 lifecycle/provenance E2E；不证明 preview 用户源或 M7 阶段退出。`m7_exit=true` 只覆盖 `sa.source.benchmark.v1` |
-| M8–M10 准入准备 | 不创建 `tests/M8/`、`tests/M10/` 等阶段生产测试树；M8 离线治理套件 `tests/M8_metadata_discovery/`（75 项）与 M9 套件 `tests/M9/`（353 项）均自 2026-09-21 起纳入 CI | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
-| M9 目标驱动计划（生成 / 分日每日容量 / 生命周期 / 偏差 / 只读复习历史、mastery、Source 摘要与先修关系投影 / 受限检索接缝 / 计划身份往返保真 / 默认关闭的外部 AI 路径与 1K 冻结比较 / 单轮 output 预算 / 唯一写权威证据 / v1.5 冻结预算矩阵 + opt-in 真实 provider 读数） | `tests/M9/`（`m9` 353 项；其中 `m9_benchmark` 3 项与 `online` 3 项 opt-in 非门禁均为其子集，2026-09-21 起纳入 CI） | `tests/regression/` + `tests/M0_M2/` | `platform/tests/` + `tests/M5b/` + `tests/M5c/` | 证明确定性生成与**每日容量**（任何一天不得超出 `hours_per_day × 60`，唯一例外是单条任务本身就装不下且该天**恰好只装一个**任务；`total_days` 回报真实天数、允许超过请求窗口，且 `total_days`/`total_hours` 与逐日明细自洽）、计划身份含派生输入摘要（复习/mastery/每日学时）、采纳/进度/重规划与消费台账、只读 mastery 投影的 file 路径映射与零写入、只读 Source 摘要的 `usable` 规则与懒装配不建库、只读先修关系投影的同目录兄弟边解析与先修合法顺序（真语料 `violations == 0`）；4a 起在**服务层接缝**上证明 stale/deleted 源拒绝（未新增公开路由，故**不是**公共 API 上的端到端隔离）；4b 起证明计划身份按 principal 分隔与记录往返保真（principal 是内部记录键，经单点 `_public_plan` 剥离，不进 HTTP 响应体）；4c 起证明复习历史是**活投影**而非构造时快照（同一进程内新落的复习立即反映到 `reviewed`、排序与 `plan_id`，且守卫钉在 `main.py` 的装配上）；步骤 6 窄口径起在**离线 stub provider** 上证明外部 AI 路径的最小披露是结构性的、每类失败逐字回退且不落库，并在冻结任务集 1K 语料上证明**输入有界**（prompt 不随语料规模增长）、两路径先修违反为 0、确定性可重放；另以**动态源文件枚举**证明「正式 mastery 只有一个写入权威」——写 `study_sessions`/`answer_attempts` 者恰好是 `learning_store.py`，M9 的 8 个模块与写权威**导入不可达**（既有测试是逐模块证明「我没写」，本项补的是**闭包**）。**不证明**：mastery 写入本身（`m9.mastery-write` 仍在 `excluded`——该证据只证明**不存在第二套权威**，不证明 M9 获得写能力）、10K/100K 容量、**性能**（v1.5 的冻结预算矩阵证明预算被**强制执行**，不是被测量——stub 下延迟是桥接开销、成本由脚本化 usage 算出；`max_input_tokens`/`model_timeout_seconds`/`max_output_tokens`（**累积**值）**无本地执行点**——但**别读成「output 预算整体无本地执行点」**：`max_turn_output_tokens`（**单轮**值，默认 1024）自 2026-09-22 起**在本地执行**，它就是传给 `create_turn` 的 `max_tokens`；`deadline` 守卫**放弃**线程而非取消它；每日容量的**绝对**保证（单条超容量任务仍会让该天超出——保证是「每天**至多一个**任务造成超出」，且与 `review_plan.py` 刻意分叉）、真实 provider 的延迟/成本/失败模式（arm B 显式 opt-in、**非门禁**且本次未运行；1K 读数**不是**容量声明——M9 既不存储也不索引 1K chunks）；冻结范围**仅限 M9 外部 AI 路径**，遵循度仍为**定性**，也不构成 M9 阶段退出 |
+| M8–M10 准入准备 | 不创建 `tests/M8/`、`tests/M10/` 等阶段生产测试树；M8 离线治理套件 `tests/M8_metadata_discovery/`（75 项）与 M9 套件 `tests/M9/`（354 项）均自 2026-09-21 起纳入 CI | `test_docs_consistency.py` + `test_governance_contract.py` | 已有保护基线 | 不构成能力、性能通过或开工批准 |
+| M9 目标驱动计划（生成 / 分日每日容量 / 生命周期 / 偏差 / 只读复习历史、mastery、Source 摘要与先修关系投影 / 受限检索接缝 / 计划身份往返保真 / 默认关闭的外部 AI 路径与 1K 冻结比较 / 单轮 output 预算 / 唯一写权威证据 / v1.5 冻结预算矩阵 + opt-in 真实 provider 读数） | `tests/M9/`（`m9` 354 项；其中 `m9_benchmark` 3 项与 `online` 3 项 opt-in 非门禁均为其子集，2026-09-21 起纳入 CI） | `tests/regression/` + `tests/M0_M2/` | `platform/tests/` + `tests/M5b/` + `tests/M5c/` | 证明确定性生成与**每日容量**（判据是「超出当日可用容量 `hours_per_day × 60 − 10` 的天**恰好只装一个**任务」——不是「绝不超出」：单条任务本身就装不下时该天必然超出，且**第 2 天起**（当日容量扣了复习缓冲，`hours_per_day × 60 − 10 < 25`，即 `hours_per_day < 35/60 ≈ 0.5833`）**每一天**都踩到这条守卫，保证在该区间内**完全空转**；**第 1 天不扣缓冲**，容量是 `hours_per_day × 60`，要靠最小任务保证则需 `hours_per_day < 25/60 ≈ 0.4167`，`0.5 小时/天` 下 142 天里 120 天超出声明的每日上界（第 1 天也在其中，因为该请求首条任务 50 分钟 > 30）；`total_days` 回报真实天数、允许超过请求窗口，且 `total_days`/`total_hours` 与逐日明细自洽）、计划身份含派生输入摘要（复习/mastery/每日学时）、采纳/进度/重规划与消费台账、只读 mastery 投影的 file 路径映射与零写入、只读 Source 摘要的 `usable` 规则与懒装配不建库、只读先修关系投影的同目录兄弟边解析与先修合法顺序（真语料 `violations == 0`）；4a 起在**服务层接缝**上证明 stale/deleted 源拒绝（未新增公开路由，故**不是**公共 API 上的端到端隔离）；4b 起证明计划身份按 principal 分隔与记录往返保真（principal 是内部记录键，经单点 `_public_plan` 剥离，不进 HTTP 响应体）；4c 起证明复习历史是**活投影**而非构造时快照（同一进程内新落的复习立即反映到 `reviewed`、排序与 `plan_id`，且守卫钉在 `main.py` 的装配上）；步骤 6 窄口径起在**离线 stub provider** 上证明外部 AI 路径的最小披露是结构性的、每类失败逐字回退且不落库，并在冻结任务集 1K 语料上证明**输入有界**（prompt 不随语料规模增长）、两路径先修违反为 0、确定性可重放；另以**动态源文件枚举**证明「正式 mastery 只有一个写入权威」——写 `study_sessions`/`answer_attempts` 者恰好是 `learning_store.py`，M9 的 8 个模块与写权威**导入不可达**（既有测试是逐模块证明「我没写」，本项补的是**闭包**）。**不证明**：mastery 写入本身（`m9.mastery-write` 仍在 `excluded`——该证据只证明**不存在第二套权威**，不证明 M9 获得写能力）、10K/100K 容量、**性能**（v1.5 的冻结预算矩阵证明预算被**强制执行**，不是被测量——stub 下延迟是桥接开销、成本由脚本化 usage 算出；`max_input_tokens`/`model_timeout_seconds` **不在本地执行**；累积值 `max_output_tokens` 则**没有运行期执行点**（不送 provider、也无用量累计核验，但**构造期被校验**并据此给单轮值定上界）——**别把这条读成「output 预算整体没有执行点」**：`max_turn_output_tokens`（**单轮**值，默认 1024）自 2026-09-22 起**在本地执行**，它就是传给 `create_turn` 的 `max_tokens`；`deadline` 守卫**放弃**线程而非取消它；每日容量的**绝对**保证（单条超容量任务仍会让该天超出——保证是「每天**至多一个**任务造成超出」，且与 `review_plan.py` 刻意分叉）、真实 provider 的延迟/成本/失败模式（arm B 显式 opt-in、**非门禁**且本次未运行；1K 读数**不是**容量声明——M9 既不存储也不索引 1K chunks）；冻结范围**仅限 M9 外部 AI 路径**，遵循度仍为**定性**，也不构成 M9 阶段退出 |
 
 ## 四、pytest 配置
 

@@ -218,30 +218,59 @@ DETERMINISTIC_STUB_BUDGET_ENFORCEMENT_CI_GATING__REAL_PROVIDER_READING_OPT_IN_NO
 provider 之前返回（provider 调用数为 0），`cost` 预算在收到**合法**置换时仍丢弃它（硬上限而非告警阈值）。
 但 stub 下**没有任何性能读数**：延迟是桥接开销，成本由脚本化 usage 算出。真实 provider 的延迟 / 成本 /
 失败模式**仍未验证**，只能由 arm B 读，且必须由人显式启动。另有三项预算**不在本地执行**：
-`max_input_tokens`（本地无 tokenizer，故用字节预算）、`model_timeout_seconds` 与 `max_output_tokens`
-（均传给 provider）；`deadline_seconds` 的守卫**放弃线程而非取消它**。
+`max_input_tokens`（本地无 tokenizer，故用字节预算）、`model_timeout_seconds`（仅传给 provider）与
+`max_output_tokens`（累积值，**既没送给 provider 也没本地核验**，见 §4.4）；`deadline_seconds` 的守卫
+**放弃线程而非取消它**。
 
-### 4.4 v1.5 之后的两处实现修正为何**不**触发 §4 撤销
+### 4.4 v1.5 之后的三处实现修正为何**不**触发 §4 撤销
 
-本节与 §4.3 成对：§4.3 论证 v1.5 **必然触发**，本节论证紧随其后的两处缺陷修正**不触发**。
+本节与 §4.3 成对：§4.3 论证 v1.5 **必然触发**，本节论证紧随其后的三处缺陷修正**不触发**。
 判据是同一把尺子——§4 看的是**强制决策的实质变化**，不是代码变动本身。
 
 **修正一：外部 AI 路径的单轮 output 预算。** `PlanAILimits.max_output_tokens`（累积，2048）曾被直接
 当作 `create_turn` 的 `max_tokens` 传下去，而 `llm_client.create_turn` 硬拒大于
 `MAX_TURN_OUTPUT_TOKENS`（1024）的值。于是**默认配置下**每次调用都在发出任何 HTTP 请求之前抛
-`ValueError`，被回退路径收敛成 `provider_unavailable`——整条外部 AI 路径静默失效，而既有测试全绿
-（它们一律经 `proposer=` 注入，绕过该调用点）。现拆成两个字段：累积值只送 provider，单轮值在本地执行。
+`ValueError`，被回退路径收敛成 `provider_unavailable`——整条外部 AI 路径静默失效，而既有测试全绿。
+**为何全绿**：`tests/M9/test_plan_ai_adapter.py` 修复前收集 50 项，其中凡是构造 adapter 的都经 `proposer=`
+注入同步 stub（其余只碰 dataclass / 载荷 / 解析 / 预算校验等接缝，根本不构造 adapter），故没有一项触到该
+调用点；而修复前**默认运行**的真实桥驱动者 `tests/M9/test_plan_ai_benchmark.py` 虽然**穿过**了该调用点，
+其 `_StubClient.create_turn` 却把 `max_tokens` 直接丢掉（`del … max_tokens …`），于是超限的 2048 照样通过
+（`tests/M9/test_plan_ai_provider_smoke.py` 同样走真实桥，但它默认 skip、本次未运行）。故真教训不是「只有经
+`proposer=` 注入的测试才看不见该调用点」，而是**桥接 stub 必须复刻客户端的硬拒**。
+
+现拆成两个字段：单轮值（`max_turn_output_tokens`，默认 1024）在本地执行；累积值（`max_output_tokens`，
+2048）**没有运行期执行点**——修复把唯一送出它的调用点换成了单轮值，provider 的请求体里也没有「累积产出
+上限」这种参数，也没有 `preview_agent.py:226` 那样的用量累计检查。**但它并非完全无人读**：`_validate_limits`
+在每次构造 `PlanAIAdapter` 时校验它（正整数、不超过冻结默认、且不得大于 `max_input_tokens`），并据此给单轮值
+定上界。本路径每个计划只发一次调用，故单轮值在效果上也是总量上界；那是**单次调用的后果**，不是设计保证。
 
 **修正二：分日的每日容量。** `_distribute` 把 `total_days`（请求窗口）当成硬截断，排不完的任务被一次性
-倾倒进一个不设上限的「第 `total_days + 1` 天」——实测默认请求下该天 114 个任务 / 3890 分钟，而当日
-可用容量 110 分钟。现改为**逐天追加**，追加的天受同一容量约束。
+倾倒进一个不设上限的「第 `total_days + 1` 天」——实测默认请求下该天 114 个任务 / 3890 分钟，而当日可用
+容量 110 分钟（**35.4 倍**；倍数分母是该天可用容量 `hours_per_day × 60 − 10`）。探针集内最高为
+`0.5 小时/天` 的 4590/20 = **229.5 倍**（`8 小时/天` 下不触发）。现改为**逐天追加**，追加的天受同一容量约束。
 
-**为何两者都不触发 §4：**
+**修正三：预算环境变量清单的宣传面。** `limit_env_names()`（步骤 6 引入，docstring 自述「暴露可收紧的
+预算环境变量名，供配置层与测试共用同一份清单」）按 `PlanAILimits` 的**字段名**推导，于是把
+`SA_PLAN_AI_MAX_RETRIES` 也列进了「可收紧的预算环境变量」——而配置层**真正兑现**的映射
+`config._PLAN_AI_LIMIT_ENV` 里**没有**这一项（`max_retries` 有字段但刻意不可由环境变量覆盖，见
+`platform/README.md`「model 与 retry 次数不可由环境变量覆盖」）。操作者照该清单设值会**静默无效**：
+配置层不报错，预算也不收紧。实测（`git stash` 回到旧代码后直接调用）：宣传清单 9 项、兑现清单 8 项，
+差集恰为 `SA_PLAN_AI_MAX_RETRIES`。现改为直接取自 `config._PLAN_AI_LIMIT_ENV`，使「宣传的清单」与
+「兑现的清单」**同源**；并新增护栏用例断言两者逐个相同，且宣传清单**非空**——否则「相等」会因两边
+都空而平凡成立。
+
+**为何三者都不触发 §4：**
 
 1. **`M9-EXTERNAL-AI` 的决策值不含任何数字**——`OPT_IN_DISABLED_BY_DEFAULT__MINIMAL_DISCLOSURE_
    NO_CHUNK_BODY_USER_DATA_PATHS_CREDENTIALS__HARD_TIMEOUT_COST_BUDGET__DETERMINISTIC_FALLBACK`。
    2048 / 1024 是**实现常量**，不是判据。修正一是把既有的 `HARD_TIMEOUT_COST_BUDGET` 从句面条款
-   变成**真正生效**的条款（修正前该子句根本没有执行点），属**兑现**而非**改判据**。
+   变成**真正生效**的条款，属**兑现**而非**改判据**。**准确范围**：`cost` 与 `deadline` 的**代码
+   路径**修正前就存在且在跑（§7.1 的冻结读数即修正前用 stub 取的：`cost` 场景收到合法置换仍丢弃、
+   `deadline` 场景实测 ~215ms 后判 `deadline_exceeded`）；坏掉的是它的 **token 部分**——旧代码把
+   累积值当单轮值传，而客户端硬拒该值。**但要说清**：在**生产默认配置**下，正是这个 token 失败
+   让每次调用都在发出任何 HTTP 请求之前就抛 `ValueError`，`propose` 拿到的永远是空审计
+   （`estimated_cost_usd = 0`）且立刻返回，故 `cost`/`deadline` 虽**有**执行点也**从未触发**过。
+   准确说法是：token 部分**没有可用的执行点**，`cost`/`deadline` 是「有执行点、默认配置下无从触发」。
 2. **`M9-EVALUATION` 的 v1.5 值不动**，`approval_scope` / `implementation_start` / 其余七项决策均不动。
 3. **两个冻结摘要逐字节不变**：`_workload_digest` 只哈希 `_WORKLOAD`（name/goal/course/required/
    excluded），`_budget_scenario_digest` 只哈希 `_BUDGET_SCENARIOS`（各 limits 字典只含
@@ -250,19 +279,34 @@ provider 之前返回（provider 调用数为 0），`cost` 预算在收到**合
 4. **`plan_id` 不受分日修正影响**：`_plan_id` 哈希的是请求字段与**派生输入摘要**（按最终顺序的
    `task_id`/`reviewed`/mastery 序列），不含天数、分组或 `total_minutes`。突变探针证实：把 `_distribute`
    换成「只产出一个空天」的桩，`plan_id` 逐字节不变。故计划身份这一兼容不变量未被触碰。
+5. **修正三不涉及任何决策值**：它只改一个辅助函数的**数据来源**（字段名推导 → 配置层映射），不改任何
+   预算的默认值、上限或校验规则，`approval_scope` / `implementation_start` / 八项决策与 `plan_revision`
+   均不动。该函数**当前无生产调用方**（全仓只有 `tests/M9/test_plan_ai_adapter.py` 引用），故它连运行期
+   行为都不改变——这是三者中影响面最小的一处。
 
-**确实变化且必须记录的两处可观行为**（属**在既有声明内的行为纠正**，不是判据变更）：
+**确实变化且必须记录的可观行为**（属**在既有声明内的行为纠正**，不是判据变更）：
 
-- 装不进窗口的计划 `total_days` 变大（默认请求 15 → 52，`os`/1 小时 15 → 19）。**超出窗口本就是声明允许的**
-  ——`review_plan.py` 的「剩余任务追加到最后一天（如果超出天数）」是唯一的正面声明，M9 逐字继承；
+- 装不进窗口的计划 `total_days` **值**变大（默认请求 15 → 52，`os`/1 小时 15 → 19）。**超出窗口本就是声明
+  允许的**——`review_plan.py` 的「剩余任务追加到最后一天（如果超出天数）」是唯一的正面声明，M9 逐字继承；
   违反声明的是**每日容量**（`review-plan` 技能：「每天学习时间不超过 `hours_per_day × 60 + 10` 分钟」）。
-- `total_days` 现在回报**真实**天数而非请求窗口值，`total_days` 与逐日明细自此自洽。
 - **与 `review_plan.py` 刻意分叉**：该服务有同一处缺陷，但 `platform/tests/test_review_plan.py` 的
   `actual_days <= max_days + 1` 明确容忍它，且该套件按仓库约定**冻结不动**。故修正只落在
   `goal_planner.py`，两个服务在这一点上**有意不一致**，不得被读成遗漏。
 - **本修正不消除的残留**：`and day_tasks` 守卫保证每天第一个任务必被放入，故单条任务时长超过当日容量时
-  （`hours_per_day=0.5` 下容量 20 分钟而进阶任务 50 分钟）该天仍会超出。保证是「**每天至多一个**任务
+  该天仍会超出。最小原子任务 25 分钟，故**第 2 天起**（当日容量扣了复习缓冲，`hours_per_day × 60 − 10 < 25`，
+  即 `hours_per_day < 35/60 ≈ 0.5833`）**每一天**都踩到这条守卫，容量保证在该区间内**完全空转**。
+  **第 1 天不扣缓冲**（`if d > 0` 才减 `REVIEW_BUFFER_MINUTES`），容量是 `hours_per_day × 60`，只有当日首条
+  任务本身就超过它时才超出——要靠最小任务保证则需 `hours_per_day < 25/60 ≈ 0.4167`。`0.5 小时/天`（合法下界）
+  下默认请求（全部课程）实测 142 天，其中 **120 天**超出声明的每日上界（`0.5 × 60 + 10 = 40` 分钟），最大
+  60 分钟；第 1 天也在其中，因为该请求的首条任务是 50 分钟 > 30。残留的准确表述是「**每天至多一条**任务
   造成超出」，不是「绝不超出」——`tests/M9/test_day_distribution.py` 把它钉成可见事实。
+
+**曾误记为「变化」、实则未变的一项**（记在此处以免被后读当成已发生的语义变更）：
+
+- **`total_days` 的语义未变**：`total_days=len(days)` 自首个 planner 提交 `afd14d3` 起如此，本次修正
+  没有碰那一行，`total_days` 与逐日明细修正前后都自洽。变化的是天数的**值**（15 → 52），不是它怎么算
+  出来的。故 `tests/M9/test_day_distribution.py` 的 `test_total_days_and_total_hours_match_the_day_list`
+  **不能**区分修正前后，不得作为本次修正的证据引用。
 
 **本次明确不做**（与 §4.3 同）：不 bump `plan_revision`、不新增 `approval_reference`、不新增
 `admission_history` 记录（§4 的两条触发条件——决策值变化与批准条件失效——均未发生）、不新增公开路由、

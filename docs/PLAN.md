@@ -322,7 +322,7 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
   `m9.external-ai` 移入 `included`（`excluded` 只剩 `m9.mastery-write`），冻结任务集上比较确定性与 AI 路径，
   容量只在 1K 跑，**`M9-EVALUATION` 原值不动**，故不触发 §4 撤销、一次批准即可实施。理由与「本次明确不做」
   清单见 M9 计划 §4.2；实现进度见该计划 §5.1。
-  **该窄口径已实施完成**（`platform/app/plan_ai_adapter.py` 默认关闭；`tests/M9/test_plan_ai_adapter.py` 50 项、
+  **该窄口径已实施完成**（`platform/app/plan_ai_adapter.py` 默认关闭；`tests/M9/test_plan_ai_adapter.py` 59 项、
   `tests/M9/test_plan_ai_benchmark.py` 3 项，后者标记 `m9_benchmark` 并作为独立 CI 步骤运行）。冻结任务集
   比较的读数是：两种语料规模（实测 10 vs 1000 chunks）下送往 AI 的 prompt 字节数与条目数**逐字相同**
   （输入有界），两条路径先修违反均为 0，确定性可重放。**必须按窄口径读**：这只证明**输入不随语料规模增长**，
@@ -336,8 +336,10 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
   接缝，逐场景断言稳定原因码——`prompt` 预算在调用 provider **之前**返回（provider 调用数为 0）、`cost`
   预算在收到**合法**置换时仍丢弃它（硬上限而非告警阈值）、`deadline` 由 `_run_blocking` 强制；**必须按窄口径读**：
   stub 下延迟是桥接开销、成本由脚本化 usage 算出，故 CI 臂证明的是**预算被强制执行**，**不是**性能；
-  `max_input_tokens` / `model_timeout_seconds` / `max_output_tokens` **不在本地执行**（报告里有机器可读的
-  `enforced_locally` / `not_enforced_locally`），`deadline` 守卫**放弃线程而非取消它**。**真实 provider 臂
+  `max_input_tokens` / `model_timeout_seconds` **不在本地执行**（报告里有机器可读的 `enforced_locally` /
+  `not_enforced_locally`）；`max_output_tokens` 当时也列在 `not_enforced_locally` 里，但它**既非 provider 侧
+  也非本地执行**——累积值**没有运行期执行点**（2026-09-22 的缺陷修正后更正，见 v2.34），`deadline` 守卫
+  **放弃线程而非取消它**。**真实 provider 臂
   （非门禁）**见 `tests/M9/test_plan_ai_provider_smoke.py`（`online` + skip 门控、花费上限默认 $1.00、
   只记脱敏字段），**本次未运行**，故真实 provider 的延迟 / 成本 / 失败模式**仍未验证**。10K/100K 仍不触碰。
 - ⬜ **M10 完整自主 Runner 与 Harness 对外**：准备计划见
@@ -378,30 +380,45 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.34（不是产品发布版本）· 更新：2026-09-22（M9 **两处缺陷修正**，
+*创建：2026-08-10 · PLAN 文档修订：v2.34（不是产品发布版本）· 更新：2026-09-22（M9 **三处缺陷修正**，
 **均不触发 §4 撤销**：① 外部 AI 路径的 output 预算曾把**累积**值（2048）直接当作 `create_turn` 的
 `max_tokens` 传下去，而 `llm_client.create_turn` 硬拒大于 `MAX_TURN_OUTPUT_TOKENS`(1024) 的值——于是
 **默认配置下**每次调用都在发出任何 HTTP 请求之前抛 `ValueError`，被回退路径收敛成 `provider_unavailable`，
-整条外部 AI 路径静默失效，而既有测试全绿（它们一律经 `proposer=` 注入，绕过那个调用点）。现拆成两个字段：
-累积值只送 provider，新增的 `max_turn_output_tokens`（单轮，默认 1024）**在本地执行**，并新增
-`SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS`（只能收紧）。② `_distribute` 把 `total_days`（请求窗口）当硬截断，
-排不完的任务被一次性倾倒进一个不设上限的「第 `total_days + 1` 天」——默认请求下该天 114 个任务 / 3890 分钟，
-而当日可用仅 110 分钟（最高超出 92 倍）。现改为**逐天追加**，追加的天受同一容量约束。判据取自声明而非
+整条外部 AI 路径静默失效，而既有测试全绿。**为何全绿**：`test_plan_ai_adapter.py` 修复前收集 50 项，其中
+凡是构造 adapter 的都经 `proposer=` 注入同步 stub（其余只碰 dataclass / 载荷 / 解析 / 预算校验等接缝），
+故没有一项触到那个调用点；而修复前**默认运行**的真实桥驱动者 `test_plan_ai_benchmark.py` **穿过**了该调用点
+却没抓到——它的 `_StubClient.create_turn` 把 `max_tokens` 直接丢掉，于是超限的 2048 照样通过
+（`test_plan_ai_provider_smoke.py` 同样走真实桥，但默认 skip）。真教训是**桥接 stub 必须复刻客户端的硬拒**。
+现拆成两个字段：新增的 `max_turn_output_tokens`（单轮，默认 1024）**在本地执行**，并新增
+`SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS`（只能收紧）；累积值 `max_output_tokens` 则**没有运行期执行点**（修复把
+唯一送出它的调用点换成了单轮值），**但并非无人读**——`_validate_limits` 在构造期校验它（正整数、≤ 冻结默认、
+≤ `max_input_tokens`）并据此给单轮值定上界。② `_distribute` 把
+`total_days`（请求窗口）当硬截断，排不完的任务被一次性倾倒进一个不设上限的「第 `total_days + 1` 天」——
+默认请求下该天 114 个任务 / 3890 分钟，而当日可用仅 110 分钟（**35.4 倍**，分母为当日可用容量
+`hours_per_day × 60 − 10`；探针集内最高是 `0.5 小时/天` 的 4590/20 = **229.5 倍**）。现改为**逐天追加**，
+追加的天受同一容量约束。判据取自声明而非
 自造：`hours_per_day` 是每日**容量**、`target_date` 是**视野**，超出窗口本就合法（`review_plan.py` 的
 「剩余任务追加到最后一天（如果超出天数）」是唯一的正面声明，M9 逐字继承），违反声明的是**每日容量**。
+③ `limit_env_names()`（步骤 6 引入，docstring 自述「供配置层与测试共用同一份清单」）按 `PlanAILimits` 的
+**字段名**推导，于是宣传了一个配置层**不兑现**的 `SA_PLAN_AI_MAX_RETRIES`（`max_retries` 有字段但刻意不可由
+环境变量覆盖，见 `platform/README.md`）——操作者照它设值会**静默无效**：配置层不报错，预算也不收紧。
+实测旧代码：宣传清单 9 项、兑现清单 8 项，差集恰为该名。现改为直接取自配置层真正兑现的
+`config._PLAN_AI_LIMIT_ENV`（两者**同源**），并新增护栏用例断言两份清单逐个相同且宣传清单非空。
 **为何不触发 §4**：`M9-EXTERNAL-AI` 的决策值不含任何数字，2048/1024 是实现常量；两个冻结摘要
 （`workload_digest` / `budget_scenario_digest`）修正后重算**逐字节不变**，故 1K 与预算矩阵的历史读数
 继续可比；`plan_id` 不随分日变化（把 `_distribute` 换成只产出一个空天的桩，`plan_id` 逐字节不变），
-计划身份这一兼容不变量未被触碰。故属**兑现**既有决策而非**改判据**——不 bump `plan_revision`、不新增
-`approval_reference`、不新增 `admission_history` 记录、不新增公开路由（详见 M9 计划 §4.4）。
+计划身份这一兼容不变量未被触碰。③ 则**连决策值都不涉及**——它只改一个辅助函数的数据来源，且该函数**当前
+无生产调用方**（全仓只有测试引用），故其运行期行为不变。故属**兑现**既有决策而非**改判据**——不 bump
+`plan_revision`、不新增 `approval_reference`、不新增 `admission_history` 记录、不新增公开路由
+（详见 M9 计划 §4.4）。
 **诚实残留**：`and day_tasks` 守卫保证每天第一个任务必被放入，故单条任务超容量时该天仍会超出——保证是
 「每天**至多一个**任务造成超出」，不是「绝不超出」；且与 `review_plan.py` **刻意分叉**（该服务有同一缺陷，
 但 `platform/tests/test_review_plan.py` 的 `actual_days <= max_days + 1` 明确容忍它，且该套件按仓库约定
-冻结不动）。`tests/M9` 327 → 353 项（新增 `test_day_distribution.py` 18 项 + adapter 8 项；
-`m9_benchmark` 3 与 `online` 3 均为 `m9` 的**子集**，不另计）；全量 1245 → 1271 collected、1266 passed、
+冻结不动）。`tests/M9` 327 → 354 项（新增 `test_day_distribution.py` 18 项 + adapter 9 项；
+`m9_benchmark` 3 与 `online` 3 均为 `m9` 的**子集**，不另计）；全量 1245 → 1272 collected、1267 passed、
 2 skipped、3 failed（3 项为 M7 TXT parser 按设计 fail closed）。另修一处**标记卫生**缺陷：
 `tests/M9/test_mastery_write_authority.py` 缺 `pytestmark`，致 `-m m9` 少收集 8 项而文档按 324 报数
-（实际 319）——现 353 项**全部**带 `m9` 标记）
+（实际 319）——现 354 项**全部**带 `m9` 标记）
 · 上一修订 v2.33（2026-09-22：M9 **评测口径解冻**：
 owner 以 plan_revision v1.5 把 `M9-EVALUATION` 的延迟/成本维度由 `..._LATENCY_COST_DEFERRED` 改为冻结评测。
 这是 M9 **第一个真正触发 §4 撤销**的变更（v1.3/v1.4 都在论证「为何不触发」），`ADMITTED→REVOKED→ADMITTED`
