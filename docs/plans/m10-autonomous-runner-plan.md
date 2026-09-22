@@ -109,6 +109,11 @@ M10 必须支持 M8 100K capacity 和拟议 M11 10K 真实数据带来的长任�
 M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0 容忍组**。四项裁定**只关闭草案内的开放点**，
 **不产生任何 `RESOLVED`**，十一项决策仍需逐项闭合并经 owner 单独批准。
 
+决策的**闭合面**（可直接落登记表 `value` 的令牌串与十项必备内容）见
+[`references/m10-decision-closure-v1.md`](references/m10-decision-closure-v1.md)：分批推进，批次 ①
+（`M10-AUTHORITY` + `M10-WRITE-AUTHORIZATION`）已起草，**批准记录为空**——本文件与闭合记录都**不产生**
+`RESOLVED`，登记表在 owner 逐批批准后才可更新。
+
 ## 4. 准入检查与批准记录
 
 - [x] M7–M9 退出证据全部真实有效（`M10-M8-EXIT` 以 §2.1 的维持现状结论兑现，不是容量证据）；
