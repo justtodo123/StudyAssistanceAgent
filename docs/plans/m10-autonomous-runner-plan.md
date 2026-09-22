@@ -111,8 +111,10 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 
 决策的**闭合面**（可直接落登记表 `value` 的令牌串与十项必备内容）见
 [`references/m10-decision-closure-v1.md`](references/m10-decision-closure-v1.md)：分批推进，批次 ①
-（`M10-AUTHORITY` + `M10-WRITE-AUTHORIZATION`）已起草，**批准记录为空**——本文件与闭合记录都**不产生**
-`RESOLVED`，登记表在 owner 逐批批准后才可更新。
+（`M10-AUTHORITY` + `M10-WRITE-AUTHORIZATION`）**已于 2026-09-22 获 owner 批准并转 `RESOLVED`**；批次 ②
+（`CHECKPOINT` / `IDEMPOTENCY` / `EFFECT-LEDGER` / `RECOVERY`）与批次 ③（`OFFLINE-DEFAULT` / `MANIFEST` /
+`EVALUATION` / `MCP` / `ROLLOUT`）**已起草但未批准**，对应九项在登记表中仍 `OPEN`。本文件与闭合记录都
+**不产生** `RESOLVED`，登记表在 owner 逐批批准后才可更新。
 
 ## 4. 准入检查与批准记录
 

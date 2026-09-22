@@ -362,8 +362,8 @@
         {"id": "M10-M9-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m9-goal-driven-planning-plan.md"]}
       ],
       "mandatory_decisions": [
-        {"id": "M10-AUTHORITY", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M10-WRITE-AUTHORIZATION", "status": "OPEN", "value": null, "evidence": []},
+        {"id": "M10-AUTHORITY", "status": "RESOLVED", "value": "STATE_MACHINE_IS_THE_FORMAL_DEFAULT__RUNNER_OWNS_ONLY_JOB_CHECKPOINT_LEDGER_STATE__NO_DIRECT_SQL_OR_NATIVE_BACKEND_ACCESS__DOMAIN_SERVICE_REJECTS_CONFLICTING_EFFECTS", "evidence": ["docs/plans/references/m10-decision-closure-v1.md", "docs/plans/references/m10-decision-design-draft.md"]},
+        {"id": "M10-WRITE-AUTHORIZATION", "status": "RESOLVED", "value": "SEPARATE_WRITE_ALLOWLIST_DISJOINT_FROM_PREVIEW__CAPABILITY_AND_SCOPE_REQUIRED_DENY_BY_DEFAULT__CONFIRMATION_TOKEN_BOUND_TO_JOB_TOOL_ARG_DIGEST__REVOCATION_INVALIDATES_PENDING__APPEND_ONLY_AUDIT", "evidence": ["docs/plans/references/m10-decision-closure-v1.md", "docs/plans/references/m10-decision-design-draft.md"]},
         {"id": "M10-CHECKPOINT", "status": "OPEN", "value": null, "evidence": []},
         {"id": "M10-IDEMPOTENCY", "status": "OPEN", "value": null, "evidence": []},
         {"id": "M10-EFFECT-LEDGER", "status": "OPEN", "value": null, "evidence": []},
