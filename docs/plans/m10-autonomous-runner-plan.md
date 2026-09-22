@@ -100,6 +100,11 @@ M10 必须支持 M8 100K capacity 和拟议 M11 10K 真实数据带来的长任�
 每项必须记录明确政策、默认与覆盖、校验/失败、兼容/隐私、量化阈值、证据、责任人和日期。笼统的
 “exactly-once”、未定义 crash point 的恢复宣称或仅有 happy-path demo 都不能闭合决策。
 
+十一项决策的设计草案（**非授权、不产生 `RESOLVED`**）见
+[`references/m10-decision-design-draft.md`](references/m10-decision-design-draft.md)：§0.1 逐条登记起草时核实的
+仓库事实，§末列出四项**待 owner 裁定**的开放点（迁移机制、两个预留错误码、worker 拓扑、全部数值阈值），
+草案不自行决定。
+
 ## 4. 准入检查与批准记录
 
 - [x] M7–M9 退出证据全部真实有效（`M10-M8-EXIT` 以 §2.1 的维持现状结论兑现，不是容量证据）；
