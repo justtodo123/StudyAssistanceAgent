@@ -275,15 +275,15 @@ DEFAULT_OFF__KILL_SWITCH_CHECKED_AT_EVERY_EFFECT_BOUNDARY_NOT_ONLY_AT_JOB_START_
 | --- | --- | --- | --- | --- | --- |
 | ① | `M10-AUTHORITY` | `RESOLVED` | justtodo123 | 2026-09-22 | 见下「批次 ① 批准依据」 |
 | ① | `M10-WRITE-AUTHORIZATION` | `RESOLVED` | justtodo123 | 2026-09-22 | 见下「批次 ① 批准依据」 |
-| ② | `M10-CHECKPOINT` | 已起草，待批准 | — | — | — |
-| ② | `M10-IDEMPOTENCY` | 已起草，待批准 | — | — | — |
-| ② | `M10-EFFECT-LEDGER` | 已起草，待批准 | — | — | — |
-| ② | `M10-RECOVERY` | 已起草，待批准 | — | — | — |
-| ③ | `M10-OFFLINE-DEFAULT` | 已起草，待批准 | — | — | — |
-| ③ | `M10-MANIFEST` | 已起草，待批准 | — | — | — |
-| ③ | `M10-EVALUATION` | 已起草，待批准 | — | — | — |
-| ③ | `M10-MCP` | 已起草，待批准 | — | — | — |
-| ③ | `M10-ROLLOUT` | 已起草，待批准 | — | — | — |
+| ② | `M10-CHECKPOINT` | `RESOLVED` | justtodo123 | 2026-09-22 | 见下「批次 ②③ 批准依据」 |
+| ② | `M10-IDEMPOTENCY` | `RESOLVED` | justtodo123 | 2026-09-22 | 见下「批次 ②③ 批准依据」 |
+| ② | `M10-EFFECT-LEDGER` | `RESOLVED` | justtodo123 | 2026-09-22 | 见下「批次 ②③ 批准依据」 |
+| ② | `M10-RECOVERY` | `RESOLVED` | justtodo123 | 2026-09-22 | 见下「批次 ②③ 批准依据」 |
+| ③ | `M10-OFFLINE-DEFAULT` | `RESOLVED` | justtodo123 | 2026-09-22 | 见下「批次 ②③ 批准依据」 |
+| ③ | `M10-MANIFEST` | `RESOLVED` | justtodo123 | 2026-09-22 | 见下「批次 ②③ 批准依据」 |
+| ③ | `M10-EVALUATION` | `RESOLVED` | justtodo123 | 2026-09-22 | 见下「批次 ②③ 批准依据」 |
+| ③ | `M10-MCP` | `RESOLVED` | justtodo123 | 2026-09-22 | 见下「批次 ②③ 批准依据」 |
+| ③ | `M10-ROLLOUT` | `RESOLVED` | justtodo123 | 2026-09-22 | 见下「批次 ②③ 批准依据」 |
 
 ### 批次 ① 批准依据
 
@@ -309,5 +309,25 @@ DEFAULT_OFF__KILL_SWITCH_CHECKED_AT_EVERY_EFFECT_BOUNDARY_NOT_ONLY_AT_JOB_START_
 `M10-RECOVERY` / `M10-OFFLINE-DEFAULT` / `M10-MANIFEST` / `M10-EVALUATION` / `M10-MCP` / `M10-ROLLOUT`），
 M10 保持 `BLOCKED / NOT_STARTED`。Agent 不得自行批准。
 
-**批次 ②③ 已起草但未批准**（见 §2 / §3）。它们的 `value` 与十项必备内容**只是提案**，在 §4 批准记录
-填入 owner 的批准引用之前，登记表中对应九项**必须**保持 `OPEN`、`value` 为 `null`、`evidence` 为空。
+**批次 ②③ 批准依据**：
+
+| 批准字段 | 值 |
+| --- | --- |
+| approved_by | justtodo123 |
+| approved_at | 2026-09-22 |
+| approval_reference | User instruction: 「全部批准（推荐）」——回应「批次 ②③（`CHECKPOINT` / `IDEMPOTENCY` / `EFFECT-LEDGER` / `RECOVERY` / `OFFLINE-DEFAULT` / `MANIFEST` / `EVALUATION` / `MCP` / `ROLLOUT`）是否批准？」，选项为「全部批准（推荐）：我把 9 项转 `RESOLVED`，十一项即全部闭合」。按本仓既有惯例逐字引用原话并说明解读；未提出修改，故 §2 / §3 的九项 `value` 与十项必备内容逐字生效 |
+
+**本批批准做什么**：把上述九项在登记表中由 `OPEN` 改为 `RESOLVED`，`value` 取 §2 / §3 的令牌串，
+`evidence` 指向本文件与设计草案。至此 **M10 十一项强制决策全部 `RESOLVED`**。
+
+**本批批准不做什么**（逐条，防止被后读高估）：
+
+- **不批准 M10 准入**：`admission_status` 仍 `BLOCKED`、`approval` 五字段仍为空——准入是**另一条独立记录**
+  （M10 计划 §4），需 owner 另行批准。
+- **不授权开工**：不创建写工具、不改 `tool_registry.py`、不建独立 SQLite 文件、不新增路由/开关、
+  不建 `tests/M10/`、不写任何生产物件。
+- **不改变** M10 计划 §4 中其余三项检查项的判定责任（crash-point/越权/重放测试方案、评测任务集冻结、
+  MCP/manifest 边界）——它们由本次批准的决策**兑现**，但仍需在准入时逐项核验。
+- **不触发 §4 撤销、不写 `admission_history`**：M10 从未准入，不存在可撤销的准入。
+
+**十一项已全部 `RESOLVED`；M10 仍为 `BLOCKED / NOT_STARTED`，阻断项只剩 owner 的独立准入批准。**

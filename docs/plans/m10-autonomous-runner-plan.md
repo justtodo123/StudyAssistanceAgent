@@ -90,15 +90,15 @@ M10 必须支持 M8 100K capacity 和拟议 M11 10K 真实数据带来的长任�
 | --- | --- | --- |
 | `M10-AUTHORITY` | `RESOLVED` | `StudySessionService`、可选 Runner、repository 和 tool 的唯一权威边界、冲突处理与状态机默认规则（2026-09-22 闭合批次 ①，`value` 见登记表与 [`references/m10-decision-closure-v1.md`](references/m10-decision-closure-v1.md) §1.1） |
 | `M10-WRITE-AUTHORIZATION` | `RESOLVED` | 写 capability、用户/learner/source scope、显式确认、拒绝/撤销语义和不可变审计字段（2026-09-22 闭合批次 ①，`value` 见登记表与 [`references/m10-decision-closure-v1.md`](references/m10-decision-closure-v1.md) §1.2） |
-| `M10-CHECKPOINT` | `OPEN` | checkpoint schema/version、边界、频率、存储、加密/保留、取消、兼容和 resume 校验 |
-| `M10-IDEMPOTENCY` | `OPEN` | idempotency key 派生、作用域、唯一约束、保留、重放、并发、冲突和结果复用 |
-| `M10-EFFECT-LEDGER` | `OPEN` | proposed/authorized/pending/applied/failed/compensated 状态、事务边界、outbox/reconcile 和审计 |
-| `M10-RECOVERY` | `OPEN` | retry/resume/compensation、poison effect、人工介入、进程 crash-point matrix 和不可补偿失败 |
-| `M10-EVALUATION` | `OPEN` | Agent 任务集、成功率、工具/参数合法率、越权率、终止、恢复、cost、p95 和发布阈值 |
-| `M10-MCP` | `OPEN` | protocol/transport、tool/resource surface、认证、schema/error mapping、写限制和 conformance |
-| `M10-MANIFEST` | `OPEN` | knowledge-pack manifest identity、版本、完整性、能力、来源、兼容和签名/校验政策 |
-| `M10-OFFLINE-DEFAULT` | `OPEN` | 状态机正式默认、无 LLM fallback、自主路径不可用/失败时的隔离和不得重复副作用 |
-| `M10-ROLLOUT` | `OPEN` | 自主 Runner 默认关闭、启用条件、环境/用户范围、观测、kill switch、回滚和迁移兼容 |
+| `M10-CHECKPOINT` | `RESOLVED` | checkpoint schema/version、边界、频率、存储、加密/保留、取消、兼容和 resume 校验 |
+| `M10-IDEMPOTENCY` | `RESOLVED` | idempotency key 派生、作用域、唯一约束、保留、重放、并发、冲突和结果复用 |
+| `M10-EFFECT-LEDGER` | `RESOLVED` | proposed/authorized/pending/applied/failed/compensated 状态、事务边界、outbox/reconcile 和审计 |
+| `M10-RECOVERY` | `RESOLVED` | retry/resume/compensation、poison effect、人工介入、进程 crash-point matrix 和不可补偿失败 |
+| `M10-EVALUATION` | `RESOLVED` | Agent 任务集、成功率、工具/参数合法率、越权率、终止、恢复、cost、p95 和发布阈值 |
+| `M10-MCP` | `RESOLVED` | protocol/transport、tool/resource surface、认证、schema/error mapping、写限制和 conformance |
+| `M10-MANIFEST` | `RESOLVED` | knowledge-pack manifest identity、版本、完整性、能力、来源、兼容和签名/校验政策 |
+| `M10-OFFLINE-DEFAULT` | `RESOLVED` | 状态机正式默认、无 LLM fallback、自主路径不可用/失败时的隔离和不得重复副作用 |
+| `M10-ROLLOUT` | `RESOLVED` | 自主 Runner 默认关闭、启用条件、环境/用户范围、观测、kill switch、回滚和迁移兼容 |
 
 每项必须记录明确政策、默认与覆盖、校验/失败、兼容/隐私、量化阈值、证据、责任人和日期。笼统的
 “exactly-once”、未定义 crash point 的恢复宣称或仅有 happy-path demo 都不能闭合决策。
@@ -119,11 +119,19 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 ## 4. 准入检查与批准记录
 
 - [x] M7–M9 退出证据全部真实有效（`M10-M8-EXIT` 以 §2.1 的维持现状结论兑现，不是容量证据）；
-- [ ] 十一项强制决策全部 `RESOLVED`，authority、authorization、ledger 和 recovery 一致；
-- [ ] 写副作用 crash-point、越权和重放测试方案可执行；
-- [ ] Agent 评测任务集、样本、硬件/provider、成本与发布阈值冻结；
-- [ ] MCP/manifest 的认证、兼容和 conformance 边界明确；
-- [ ] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表一致；
+- [x] 十一项强制决策全部 `RESOLVED`（2026-09-22 闭合批次 ① 两项 + ②③ 九项），authority、authorization、
+  ledger 和 recovery 一致——四项相互引用的约束已交叉核对（独立 SQLite 文件 ⇒ 无跨库事务 ⇒ outbox/reconcile
+  必需 ⇒ 台账行先落 `pending`；单 worker ⇒ crash 矩阵只需单进程）；
+- [ ] 写副作用 crash-point、越权和重放测试方案可执行——**已由 `M10-RECOVERY` 的 10 点矩阵、`M10-WRITE-AUTHORIZATION`
+  的越权/令牌重放阈值与 `M10-IDEMPOTENCY` 的冲突语义指定**，但具体测试方案（文件、fixture、每点如何行使）
+  尚未落盘，故本项**保持未勾选**；
+- [ ] Agent 评测任务集、样本、硬件/provider、成本与发布阈值冻结——**阈值已由 `M10-EVALUATION` 冻结为 0 容忍组**，
+  两臂分工亦已冻结；但**任务集本身尚未冻结成文件**，故本项**保持未勾选**；
+- [x] MCP/manifest 的认证、兼容和 conformance 边界明确（`M10-MCP` 与 `M10-MANIFEST` 已 `RESOLVED`，含
+  stdio-only、token ≥32 字节、首个发布不含写工具，以及 manifest digest 的 canonicalization 前置）；
+- [x] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表一致（由
+  `test_stage_plans_track_registry_prerequisites`、`test_stage_plans_track_registry_decision_status` 与
+  `test_plan_milestone_table_matches_registry` 逐项机械校验）；
 - [ ] 用户或项目负责人完成批准。
 
 | 批准字段 | 当前值 |
@@ -133,6 +141,10 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 | approval_reference | — |
 | plan_revision | — |
 | decision_set_version | — |
+
+**准入还差两项可执行的落盘物**（上表第 3、4 项）：写副作用 crash-point / 越权 / 重放的**测试方案**，以及
+**冻结的 Agent 评测任务集**。二者在决策层已指定（矩阵、阈值、两臂分工），但方案与任务集尚未写成文件；
+它们**不需要新的 owner 裁定**，属于可在准入前直接交付的准备物。
 
 批准为空，M10 保持 `BLOCKED / NOT_STARTED`。三项前置（`M10-M7-EXIT` / `M10-M8-EXIT` / `M10-M9-EXIT`）
 自 2026-09-22 起均已 `SATISFIED`，**阻断项只剩 §3 的十一项强制决策与 owner 的独立准入批准**；
