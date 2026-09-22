@@ -139,6 +139,8 @@ StudyAssistanceAgent/
 │   ├── M6a/               # M6a harness 契约与兼容骨架测试
 │   ├── M6b/               # M6b 只读 Agent Preview 隔离测试与离线 benchmark
 │   ├── M7/                # M7 lifecycle/FTS5/vector/offline + Search/QA internal overlay（277 项）
+│   ├── M9/                # M9 目标驱动计划、只读投影、外部 AI 路径（354 项）
+│   ├── M10/               # M10 写权限与副作用台账：拒绝路径优先、默认关闭（34 项）
 │   ├── regression/        # 跨阶段回归套件
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）

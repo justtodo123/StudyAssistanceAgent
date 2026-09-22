@@ -86,8 +86,11 @@
 ## 6. 权威边界与零写入（`M10-AUTHORITY`）
 
 - 源码级**动态枚举** `platform/app/` 全部源文件（沿用 `tests/M9/test_mastery_write_authority.py` 的纪律，
-  不写死名单；带非空性断言）：写 `study_sessions` / `answer_attempts` 的模块**恰好**是 `learning_store.py`；
-  Runner 侧模块**不 import `sqlite3`**。
+  不写死名单；带非空性断言）：写 `study_sessions` / `answer_attempts` 的模块**恰好**是 `learning_store.py`。
+- Runner 侧模块**不 import `learning_store`**，也不引用其写方法名（`save` / `save_review` / `save_plan` /
+  `save_progress_event`）。**注意口径**：`M10-CHECKPOINT` 已裁定 runner 状态放**独立 SQLite 文件**，故
+  `effect_ledger.py` **必然** import `sqlite3`——它打开的是**自己的**库。因此本项的判据是「不触碰**领域**库」，
+  **不是**「不用 `sqlite3`」；写成后者会是一条错的守卫，并会因不成立而被削弱。
 - 冲突：领域服务拒绝 Runner 提议时，job 记 `failed` + 稳定原因码，**不盲目重试**（断言重试计数为 0）。
 - 物理分离：Runner 自有库与学习状态库是**两个文件**——断言路径不同，且学习状态库在整套 M10 用例后
   逐字节未变。

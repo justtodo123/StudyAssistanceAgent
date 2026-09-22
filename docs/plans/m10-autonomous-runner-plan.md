@@ -193,7 +193,21 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 
 ## 5. 获准后的拟实施顺序
 
-1. 冻结 authority、capability 和 EffectLedger schema，先实现拒绝路径；
+> **实施进度**：步骤 1 **已完成**（2026-09-22）。其余六步未开始。
+
+1. ✅ 冻结 authority、capability 和 EffectLedger schema，先实现拒绝路径
+   （2026-09-22）：`platform/app/runner_authority.py`（写 allowlist **与只读 preview 不相交**、
+   注册期与执行期双重拒绝、确认令牌绑定 `(job_id, tool_name, 参数摘要)`、撤销、追加式审计只留摘要、
+   六态跃迁合法性、幂等键派生）与 `platform/app/effect_ledger.py`（**独立** SQLite 文件 + 版本化
+   `runner_meta`、`runner_jobs` / `effect_ledger` / `effect_events` / `job_checkpoints`、
+   **`pending` 先于领域写入**、同键重放返回已记录 effect、同键不同参数判冲突）。
+   `RUNNER_WRITE_TOOL_ALLOWLIST` **冻结为空**——生产上什么都注册不了；两个模块**未接入 `main.py`**
+   （无路由、无开关、无 worker），故「默认关闭是恒等操作」在结构上成立。证据见 `tests/M10/`
+   （34 项，`m10` 标记）：`test_write_authorization.py`、`test_effect_ledger.py`、
+   `test_authority_boundary.py`。变异验证：去掉撤销检查 / 令牌参数不匹配检查 / allowlist 不相交检查 /
+   幂等重放，各自恰好判红对应用例。
+   **实施中修正的一处口径**：测试方案 §6 原写「Runner 侧模块不 import `sqlite3`」——在独立库裁定下
+   **不成立**（台账必然要自建库），已改为「不 import 领域仓储、不引用其写方法」。
 2. 为单一受控写工具实现 idempotency、checkpoint 和逐 crash point 恢复；
 3. 建立通用异步 job envelope、资源预算、进度、取消和 terminal state，并先用无生产发布的合成长任务验证；
 4. 为 ingestion/embedding/reindex 定义 manifest-bound checkpoint 与 generation publication 门禁；
