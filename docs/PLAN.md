@@ -389,7 +389,20 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.42（不是产品发布版本）· 更新：2026-09-22（**M10 实施步骤 2 完成——
+*创建：2026-08-10 · PLAN 文档修订：v2.43（不是产品发布版本）· 更新：2026-09-22（**M10 实施步骤 3 完成——
+通用异步 job envelope**：新增 `platform/app/job_envelope.py`（`JobBudget` / `JobProgress` / `ConcurrencyGate` /
+`JobEnvelope` / `SyntheticJobRunner`），**按计划要求只用合成长任务验证、无生产发布**。每项预算做**三分类**——
+`ENFORCED_LOCALLY`（wall-clock / CPU / disk / concurrency）、`ENFORCED_ELSEWHERE`（`retention_seconds` 由
+`EffectLedgerStore.purge_expired` 强制）、`NOT_ENFORCED_LOCALLY`（`ai_tokens` / `ai_cost_usd`），分区断言保证
+**新增字段无法不被归类**，且对循环强制的每一项做**行为化**验证（真的把 job 停下并提前停下）。
+新增 `tests/M10/test_job_envelope.py`（17 项）与 retention 用例，`tests/M10/` 53 → 71 项；全量 1335 → 1353
+collected、1330 → 1348 passed、2 skipped、3 failed（3 项仍为 M7 TXT parser 按设计 fail closed）。
+**本步骤修掉三处我自己写的问题**：① 首版「每个 enforced 字段都有执行点」的断言**有一半恒真**
+（`or name in (...)` 让四个字段平凡通过）——已换成三分类分区 + 行为化验证；② `retention_seconds` 曾被列进
+`ENFORCED_LOCALLY` 却**根本没有执行点**，正是 M9 `max_output_tokens` 那个缺陷类别——已实现 `purge_expired`
+（并**拒绝清除有未完成 effect 的 job**，那会丢掉 resume 需要的行）后归入 `ENFORCED_ELSEWHERE`；
+③ 一条**空转的并发用例**（先取消 envelope 使 `check()` 在取门之前就抛，「已释放」因此平凡成立）。
+变异验证：去掉取消检查 / CPU 预算 / 并发槽释放 / retention 的未完成保护 / 「只能收紧」上界，各自判红对应用例）· 上一修订 v2.42（2026-09-22：**M10 实施步骤 2 完成——
 crash-point 恢复**：新增 `platform/app/runner_recovery.py`，把 `M10-RECOVERY` 的**十个** crash point 落成
 流水线 `proposed → authorized → pending → applied`，每边界一次 checkpoint，**行先到 `pending` 再执行领域写入**；
 `resume_job` 按**台账**分类而不猜测（`proposed`/`authorized` ⇒ 判 failed **不重放**；`pending` ⇒ **只由领域对账**

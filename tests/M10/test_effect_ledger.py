@@ -190,6 +190,37 @@ def test_checkpoints_are_monotonic_per_job(tmp_path) -> None:
     assert caught.value.code == "CHECKPOINT_CONFLICT"
 
 
+def test_retention_purges_terminal_jobs_and_refuses_unfinished_ones(tmp_path) -> None:
+    """The retention budget's execution point: it must actually delete, and refuse.
+
+    Purging a job with unfinished effects would throw away exactly the rows a
+    resume needs, turning a recoverable crash into a lost one.
+    """
+    store = _store(tmp_path)
+    _job(store, job_id="job-done")
+    store.create_job(job_id="job-open", scope_id="m10-autonomous-runner-v1",
+                     learner_id="learner-1")
+    for job_id in ("job-done", "job-open"):
+        store.begin_effect(effect_id=f"{job_id}-eff", job_id=job_id, tool_name="log_review",
+                           argument_digest=_ARG_DIGEST, idempotency_key=f"key-{job_id}")
+    # `job-done` reaches a terminal state; `job-open` stays at `proposed`.
+    store.authorize_effect("job-done-eff")
+    store.mark_pending("job-done-eff")
+    store.mark_applied("job-done-eff", "b" * 64)
+
+    later = "2099-01-01T00:00:00+00:00"
+    assert store.purge_expired(retention_seconds=60, now=later) == 1
+    assert store.get_job_state("job-done") is None
+    assert store.get_job_state("job-open") == "created"
+    assert [r.effect_id for r in store.unfinished_effects()] == ["job-open-eff"]
+
+    # Nothing is old enough yet.
+    assert store.purge_expired(retention_seconds=10**9, now=later) == 0
+    with pytest.raises(EffectLedgerError) as caught:
+        store.purge_expired(retention_seconds=-1, now=later)
+    assert caught.value.code == "RETENTION_INVALID"
+
+
 def test_the_ledger_schema_has_no_column_for_argument_or_result_values(tmp_path) -> None:
     """Privacy is structural: there is nowhere to put user content."""
     store = _store(tmp_path)

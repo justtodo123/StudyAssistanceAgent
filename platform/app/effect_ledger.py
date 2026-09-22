@@ -105,6 +105,18 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _older_than(created_at: str, now: str, retention_seconds: int) -> bool:
+    """Whether `created_at` is older than the retention window ending at `now`."""
+    try:
+        created = datetime.fromisoformat(created_at)
+        reference = datetime.fromisoformat(now)
+    except (TypeError, ValueError):
+        return False
+    if created.tzinfo is None or reference.tzinfo is None:
+        return False
+    return (reference - created).total_seconds() > retention_seconds
+
+
 class EffectLedgerStore:
     """Append-only effect ledger over one dedicated SQLite file."""
 
@@ -336,6 +348,49 @@ class EffectLedgerStore:
         return tuple((row["from_state"], row["to_state"]) for row in rows)
 
     # -- checkpoints --------------------------------------------------------
+
+    def purge_expired(self, *, retention_seconds: int, now: str | None = None) -> int:
+        """Drop terminal jobs older than the retention window. Returns how many went.
+
+        This is the retention budget's **execution point** — without it,
+        `retention_seconds` would be a limit with nothing enforcing it, which is
+        the defect M9 shipped with `max_output_tokens`.
+
+        A job with unfinished effects is **never** purged: deleting it would throw
+        away exactly the rows a resume needs, turning a recoverable crash into a
+        lost one. The refusal is silent per-job (the job is skipped) so one
+        unfinished job cannot block retention for every other.
+        """
+        if not isinstance(retention_seconds, int) or isinstance(retention_seconds, bool) \
+                or retention_seconds < 0:
+            raise EffectLedgerError("RETENTION_INVALID",
+                                    "retention_seconds must be a non-negative integer.")
+        cutoff = _now() if now is None else now
+        terminal = (EffectState.APPLIED.value, EffectState.FAILED.value,
+                    EffectState.COMPENSATED.value)
+        purged = 0
+        with self._lock, self._connect() as connection:
+            rows = connection.execute(
+                "SELECT job_id, created_at FROM runner_jobs ORDER BY created_at"
+            ).fetchall()
+            for row in rows:
+                if not _older_than(row["created_at"], cutoff, retention_seconds):
+                    continue
+                unfinished = connection.execute(
+                    "SELECT COUNT(*) AS n FROM effect_ledger WHERE job_id = ?"
+                    " AND state NOT IN (?, ?, ?)",
+                    (row["job_id"], *terminal),
+                ).fetchone()["n"]
+                if unfinished:
+                    continue
+                connection.execute("DELETE FROM effect_events WHERE effect_id IN"
+                                   " (SELECT effect_id FROM effect_ledger WHERE job_id = ?)",
+                                   (row["job_id"],))
+                connection.execute("DELETE FROM effect_ledger WHERE job_id = ?", (row["job_id"],))
+                connection.execute("DELETE FROM job_checkpoints WHERE job_id = ?", (row["job_id"],))
+                connection.execute("DELETE FROM runner_jobs WHERE job_id = ?", (row["job_id"],))
+                purged += 1
+        return purged
 
     def next_checkpoint_seq(self, job_id: str) -> int:
         """The next free sequence for a job.

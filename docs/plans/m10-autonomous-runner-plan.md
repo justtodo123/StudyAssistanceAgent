@@ -193,7 +193,7 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 
 ## 5. 获准后的拟实施顺序
 
-> **实施进度**：步骤 1、2 **已完成**（2026-09-22）。其余五步未开始。
+> **实施进度**：步骤 1、2、3 **已完成**（2026-09-22）。其余四步未开始。
 
 1. ✅ 冻结 authority、capability 和 EffectLedger schema，先实现拒绝路径
    （2026-09-22）：`platform/app/runner_authority.py`（写 allowlist **与只读 preview 不相交**、
@@ -225,7 +225,21 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
    故本步骤**只**断言前者，并在测试文件里写明后者为何不适用，而不是补一条空转断言。
    **仍未接入生产**：`RUNNER_WRITE_TOOL_ALLOWLIST` 仍为空，三个模块都**未接入 `main.py`**；测试用的写工具是
    **测试内注入**的，把它放进生产 allowlist 是一次**治理动作**，需 owner 批准具体写工具；
-3. 建立通用异步 job envelope、资源预算、进度、取消和 terminal state，并先用无生产发布的合成长任务验证；
+3. ✅ 建立通用异步 job envelope、资源预算、进度、取消和 terminal state，并先用无生产发布的合成长任务验证
+   （2026-09-22）：`platform/app/job_envelope.py` 交付 `JobBudget`（wall-clock / CPU / disk / concurrency /
+   retention / ai_tokens / ai_cost）、`JobProgress`、`ConcurrencyGate`、`JobEnvelope`（步进边界守卫）与
+   `SyntheticJobRunner`。**每项预算都被三分类**——`ENFORCED_LOCALLY`（步进循环强制）、
+   `ENFORCED_ELSEWHERE`（`retention_seconds` 由 `EffectLedgerStore.purge_expired` 强制）、
+   `NOT_ENFORCED_LOCALLY`（`ai_tokens` / `ai_cost_usd`，本阶段没有 provider 调用可计量）——分区断言保证
+   **新增字段无法不被归类**，且对循环强制的每一项做**行为化**验证（真的把 job 停下并提前停下）。
+   证据见 `tests/M10/test_job_envelope.py`（17 项）。变异验证：去掉取消检查 / CPU 预算 / 并发槽释放 /
+   retention 的未完成保护 / 「只能收紧」上界，各自判红对应用例。
+   **本步骤修掉两处我自己写的问题**：① 首版「每个 enforced 字段都有执行点」的断言**有一半恒真**
+   （`or name in (...)` 让四个字段平凡通过）——已换成三分类分区 + 行为化验证；② `retention_seconds`
+   曾被列进 `ENFORCED_LOCALLY` 却**根本没有执行点**（正是 M9 `max_output_tokens` 那个缺陷类别），
+   已实现 `purge_expired`（且**拒绝清除有未完成 effect 的 job**——那会丢掉 resume 需要的行）并把它归到
+   `ENFORCED_ELSEWHERE`。另修一条**空转的并发用例**（先取消 envelope 使 `check()` 在取门之前就抛，
+   「已释放」因此平凡成立）。**无生产发布**：本步骤按要求只用合成长任务验证，未接入 `main.py`；
 4. 为 ingestion/embedding/reindex 定义 manifest-bound checkpoint 与 generation publication 门禁；
 5. 建立 reconcile/人工介入和不可补偿失败处理，再扩大写工具集合；
 6. 接入默认关闭的可选 Runner，并保持状态机路径与数据兼容；
