@@ -18,15 +18,33 @@
 
 ## output token 预算是**两个**字段，不是一个
 
-`max_output_tokens` 是**累积**预算（整个计划路径的产出总量），只送给 provider——本地没有 tokenizer，
-无从核验一次调用真正产出了多少 token，故它在本地没有执行点。`max_turn_output_tokens` 是**单轮**
-预算，它才是传给 `create_turn` 的 `max_tokens`，而 `llm_client.create_turn` 硬拒大于
-`MAX_TURN_OUTPUT_TOKENS` 的值，所以这道闸门**在本地、在发出任何 HTTP 请求之前**。
+`max_turn_output_tokens` 是**单轮**预算：它才是传给 `create_turn` 的 `max_tokens`，而
+`llm_client.create_turn` 硬拒大于 `MAX_TURN_OUTPUT_TOKENS` 的值，所以这道闸门**在本地、在发出任何
+HTTP 请求之前**。
+
+`max_output_tokens` 是**累积**预算（整个计划路径的产出总量），但**它没有运行期执行点**：既不送给
+provider（本模块唯一的 provider 调用传的是 `max_turn_output_tokens`；provider 的请求体里也没有
+「累积产出上限」这种参数），也没有 `preview_agent.py:226` 那样的用量累计核验。**但它并非完全无人读**：
+`_validate_limits` 在每次构造 `PlanAIAdapter` 时校验它（正整数、不超过冻结默认、且不得大于
+`max_input_tokens`），并据此给单轮值定上界（`max_turn_output_tokens ≤ max_output_tokens`）。故收紧
+`SA_PLAN_AI_MAX_OUTPUT_TOKENS` **不会**收紧 provider 的产出——真正约束 provider 的是单轮值。本路径
+每个计划只发**一次** provider 调用，因此单轮值在效果上也就是总量上界；但这条等价性是**单次调用**的
+后果，不是设计保证：一旦本路径引入重试或多轮，必须补上 `preview_agent.py` 那样的累计检查
+（`state.usage.output_tokens > max_output_tokens`）。
 
 两者语义不同，故不可合并成一个值。**曾合并过**：累积值被直接当单轮值传下去，于是默认配置下每次
 调用都在本地抛 `ValueError`，被 `propose` 的回退路径收敛成 `provider_unavailable`——整条外部 AI
-路径静默失效，且既有测试全绿（它们经 `proposer=` 注入，绕过这个调用点）。回归用例因此必须驱动
-`build_anthropic_proposer` 这条真实桥，见 `tests/M9/test_plan_ai_adapter.py` 的「单轮 output 预算」节。
+路径静默失效。
+
+**这次缺陷为什么没被既有测试抓到**：修复前 `tests/M9/test_plan_ai_adapter.py` 收集 50 项，其中**凡是
+构造 adapter 的都经 `proposer=` 注入同步 stub**（其余只碰 dataclass / 载荷 / 解析 / 预算校验等接缝，
+根本不构造 adapter），故没有一项触到 `create_turn` 调用点。更关键的是另一处：修复前**默认运行**的
+真实桥驱动者是 `tests/M9/test_plan_ai_benchmark.py`（`tests/M9/test_plan_ai_provider_smoke.py` 同样
+走真实桥，但它默认 skip），它**穿过了**那个调用点却没抓到——它的 `_StubClient.create_turn`
+把 `max_tokens` 直接丢掉（`del … max_tokens …`），于是超限的 2048 照样通过。教训不是「只有经
+`proposer=` 注入的测试才看不见那个调用点」，而是**桥接 stub 必须复刻客户端的硬拒**。回归用例因此
+必须驱动 `build_anthropic_proposer` 这条真实桥，见 `tests/M9/test_plan_ai_adapter.py` 的
+「单轮 output 预算」节。
 
 ## 同步/异步边界
 
@@ -46,7 +64,7 @@ import re
 import threading
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, fields, replace
+from dataclasses import dataclass, replace
 from typing import Any
 
 from .llm_client import (
@@ -88,7 +106,10 @@ class PlanAILimits:
     deadline_seconds: float = 30.0
     model_timeout_seconds: float = 20.0
     max_input_tokens: int = 8_000
-    # 累积预算，**只在 provider 侧**执行：本地没有 tokenizer，无从核验一次调用真正产出了多少 token。
+    # 累积预算，**没有运行期执行点**：不送 provider（唯一调用传的是下面的单轮值），也无用量累计核验。
+    # 但它在**构造期被校验**：正整数、不超过冻结默认、不得大于 `max_input_tokens`，并给单轮值定上界
+    # （`max_turn_output_tokens ≤ max_output_tokens`）。本路径每个计划只发一次调用，故单轮值在效果上
+    # 也是总量上界；引入重试或多轮时必须补上 `preview_agent.py:226` 那样的累计检查。
     max_output_tokens: int = 2_048
     # 单轮预算，**在本地执行**：这是传给 `create_turn` 的 `max_tokens`，而 `llm_client` 硬拒
     # 大于 `MAX_TURN_OUTPUT_TOKENS` 的值。两者语义不同，故必须是两个字段——把累积值直接当单轮值
@@ -482,5 +503,14 @@ def _run_blocking(call: Callable[[], PlanAIOutcome], *, deadline_seconds: float)
 
 
 def limit_env_names() -> tuple[str, ...]:
-    """暴露可收紧的预算环境变量名，供配置层与测试共用同一份清单。"""
-    return tuple(f"SA_PLAN_AI_{field.name.upper()}" for field in fields(PlanAILimits))
+    """暴露可收紧的预算环境变量名，供配置层与测试共用同一份清单。
+
+    名字直接取自配置层**真正兑现**的那份映射，而**不是**从 `PlanAILimits` 的字段名推导：
+    `max_retries` 有字段但**刻意不可由环境变量覆盖**（见 `platform/README.md`「model 与 retry 次数
+    不可由环境变量覆盖」），按字段名推导会宣传一个没人兑现的 `SA_PLAN_AI_MAX_RETRIES`——操作者照它
+    设值会静默无效。本函数与配置层**同源**，否则「宣传的清单」与「兑现的清单」会静默漂移；
+    `tests/M9/test_plan_ai_adapter.py` 有一条用例直接比对两者。
+    """
+    from . import config
+
+    return tuple(env_name for env_name, _ in config._PLAN_AI_LIMIT_ENV.values())

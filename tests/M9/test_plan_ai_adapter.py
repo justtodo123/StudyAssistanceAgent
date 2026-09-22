@@ -40,6 +40,7 @@ from app.plan_ai_adapter import (
     PlanAIRequest,
     PlanAITaskSummary,
     build_anthropic_proposer,
+    limit_env_names,
     parse_order,
     render_prompt,
 )
@@ -277,8 +278,14 @@ def test_tightened_limits_are_accepted():
 # 已证实缺陷的回归：`max_output_tokens`（累积，2048）曾被**直接**当作 `create_turn` 的
 # `max_tokens` 传下去，而 `llm_client.create_turn` 硬拒大于 `MAX_TURN_OUTPUT_TOKENS`（1024）的值。
 # 于是**默认配置下**每次调用都在发出任何 HTTP 请求之前抛 ValueError，被回退路径收敛成
-# `provider_unavailable`——整条外部 AI 路径静默失效，而既有测试全绿：它们一律经 `proposer=`
-# 注入，完全绕过那个调用点。故本节的断言必须驱动**真实桥**（`build_anthropic_proposer`）。
+# `provider_unavailable`——整条外部 AI 路径静默失效，而**本文件修复前收集的 50 项全绿**：其中凡是
+# 构造 adapter 的都经 `proposer=` 注入同步 stub（其余只碰 dataclass / 载荷 / 解析 / 预算校验等接缝，
+# 根本不构造 adapter），故没有一项触到那个调用点。**但盲区不止于此**：修复前**默认运行**的真实桥
+# 驱动者 `test_plan_ai_benchmark.py` **穿过**了那个调用点却仍全绿，因为它的 `_StubClient.create_turn`
+# 把 `max_tokens` 丢掉（`del … max_tokens …`），超限的 2048 照样通过。（`test_plan_ai_provider_smoke.py`
+# 同样走真实桥，但它默认 skip、本次未运行。）真教训是**桥接 stub 必须复刻客户端的硬拒**，
+# 不只是「`proposer=` 注入会绕过调用点」。故本节的断言必须驱动**真实桥**
+# （`build_anthropic_proposer`），且下面的 `_RecordingClient` 刻意复刻了那道硬拒。
 
 
 class _RecordingClient:
@@ -384,6 +391,24 @@ def test_per_turn_budget_env_var_is_wired_and_tightens_only(monkeypatch: pytest.
     monkeypatch.setenv("SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS", str(MAX_TURN_OUTPUT_TOKENS + 1))
     with pytest.raises(ValueError):
         config.plan_ai_limits()
+
+
+def test_advertised_budget_env_names_are_exactly_the_honoured_ones() -> None:
+    """`limit_env_names()` 宣传的清单必须与配置层**兑现**的清单逐个相同。
+
+    它曾按 `PlanAILimits` 的字段名推导，于是宣传了一个没人兑现的 `SA_PLAN_AI_MAX_RETRIES`
+    （`max_retries` 有字段但刻意不可由环境变量覆盖）。操作者照它设值会**静默无效**——配置层不报错，
+    预算也不收紧。这条用例把两份清单钉在一起，防止再次漂移。
+    """
+    from app import config
+
+    honoured = {env_name for env_name, _ in config._PLAN_AI_LIMIT_ENV.values()}
+
+    assert set(limit_env_names()) == honoured
+    # 反向：`max_retries` 有字段但不可配置，故不得出现在宣传清单里。
+    assert "SA_PLAN_AI_MAX_RETRIES" not in limit_env_names()
+    # 宣传清单非空，否则「相等」会因两边都空而平凡成立。
+    assert len(honoured) == len(PlanAILimits.__dataclass_fields__) - 1
 
 
 # ── 回退：每一类失败都收敛为 order=None ─────────────────────────────────────
