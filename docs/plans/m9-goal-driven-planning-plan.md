@@ -1,6 +1,6 @@
 # M9 目标驱动学习计划准备计划
 
-> 当前状态：`ADMITTED / IN_PROGRESS`；确定性 Planner + 计划生命周期（生成/采纳/进度/重规划 + 跳过/逾期偏差信号；可选外部 AI 路径默认关闭；mastery 写入除外）
+> 当前状态：`ADMITTED / COMPLETE`（2026-09-22 收口，`completion_approval` 见 §4.5）；确定性 Planner + 计划生命周期（生成/采纳/进度/重规划 + 跳过/逾期偏差信号；可选外部 AI 路径默认关闭；mastery 写入除外）
 > 前置：M7 用户源生命周期与 M8 存储契约退出证据
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
@@ -67,8 +67,8 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
   stub provider，真实 provider 的延迟/成本/失败模式仍未验证）；
 - [x] evaluation workload、样本与阈值口径冻结——**范围仅限 M9 外部 AI 路径**（v1.5，见 §4.3）；
   遵循度的人工评审口径**仍未**冻结（保持定性），故这不是全项目评测口径冻结；
-- [ ] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表一致；
-- [ ] 用户或项目负责人完成批准。
+- [x] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表一致（2026-09-22 收口时核对）；
+- [x] 用户或项目负责人完成批准（准入批准见下表；**完成批准**是另一条独立记录，见 §4.5）。
 
 | 批准字段 | 当前值 |
 | --- | --- |
@@ -312,6 +312,49 @@ provider 之前返回（provider 调用数为 0），`cost` 预算在收到**合
 `admission_history` 记录（§4 的两条触发条件——决策值变化与批准条件失效——均未发生）、不新增公开路由、
 不申请 M9 收口。
 
+### 4.5 M9 完成批准（2026-09-22）
+
+按 [`stage-admission-gates.md`](../standards/stage-admission-gates.md) §4：交付改为 `COMPLETE` 时，
+必须在技术退出证据之外登记**独立**的 `completion_approval`；该记录**不得覆盖**原准入批准，也**不得扩大**
+既有 `approval_scope`。
+
+| 完成批准字段 | 值 |
+| --- | --- |
+| approved_by | justtodo123 |
+| approved_at | 2026-09-22 |
+| approval_reference | User instruction: 批准 M9 COMPLETE（「可以，目标是快速推进，记录完当前状态后就迅速进入下一个阶段」） |
+| approval_scope | `m9-plan-lifecycle-v1`（与 §4 的 `approval_scope.scope_id` **逐字相同**，未扩大） |
+| evidence | `docs/PLAN.md`、本计划、`docs/baselines.md`、`tests/M9/README.md`、`tests/TEST_PLAN.md` |
+
+**登记表侧的对应变更**：`delivery_status` 由 `IN_PROGRESS` 改为 `COMPLETE`；新增上面的
+`completion_approval` 对象。**未改动**：`admission_status`（仍 `ADMITTED`）、`approval`（仍是 v1.5 的
+准入批准，完成批准**不覆盖**它）、`admission_history`（本次不是准入状态过渡，§4 的两条触发条件均未发生）、
+`approval_scope`、`implementation_start`。
+
+**本收口批准的范围与三条 caveat 一起读**（它们**不是**收口后被解除的限制，而是收口时**已知且接受**的）：
+
+1. 冻结评测的**范围仅限 M9 外部 AI 路径**，不是全项目评测；遵循度仍是定性、无数值阈值；
+2. 真实 provider 的延迟 / 成本 / 失败模式**仍未验证**——被**刻意**排除在门禁判据之外，arm B 未运行；
+3. 10K/100K 不在范围内：M8 `BLOCKED` / M11 拟议。
+
+**随收口登记的一条已知限制**（外部 AI 路径的**有效性**上限，不是正确性缺陷）：`PlanAIRequest` 的字段
+是 `goal` / `course` / `hours_per_day` / `required_topics` / `excluded_topics` / `scope_id` /
+`mastery_counts` / `tasks`，**不含先修关系**；而 `goal_planner._ai_order` 会拿 `_prerequisite_report`
+的先修违反数作闸门丢弃整个置换。即**模型被要求满足一个从不告诉它的约束**。2026-09-22 的一次
+**第三方 provider 探针**（非 arm B、非 M9 证据、不进门禁，产物在 gitignored 的 `artifacts/`）实测：
+5 个冻结 workload 各 2 轮，生产 prompt 下 `adopted 5/10`；仅改措辞（`instruct`）`4/10`；**把先修边以
+`task_id` 对送出去**（`disclose`）`8/10`。同轮另测出该模型是推理模型、关掉推理可把单次延迟从 22.0s
+降到 2.4s 而答案字节数不变。**这不阻塞收口**——该路径默认关闭、失败逐字回退、设计上就是「AI 提议、
+确定性校验器裁决」；但它说明这条路径在采纳率上有结构性上限，且**修复它要动披露范围**（属
+`M9-EXTERNAL-AI` 的 `MINIMAL_DISCLOSURE` 判据），故**本次不动**，留作后续阶段的输入。
+
+**未申请**：`admission_history` 新增条目（本次 `ADMITTED → ADMITTED`，写进去会造成语义错配，且会被
+`test_admission_history_records_are_well_formed` 的 `from != to` 断言判红）。留痕由本节与登记表的
+`completion_approval` 承担。
+
+**下游效果**：`M10-M9-EXIT` 由 `OPEN` 改为 `SATISFIED`（证据 `docs/PLAN.md` + 本计划）。这**只登记
+事实**，**不构成** M10 的准入批准——M10 仍需 `M10-M8-EXIT` 与自身 11 项 `OPEN` 决策。
+
 ## 5. 获准后的拟实施顺序
 
 1. 先冻结 planner input、plan、mastery 和 progress event schema；
@@ -339,6 +382,11 @@ mastery 只有一个写入权威（`tests/M9/test_mastery_write_authority.py`，
 2. 真实 provider 的延迟 / 成本 / 失败模式被**刻意**排除在门禁判据之外，且**仍未验证**（arm B 本次未运行）；
 3. `COMPLETE` 需要 §4 要求的**独立 `completion_approval`**，本次**不申请**。是否作退出就绪声明是
    **另一个决定**，不得从 v1.5 推定。
+
+> **2026-09-22 收口更新**（不修改上述历史记录）：第 3 条的「另一个决定」已于同日作出——owner 批准
+> M9 `COMPLETE`，`completion_approval` 见 §4.5，登记表 `delivery_status` 改为 `COMPLETE`。
+> **第 1、2 条仍然成立**：收口**不**把冻结范围扩大到全项目，**也**不产生任何真实 provider 读数。
+> 收口时另登记了一条已知限制（外部 AI 路径的采纳率上限），见 §4.5 末。
 
 ### 5.1 实现进度
 

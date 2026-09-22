@@ -751,6 +751,9 @@ M9 外部 AI 路径（`m9.external-ai`）**，**不是**全项目评测，也**�
 5. **不是容量**：1K 语料**不被 M9 存储或索引**；10K/100K 仍是 M8（`BLOCKED`）/ M11 依赖。
 6. **不是全项目评测口径冻结**：冻结范围仅限 M9 外部 AI 路径；遵循度仍为**定性**，未冻结数值阈值。
 7. **不构成 M9 阶段退出**：`COMPLETE` 需要独立的 `completion_approval`，本次**不申请**。
+   **2026-09-22 更新**：该完成批准已于同日由 owner 给出（见 M9 计划 §4.5），故本条「不申请」**已过时**；
+   但上列 1–6 各项 caveat **仍然成立**——收口**不**产生任何真实 provider 读数、**不**把冻结范围扩大到
+   全项目、**不**给出 mastery 写入能力。
 
 该变更是 M9 **第一次触发** `stage-admission-gates.md` §4 撤销的变更（决策值实质变更 ⇒
 `admission_history` 追加 `ADMITTED→REVOKED`、`REVOKED→ADMITTED` 两条），live 字段仍为

@@ -434,7 +434,17 @@ class TestStageAdmissionConsistency:
 
         m9 = stages["M9"]
         assert m9["admission_status"] == "ADMITTED"
-        assert m9["delivery_status"] == "IN_PROGRESS"
+        # 2026-09-22 收口：owner 批准 M9 COMPLETE。本断言随事实移动，并**加强**为同时校验 §4 要求的
+        # 独立完成批准——「完成批准不得覆盖原准入批准、不得扩大既有 approval_scope」。
+        assert m9["delivery_status"] == "COMPLETE"
+        completion = m9["completion_approval"]
+        assert completion["approved_by"] == "justtodo123"
+        assert completion["approved_at"]
+        assert completion["approval_reference"].startswith("User instruction:")
+        assert completion["approval_scope"] == m9["approval_scope"]["scope_id"]
+        assert completion["evidence"]
+        # 原准入批准（v1.5）不被完成批准覆盖：两条记录并存，准入引用仍是 v1.5 那条。
+        assert m9["approval"]["plan_revision"] == "v1.5"
         m9_exit = next(
             prerequisite
             for prerequisite in m9["prerequisites"]

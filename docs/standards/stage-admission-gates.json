@@ -315,7 +315,7 @@
       "stage": "M9",
       "plan": "docs/plans/m9-goal-driven-planning-plan.md",
       "admission_status": "ADMITTED",
-      "delivery_status": "IN_PROGRESS",
+      "delivery_status": "COMPLETE",
       "prerequisites": [
         {"id": "M9-M7-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m7-source-lifecycle-plan.md", "docs/baselines.md"]},
         {"id": "M9-M8-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m8-specialized-storage-plan.md"]}
@@ -342,7 +342,14 @@
         "included": ["m9.goal-plan-generation", "m9.plan-adoption", "m9.progress-event", "m9.replanning", "m9.bounded-grounding-retrieval", "m9.plan-identity-fidelity", "m9.external-ai"],
         "excluded": ["m9.mastery-write"]
       },
-      "implementation_start": {"status": "AUTHORIZED", "authorized_by": "justtodo123", "authorized_at": "2026-09-20", "authorization_reference": "User instruction: 批准 M9 确定性 Planner 先行并扩展到计划生命周期（生成+采纳+进度+重规划；外部 AI 与 mastery 写入除外）"}
+      "implementation_start": {"status": "AUTHORIZED", "authorized_by": "justtodo123", "authorized_at": "2026-09-20", "authorization_reference": "User instruction: 批准 M9 确定性 Planner 先行并扩展到计划生命周期（生成+采纳+进度+重规划；外部 AI 与 mastery 写入除外）"},
+      "completion_approval": {
+        "approved_by": "justtodo123",
+        "approved_at": "2026-09-22",
+        "approval_reference": "User instruction: 批准 M9 COMPLETE（「可以，目标是快速推进，记录完当前状态后就迅速进入下一个阶段」）",
+        "approval_scope": "m9-plan-lifecycle-v1",
+        "evidence": ["docs/PLAN.md", "docs/plans/m9-goal-driven-planning-plan.md", "docs/baselines.md", "tests/M9/README.md", "tests/TEST_PLAN.md"]
+      }
     },
     {
       "stage": "M10",
@@ -352,7 +359,7 @@
       "prerequisites": [
         {"id": "M10-M7-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m7-source-lifecycle-plan.md", "docs/baselines.md"]},
         {"id": "M10-M8-EXIT", "status": "OPEN", "evidence": []},
-        {"id": "M10-M9-EXIT", "status": "OPEN", "evidence": []}
+        {"id": "M10-M9-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m9-goal-driven-planning-plan.md"]}
       ],
       "mandatory_decisions": [
         {"id": "M10-AUTHORITY", "status": "OPEN", "value": null, "evidence": []},
