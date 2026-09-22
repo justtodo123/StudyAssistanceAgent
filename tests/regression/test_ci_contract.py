@@ -129,3 +129,52 @@ class TestOfflineCiContract:
             "python -m pytest tests/M6_crawler -q --tb=short "
             '-m "m6_crawler and online"'
         ) in online_commands
+
+    #: Stage test directories that are deliberately absent from the shared stage
+    #: command, each with the reason. Every other `tests/*/` directory that holds
+    #: `test_*.py` must be in that command.
+    _STAGE_DIRS_WITHOUT_SHARED_COMMAND = {
+        "M6_crawler": "runs in the dedicated crawler-offline / crawler-online-smoke jobs",
+        "M7": "excluded: 3 TXT cases fail closed on CPython 3.13 by design (see TEST_PLAN)",
+        "source_inventory": "read-only external inventory; not a gate",
+    }
+
+    def test_every_stage_test_directory_is_covered_by_ci(self, repo_root):
+        """A stage suite must not be able to land without CI coverage.
+
+        M10 shipped 115 tests — including the write-authorization, crash-recovery
+        and atomic-publication guards — and was absent from the stage command
+        until it was noticed by hand. The existing assertions are subset checks,
+        so they cannot catch an omission. Enumerating the tree can.
+        """
+        tests_root = repo_root / "tests"
+        present = sorted(
+            path.name
+            for path in tests_root.iterdir()
+            if path.is_dir()
+            and path.name not in {"__pycache__", "utils"}
+            and any(path.glob("test_*.py"))
+        )
+        assert present, "the enumeration found no stage directories at all"
+
+        commands = self._run_commands(
+            self._load_workflow(repo_root)["jobs"]["offline"]
+        )
+        stage_command = next(
+            command for command in commands
+            if command.startswith("python -m pytest tests/M0_M2")
+        )
+
+        missing = [
+            name for name in present
+            if name not in self._STAGE_DIRS_WITHOUT_SHARED_COMMAND
+            and f"tests/{name}" not in stage_command
+        ]
+        assert missing == [], (
+            f"stage suites with no CI coverage: {missing}"
+        )
+        # Non-vacuity: the exclusion list must be a decision, not an escape hatch
+        # that could be widened until the check passes for anything.
+        assert set(self._STAGE_DIRS_WITHOUT_SHARED_COMMAND) <= set(present)
+        for name in self._STAGE_DIRS_WITHOUT_SHARED_COMMAND:
+            assert (tests_root / name).is_dir(), f"{name} vanished from the tree"
