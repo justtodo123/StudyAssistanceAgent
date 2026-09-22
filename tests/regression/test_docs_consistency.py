@@ -97,7 +97,7 @@ class TestProjectStatusConsistency:
         assert "M6a-P0 crawler 已收口" in root
         assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in plan
         assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in root
-        assert "M8 与 M10–M12" in root
+        assert "M8 与 M11–M12" in root
         assert "M6–M12" in plan
         for text in (root, plan):
             assert "BLOCKED / NOT_STARTED" in text
@@ -107,8 +107,10 @@ class TestProjectStatusConsistency:
         assert "独立人工完成批准" in root
         assert "M8–M10 的事实型" in root
         assert "M7 退出前置已满足" in root
-        assert "M8 与 M10–M12 仍为 `BLOCKED / NOT_STARTED`" in root
+        assert "M8 与 M11–M12 仍为 `BLOCKED / NOT_STARTED`" in root
         assert "M9 八项 Decision 已 `RESOLVED`" in root
+        # 2026-09-22：M10 获批 `ADMITTED / IN_PROGRESS`（十一项决策已闭合）。本断言随事实移动。
+        assert "M10 十一项 Decision 已全部 `RESOLVED`" in root
         assert "M0–M5 MVP 可用。" in root
         assert "M10" in root and "自主 Runner" in root
         assert "课程笔记创建" not in root
@@ -483,9 +485,9 @@ class TestStageAdmissionConsistency:
             ],
         }
 
+        # 2026-09-22：M10 已获批 `ADMITTED / IN_PROGRESS`，故从「仍阻断的下游」组移出，单独断言。
         downstream = {
             "M8": "M8-M7-EXIT",
-            "M10": "M10-M7-EXIT",
         }
         expected_exit_evidence = [
             "docs/PLAN.md",
@@ -507,6 +509,36 @@ class TestStageAdmissionConsistency:
                 "evidence": expected_exit_evidence,
             }
             assert all(value is None for value in stage["approval"].values())
+
+        m10 = stages["M10"]
+        assert m10["admission_status"] == "ADMITTED"
+        assert m10["delivery_status"] == "IN_PROGRESS"
+        m10_m7_exit = next(
+            prerequisite
+            for prerequisite in m10["prerequisites"]
+            if prerequisite["id"] == "M10-M7-EXIT"
+        )
+        assert m10_m7_exit == {
+            "id": "M10-M7-EXIT",
+            "status": "SATISFIED",
+            "evidence": expected_exit_evidence,
+        }
+        # §4 五项批准字段齐全；准入批准与生产开工是**两条独立记录**。
+        assert all(value for value in m10["approval"].values())
+        assert m10["approval"]["approved_by"] == "justtodo123"
+        assert m10["approval"]["approval_reference"].startswith("User instruction:")
+        assert m10["implementation_start"]["status"] == "AUTHORIZED"
+        # scope 只缩小边界：`included` / `excluded` 均非空，且与决策集一一对应。
+        assert m10["approval_scope"]["included"]
+        assert m10["approval_scope"]["excluded"]
+        assert len(m10["approval_scope"]["included"]) == len(m10["mandatory_decisions"])
+        # 准入批准**不覆盖**任何决策值：十一项仍逐项 `RESOLVED` 且带 value。
+        assert all(
+            decision["status"] == "RESOLVED" and decision["value"]
+            for decision in m10["mandatory_decisions"]
+        )
+        # 尚未完成：不得有 `completion_approval`。
+        assert m10.get("completion_approval") is None
 
         m9 = stages["M9"]
         assert m9["admission_status"] == "ADMITTED"

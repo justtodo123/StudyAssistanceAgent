@@ -1,7 +1,8 @@
 # M10 自主 Runner 与 Harness 对外准备计划
 
-> 当前状态：设计准备；`BLOCKED / NOT_STARTED`，未获准开工
-> 前置：M7、M8、M9 全部退出证据
+> 当前状态：`ADMITTED / IN_PROGRESS`（2026-09-22 获批，范围 `m10-autonomous-runner-v1`，plan_revision v1.0；
+> `implementation_start` 已 `AUTHORIZED`，见 §4.1）
+> 前置：M7、M8、M9 全部退出证据（三项均已 `SATISFIED`）
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
 
@@ -135,23 +136,60 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 - [x] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表一致（由
   `test_stage_plans_track_registry_prerequisites`、`test_stage_plans_track_registry_decision_status` 与
   `test_plan_milestone_table_matches_registry` 逐项机械校验）；
-- [ ] 用户或项目负责人完成批准。
+- [x] 用户或项目负责人完成批准（2026-09-22，见 §4.1）。
 
 | 批准字段 | 当前值 |
 | --- | --- |
-| approved_by | — |
-| approved_at | — |
-| approval_reference | — |
-| plan_revision | — |
-| decision_set_version | — |
+| approved_by | justtodo123 |
+| approved_at | 2026-09-22 |
+| approval_reference | User instruction: 「允许执行」（原文与解读见 §4.1） |
+| plan_revision | v1.0 |
+| decision_set_version | m10-decision-set-v1 |
 
-**准入检查表六项已全部勾选**，只剩 owner 的独立准入批准。第 3、4 两项由准备物
+**准入检查表六项已全部勾选。** 第 3、4 两项由准备物
 [`references/m10-test-plan-v1.md`](references/m10-test-plan-v1.md) 关闭——它给出可执行的测试方案与冻结的
 评测任务集**形状**，但**不创建 `tests/M10/`**、不写生产物件、不产生性能声明。
 
-批准为空，M10 保持 `BLOCKED / NOT_STARTED`。三项前置（`M10-M7-EXIT` / `M10-M8-EXIT` / `M10-M9-EXIT`）
-自 2026-09-22 起均已 `SATISFIED`，**阻断项只剩 §3 的十一项强制决策与 owner 的独立准入批准**；
-前置满足不构成准入。Agent 不得自行批准。
+三项前置（`M10-M7-EXIT` / `M10-M8-EXIT` / `M10-M9-EXIT`）自 2026-09-22 起均已 `SATISFIED`。
+
+### 4.1 准入与生产开工批准（2026-09-22）
+
+| 批准字段 | 值 |
+| --- | --- |
+| approved_by | justtodo123 |
+| approved_at | 2026-09-22 |
+| approval_reference | User instruction: 「允许执行」——回应「下一步：M10 准入 + 开工批准。批了之后 M10 转 `ADMITTED / IN_PROGRESS`，我按计划 §5 从『冻结 authority/capability/EffectLedger schema，先实现拒绝路径』开始写代码」。按本仓既有惯例逐字引用原话并说明解读：本次用「执行」（而非上次推送用的「推送」），故读作**批准 M10 准入与生产开工**，而非仅批准推送 |
+| plan_revision | v1.0 |
+| decision_set_version | m10-decision-set-v1 |
+| approval_scope | `m10-autonomous-runner-v1` |
+| implementation_start | `AUTHORIZED`（2026-09-22，同一指令；见登记表） |
+
+**批准范围 `m10-autonomous-runner-v1`**：
+
+- `included`（11 项，与 §3 的十一项强制决策一一对应）：`m10.authority`、`m10.write-authorization`、
+  `m10.checkpoint`、`m10.idempotency`、`m10.effect-ledger`、`m10.recovery`、`m10.evaluation`、
+  `m10.manifest`、`m10.mcp`、`m10.offline-default`、`m10.rollout`；
+- `excluded`（5 项）：`m11.data-scaling`、`m12.cloud-deployment`、`m10.multi-worker-topology`、
+  `m8.backend-selection`、`m10.real-10k-100k-data`。
+
+**本批准做什么**：把 `admission_status` 改为 `ADMITTED`、`delivery_status` 改为 `IN_PROGRESS`，
+`implementation_start` 改为 `AUTHORIZED`（按
+[`stage-admission-gates.md`](../standards/stage-admission-gates.md) §4，交付进入 `IN_PROGRESS` 需开工门禁已授权）。
+
+**本批准不做什么**（逐条，防止被后读高估）：
+
+- **不批准任何被排除项**：M11 数据扩展、M12 云部署、多 worker 拓扑、M8 后端选择、10K/100K 真实数据
+  仍全部未获批——`approval_scope` 只用于**缩小**边界，不得把被排除的下游阶段隐式提升为已批准。
+- **不产生 `completion_approval`**：`COMPLETE` 需要技术退出证据之外的**独立**完成批准，本阶段远未到；
+  登记表中 `completion_approval` 必须保持不存在。
+- **不改变十一项决策值**、不改 `approval_scope` 之外任何字段、不写 `admission_history`（本次为
+  `BLOCKED → ADMITTED`，是**准入状态过渡**——按 §4 的留痕要求，过渡本身由本节与登记表批准字段承担；
+  M9 的 `admission_history` 记录对应的是**决策值实质变更**，本次没有决策值变更）。
+- **不豁免 §6 继承不变量**：M0–M5 API/OpenAPI 与正式学习闭环保持兼容、`StudySessionService` 继续独占正式
+  状态转换与领域写入、默认 90 题不变、默认离线路径不强制依赖外部 LLM、M6b 仍是隔离且默认关闭的只读 preview、
+  **状态机仍为正式默认**。
+- **不授权跳过 §5 顺序**：实施按 §5 的七步推进，且必须遵守
+  [`references/m10-test-plan-v1.md`](references/m10-test-plan-v1.md) 的方案与变异要求。
 
 ## 5. 获准后的拟实施顺序
 

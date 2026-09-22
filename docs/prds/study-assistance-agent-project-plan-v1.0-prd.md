@@ -59,8 +59,9 @@
 - M8/M9/M10 的事实型 M7 退出前置已满足。M9 已于 2026-09-22 在 `m9-plan-lifecycle-v1` 范围内取得独立完成
   批准，现为 `ADMITTED / COMPLETE`（其 M8 前置以「维持当前 SQLite/BM25 后端」满足，非 M8 执行）；M10 的
   三项前置亦已于 2026-09-22 全部 `SATISFIED`（`M10-M8-EXIT` 走同一条维持现状结论分支，见 M10 计划 §2.1，
-  非容量证据）；M8 仍须闭合自身决策与批准，M8 与 M10 保持 `BLOCKED / NOT_STARTED`（M10 等待自身十一项强制
-  决策与独立批准），且不以 M6b 为写路径或 Source 生命周期前置。
+  非容量证据）；**M10 的十一项强制决策亦已全部 `RESOLVED`，并于 2026-09-22 在 `m10-autonomous-runner-v1`
+  范围内获批为 `ADMITTED / IN_PROGRESS`、`implementation_start` 已 `AUTHORIZED`**；M8 仍须闭合自身决策与批准，
+  M8 保持 `BLOCKED / NOT_STARTED`，且不以 M6b 为写路径或 Source 生命周期前置。
 
 ### 风险评估
 - **技术风险**：Runner 误写学习状态。缓解：状态机独占正式写入；M6b 只读；M10 完成授权/checkpoint/幂等后才写。
