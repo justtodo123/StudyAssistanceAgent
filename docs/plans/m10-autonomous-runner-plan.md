@@ -24,7 +24,10 @@ M10 必须支持 M8 100K capacity 和拟议 M11 10K 真实数据带来的长任�
 - EffectLedger 记录 proposed/authorized/pending/applied/failed/compensated，批量子任务必须使用幂等键；
 - Runner 和模型不得直接执行 LanceDB/Qdrant/SQLite 原生命令，只能调用受授权领域服务；
 - index candidate 构建不得阻塞正式学习会话；只有完整校验和原子发布后才可见；
-- 本地进程退出、断电、磁盘不足、取消与未来云端 worker 重试必须进入冻结 crash/recovery matrix；
+- 本地进程退出、断电、磁盘不足、取消必须进入冻结 crash/recovery matrix；**未来云端 worker 重试**在
+  2026-09-22 的 worker 拓扑裁定（维持单 worker，多 worker 留给 M12，见
+  [`references/m10-decision-design-draft.md`](references/m10-decision-design-draft.md) §11）下**只作为 M12 的
+  输入**，不构成本阶段的矩阵要求；
 - 资源预算至少覆盖 wall-clock、CPU、RSS、磁盘临时空间、并发、外部 AI token/cost（若启用）和保留期。
 
 本节不批准 M11 数据扩展、M12 云部署、后台 worker 或任何生产长任务。
@@ -102,8 +105,9 @@ M10 必须支持 M8 100K capacity 和拟议 M11 10K 真实数据带来的长任�
 
 十一项决策的设计草案（**非授权、不产生 `RESOLVED`**）见
 [`references/m10-decision-design-draft.md`](references/m10-decision-design-draft.md)：§0.1 逐条登记起草时核实的
-仓库事实，§末列出四项**待 owner 裁定**的开放点（迁移机制、两个预留错误码、worker 拓扑、全部数值阈值），
-草案不自行决定。
+仓库事实；§末记录 owner 于 2026-09-22 对四项开放点的**裁定**——存储机制取**独立 SQLite 文件**、预留错误码由
+M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0 容忍组**。四项裁定**只关闭草案内的开放点**，
+**不产生任何 `RESOLVED`**，十一项决策仍需逐项闭合并经 owner 单独批准。
 
 ## 4. 准入检查与批准记录
 

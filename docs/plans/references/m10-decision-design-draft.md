@@ -73,11 +73,14 @@
 
 ## 3. `M10-CHECKPOINT`
 
-- **先决问题（必须显式裁定，不能默认）**：`learning_store.py` **没有**迁移机制，而 checkpoint 需要新表。
-  三条现成路径择一：(a) 学 `source_registry.py` 的 meta 表 family+数值版本 + 不匹配即拒；(b) 学
-  `source_delete.py` 的数值版本 + `ALTER TABLE` 迁移路径；(c) 新建**独立** SQLite 文件承载 job/checkpoint/
-  ledger，完全不碰学习状态库。**本草案倾向 (c)**：它让「Runner 自有状态」与「领域权威状态」在**物理上**分开，
-  使 `M10-AUTHORITY` 的边界可被机械检查，也避免动到无迁移机制的库；代价是多一个文件与跨库事务不可用。
+- **先决问题（已由 owner 裁定，见 §末裁定记录）**：`learning_store.py` **没有**迁移机制，而 checkpoint 需要新表，
+  故存储与迁移机制必须先定。**裁定取 (c)：新建独立 SQLite 文件**承载 job / checkpoint / ledger，完全不碰学习
+  状态库。理由：它让「Runner 自有状态」与「领域权威状态」在**物理上**分开，使 `M10-AUTHORITY` 的边界可被机械
+  检查，也避免动到无迁移机制的库。
+- **该裁定的已知代价（必须一并承担，不得后读时当作意外）**：跨库事务不可用。因此台账的
+  「状态跃迁与领域写入同事务」**不可行**，outbox + reconcile 从 §5 的可选项变成**必需项**；且
+  「恢复一致性」必须靠 reconcile 收敛，不能靠事务回滚。另需为这个新库自己定义版本机制（(a) 或 (b) 的范式
+  仍适用于**它**，只是不再适用于 `learning_store.py`）。
 - **对象**：`job`（identity / scope / input manifest digest / 资源预算 / progress / terminal state）与
   `checkpoint`（`job_id` / 单调 `seq` / `stage` / `input_digest` / `state_digest` / 时间戳）。
 - **边界与频率**：**每个副作用边界至多一次** checkpoint（propose 前 / authorize 后 / apply 前 / apply 后）。
@@ -102,8 +105,9 @@
 ## 5. `M10-EFFECT-LEDGER`
 
 - **状态**：`proposed` / `authorized` / `pending` / `applied` / `failed` / `compensated`（M10 计划 §1.1）。
-- **事务边界**：台账状态跃迁与领域写入**尽可能**在同一事务内。**若采纳 §3 的 (c) 独立库**，则跨库事务
-  不可用，**必须**走 outbox + reconcile——这是 (c) 的**已知代价**，须在裁定 §3 时一并承担。
+- **事务边界**：§3 已裁定采用**独立 SQLite 文件**，跨库事务不可用，故 outbox + reconcile 是**必需项**而非
+  可选优化：台账状态跃迁与领域写入不在同一事务内，一致性由 reconcile 收敛。台账行必须在领域写入**之前**
+  持久化为 `pending`，否则崩溃窗口内会出现「已 apply 但无台账行」。
 - **outbox / reconcile**：`pending` 超过阈值的条目与领域状态对账；**reconcile 自身必须幂等**。
 - **审计**：追加式，保留期内不删除。
 - **诚实声明（强制）**：台账**不得**宣称 exactly-once。报告须写明实际保证（如「at-least-once + 幂等应用」
@@ -138,8 +142,10 @@
   显式 opt-in、**非门禁**、任何退出条件与登记表**不得**依赖它。
 - **原则 3 的强制适用**：每个被写成门禁的指标都必须给出**本地执行点**。给不出执行点的指标只能进报告，
   **不得**进门禁——M9 的 `max_output_tokens` 就是这么被纠正的（M9 计划 §4.4）。
-- **阈值（待 owner 裁定）**：越权率 = 0；重复副作用 = 0；半发布 generation = 0；crash 矩阵覆盖 = 100%；
-  状态机默认路径可回滚且旧 session 可恢复；默认 90 题不退化。
+- **阈值（owner 已裁定取 0 容忍组）**：越权率 = 0；重复副作用 = 0；半发布 generation = 0；
+  crash 矩阵覆盖 = 100%；状态机默认路径可回滚且旧 session 可恢复；默认 90 题不退化。与 M9 的
+  「先修违反 = 0 / stale Source 进入 = 0」同一纪律。**注意**：0 容忍组里每一项都必须先能**本地执行**，
+  否则按原则 3 只能进报告、不得进门禁。
 - **范围限制**：本评测**只覆盖 M10 自主路径**，不是全项目评测口径冻结；遵循度类指标仍为定性。
 - **证据**：冻结任务集文件、报告（含机器可读的 `enforced_locally` / `not_enforced_locally`，沿用 M9 报告形态）、
   用例名清单。
@@ -149,10 +155,10 @@
 - **最小面**：首个发布**不含写工具**；工具集是 `PREVIEW_TOOL_ALLOWLIST` 的子集或等价的只读集。
 - **传输**：本地 **stdio only**，不监听端口——与 local-first 默认一致，也避免新开网络面。
 - **认证**：token ≥32 UTF-8 字节、缺失即 fail closed，沿用 `config.py:140-143` 的 preview 形态。
-- **schema / 错误映射**：**必须裁定** `runtime-contracts.md:71-72` 两个**预留但未被消费**的错误码
-  （`TOOL_PERMISSION_DENIED` / `BUDGET_EXCEEDED`）：要么在本阶段**消费**它们，要么**修订**该契约表并说明
-  实际表达方式（M6b 用的是 `terminated` envelope + 内部原因码）。**不得**让契约表继续悬空——那是既有的
-  文档-实现口径差，M10 是收口它的自然位置。
+- **schema / 错误映射（owner 已裁定：M10 消费它们）**：`runtime-contracts.md:71-72` 两个**预留但未被消费**的
+  错误码（`TOOL_PERMISSION_DENIED` / `BUDGET_EXCEEDED`）由 M10 的写路径与 MCP 面**真实返回**，使契约表与
+  实现对齐。**边界**：本裁定只要求 M10 自己的面消费它们；M6b preview 的既有表达（`terminated` envelope +
+  内部原因码）**不因此改写**——它是已交付且已冻结的行为，改它属另一个决定。
 - **conformance**：不得暴露 LanceDB/Qdrant/SQLite 原生能力；错误码稳定且不泄露路径/凭据。
 - **阈值**：conformance 用例全绿；未授权工具调用 = 0；响应中宿主路径出现 = 0。
 
@@ -180,9 +186,11 @@
 
 - **默认**：关闭。启用条件、环境/用户范围、观测字段、kill switch、回滚、迁移兼容。
 - **kill switch**：**在每个副作用边界**检查，不只在 job 开始时检查一次——否则长任务无法被叫停。
-- **并发前提**：`worker_topology.py:40/64` 的**单 worker 守卫**与「未来云端 worker 重试」（M10 计划 §1.1）
-  直接冲突。**必须显式裁定**：M10 是维持单 worker 并把多 worker 留给 M12，还是在本阶段就定义多 worker
-  拓扑。本草案**倾向**维持单 worker（改动面最小，且与既有守卫一致）。
+- **并发前提（owner 已裁定：维持单 worker）**：`worker_topology.py:40/64` 的 `enforce_single_worker_topology`
+  继续生效，M10 **不**放宽它；多 worker 与云端 worker 重试**留给 M12**。直接后果：crash 矩阵只需覆盖**单进程**
+  crash（§6 的 10 点即按此口径），幂等与台账无需处理跨 worker 并发。**同时更新 M10 计划 §1.1 的口径**——
+  该节「未来云端 worker 重试必须进入冻结 crash/recovery matrix」一句在本裁定下**只作为 M12 的输入**，
+  不构成本阶段的矩阵要求。
 - **回滚**：关闭 Runner 后，全部既有 session/plan/review 数据仍可读，状态机路径功能完整。
 - **阈值**：kill switch 在矩阵每个边界点生效（用例覆盖 100%）；关闭后回归套件全绿。
 
@@ -195,9 +203,24 @@
 顺序**不构成**准入或开工授权。十一项全部 `RESOLVED` 且 owner 填写批准记录之前，M10 保持
 `BLOCKED / NOT_STARTED`。
 
-## 待 owner 裁定的开放点（草案不自行决定）
+## owner 裁定记录（2026-09-22）
 
-1. §3 的迁移机制：独立 SQLite 文件 (c) / meta 表版本 (a) / `ALTER TABLE` 迁移 (b)。
-2. §8 的两个预留错误码：消费还是修订契约。
-3. §11 的 worker 拓扑：维持单 worker 还是本阶段定义多 worker。
-4. §7 的全部数值阈值。
+起草时列出的四项开放点已由 owner 逐项裁定。裁定**只关闭草案内的开放点**，**不**使任何一项 Decision 变成
+`RESOLVED`——十一项仍需完整的政策/默认/覆盖/校验/失败/隐私/阈值/证据/责任人/日期，并经 owner 单独批准。
+
+| 开放点 | 裁定 | 落地位置 |
+| --- | --- | --- |
+| 存储与迁移机制 | 新建**独立 SQLite 文件**承载 job / checkpoint / ledger，不碰学习状态库 | §3、§5 |
+| 两个预留错误码 | M10 **消费** `TOOL_PERMISSION_DENIED` / `BUDGET_EXCEEDED`（不改写 M6b 既有表达） | §8 |
+| worker 拓扑 | **维持单 worker**，多 worker 与云端重试留给 M12 | §11 |
+| 评测数值阈值 | 接受 **0 容忍组**（越权 0 / 重复副作用 0 / 半发布 generation 0 / 矩阵覆盖 100% / 90 题不退化） | §7 |
+
+| 裁定字段 | 值 |
+| --- | --- |
+| decided_by | justtodo123 |
+| decided_at | 2026-09-22 |
+| decision_reference | User instruction: 就本草案末尾四项开放点逐项裁定，四项均取草案给出的推荐项——存储机制取「独立 SQLite 文件」、预留错误码取「M10 消费它们」、worker 拓扑取「维持单 worker」、评测阈值取「0 容忍组」 |
+
+**这四项裁定不做什么**（防止被后读高估）：不产生任何 `RESOLVED`；不改变 `stage-admission-gates.json`（十一项
+仍 `OPEN`）；不批准 M10 准入或开工；不创建任何生产物件（无写工具、无 MCP server、无 schema migration、
+无执行开关）；M10 保持 `BLOCKED / NOT_STARTED`。
