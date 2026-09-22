@@ -378,7 +378,31 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.33（不是产品发布版本）· 更新：2026-09-22（M9 **评测口径解冻**：
+*创建：2026-08-10 · PLAN 文档修订：v2.34（不是产品发布版本）· 更新：2026-09-22（M9 **两处缺陷修正**，
+**均不触发 §4 撤销**：① 外部 AI 路径的 output 预算曾把**累积**值（2048）直接当作 `create_turn` 的
+`max_tokens` 传下去，而 `llm_client.create_turn` 硬拒大于 `MAX_TURN_OUTPUT_TOKENS`(1024) 的值——于是
+**默认配置下**每次调用都在发出任何 HTTP 请求之前抛 `ValueError`，被回退路径收敛成 `provider_unavailable`，
+整条外部 AI 路径静默失效，而既有测试全绿（它们一律经 `proposer=` 注入，绕过那个调用点）。现拆成两个字段：
+累积值只送 provider，新增的 `max_turn_output_tokens`（单轮，默认 1024）**在本地执行**，并新增
+`SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS`（只能收紧）。② `_distribute` 把 `total_days`（请求窗口）当硬截断，
+排不完的任务被一次性倾倒进一个不设上限的「第 `total_days + 1` 天」——默认请求下该天 114 个任务 / 3890 分钟，
+而当日可用仅 110 分钟（最高超出 92 倍）。现改为**逐天追加**，追加的天受同一容量约束。判据取自声明而非
+自造：`hours_per_day` 是每日**容量**、`target_date` 是**视野**，超出窗口本就合法（`review_plan.py` 的
+「剩余任务追加到最后一天（如果超出天数）」是唯一的正面声明，M9 逐字继承），违反声明的是**每日容量**。
+**为何不触发 §4**：`M9-EXTERNAL-AI` 的决策值不含任何数字，2048/1024 是实现常量；两个冻结摘要
+（`workload_digest` / `budget_scenario_digest`）修正后重算**逐字节不变**，故 1K 与预算矩阵的历史读数
+继续可比；`plan_id` 不随分日变化（把 `_distribute` 换成只产出一个空天的桩，`plan_id` 逐字节不变），
+计划身份这一兼容不变量未被触碰。故属**兑现**既有决策而非**改判据**——不 bump `plan_revision`、不新增
+`approval_reference`、不新增 `admission_history` 记录、不新增公开路由（详见 M9 计划 §4.4）。
+**诚实残留**：`and day_tasks` 守卫保证每天第一个任务必被放入，故单条任务超容量时该天仍会超出——保证是
+「每天**至多一个**任务造成超出」，不是「绝不超出」；且与 `review_plan.py` **刻意分叉**（该服务有同一缺陷，
+但 `platform/tests/test_review_plan.py` 的 `actual_days <= max_days + 1` 明确容忍它，且该套件按仓库约定
+冻结不动）。`tests/M9` 327 → 353 项（新增 `test_day_distribution.py` 18 项 + adapter 8 项；
+`m9_benchmark` 3 与 `online` 3 均为 `m9` 的**子集**，不另计）；全量 1245 → 1271 collected、1266 passed、
+2 skipped、3 failed（3 项为 M7 TXT parser 按设计 fail closed）。另修一处**标记卫生**缺陷：
+`tests/M9/test_mastery_write_authority.py` 缺 `pytestmark`，致 `-m m9` 少收集 8 项而文档按 324 报数
+（实际 319）——现 353 项**全部**带 `m9` 标记）
+· 上一修订 v2.33（2026-09-22：M9 **评测口径解冻**：
 owner 以 plan_revision v1.5 把 `M9-EVALUATION` 的延迟/成本维度由 `..._LATENCY_COST_DEFERRED` 改为冻结评测。
 这是 M9 **第一个真正触发 §4 撤销**的变更（v1.3/v1.4 都在论证「为何不触发」），`ADMITTED→REVOKED→ADMITTED`
 过渡已登记在 `admission_history`（live 字段仍 `ADMITTED / IN_PROGRESS`，理由见 M9 计划 §4.3）。冻结口径

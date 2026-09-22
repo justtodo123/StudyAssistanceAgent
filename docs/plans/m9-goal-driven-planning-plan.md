@@ -221,6 +221,53 @@ provider 之前返回（provider 调用数为 0），`cost` 预算在收到**合
 `max_input_tokens`（本地无 tokenizer，故用字节预算）、`model_timeout_seconds` 与 `max_output_tokens`
 （均传给 provider）；`deadline_seconds` 的守卫**放弃线程而非取消它**。
 
+### 4.4 v1.5 之后的两处实现修正为何**不**触发 §4 撤销
+
+本节与 §4.3 成对：§4.3 论证 v1.5 **必然触发**，本节论证紧随其后的两处缺陷修正**不触发**。
+判据是同一把尺子——§4 看的是**强制决策的实质变化**，不是代码变动本身。
+
+**修正一：外部 AI 路径的单轮 output 预算。** `PlanAILimits.max_output_tokens`（累积，2048）曾被直接
+当作 `create_turn` 的 `max_tokens` 传下去，而 `llm_client.create_turn` 硬拒大于
+`MAX_TURN_OUTPUT_TOKENS`（1024）的值。于是**默认配置下**每次调用都在发出任何 HTTP 请求之前抛
+`ValueError`，被回退路径收敛成 `provider_unavailable`——整条外部 AI 路径静默失效，而既有测试全绿
+（它们一律经 `proposer=` 注入，绕过该调用点）。现拆成两个字段：累积值只送 provider，单轮值在本地执行。
+
+**修正二：分日的每日容量。** `_distribute` 把 `total_days`（请求窗口）当成硬截断，排不完的任务被一次性
+倾倒进一个不设上限的「第 `total_days + 1` 天」——实测默认请求下该天 114 个任务 / 3890 分钟，而当日
+可用容量 110 分钟。现改为**逐天追加**，追加的天受同一容量约束。
+
+**为何两者都不触发 §4：**
+
+1. **`M9-EXTERNAL-AI` 的决策值不含任何数字**——`OPT_IN_DISABLED_BY_DEFAULT__MINIMAL_DISCLOSURE_
+   NO_CHUNK_BODY_USER_DATA_PATHS_CREDENTIALS__HARD_TIMEOUT_COST_BUDGET__DETERMINISTIC_FALLBACK`。
+   2048 / 1024 是**实现常量**，不是判据。修正一是把既有的 `HARD_TIMEOUT_COST_BUDGET` 从句面条款
+   变成**真正生效**的条款（修正前该子句根本没有执行点），属**兑现**而非**改判据**。
+2. **`M9-EVALUATION` 的 v1.5 值不动**，`approval_scope` / `implementation_start` / 其余七项决策均不动。
+3. **两个冻结摘要逐字节不变**：`_workload_digest` 只哈希 `_WORKLOAD`（name/goal/course/required/
+   excluded），`_budget_scenario_digest` 只哈希 `_BUDGET_SCENARIOS`（各 limits 字典只含
+   `max_prompt_bytes` / `max_answer_bytes` / `deadline_seconds`）。修正后重算，两者与 v1.5 记录值
+   逐字节相同，故 1K 与预算矩阵的历史读数**继续可比**。
+4. **`plan_id` 不受分日修正影响**：`_plan_id` 哈希的是请求字段与**派生输入摘要**（按最终顺序的
+   `task_id`/`reviewed`/mastery 序列），不含天数、分组或 `total_minutes`。突变探针证实：把 `_distribute`
+   换成「只产出一个空天」的桩，`plan_id` 逐字节不变。故计划身份这一兼容不变量未被触碰。
+
+**确实变化且必须记录的两处可观行为**（属**在既有声明内的行为纠正**，不是判据变更）：
+
+- 装不进窗口的计划 `total_days` 变大（默认请求 15 → 52，`os`/1 小时 15 → 19）。**超出窗口本就是声明允许的**
+  ——`review_plan.py` 的「剩余任务追加到最后一天（如果超出天数）」是唯一的正面声明，M9 逐字继承；
+  违反声明的是**每日容量**（`review-plan` 技能：「每天学习时间不超过 `hours_per_day × 60 + 10` 分钟」）。
+- `total_days` 现在回报**真实**天数而非请求窗口值，`total_days` 与逐日明细自此自洽。
+- **与 `review_plan.py` 刻意分叉**：该服务有同一处缺陷，但 `platform/tests/test_review_plan.py` 的
+  `actual_days <= max_days + 1` 明确容忍它，且该套件按仓库约定**冻结不动**。故修正只落在
+  `goal_planner.py`，两个服务在这一点上**有意不一致**，不得被读成遗漏。
+- **本修正不消除的残留**：`and day_tasks` 守卫保证每天第一个任务必被放入，故单条任务时长超过当日容量时
+  （`hours_per_day=0.5` 下容量 20 分钟而进阶任务 50 分钟）该天仍会超出。保证是「**每天至多一个**任务
+  造成超出」，不是「绝不超出」——`tests/M9/test_day_distribution.py` 把它钉成可见事实。
+
+**本次明确不做**（与 §4.3 同）：不 bump `plan_revision`、不新增 `approval_reference`、不新增
+`admission_history` 记录（§4 的两条触发条件——决策值变化与批准条件失效——均未发生）、不新增公开路由、
+不申请 M9 收口。
+
 ## 5. 获准后的拟实施顺序
 
 1. 先冻结 planner input、plan、mastery 和 progress event schema；
@@ -538,6 +585,12 @@ caller-selected `principal_id` 一致），与 `_user_source_search` 同一形�
 同时存在于旧（已采纳）与新两个 id 下——不要靠「让 replan 重算身份」来消除它，那会打断 revision 链并
 孤立进度事件。同时修掉 `_response_to_record` 对任务**逐字段列举**导致的静默丢字段：新增的 mastery 字段
 若不加进该列举会从 `plan["tasks"]` 消失，而 `plan["revisions"]` 用 `model_dump()` 会保留，两处表示不一致。
+
+> **2026-09-22 修订**：上段引用的 `total_days` 15 vs 2 是**每日容量缺陷**下的读数（窗口 14 天 + 一个
+> 不设上限的溢出天）。该缺陷已修（见 §4.4），同一请求现为 `19 vs 2`。原句保留以记录当时的实测值——
+> 「两个 `plan_id` 相撞」这一**结论**不受影响，且 `plan_id` 本身不随分日变化（把 `_distribute` 换成
+> 只产出一个空天的桩，`plan_id` 逐字节不变）。
+
 mastery 字段**只落 payload**，不给 `plan_tasks` 表加列（该表只写不读，且仓库无 `ALTER TABLE`/`user_version`
 迁移机制，`CREATE TABLE IF NOT EXISTS` 对既有库不会补列）。本次**未新增任何公开路由**：能力经既有
 `POST /api/v1/plans` 与 `replan` 可达，`PUBLIC_API_PATHS` 未改动。`tests/M9` 自本次起纳入

@@ -5,7 +5,8 @@
 四个投影都是纯读（不写领域状态、不构建 chunk 索引、不读原始 chunk 正文），
 且都以**活对象**注入，使计划身份与排序随答题 / 复习状态刷新。
 `test_plan_grounding.py` 覆盖其后的**受限检索接缝**：Planner 按需取回有界 grounding 证据，
-并在接缝上独立交叉校验用户源可用性。
+并在接缝上独立交叉校验用户源可用性。`test_day_distribution.py` 覆盖分日的**每日容量**不变量
+（窗口是起点、容量才是硬约束）。
 
 `test_plan_ai_adapter.py` / `test_plan_ai_benchmark.py` 覆盖 **`m9.external-ai`（默认关闭）**：可选外部 AI
 排序路径，以及冻结工作负载上确定性与 AI 两条路径的比较。自 v1.5 起 `test_plan_ai_benchmark.py` 还承载
@@ -21,6 +22,7 @@
 | 文件 | 覆盖 |
 |------|------|
 | `test_goal_planner.py` | 确定性生成、版本、计划身份、输入有界与只读守卫 |
+| `test_day_distribution.py` | **每日容量是硬约束**：任何一天的任务分钟数不得超出当日容量（唯一例外是「单条任务本身就装不下」且该天**恰好只装一个**任务）、追加的天与窗口内的天同受容量约束且日期连续、窗口够用时不追加、`total_days`/`total_hours` 与逐日明细自洽、`total_minutes` 的构成口径、空任务集仍是 1 个空天、分日确定性 |
 | `test_plan_lifecycle.py` | 采纳、进度事件、重规划与 revision 前向链 |
 | `test_deviation_signals.py` | 跳过 + 逾期偏差信号、阈值触发与 `parent_revision_id` |
 | `test_deviation_consumption.py` | 未消费阈值、`deviation_ledger` 消费台账与重复调用幂等 |
@@ -30,7 +32,7 @@
 | `test_plan_grounding.py` | 受限检索接缝：四类预算各自生效与放宽被拒、stale/deleted/未发布/未就绪/禁用/待删源在接缝上被丢弃（真 registry + 真投影端到端）、无 principal 与投影不可用时的 fail-closed、畸形 provenance、真只读守卫、证据有界 |
 | `test_plan_identity.py` | 计划身份按 principal 分隔（带标签段、7 例参数化、`goal` 伪造 `\|principal=` 段不碰撞）与反 churn 逐字节护栏（对合成任务对比旧公式，不依赖语料）、进度事件不跨 principal 污染、`summary` 落记录、replan 还原 principal 与源范围、principal 不出现在任何读取路径、源码级单点剥离护栏 |
 | `test_review_history_projection.py` | 复习历史活投影：只返回成员资格（不交 payload）、刻意不缓存、恰好一次批量读、无写面（import 级 AST 扫描 + 连接级 `total_changes` 审计 + 库快照比对）、**构造 Planner 之后落的复习必须可见**（旧代码下必失败的缺陷证明）、快照参数仍冻结、`plan_id` 随复习变化、`main.py` 装配护栏 |
-| `test_plan_ai_adapter.py` | 外部 AI 排序路径（默认关闭）：最小披露的**字段级**白名单（prompt 里没有路径 / chunk 正文 / `principal_id` / per-file mastery）、预算只允许收紧与非正数被拒、每一类失败收敛为 `order=None` + 稳定原因码、关闭时与无 adapter 逐字节相同（含 `plan_id`）、失败不落库（写入口全 fail + 连接级审计 + 库快照比对）、先修闸门与必选置顶**非空转**（同 adapter 同提案：注入图被拒、不注入图被采纳；置顶断言传递闭包块是前缀） |
+| `test_plan_ai_adapter.py` | 外部 AI 排序路径（默认关闭）：最小披露的**字段级**白名单（prompt 里没有路径 / chunk 正文 / `principal_id` / per-file mastery）、预算只允许收紧与非正数被拒、每一类失败收敛为 `order=None` + 稳定原因码、关闭时与无 adapter 逐字节相同（含 `plan_id`）、失败不落库（写入口全 fail + 连接级审计 + 库快照比对）、先修闸门与必选置顶**非空转**（同 adapter 同提案：注入图被拒、不注入图被采纳；置顶断言传递闭包块是前缀）、**单轮 output 预算**（驱动**真实桥** `build_anthropic_proposer` 证明默认预算能走到 provider 且传给 `create_turn` 的是单轮值、单轮 ≤ 累积 ≤ 客户端硬上限、单轮 > 累积被拒、`SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS` 真被读且只能收紧） |
 | `test_plan_ai_benchmark.py` | 冻结工作负载上两条路径的比较（`m9_benchmark`，1K 语料）：语料**只读复用** M7 生成器且 chunk 数**量出来**（10 vs 1000，源真的发布过且可检索）、输入有界（两种规模下 prompt 字节数与条目数逐字相同）、两条路径先修违反均为 0、确定性可重放、合法相邻对换被采纳而非法对换被拒（两条臂都非空转）、报告独占创建 + 双摘要。**另含 v1.5 冻结预算矩阵**（6 场景 × 稳定原因码）：驱动**真实** `build_anthropic_proposer(client_factory=…)` 接缝（用 `proposer=` 注入会绕过 `_run_blocking`，那样断言 deadline 是假证据），断言 `prompt` 预算在调用 provider **之前**返回（provider 调用数为 0）、`cost` 预算在收到**合法**置换时仍丢弃它、`deadline` 被强制；并钉住两处价目表常量不漂移、`_estimate_cost` 在冻结表上可复现、stub 延迟分布上界绑在冻结 `deadline_seconds` 之下。报告 `m9-plan-ai-evaluation-v2` 含机器可读的 `enforced_locally` / `not_enforced_locally` |
 | `test_plan_ai_provider_smoke.py` | **真实 provider** 读数（`online` + `M9_PROVIDER_SMOKE` skip 门控，**非门禁**）：复用 `test_plan_ai_benchmark.py` 的 `_WORKLOAD`（import，不重新声明，防两臂漂到不同 workload），5 workload × 2 轮 = 10 个固定 case，走生产 `build_anthropic_proposer`（默认 `client_factory=AnthropicLLMClient`）；**只记脱敏字段**（无 prompt 正文、无 provider 原文、无路径、无异常文本）；花费上限默认 $1.00、**事后累加**（故最坏为 cap + 单次调用，报告里写明）、报告先落盘再断言（判红也保留读数）。**本次未运行**，真实 provider 延迟 / 成本 / 失败模式**仍未验证** |
 | `test_mastery_write_authority.py` | M9 退出条件「正式 mastery 只有一个写入权威」的**结构性证据**：动态枚举 `platform/app/` 全部源文件（当前 60 个）后断言写 `study_sessions`/`answer_attempts` 的模块**恰好**是 `learning_store.py`、M9 模块连**导入**写权威都做不到（AST 闭包断言，非子串匹配）、mastery 派生只有一处定义；含检测器正反对照与「表名确实是 store 建的表」的上游契约钉桩 |
@@ -75,6 +77,15 @@
   快照，故既有调用方行为逐字节不变。**该守卫必须钉在 `main.py` 的装配上**——本目录其余用例直接构造
   `GoalPlannerService`，把装配改回快照它们仍然全绿，而缺陷原本就长在装配上。
 
+- **`hours_per_day` 是每日容量（预算），`target_date` 是视野而非硬期限**：容量是**硬约束**，视野不是
+  ——计划**允许超过窗口**（`review_plan.py` 的「剩余任务追加到最后一天（如果超出天数）」是唯一的正面声明，
+  M9 逐字继承），但**不允许**任何一天超出 `hours_per_day × 60`（唯一声明的每日上界是 `+ 10` 分钟复习缓冲）。
+  已证实缺陷的回归：排不完的任务曾被一次性倾倒进一个不设上限的「第 `total_days + 1` 天」——默认请求下
+  该天 114 个任务 / 3890 分钟，而当日可用仅 110 分钟（最高超出 92 倍）。现为**逐天追加**，追加的天受
+  同一容量约束。**残留**：`and day_tasks` 守卫保证每天第一个任务必被放入，故单条任务超容量时该天仍会
+  超出——保证是「每天**至多一个**任务造成超出」，不是「绝不超出」，`test_day_distribution.py` 把它钉成
+  可见事实。**与 `review_plan.py` 刻意分叉**：该服务有同一处缺陷，但 `platform/tests/test_review_plan.py`
+  的 `actual_days <= max_days + 1` 明确容忍它且该套件按约定冻结不动，故修正只落在 `goal_planner.py`。
 - **外部 AI 路径默认关闭，且「最小披露」是结构性的**：载荷由 `PlanAIRequest` / `PlanAITaskSummary`
   两个冻结 dataclass 定义，`PlanAITaskSummary` **没有 `file` 字段**，`task_id` 是 `sha256(file)[:16]`
   （不透明、不含路径），mastery 只送**聚合计数**，`principal_id` 根本不在载荷里——故「不送路径」不是靠
@@ -95,6 +106,14 @@
   算出。另有三项预算**不在本地执行**（`max_input_tokens` 本地无 tokenizer、`model_timeout_seconds` 与
   `max_output_tokens` 仅 provider 侧），报告里的 `not_enforced_locally` 是这条的机器可读证据；
   `deadline` 守卫**放弃线程而非取消它**。
+- **output token 预算是两个字段，不是一个**：`max_output_tokens` 是**累积**预算、只送 provider；
+  `max_turn_output_tokens` 是**单轮**预算，它才是传给 `create_turn` 的 `max_tokens`，而 `llm_client`
+  硬拒大于 `MAX_TURN_OUTPUT_TOKENS`(1024) 的值，故这道闸门**在本地**。已证实缺陷的回归：累积值曾被
+  直接当单轮值传下去，于是**默认配置下**每次调用都在发出任何 HTTP 请求之前抛 `ValueError`，被回退路径
+  收敛成 `provider_unavailable`——整条外部 AI 路径静默失效，而既有测试全绿（它们一律经 `proposer=`
+  注入，绕过那个调用点）。故 `test_plan_ai_adapter.py` 的「单轮 output 预算」节**驱动真实桥**
+  （`build_anthropic_proposer`），并有一条配置层用例钉住 `SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS` 真的被读、
+  且只能收紧。
 - **真实 provider 读数必须显式 opt-in，且不得成为门禁**：`test_plan_ai_provider_smoke.py` 的 skip 门控是
   **承重**的——本目录在 CI 阶段测试步骤内，而该步骤**不排除** `online` 标记，故「默认不跑」完全靠
   `M9_PROVIDER_SMOKE` 未设时的 `pytest.skip`。该文件**绝不**触碰 workflow：
