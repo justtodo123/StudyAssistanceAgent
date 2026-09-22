@@ -546,7 +546,8 @@ Preview 的 model、官方 endpoint、TLS 校验、tool allowlist、capacity=2�
 | `SA_PLAN_AI_DEADLINE_SECONDS` | `30` | 桥接线程外层 deadline；只能收紧 |
 | `SA_PLAN_AI_MODEL_TIMEOUT_SECONDS` | `20` | 单次 `create_turn` timeout；只能收紧 |
 | `SA_PLAN_AI_MAX_INPUT_TOKENS` | `8000` | input token 上限；只能收紧。**仅 provider 侧**——本仓无本地 tokenizer，本地用的是 `SA_PLAN_AI_MAX_PROMPT_BYTES` 字节预算，该值**没有本地执行点** |
-| `SA_PLAN_AI_MAX_OUTPUT_TOKENS` | `2048` | output token 上限；只能收紧 |
+| `SA_PLAN_AI_MAX_OUTPUT_TOKENS` | `2048` | **累积** output token 上限；只能收紧。**仅 provider 侧**——本地无 tokenizer 可核验一次调用的产出量 |
+| `SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS` | `1024` | **单轮** output token 上限；只能收紧，且不得超过累积值或 `MAX_TURN_OUTPUT_TOKENS`(1024)。这是真正传给 `create_turn` 的 `max_tokens`，**在本地执行** |
 | `SA_PLAN_AI_MAX_COST_USD` | `0.10` | 冻结价格表估算费用**硬上限**；只能收紧 |
 | `SA_PLAN_AI_MAX_PROMPT_BYTES` | `16384` | UTF-8 prompt 字节上限；只能收紧 |
 | `SA_PLAN_AI_MAX_ANSWER_BYTES` | `16384` | UTF-8 回复字节上限；只能收紧 |
@@ -570,9 +571,10 @@ model 与 retry 次数不可由环境变量覆盖（沿用 Preview 的“应用�
 | `max_answer_bytes` | 是 | 收到回复后立即判 |
 | `max_cost_usd` | 是 | **硬上限**：即便收到合法置换也丢弃，不是告警阈值 |
 | `deadline_seconds` | 是 | 桥接线程外层 deadline；**放弃线程而非取消它** |
+| `max_turn_output_tokens` | 是 | **单轮**预算：传给 `create_turn` 的 `max_tokens`，而 `llm_client` 硬拒超限值，故闸门在本地、在发出任何 HTTP 请求之前 |
 | `max_input_tokens` | **否** | 本地无 tokenizer，故用字节预算替代 |
 | `model_timeout_seconds` | **否** | 传给 provider，仅 provider 侧 |
-| `max_output_tokens` | **否** | 传给 provider，仅 provider 侧 |
+| `max_output_tokens` | **否** | **累积**预算，传给 provider，仅 provider 侧；单轮预算见上一行（两者不可合并） |
 
 > **必须按窄口径读**：CI 臂用确定性 stub，故其延迟是桥接开销、成本由脚本化 usage 算出——它冻结的是
 > **预算被强制执行**，**不是**性能。真实 provider 的延迟 / 成本 / 失败模式见

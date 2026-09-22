@@ -213,11 +213,17 @@ _ENFORCED_LOCALLY = (
     "max_answer_bytes",
     "max_cost_usd",
     "deadline_seconds",
+    # 单轮 output 预算：它是传给 create_turn 的 max_tokens，而 llm_client 硬拒超限值，
+    # 故闸门在本地、在发出任何 HTTP 请求之前。注意这与下面的 max_output_tokens 是**两个**字段：
+    # 累积值只在 provider 侧，单轮值在本地——把累积值当单轮值传下去会让每次调用在本地抛
+    # ValueError，被回退路径收敛成 provider_unavailable，整条外部 AI 路径静默失效。
+    "max_turn_output_tokens",
 )
 _NOT_ENFORCED_LOCALLY = (
     "max_input_tokens: no local tokenizer; byte budgets are used instead",
     "model_timeout_seconds: passed to the provider; provider-side only",
-    "max_output_tokens: passed to the provider; provider-side only",
+    "max_output_tokens: cumulative budget, passed to the provider; provider-side only"
+    " (the per-turn budget max_turn_output_tokens IS enforced locally)",
 )
 
 

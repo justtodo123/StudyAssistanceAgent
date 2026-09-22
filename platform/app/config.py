@@ -203,6 +203,7 @@ _PLAN_AI_LIMIT_ENV: dict[str, tuple[str, str]] = {
     "model_timeout_seconds": ("SA_PLAN_AI_MODEL_TIMEOUT_SECONDS", "float"),
     "max_input_tokens": ("SA_PLAN_AI_MAX_INPUT_TOKENS", "int"),
     "max_output_tokens": ("SA_PLAN_AI_MAX_OUTPUT_TOKENS", "int"),
+    "max_turn_output_tokens": ("SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS", "int"),
     "max_cost_usd": ("SA_PLAN_AI_MAX_COST_USD", "float"),
     "max_prompt_bytes": ("SA_PLAN_AI_MAX_PROMPT_BYTES", "int"),
     "max_answer_bytes": ("SA_PLAN_AI_MAX_ANSWER_BYTES", "int"),

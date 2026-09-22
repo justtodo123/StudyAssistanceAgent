@@ -13,6 +13,7 @@ import hashlib
 import json
 import re
 import sqlite3
+from collections.abc import Sequence
 from contextlib import contextmanager
 from dataclasses import fields, replace
 from pathlib import Path
@@ -21,6 +22,7 @@ import pytest
 
 from app.goal_planner import GoalPlannerService
 from app.learning_store import SqliteLearningStore
+from app.llm_client import MAX_TURN_OUTPUT_TOKENS, ModelTurn, ModelUsage
 from app.models import GoalPlanConstraints, GoalPlanRequest
 from app.plan_ai_adapter import (
     AUTHORIZED_SCOPE_ID,
@@ -30,12 +32,14 @@ from app.plan_ai_adapter import (
     REASON_DISABLED,
     REASON_NOT_A_PERMUTATION,
     REASON_PROMPT_BUDGET,
+    REASON_PROVIDER_UNAVAILABLE,
     PlanAIAdapter,
     PlanAIAudit,
     PlanAILimits,
     PlanAIOutcome,
     PlanAIRequest,
     PlanAITaskSummary,
+    build_anthropic_proposer,
     parse_order,
     render_prompt,
 )
@@ -226,6 +230,7 @@ def test_mastery_is_sent_as_aggregate_counts_not_per_file_values(goal_planner_se
         ("model_timeout_seconds", 999.0),
         ("max_input_tokens", 10**9),
         ("max_output_tokens", 10**9),
+        ("max_turn_output_tokens", 10**9),
         ("max_cost_usd", 99.0),
         ("max_prompt_bytes", 10**9),
         ("max_answer_bytes", 10**9),
@@ -244,7 +249,16 @@ def test_limits_reject_non_positive_floats(name):
             PlanAIAdapter(limits=replace(PlanAILimits(), **{name: bad}))
 
 
-@pytest.mark.parametrize("name", ("max_input_tokens", "max_prompt_bytes", "max_answer_bytes"))
+@pytest.mark.parametrize(
+    "name",
+    (
+        "max_input_tokens",
+        "max_output_tokens",
+        "max_turn_output_tokens",
+        "max_prompt_bytes",
+        "max_answer_bytes",
+    ),
+)
 def test_limits_reject_non_positive_ints(name):
     for bad in (0, -1):
         with pytest.raises(ValueError):
@@ -256,6 +270,120 @@ def test_tightened_limits_are_accepted():
         deadline_seconds=5.0, max_prompt_bytes=512, max_answer_bytes=256, max_cost_usd=0.01
     )
     assert PlanAIAdapter(limits=limits).limits.max_prompt_bytes == 512
+
+
+# ── 单轮 output 预算：累积值与单轮值是**两个**字段 ──────────────────────────
+#
+# 已证实缺陷的回归：`max_output_tokens`（累积，2048）曾被**直接**当作 `create_turn` 的
+# `max_tokens` 传下去，而 `llm_client.create_turn` 硬拒大于 `MAX_TURN_OUTPUT_TOKENS`（1024）的值。
+# 于是**默认配置下**每次调用都在发出任何 HTTP 请求之前抛 ValueError，被回退路径收敛成
+# `provider_unavailable`——整条外部 AI 路径静默失效，而既有测试全绿：它们一律经 `proposer=`
+# 注入，完全绕过那个调用点。故本节的断言必须驱动**真实桥**（`build_anthropic_proposer`）。
+
+
+class _RecordingClient:
+    """离线假 provider：记录 `create_turn` 收到的 `max_tokens`，并复刻真实客户端的硬拒。"""
+
+    def __init__(self, *, order: Sequence[str], seen: list[int]) -> None:
+        self._order = list(order)
+        self._seen = seen
+
+    def new_conversation(self, prompt: str) -> object:
+        del prompt
+        return object()
+
+    async def create_turn(
+        self, conversation: object, tools: Sequence[object], *, max_tokens: int, timeout: float
+    ) -> ModelTurn:
+        del conversation, tools, timeout
+        if not 1 <= max_tokens <= MAX_TURN_OUTPUT_TOKENS:
+            # 与 `AnthropicLLMClient.create_turn` 同形。这正是被回退路径吞掉的那一步：
+            # 真实客户端在此抛 ValueError，调用方只看得到 provider_unavailable。
+            raise ValueError("max_tokens exceeds the M6b hard limit")
+        self._seen.append(max_tokens)
+        return ModelTurn(
+            text=json.dumps({"order": self._order}),
+            tool_calls=(),
+            stop_reason="end_turn",
+            usage=ModelUsage(input_tokens=10, output_tokens=10),
+            latency_ms=1.0,
+        )
+
+    async def close(self) -> None:
+        return None
+
+
+def _single_task_request() -> PlanAIRequest:
+    return PlanAIRequest(
+        goal="两周内掌握进程调度与死锁",
+        course="os",
+        hours_per_day=2.0,
+        required_topics=(),
+        excluded_topics=(),
+        scope_id=AUTHORIZED_SCOPE_ID,
+        mastery_counts={},
+        tasks=(PlanAITaskSummary(task_id="t1", topic="调度", difficulty="基础", tags=()),),
+    )
+
+
+def test_default_limits_actually_reach_the_provider():
+    """默认预算必须能走到 provider：旧行为在此抛 ValueError 并静默回退成 provider_unavailable。"""
+    seen: list[int] = []
+    adapter = PlanAIAdapter(
+        proposer=build_anthropic_proposer(
+            token="offline-token-not-a-credential",
+            client_factory=lambda key: _RecordingClient(order=("t1",), seen=seen),
+        ),
+        enabled=True,
+    )
+
+    outcome = adapter.propose(_single_task_request())
+
+    assert outcome.audit.reason == REASON_ADOPTED
+    assert outcome.audit.reason != REASON_PROVIDER_UNAVAILABLE
+    assert outcome.order == ("t1",)
+
+
+def test_default_per_turn_budget_is_what_reaches_the_client():
+    """传给 `create_turn` 的是**单轮**预算，且默认值就在客户端硬上限上——不是累积值。"""
+    seen: list[int] = []
+    adapter = PlanAIAdapter(
+        proposer=build_anthropic_proposer(
+            token="offline-token-not-a-credential",
+            client_factory=lambda key: _RecordingClient(order=("t1",), seen=seen),
+        ),
+        enabled=True,
+    )
+
+    adapter.propose(_single_task_request())
+
+    assert seen == [MAX_TURN_OUTPUT_TOKENS]
+    assert PlanAILimits().max_output_tokens > MAX_TURN_OUTPUT_TOKENS  # 累积值本就更大
+
+
+def test_default_per_turn_budget_sits_within_both_ceilings():
+    limits = PlanAILimits()
+
+    assert limits.max_turn_output_tokens <= MAX_TURN_OUTPUT_TOKENS
+    assert limits.max_turn_output_tokens <= limits.max_output_tokens
+
+
+def test_per_turn_budget_cannot_exceed_the_cumulative_budget():
+    """单轮 > 累积是自相矛盾的预算，必须在构造时拒绝。"""
+    with pytest.raises(ValueError):
+        PlanAIAdapter(limits=replace(PlanAILimits(), max_output_tokens=512))
+
+
+def test_per_turn_budget_env_var_is_wired_and_tightens_only(monkeypatch: pytest.MonkeyPatch):
+    """配置层必须真的读这个变量，且只能收紧；否则新字段会静默不可配置。"""
+    from app import config
+
+    monkeypatch.setenv("SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS", "512")
+    assert config.plan_ai_limits().max_turn_output_tokens == 512
+
+    monkeypatch.setenv("SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS", str(MAX_TURN_OUTPUT_TOKENS + 1))
+    with pytest.raises(ValueError):
+        config.plan_ai_limits()
 
 
 # ── 回退：每一类失败都收敛为 order=None ─────────────────────────────────────

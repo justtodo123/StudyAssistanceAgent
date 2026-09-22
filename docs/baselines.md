@@ -731,8 +731,11 @@ M9 外部 AI 路径（`m9.external-ai`）**，**不是**全项目评测，也**�
    max 10.76 ms —— **同一冻结负载下相差数倍**，这本身就是「它不是稳定 SLA」的实证。成本同理，由脚本化
    usage 算出，非计量。
 2. **三项预算无本地执行点**：`max_input_tokens`（本仓无本地 tokenizer，本地用的是字节预算）、
-   `model_timeout_seconds`、`max_output_tokens` 仅传给 provider。报告 `not_enforced_locally` 是这条的
-   机器可读证据。
+   `model_timeout_seconds`、`max_output_tokens`（**累积**值）仅传给 provider。报告 `not_enforced_locally`
+   是这条的机器可读证据。**注意别读成「output 预算整体无本地执行点」**：自 2026-09-22 起
+   `max_turn_output_tokens`（单轮值，默认 1024）**在本地执行**——它是传给 `create_turn` 的 `max_tokens`，
+   `llm_client` 硬拒超限值。修复前累积值被当单轮值传下去，默认配置下每次调用都在发出任何 HTTP 请求之前
+   抛 `ValueError` 并被收敛成 `provider_unavailable`，即整条外部 AI 路径静默失效（M9 计划 §4.4）。
 3. **`deadline_seconds` 的守卫放弃线程而非取消它**：挂住的 provider 调用可以活过 deadline。
 4. **arm B 本次未运行**：真实 provider 的延迟 / 成本 / 失败模式**仍未验证**。运行它需要 owner 的 key
    与真实花费（opt-in 命令、默认 $1.00 上限与「最坏为 cap + 单次调用」的说明见 `tests/M9/README.md`）。

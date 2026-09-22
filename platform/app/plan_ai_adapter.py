@@ -16,6 +16,18 @@
 直接复用 `llm_client` 的 `LLMClient` 协议与 `AnthropicLLMClient`，不新建 provider 抽象；预算校验沿用
 `preview_agent` 的「每值 ≤ 冻结默认」约定与同一组定价常量，避免两处定价各自漂移。
 
+## output token 预算是**两个**字段，不是一个
+
+`max_output_tokens` 是**累积**预算（整个计划路径的产出总量），只送给 provider——本地没有 tokenizer，
+无从核验一次调用真正产出了多少 token，故它在本地没有执行点。`max_turn_output_tokens` 是**单轮**
+预算，它才是传给 `create_turn` 的 `max_tokens`，而 `llm_client.create_turn` 硬拒大于
+`MAX_TURN_OUTPUT_TOKENS` 的值，所以这道闸门**在本地、在发出任何 HTTP 请求之前**。
+
+两者语义不同，故不可合并成一个值。**曾合并过**：累积值被直接当单轮值传下去，于是默认配置下每次
+调用都在本地抛 `ValueError`，被 `propose` 的回退路径收敛成 `provider_unavailable`——整条外部 AI
+路径静默失效，且既有测试全绿（它们经 `proposer=` 注入，绕过这个调用点）。回归用例因此必须驱动
+`build_anthropic_proposer` 这条真实桥，见 `tests/M9/test_plan_ai_adapter.py` 的「单轮 output 预算」节。
+
 ## 同步/异步边界
 
 Planner 的 `generate()` 是同步的，而 `LLMClient` 是异步的。本模块把这条边界收在**一个**地方：
@@ -37,7 +49,12 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, fields, replace
 from typing import Any
 
-from .llm_client import AnthropicLLMClient, LLMClient, ProviderError
+from .llm_client import (
+    MAX_TURN_OUTPUT_TOKENS,
+    AnthropicLLMClient,
+    LLMClient,
+    ProviderError,
+)
 
 PLAN_AI_SCHEMA_VERSION = "m9-plan-ai-adapter-v1"
 
@@ -71,7 +88,13 @@ class PlanAILimits:
     deadline_seconds: float = 30.0
     model_timeout_seconds: float = 20.0
     max_input_tokens: int = 8_000
+    # 累积预算，**只在 provider 侧**执行：本地没有 tokenizer，无从核验一次调用真正产出了多少 token。
     max_output_tokens: int = 2_048
+    # 单轮预算，**在本地执行**：这是传给 `create_turn` 的 `max_tokens`，而 `llm_client` 硬拒
+    # 大于 `MAX_TURN_OUTPUT_TOKENS` 的值。两者语义不同，故必须是两个字段——把累积值直接当单轮值
+    # 传下去（旧行为）会让每次调用在**发出任何 HTTP 请求之前**抛 ValueError，被回退路径收敛成
+    # `provider_unavailable`，从而让整条外部 AI 路径静默失效。同形约定见 `preview_agent.PreviewLimits`。
+    max_turn_output_tokens: int = MAX_TURN_OUTPUT_TOKENS
     max_cost_usd: float = 0.10
     # 字节预算而非 token 预算：本地没有 tokenizer，估算 token 会引入一个我们自己造的近似值。
     max_prompt_bytes: int = 16 * 1024
@@ -142,6 +165,7 @@ def _validate_limits(limits: PlanAILimits) -> None:
     for name in (
         "max_input_tokens",
         "max_output_tokens",
+        "max_turn_output_tokens",
         "max_prompt_bytes",
         "max_answer_bytes",
     ):
@@ -156,6 +180,8 @@ def _validate_limits(limits: PlanAILimits) -> None:
         raise ValueError("max_retries cannot exceed the hard limit")
     if limits.max_output_tokens > limits.max_input_tokens:
         raise ValueError("output budget cannot exceed input budget")
+    if limits.max_turn_output_tokens > limits.max_output_tokens:
+        raise ValueError("turn output limit cannot exceed total output limit")
 
 
 def limits_from_env() -> PlanAILimits:
@@ -402,7 +428,7 @@ async def _propose_async(
         turn = await client.create_turn(
             conversation,
             (),
-            max_tokens=limits.max_output_tokens,
+            max_tokens=limits.max_turn_output_tokens,
             timeout=limits.model_timeout_seconds,
         )
     finally:
