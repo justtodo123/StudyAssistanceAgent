@@ -135,7 +135,7 @@ StudyAssistanceAgent/
 │   ├── M6_crawler/        # crawler P0 离线测试（独立 marker / CI 已收口）
 │   ├── M6a/               # M6a harness 契约与兼容骨架测试
 │   ├── M6b/               # M6b 只读 Agent Preview 隔离测试与离线 benchmark
-│   ├── M7/                # M7 lifecycle/FTS5/vector/offline + Search/QA internal overlay（270 项）
+│   ├── M7/                # M7 lifecycle/FTS5/vector/offline + Search/QA internal overlay（277 项）
 │   ├── regression/        # 跨阶段回归套件
 │   └── utils/             # 测试工具函数
 ├── proced_problem/        # 问题记录库（踩坑复盘）

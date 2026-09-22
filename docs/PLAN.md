@@ -228,7 +228,8 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
   2026-09-04 冻结 1k/3k BGE 完整协议通过；2026-09-06 在 `platform/.venv311` 的 CPython 3.11.9 精确冻结依赖环境中
   复跑 Markdown/TXT/PDF/PPTX/DOCX 各 100 个运行时 fixture × 20 次，五格式全 PASS、五类失败计数均为 0，
   `external_source_reads=0`、`tmp_only=true`，报告只写系统临时目录且不入库。correctness 收口后 `tests/M7/`
-  收集 270 项；Python 3.13.3 的三个 TXT failure 是精确 `cpython-textio==3.11.9` 合同的预期 fail-closed；CPython 3.11.9
+  收集 277 项（2026-09-22 收口后缺陷修正新增 `test_parser_timeout.py` 7 项，见 §五 v2.38）；Python 3.13.3 执行
+  274 passed / 3 failed，三个 TXT failure 是精确 `cpython-textio==3.11.9` 合同的预期 fail-closed；CPython 3.11.9
   根级复验为 825 passed、1 skipped。公共 Search/QA 请求体不接受 caller-selected `principal_id`，可信 principal 仅作为
   内部服务边界；用户源读后 operation-lock 复核是有界进程内保护，不是跨进程 read lease。Network 文档晋升、P0 语料
   闭环、任何 corpus 自动批准、M8 专业存储和 Milvus 后端选择仍在批准范围外。
@@ -388,7 +389,23 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.37（不是产品发布版本）· 更新：2026-09-22（M10 **决策闭合批次 ①**：
+*创建：2026-08-10 · PLAN 文档修订：v2.38（不是产品发布版本）· 更新：2026-09-22（**M7 收口后缺陷修正——
+解析路径墙钟上界**，属生产代码改动：`MAX_FILE_BYTES` / `MAX_PDF_PAGES` 等约束的是解析器**拿到多少输入**，
+不是**能跑多久**；内部死循环的解析器既不返回也不抛异常，故解析路径上任何 `except` 对它都是盲的，调用永不返回，
+在强制的单 worker 拓扑下会卡死**整个进程**。`parse_document` / `parse_file` 新增 `timeout_seconds`
+（默认 `PARSE_TIMEOUT_SECONDS = 30.0`），校验与既有 `max_bytes` 同形（正的有限数且不得超过冻结默认），
+超时抛新增稳定码 `SOURCE_PARSE_TIMEOUT`；接缝**格式无关**，五格式统一施加。新增
+`tests/M7/test_parser_timeout.py`（7 项，**新文件**，未改任何存量 M7 测试），`tests/M7/` 270 → 277 项、
+267 → 274 passed（3 项 TXT 基线失败**未增加**——新测试对不可用格式 skip 而非断言）。
+**为何不升级 pypdf pin**：pin 是承重的（`require_parser` 精确匹配、M7 冻结策略串、M8 metadata-discovery 的
+`SCOPE_ASSERTIONS` 与 scope builder 从 HEAD 读 `requirements.txt`），且升级只修那两个 DoS 通告、
+**不改变「解析没有时间上界」这一缺陷本身**。**为何不触发 M7 §6 撤销**：parser matrix 身份、normalized
+document 形状、`document_id` 派生与公开路由逐字未动，正常解析产出逐字节不变。**残留（逐字记录，不得后读时
+当作已解决）**：① 线程被**放弃而非取消**（Python 无法强杀线程），泄漏限制为「每次发布尝试至多一个」；
+② 进程级隔离是更强的修法，本次不做；③ 默认 30 秒是估计而非实测基线；④ `txt` 在本机不经此路径。
+变异验证：超时码改成 `PARSE_FAILED` → 3 项失败；去掉「只能收紧」校验 → 1 项失败；**完全移除上界不会判红而是
+让测试挂起**——实施中一次把 mock 打错位置（替换 `_run_bounded` 本身而非解析器）实测整套测试 300 秒不返回）·
+上一修订 v2.37（2026-09-22：M10 **决策闭合批次 ①**：
 owner 批准 `M10-AUTHORITY` 与 `M10-WRITE-AUTHORIZATION` 由 `OPEN` 改为 `RESOLVED`（批准引用逐字为
 「按顺序进行即可」，回应「确认后我把它标为已批准、把登记表两项转 `RESOLVED`，再写批次 ②」；按本仓既有惯例
 逐字引用原话并说明解读）。闭合面见新增的 [`m10-decision-closure-v1.md`](plans/references/m10-decision-closure-v1.md)，

@@ -1097,3 +1097,62 @@ Normalized document 是解析后、切块前的统一表示；它把受支持格
 只覆盖 `m7-infrastructure-only-v1`，不改变 Network、corpus 自动批准、M8 专业存储或 Milvus 的排除边界。
 M8 的事实型 `M8-M7-EXIT` 前置现已满足，但 M8 自身仍为 `BLOCKED / NOT_STARTED`：八项强制决策、后端选择、
 依赖、迁移、parity、fallback、benchmark 和独立人工批准均未闭合。M9/M10 同样不会因 M7 完成而自动获批或开工。
+
+## 7. 收口后的缺陷修正（2026-09-22）
+
+### 7.1 解析路径的墙钟上界（`PARSE_TIMEOUT_SECONDS`）
+
+**缺陷**：`MAX_FILE_BYTES` / `MAX_PDF_PAGES` / `MAX_PPTX_SLIDES` / `MAX_DOCX_BODY_PARAGRAPHS`
+约束的是解析器**拿到多少输入**，不是它**能跑多久**。一个在内部死循环的解析器既不返回也不抛异常，
+因此 `_parse_pdf` 的 `except Exception` 以及解析路径上任何 `except` 子句对它**都是盲的**：调用永不返回。
+在仓库强制的单 worker 拓扑下（`worker_topology.py` 的 `enforce_single_worker_topology`），这会把**整个进程**
+卡死，而不是一个请求。
+
+**触发证据（本仓外部，非本阶段证据）**：`pypdf` 6.0.0 有两个已公开的 DoS 通告
+（CVE-2026-59935 / CVE-2026-59936，未终止的内联图片），其**全部影响**就是死循环；修复版本为 6.14.1 / 6.14.2。
+本阶段**不**升级该 pin（理由见下），改为给解析路径本身加上界。
+
+**修正**：`parse_document` / `parse_file` 新增 `timeout_seconds` 参数（默认 `PARSE_TIMEOUT_SECONDS = 30.0`），
+校验与既有 `max_bytes` **同形**——必须是正的有限数且**不得超过**该冻结默认值，超过即
+`PARSE_LIMIT_EXCEEDED` 且不触达解析器。执行经 `_run_bounded`：解析在 daemon 线程中运行，超时即抛新增的
+稳定码 `ParserErrorCode.PARSE_TIMEOUT`（`SOURCE_PARSE_TIMEOUT`）。该接缝是**格式无关**的
+（`units = _run_bounded(parser, timeout_seconds)` 对所有五种格式生效），与 `max_bytes` 一样统一施加。
+
+**为何不升级 pypdf pin**：该 pin 是**承重**的，改它要同时动六处——`platform/requirements.txt`、
+`parser_matrix.py` 的 `PARSER_SPECS`（`require_parser` 对不等于该版本的值 fail closed）、
+`tests/M7/test_parser_matrix.py` 的精确断言、本文件第 678 行的冻结策略串，以及 M8 metadata-discovery 的
+`SCOPE_ASSERTIONS` 与 scope builder（后者从 HEAD 读 `requirements.txt`，不是恰好一条 `pypdf==6.0.0` 就抛
+`ValueError`，故在 HEAD 上升级会让 `tests/M8_metadata_discovery/` 变红，重冻需开一个 M8 新周期）。
+更根本的是：**升级只修这两个 CVE，不改变「解析没有时间上界」这一缺陷本身**——下一个畸形输入仍会挂在别处。
+
+**为何不触发 §6 撤销**：§6 的撤销前提是「identity、删除、隔离、tokenizer、benchmark、文件级 manifest、
+parser matrix、normalized document 或 provenance 前提**实质变化**」。本次三者均未变：
+
+- **parser matrix 未变**：五种格式的唯一解析器及其精确版本**逐字未动**（第 678 行的冻结策略串保持恰好一次
+  出现），`require_parser` 的精确匹配语义未动；新增的是**解析调用外的时间边界**，不是 parser 身份。
+- **normalized document / manifest / provenance 未变**：`ParsedDocument` / `ParsedUnit` 的形状与
+  `document_id` 派生未动；正常解析的产出**逐字节不变**（`tests/M7/test_parser_timeout.py` 用真实
+  Markdown 钉住这一点）。
+- **兼容不变量未变**：未 bump `SCHEMA_VERSION`、未改公开路由、未改 `PUBLISHED` 语义。
+
+**新增可观测行为（诚实记录）**：一个新的稳定失败码 `SOURCE_PARSE_TIMEOUT`。它经 `ManifestEntry.reject_code`
+（自由字符串，无冻结词表）进入 manifest，因此旧 manifest 仍可读；既有测试未枚举 `ParserErrorCode` 全集，
+故无既有断言被改动。
+
+**本修正不消除的残留（逐字记录，不得后读时当作已解决）**：
+
+1. **线程被放弃而非取消**：Python 无法强杀线程，超时后那个循环线程会继续跑到进程退出。与
+   `plan_ai_adapter._run_blocking` 的 caveat 同形。泄漏在实践中被限制为**每次发布尝试至多一个**——
+   `_build_candidate` 在首个坏文件上即 fail closed 并把异常抛出 `publish_full`，不会继续处理 manifest 余项。
+2. **进程级隔离是更强的修法，本次不做**：真正的硬上界需要子进程 + 强杀（每次解析一次进程开销）或
+   平台级作业对象。本次取的是与既有 `_run_blocking` 一致的**调用级**上界，不是**进程级**上界。
+3. **默认值 30 秒是估计而非实测**：没有对最大合法输入（32 MiB / 500 页）的实测解析耗时基线。若将来出现
+   合法大文件在 30 秒内跑不完，那是**新的**缺陷，需另行裁定默认值，不得靠放宽本上界来掩盖。
+4. **`txt` 格式在本机不经此路径**：`cpython-textio==3.11.9` 的精确合同使其在 CPython 3.13.3 上
+   `PARSER_UNAVAILABLE`，故本机测不到该格式的边界（新测试对该格式 skip 而非断言）。
+
+**证据**：`tests/M7/test_parser_timeout.py`（7 项，新增文件，**未修改**任何存量 M7 测试）。变异验证：
+把超时码改成 `PARSE_FAILED` → 3 项失败；去掉「只能收紧」的上限校验 → 1 项失败。
+**另记一项无法用判红表达的结果**：完全移除该上界不会让测试判红，而是让测试**挂起**——因为死循环正是
+没有 `except` 能捕获的东西。实施过程中一次把 mock 打错位置（替换了 `_run_bounded` 本身而非解析器）
+就实测到了这一点：整套测试 300 秒不返回。这正是本修正存在的理由，也是「挂起不是失败」这条测试盲区的实证。

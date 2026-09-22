@@ -16,12 +16,18 @@ from types import MappingProxyType
 from typing import Iterable, Mapping
 import platform
 import re
+import threading
 import unicodedata
 import zipfile
 
 
 PARSER_MATRIX_SCHEMA = "sa.source.parser-matrix.v1"
 MAX_FILE_BYTES = 32 * 1024 * 1024
+# Wall-clock ceiling for one `parse_document` call. The byte and unit limits above
+# bound how much a parser is *given*, not how long it may run: a parser that loops
+# internally never returns and never raises, so no `except` clause can contain it.
+# This is the bound that makes the fail-closed contract hold for that case.
+PARSE_TIMEOUT_SECONDS = 30.0
 MAX_PDF_PAGES = 500
 MAX_PPTX_SLIDES = 500
 MAX_DOCX_BODY_PARAGRAPHS = 500
@@ -35,6 +41,7 @@ class ParserErrorCode(str, Enum):
     PARSER_UNAVAILABLE = "SOURCE_PARSER_UNAVAILABLE"
     PARSE_FAILED = "SOURCE_PARSE_FAILED"
     PARSE_LIMIT_EXCEEDED = "SOURCE_PARSE_LIMIT_EXCEEDED"
+    PARSE_TIMEOUT = "SOURCE_PARSE_TIMEOUT"
 
 
 _ERROR_MESSAGES: Mapping[ParserErrorCode, str] = MappingProxyType(
@@ -44,6 +51,7 @@ _ERROR_MESSAGES: Mapping[ParserErrorCode, str] = MappingProxyType(
         ParserErrorCode.PARSER_UNAVAILABLE: "The required source parser is unavailable.",
         ParserErrorCode.PARSE_FAILED: "The source document could not be parsed.",
         ParserErrorCode.PARSE_LIMIT_EXCEEDED: "The source document exceeds a parser limit.",
+        ParserErrorCode.PARSE_TIMEOUT: "The source document did not parse within the time limit.",
     }
 )
 
@@ -63,6 +71,7 @@ class ParserMatrixError(ValueError):
             ParserErrorCode.PARSER_UNAVAILABLE: "repair-local-parser",
             ParserErrorCode.PARSE_FAILED: "repair-source-document",
             ParserErrorCode.PARSE_LIMIT_EXCEEDED: "reduce-source-document",
+            ParserErrorCode.PARSE_TIMEOUT: "repair-source-document",
         }[stable_code]
         super().__init__(_ERROR_MESSAGES[stable_code])
 
@@ -435,8 +444,40 @@ def _parse_docx(data: bytes, spec: ParserSpec) -> tuple[ParsedUnit, ...]:
         raise ParserMatrixError(ParserErrorCode.PARSE_FAILED) from exc
 
 
+def _run_bounded(parser, timeout_seconds: float):
+    """Run one parser under a wall-clock bound, fail closed when it is exceeded.
+
+    **The thread is abandoned, not cancelled.** Python cannot kill a thread, so a
+    parser stuck in an internal loop keeps running until the process exits. What
+    this buys is that the *caller* is released and the failure is turned into a
+    stable `PARSE_TIMEOUT` instead of hanging forever — which matters because the
+    hang is exactly what no `except` clause can catch. The leak is bounded in
+    practice by the caller failing closed on the first bad file rather than
+    continuing to the rest of the manifest.
+
+    Same shape as `plan_ai_adapter._run_blocking`, including its caveat.
+    """
+    box: dict[str, object] = {}
+
+    def runner() -> None:
+        try:
+            box["value"] = parser()
+        except BaseException as exc:  # noqa: BLE001 - re-raised unchanged below
+            box["error"] = exc
+
+    thread = threading.Thread(target=runner, daemon=True)
+    thread.start()
+    thread.join(timeout_seconds)
+    if thread.is_alive():
+        raise ParserMatrixError(ParserErrorCode.PARSE_TIMEOUT)
+    if "error" in box:
+        raise box["error"]  # type: ignore[misc]
+    return box["value"]
+
+
 def parse_document(data: bytes, declared_format: str, *, filename: str | PurePath | None = None,
-                   max_bytes: int = MAX_FILE_BYTES, enabled_formats: Iterable[str] | None = None) -> ParsedDocument:
+                   max_bytes: int = MAX_FILE_BYTES, enabled_formats: Iterable[str] | None = None,
+                   timeout_seconds: float = PARSE_TIMEOUT_SECONDS) -> ParsedDocument:
     """Parse one complete file under the frozen M7 parser policy.
 
     The caller supplies bytes and a manifest-declared format. ``filename`` is
@@ -446,6 +487,9 @@ def parse_document(data: bytes, declared_format: str, *, filename: str | PurePat
     if not isinstance(data, bytes):
         raise ParserMatrixError(ParserErrorCode.PARSE_FAILED)
     if not isinstance(max_bytes, int) or isinstance(max_bytes, bool) or max_bytes <= 0 or max_bytes > MAX_FILE_BYTES:
+        raise ParserMatrixError(ParserErrorCode.PARSE_LIMIT_EXCEEDED)
+    if (not isinstance(timeout_seconds, (int, float)) or isinstance(timeout_seconds, bool)
+            or not 0 < timeout_seconds <= PARSE_TIMEOUT_SECONDS):
         raise ParserMatrixError(ParserErrorCode.PARSE_LIMIT_EXCEEDED)
     spec = _validate_declaration(data, declared_format, filename)
     if enabled_formats is not None:
@@ -466,14 +510,15 @@ def parse_document(data: bytes, declared_format: str, *, filename: str | PurePat
         "pptx": lambda: _parse_pptx(data, spec),
         "docx": lambda: _parse_docx(data, spec),
     }[spec.format]
-    units = parser()
+    units = _run_bounded(parser, timeout_seconds)
     if not units or not any(unit.text.strip() for unit in units):
         raise ParserMatrixError(ParserErrorCode.PARSE_FAILED)
     return ParsedDocument(spec.format, spec.parser_id, spec.parser_version, units)
 
 
 def parse_file(path: str | PurePath, declared_format: str | None = None, *, max_bytes: int = MAX_FILE_BYTES,
-               enabled_formats: Iterable[str] | None = None) -> ParsedDocument:
+               enabled_formats: Iterable[str] | None = None,
+               timeout_seconds: float = PARSE_TIMEOUT_SECONDS) -> ParsedDocument:
     """Read and parse one file without ever exposing its host path in errors."""
     filename = PurePath(path).name
     declaration = declared_format or _extension_format(filename)
@@ -484,7 +529,8 @@ def parse_file(path: str | PurePath, declared_format: str | None = None, *, max_
             data = stream.read(max_bytes + 1)
     except OSError as exc:
         raise ParserMatrixError(ParserErrorCode.PARSE_FAILED) from exc
-    return parse_document(data, declaration, filename=filename, max_bytes=max_bytes, enabled_formats=enabled_formats)
+    return parse_document(data, declaration, filename=filename, max_bytes=max_bytes,
+                          enabled_formats=enabled_formats, timeout_seconds=timeout_seconds)
 
 
 parse_bytes = parse_document
@@ -495,6 +541,7 @@ __all__ = [
     "MAX_FILE_BYTES",
     "MAX_PDF_PAGES",
     "MAX_PPTX_SLIDES",
+    "PARSE_TIMEOUT_SECONDS",
     "PARSER_MATRIX_SCHEMA",
     "PARSER_SPECS",
     "ParsedDocument",

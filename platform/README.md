@@ -44,7 +44,7 @@ platform/
 │   ├── preview_service.py # M6b 独立认证、容量与 HTTP preview surface
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）
 │   ├── source_manifest.py # M7 用户源文件 manifest、格式接纳与 canonical digest
-│   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析
+│   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析（含墙钟上界）
 │   ├── normalized_document.py # M7 跨格式 normalized units、chunks 与缓存
 │   ├── user_source_snapshot.py # M7 source-local FULL candidate 与原子发布
 │   ├── user_source_sync.py # M7 source-local FULL/INCREMENTAL sync worker
@@ -588,7 +588,19 @@ M6a 已完成 Source/存储职责/Tool/Runner 薄适配、启动期静态额外�
 M6b 已实现独立、默认关闭、只读的原生工具调用 preview，并完成 closeout 收口，当前为 `ADMITTED / COMPLETE`。
 它不接管 `/api/v1/study-sessions`，不写学习状态，也不新增 `SA_RUNNER=react`。完整自主 Runner、写工具、checkpoint/幂等和 Agent 评测属于 M10。
 
-M7 当前为 `ADMITTED / COMPLETE`。独立 Source Registry、source-local manifest、冻结 parser matrix、normalized document、单源 FULL candidate/发布合同、incremental sync worker、source-local delete/isolation/FTS5/vector/offline 合同，以及 Search/QA 的受信任内部 principal overlay 已完成；阶段测试 `tests/M7/` 当前收集 270 项。Python 3.13.3 当前执行为 267 passed / 3 failed，三个 TXT 真实 parser 用例因精确 `cpython-textio==3.11.9` 合同返回 `PARSER_UNAVAILABLE`，不得以放宽合同修复。2026-09-06 已在 `platform/.venv311` 的 Python 3.11.9 精确依赖环境中复跑 seed `20260904` 的五格式各 100 fixture × 20 次完整协议，全部 PASS，失败计数为 0，且 `external_source_reads=0`、`tmp_only=true`；报告仅位于系统临时目录且不入库。同步、删除、sweep 与查询最终发布门共享按 cache root 归一化的进程内 `RLock`；重试等待在锁外执行，查询昂贵读取后才短暂持锁复核。该协议依赖单 worker 拓扑，不是跨进程 read lease。五格式冻结协议、lifecycle/provenance E2E 和 BGE 证据彼此分离，技术证据与 `m7_exit=true` 均不自动构成阶段批准；justtodo123 于 2026-09-06 另行在 `m7-infrastructure-only-v1` 范围内批准 `M7 COMPLETE`。M8 的事实型 M7 退出前置已满足，但 M8 自身决策、后端选择和批准仍未闭合，因此保持 `BLOCKED / NOT_STARTED`。
+M7 当前为 `ADMITTED / COMPLETE`。独立 Source Registry、source-local manifest、冻结 parser matrix、normalized document、单源 FULL candidate/发布合同、incremental sync worker、source-local delete/isolation/FTS5/vector/offline 合同，以及 Search/QA 的受信任内部 principal overlay 已完成；阶段测试 `tests/M7/` 当前收集 277 项。Python 3.13.3 当前执行为 274 passed / 3 failed，三个 TXT 真实 parser 用例因精确 `cpython-textio==3.11.9` 合同返回 `PARSER_UNAVAILABLE`，不得以放宽合同修复。2026-09-06 已在 `platform/.venv311` 的 Python 3.11.9 精确依赖环境中复跑 seed `20260904` 的五格式各 100 fixture × 20 次完整协议，全部 PASS，失败计数为 0，且 `external_source_reads=0`、`tmp_only=true`；报告仅位于系统临时目录且不入库。同步、删除、sweep 与查询最终发布门共享按 cache root 归一化的进程内 `RLock`；重试等待在锁外执行，查询昂贵读取后才短暂持锁复核。该协议依赖单 worker 拓扑，不是跨进程 read lease。五格式冻结协议、lifecycle/provenance E2E 和 BGE 证据彼此分离，技术证据与 `m7_exit=true` 均不自动构成阶段批准；justtodo123 于 2026-09-06 另行在 `m7-infrastructure-only-v1` 范围内批准 `M7 COMPLETE`。M8 的事实型 M7 退出前置已满足，但 M8 自身决策、后端选择和批准仍未闭合，因此保持 `BLOCKED / NOT_STARTED`。
+
+**2026-09-22 收口后缺陷修正——解析路径的墙钟上界**：`MAX_FILE_BYTES` / `MAX_PDF_PAGES` /
+`MAX_PPTX_SLIDES` / `MAX_DOCX_BODY_PARAGRAPHS` 约束的是解析器**拿到多少输入**，不是它**能跑多久**；
+一个内部死循环的解析器既不返回也不抛异常，故解析路径上任何 `except` 对它都是盲的，调用永不返回。
+`parse_document` / `parse_file` 因此新增 `timeout_seconds` 参数，默认 `PARSE_TIMEOUT_SECONDS = 30.0`
+（`platform/app/parser_matrix.py`），校验与既有 `max_bytes` 同形——必须是正的有限数且**不得超过**该冻结
+默认值，超过即 `SOURCE_PARSE_LIMIT_EXCEEDED` 且不触达解析器。超时抛新增稳定码
+**`SOURCE_PARSE_TIMEOUT`**（`ParserErrorCode.PARSE_TIMEOUT`），并带 `repair-source-document` 修复分类。
+该接缝**格式无关**，五种格式统一施加。**残留（不得后读时当作已解决）**：线程被**放弃而非取消**
+（Python 无法强杀线程，与 `plan_ai_adapter._run_blocking` 同形），泄漏被限制为「每次发布尝试至多一个」
+（首个坏文件即 fail closed）；进程级隔离是更强的修法，本次不做；默认 30 秒是估计而非实测基线。
+详见 [`docs/plans/m7-source-lifecycle-plan.md`](../docs/plans/m7-source-lifecycle-plan.md) §7.1。
 默认 RAG 基线仍为 OS/DS/CO 三课 90 题；Network 30 题为显式运行的扩展集。
 
 ## 降级路径
