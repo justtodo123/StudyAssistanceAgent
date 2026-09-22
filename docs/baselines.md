@@ -701,5 +701,49 @@ authorization 记录保持不变。当前 M7 为 `ADMITTED / COMPLETE`。
 阶段。M8、M9、M10 仍为 `BLOCKED / NOT_STARTED`；Network 文档晋升、P0 语料治理闭环、任意 corpus 自动批准、
 M8 专业化存储、Milvus/LanceDB/Qdrant 选择以及 M9/M10 实现继续处于原批准范围之外。
 
-*创建：2026-08-12 · 更新：2026-09-06（追加 M7 独立完成批准；不启动 M8）·
+## M9 v1.5 外部 AI 路径评测读数 — 2026-09-22
+
+本节记录 `M9-EVALUATION` 延迟/成本维度解冻（plan_revision v1.5）后的**本地复现读数**。范围**仅限
+M9 外部 AI 路径（`m9.external-ai`）**，**不是**全项目评测，也**不是** provider 性能。证据绑定：
+
+- **arm A（门禁）**：`tests/M9/test_plan_ai_benchmark.py`，提交 `6ba6ce8`；报告 schema
+  `m9-plan-ai-evaluation-v2`；`workload_digest`
+  `0e6de48f48dabb6b45f58f53198ea80f7f5f37848aad2d4005f98ac50cd1bf8f`（冻结 workload，五个：
+  `os-baseline`/`os-required-deadlock`/`os-excluded-memory`/`ds-baseline`/`network-baseline`）、
+  `budget_scenario_digest`
+  `508707a16a1b0ee0367dc22b9bdc8628f11dfc1a5b2da5aebda4e7d250d667f1`（冻结 6 场景）。两个摘要都是冻结
+  常量的纯函数，故可复算比对；报告本体经 `M9_BENCHMARK_REPORT` 独占创建写入**本地临时目录**（不入库）。
+- **arm B（非门禁）**：`tests/M9/test_plan_ai_provider_smoke.py`，提交 `51220d6`。**本次未运行**。
+
+**arm A 读数**（Windows 11 `10.0.26200`、CPython 3.13.3、`provider: deterministic-stub (no network)`，
+本地探针 `evidence_id=m9-v15-local-probe`）：6 场景观测原因码与期望**逐项一致**，`budget_enforcement`
+`enforced=6 / total=6 / rate=1.0`。结构性三例：`prompt-budget`（`max_prompt_bytes=16`，prompt 实测 3876 字节）
+**provider 调用数为 0** —— 钉住 prompt 预算判定位于 provider 调用**之前**；`cost-budget` 收到的是**合法置换**
+却仍 `order_returned=false`、`estimated_cost_usd=0.30 > max_cost_usd=0.10` —— 钉住成本是**硬上限**而非建议；
+`deadline`（`deadline_seconds=0.2`）实测 `latency_ms≈215` 后判 `deadline_exceeded`。1K 侧读数不变：
+`input_bounded=true`（同一 workload 在 10 chunks 与 1000 chunks 下 prompt 字节数**逐字相同**，
+3555–5280 字节）、`prerequisite_violations_total=0`、`deterministic_replay_consistency=true`。
+
+**该读数不能用来声称什么**（逐条，报告内亦有机器可读副本）：
+
+1. **不是性能**：`stub_latency_ms` 标签逐字为 `deterministic-stub end-to-end; NOT provider latency`。
+   同轮 200 样本为 p50 1.15 / p95 1.56 / max 1.90 ms，而同日更早一次本地探针为 p50 2.16 / p95 3.40 /
+   max 10.76 ms —— **同一冻结负载下相差数倍**，这本身就是「它不是稳定 SLA」的实证。成本同理，由脚本化
+   usage 算出，非计量。
+2. **三项预算无本地执行点**：`max_input_tokens`（本仓无本地 tokenizer，本地用的是字节预算）、
+   `model_timeout_seconds`、`max_output_tokens` 仅传给 provider。报告 `not_enforced_locally` 是这条的
+   机器可读证据。
+3. **`deadline_seconds` 的守卫放弃线程而非取消它**：挂住的 provider 调用可以活过 deadline。
+4. **arm B 本次未运行**：真实 provider 的延迟 / 成本 / 失败模式**仍未验证**。运行它需要 owner 的 key
+   与真实花费（opt-in 命令、默认 $1.00 上限与「最坏为 cap + 单次调用」的说明见 `tests/M9/README.md`）。
+   **不得**从上述 stub 延迟/成本推导任何 provider 性能数字。
+5. **不是容量**：1K 语料**不被 M9 存储或索引**；10K/100K 仍是 M8（`BLOCKED`）/ M11 依赖。
+6. **不是全项目评测口径冻结**：冻结范围仅限 M9 外部 AI 路径；遵循度仍为**定性**，未冻结数值阈值。
+7. **不构成 M9 阶段退出**：`COMPLETE` 需要独立的 `completion_approval`，本次**不申请**。
+
+该变更是 M9 **第一次触发** `stage-admission-gates.md` §4 撤销的变更（决策值实质变更 ⇒
+`admission_history` 追加 `ADMITTED→REVOKED`、`REVOKED→ADMITTED` 两条），live 字段仍为
+`ADMITTED / IN_PROGRESS`；理由与未变项清单见 M9 计划 §4.3。
+
+*创建：2026-08-12 · 更新：2026-09-22（追加 M9 v1.5 外部 AI 评测读数；不启动 M9 收口）·
 维护：知识库、评测集或检索策略变化后复测并追加记录*
