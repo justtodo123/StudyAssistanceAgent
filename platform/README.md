@@ -545,7 +545,7 @@ Preview 的 model、官方 endpoint、TLS 校验、tool allowlist、capacity=2�
 | `SA_PLAN_AI_TOKEN` | 空（回退 `ANTHROPIC_API_KEY`） | 启用时至少 32 个 UTF-8 字节，否则启动即 fail closed |
 | `SA_PLAN_AI_DEADLINE_SECONDS` | `30` | 桥接线程外层 deadline；只能收紧 |
 | `SA_PLAN_AI_MODEL_TIMEOUT_SECONDS` | `20` | 单次 `create_turn` timeout；只能收紧 |
-| `SA_PLAN_AI_MAX_INPUT_TOKENS` | `8000` | input token 上限；只能收紧 |
+| `SA_PLAN_AI_MAX_INPUT_TOKENS` | `8000` | input token 上限；只能收紧。**仅 provider 侧**——本仓无本地 tokenizer，本地用的是 `SA_PLAN_AI_MAX_PROMPT_BYTES` 字节预算，该值**没有本地执行点** |
 | `SA_PLAN_AI_MAX_OUTPUT_TOKENS` | `2048` | output token 上限；只能收紧 |
 | `SA_PLAN_AI_MAX_COST_USD` | `0.10` | 冻结价格表估算费用**硬上限**；只能收紧 |
 | `SA_PLAN_AI_MAX_PROMPT_BYTES` | `16384` | UTF-8 prompt 字节上限；只能收紧 |
@@ -556,7 +556,29 @@ model 与 retry 次数不可由环境变量覆盖（沿用 Preview 的“应用�
 或不是原集合**置换**的回复都逐字回退确定性计划，**不产生半成品计划**，也不落库。
 
 > 范围：本路径只跑 **1K** 冻结比较，证明**输入有界**（prompt 不随语料规模增长），**不是**容量声明；
-> 10K/100K 属 M8（`BLOCKED`）/ M11（拟议）依赖，延迟/成本维度仍 `DEFERRED`。
+> 10K/100K 属 M8（`BLOCKED`）/ M11（拟议）依赖。
+
+### 预算在本地执行到什么程度（v1.5 冻结口径）
+
+`M9-EVALUATION` 的延迟/成本维度已由 plan_revision v1.5 解冻为**冻结评测**，范围**仅限本路径**。
+`tests/M9/test_plan_ai_benchmark.py`（`-m m9_benchmark`）在冻结预算矩阵上驱动**真实**的
+`build_anthropic_proposer(client_factory=…)` 接缝，逐场景断言稳定原因码，并在报告里给出机器可读的划分：
+
+| 预算 | 是否本地执行 | 说明 |
+| --- | --- | --- |
+| `max_prompt_bytes` | 是 | 在**调用 provider 之前**返回（provider 调用数为 0） |
+| `max_answer_bytes` | 是 | 收到回复后立即判 |
+| `max_cost_usd` | 是 | **硬上限**：即便收到合法置换也丢弃，不是告警阈值 |
+| `deadline_seconds` | 是 | 桥接线程外层 deadline；**放弃线程而非取消它** |
+| `max_input_tokens` | **否** | 本地无 tokenizer，故用字节预算替代 |
+| `model_timeout_seconds` | **否** | 传给 provider，仅 provider 侧 |
+| `max_output_tokens` | **否** | 传给 provider，仅 provider 侧 |
+
+> **必须按窄口径读**：CI 臂用确定性 stub，故其延迟是桥接开销、成本由脚本化 usage 算出——它冻结的是
+> **预算被强制执行**，**不是**性能。真实 provider 的延迟 / 成本 / 失败模式见
+> `tests/M9/test_plan_ai_provider_smoke.py`（`online` + skip 门控、花费上限默认 $1.00、只记脱敏字段、
+> **非门禁**）；该臂**本次未运行**，故真实 provider 性能**仍未验证**。任何门禁、退出条件与登记表都不得
+> 依赖它。
 
 ## M6/M7 边界
 

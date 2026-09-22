@@ -70,6 +70,11 @@
   用户数据、绝对路径、凭据。
 - **隐私/保留**：不落 provider 侧日志/trace；本地只留脱敏审计。
 - **timeout/cost**：硬超时、token/成本预算；失败即回退确定性路径，不产生半成品 Plan。
+  **口径澄清（v1.5）**：本仓无本地 tokenizer，故「token 预算」在本地实为 **UTF-8 字节预算**
+  （`max_prompt_bytes` / `max_answer_bytes`，在调用 provider **之前**判定）；`max_input_tokens` /
+  `max_output_tokens` / `model_timeout_seconds` 只传给 provider、**没有本地执行点**。真正的硬闸门是
+  `max_cost_usd`（硬上限，合法输出照样丢弃）与 `deadline_seconds`（`_run_blocking` 强制，但**放弃**线程
+  而非取消它）。逐项清单见评测报告 `m9-plan-ai-evaluation-v2` 的 `enforced_locally` / `not_enforced_locally`。
 - **确定性 fallback**：无 LLM 时产出规则化 Plan，schema 与正确性要求不变。
 
 ## 7. `M9-EVALUATION`
@@ -79,6 +84,29 @@
 - **workload**：固定任务集（覆盖不同课程/等级/约束），比较确定性路径与可选 AI 路径。
 - **阈值**：先修关系违反 = 0；stale/deleted Source 进入 = 0；确定性路径可重放 = 100%；输入规模不随 chunk
   总量线性增长必须可证明。
+
+### 7.1 v1.5 冻结（延迟/成本维度解冻）
+
+`M9-EVALUATION` 的延迟/成本维度自 plan_revision v1.5 起为**冻结评测**，取值
+`..._LATENCY_COST_FROZEN_M9_EXTERNAL_AI_PATH_ONLY__DETERMINISTIC_STUB_BUDGET_ENFORCEMENT_CI_GATING__REAL_PROVIDER_READING_OPT_IN_NON_GATING`。
+
+- **范围限制**：冻结只覆盖 **M9 外部 AI 路径**，**不**是全项目评测口径冻结。遵循度**仍是定性**，
+  未冻结任何数值阈值；10K/100K 容量仍记 M8（`BLOCKED`）/ M11 依赖。
+- **两臂分工**：
+  - **arm A（门禁）** —— `tests/M9/test_plan_ai_benchmark.py` 内的**冻结预算矩阵**，由**确定性 stub** 驱动，
+    走真实 `build_anthropic_proposer(client_factory=…)` 接缝（用 `proposer=` 注入会绕过 `_run_blocking`，
+    那样断言 deadline 就是假证据）。它证明的是预算被**强制执行**，**不是**性能。
+  - **arm B（非门禁）** —— `tests/M9/test_plan_ai_provider_smoke.py`，真实 provider 读数，显式 opt-in
+    （`M9_PROVIDER_SMOKE`）、skip 门控**承重**、**任何门禁/退出条件/登记表都不得依赖它**。
+- **阈值（arm A，冻结）**：6 场景观测原因码 == 期望且 `enforcement rate == 1.0`；`prompt` 预算场景
+  provider 调用数 **= 0**；`cost` 预算场景在收到**合法**置换时仍 `order is None`；冻结价目表与
+  `app.preview_agent` 同名常量**断言相等**；`_estimate_cost` 在冻结小表上可复现；stub 延迟
+  `p95 <= 1000ms` **且** `p95 < deadline_seconds * 1000`（魔数绑在冻结预算上）。
+- **本地 vs provider 侧执行划分**：本地执行 `max_prompt_bytes` / `max_answer_bytes` / `max_cost_usd` /
+  `deadline_seconds`；**不**本地执行 `max_input_tokens`（无本地 tokenizer）/ `model_timeout_seconds` /
+  `max_output_tokens`（仅 provider 侧）。该划分在报告里是机器可读字段。
+- **诚实边界**：stub 下没有任何性能读数——延迟是桥接开销，成本由脚本化 usage 算出；arm B 本次**未运行**，
+  真实 provider 的延迟/成本/失败模式**仍未验证**；本次**不启动 M9 收口**。
 
 ## 8. `M9-COMPATIBILITY`
 

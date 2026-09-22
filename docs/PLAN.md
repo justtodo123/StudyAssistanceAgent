@@ -9,7 +9,9 @@
 > **显式扩张**该范围（新增 `m9.bounded-grounding-retrieval` 与 `m9.plan-identity-fidelity`；扩张不触发 §4 撤销，
 > 理由见 M9 计划 §4.1），再以 plan_revision v1.4 **窄口径扩张**至步骤 6（新增 `m9.external-ai`：默认关闭的
 > 可选外部 AI 路径 + 冻结任务集 1K 比较；`M9-EVALUATION` 原值不动、延迟/成本仍暂缓，10K/100K 逐字记为
-> M8/M11 依赖，理由见 M9 计划 §4.2）；M8 与 M10–M12 自身仍为
+> M8/M11 依赖，理由见 M9 计划 §4.2），再以 plan_revision v1.5 **解冻 `M9-EVALUATION` 的延迟/成本维度**
+> 为冻结评测（范围**仅限 M9 外部 AI 路径**：CI 侧冻结预算执行、真实 provider 读数走显式 opt-in 且非门禁；
+> 该变更**触发 §4 撤销过渡**，与 v1.3/v1.4 相反，理由见 M9 计划 §4.3）；M8 与 M10–M12 自身仍为
 > `BLOCKED / NOT_STARTED`；M8 active execution protocol `draft-0.10`
 > 曾完成 P0/P1/P2 并到达 `BINDING_FROZEN`，但 2026-09-14 独立 P3 文本审计因三项阻断性
 > schema/治理闭合缺陷判定 `REJECTED / stop`（`FAILED / RETURNED`）。不得 `request-p4`，且未授权或执行任何
@@ -152,7 +154,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
 | M7 | `ADMITTED` | `COMPLETE` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策、保护基线、Source lifecycle/delete/isolation/fallback、冻结 1k/3k BGE 与五格式 100×20 parser/normalized/lifecycle 证据已闭合。原 2026-08-31 准入与开工授权保持不变；justtodo123 于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内独立批准 `M7 COMPLETE`。技术证据本身不产生批准；M6b preview、Quiz、Review Plan 与 study-sessions 仍不含用户源 |
 | M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | 八项 Decision 已 `RESOLVED`；`draft-0.10` P3 拒绝链冻结；`draft-0.11` 独立 P3 已 `REJECTED / stop`，失败链冻结；执行、后端选择和 admission 未授权；100K 专业化存储容量验证暂缓，现有 SQLite 线性余弦 + BM25 满足当前个人规模 |
-| M9 | `ADMITTED` | `IN_PROGRESS` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT`、`M9-M8-EXIT`（维持当前 SQLite/BM25 后端）均已 `SATISFIED`；八项强制决策全部 `RESOLVED`；justtodo123 于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内批准开工（生成 + 采纳 + 进度 + 偏差重规划；v1.1 时外部 AI 与 mastery 写入除外）。确定性 Planner、计划生命周期与跳过/逾期偏差信号已实现；`M9-EXECUTION-DEVIATION` 决策值在 v1.2 实质变更，撤销与重新准入过渡已登记在 `admission_history`；步骤 3 的三个只读投影（mastery、授权 Source 摘要、先修关系 topic graph）均已实现并接入确定性 Planner（计划身份含派生输入摘要；先修违反由 `summary.prerequisites.violations` 可测，真语料实测为 0）；2026-09-21 owner 以 v1.3 扩张范围至步骤 4（拆为 4a/4b），4a 受限检索接缝（`PlanGroundingService`，四类预算 + fail-closed 交叉校验）与 4b 计划身份往返保真（principal 进身份键与记录 payload、经单点 `_public_plan` 剥离后不进响应体）均已完成；步骤 4c 修复了步骤 3 记录的复习历史冻结快照残留（`main.py` 改注入只读活投影）；步骤 4d 关闭了 §4 记录的准入留痕覆盖缺口（`_registry_references` 现同时枚举 `admission_history[].reference`，纯治理测试硬化）；2026-09-21 owner 再以 v1.4 窄口径扩张至步骤 6，`m9.external-ai` 移入 `included`（排除项只剩 mastery 写入），实现默认关闭的可选外部 AI 路径与冻结任务集 1K 比较；**`M9-EVALUATION` 原值未动**（延迟/成本仍 `DEFERRED`），10K/100K 容量验证逐字记为 M8（`BLOCKED`）/ M11 依赖、本次不触碰，故步骤 6 仅为**窄口径**推进、评测 workload 整体仍未冻结；该窄口径**已实施完成**（adapter 默认关闭 + 冻结任务集 1K 比较，读数见下方步骤 6 段）；2026-09-21 另交付 M9 **退出条件证据**——`tests/M9/test_mastery_write_authority.py` 以动态源文件枚举钉住「正式 mastery 只有一个写入权威」（写 `study_sessions`/`answer_attempts` 者恰好是 `learning_store.py`，M9 的 8 个模块与写权威导入不可达）；该增量**不新增写路径**（`m9.mastery-write` 仍在 `excluded`）、不改 `plan_revision`、不写 `admission_history`。M9 退出条件中**仅「冻结评测达标」仍未挣得**，故 M9 尚不具备退出条件 |
+| M9 | `ADMITTED` | `IN_PROGRESS` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT`、`M9-M8-EXIT`（维持当前 SQLite/BM25 后端）均已 `SATISFIED`；八项强制决策全部 `RESOLVED`；justtodo123 于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内批准开工（生成 + 采纳 + 进度 + 偏差重规划；v1.1 时外部 AI 与 mastery 写入除外）。确定性 Planner、计划生命周期与跳过/逾期偏差信号已实现；`M9-EXECUTION-DEVIATION` 决策值在 v1.2 实质变更，撤销与重新准入过渡已登记在 `admission_history`；步骤 3 的三个只读投影（mastery、授权 Source 摘要、先修关系 topic graph）均已实现并接入确定性 Planner（计划身份含派生输入摘要；先修违反由 `summary.prerequisites.violations` 可测，真语料实测为 0）；2026-09-21 owner 以 v1.3 扩张范围至步骤 4（拆为 4a/4b），4a 受限检索接缝（`PlanGroundingService`，四类预算 + fail-closed 交叉校验）与 4b 计划身份往返保真（principal 进身份键与记录 payload、经单点 `_public_plan` 剥离后不进响应体）均已完成；步骤 4c 修复了步骤 3 记录的复习历史冻结快照残留（`main.py` 改注入只读活投影）；步骤 4d 关闭了 §4 记录的准入留痕覆盖缺口（`_registry_references` 现同时枚举 `admission_history[].reference`，纯治理测试硬化）；2026-09-21 owner 再以 v1.4 窄口径扩张至步骤 6，`m9.external-ai` 移入 `included`（排除项只剩 mastery 写入），实现默认关闭的可选外部 AI 路径与冻结任务集 1K 比较；**`M9-EVALUATION` 原值未动**（延迟/成本仍 `DEFERRED`），10K/100K 容量验证逐字记为 M8（`BLOCKED`）/ M11 依赖、本次不触碰，故步骤 6 仅为**窄口径**推进、评测 workload 整体仍未冻结；该窄口径**已实施完成**（adapter 默认关闭 + 冻结任务集 1K 比较，读数见下方步骤 6 段）；2026-09-21 另交付 M9 **退出条件证据**——`tests/M9/test_mastery_write_authority.py` 以动态源文件枚举钉住「正式 mastery 只有一个写入权威」（写 `study_sessions`/`answer_attempts` 者恰好是 `learning_store.py`，M9 的 8 个模块与写权威导入不可达）；该增量**不新增写路径**（`m9.mastery-write` 仍在 `excluded`）、不改 `plan_revision`、不写 `admission_history`；2026-09-22 owner 再以 plan_revision v1.5 **解冻 `M9-EVALUATION` 的延迟/成本维度**为冻结评测（`ADMITTED→REVOKED→ADMITTED` 过渡已登记在 `admission_history`，`M9-EVALUATION` 为 M9 首个**真正触发** §4 的变更），冻结口径**仅限 M9 外部 AI 路径**：CI 臂在 `tests/M9/test_plan_ai_benchmark.py` 以确定性 stub 驱动真实 `client_factory=` 接缝，冻结**预算被强制执行**（`-m m9_benchmark`）；真实 provider 读数走 `tests/M9/test_plan_ai_provider_smoke.py`（`online` + skip 门控、**非门禁、本次未运行**）。故 M9 七项退出条件**在各自声明的范围内**均已挣得，但**不得**读成「M9 完成」——真实 provider 性能被刻意排除在门禁判据外且仍未验证，`COMPLETE` 另需 §4 要求的独立 `completion_approval`（本次不申请） |
 | M10 | `BLOCKED` | `NOT_STARTED` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | `M10-M7-EXIT=SATISFIED`；仍等待 M8/M9，写授权、恢复、rollout 与独立批准仍 `OPEN` |
 | M11 | `BLOCKED` | `NOT_STARTED` | [`m11-data-scaling-plan.md`](plans/m11-data-scaling-plan.md) | 拟议真实数据规模化阶段；正式退出目标为 10K approved chunks，3K 为先行 Gate，全部 Decision 与批准 `OPEN` |
 | M12 | `BLOCKED` | `NOT_STARTED` | [`m12-cloud-deployment-plan.md`](plans/m12-cloud-deployment-plan.md) | 拟议可选云端单用户部署；本地离线仍为默认，服务器 baseline、十三项 Decision 与批准全部 `OPEN` |
@@ -326,6 +328,18 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
   （输入有界），两条路径先修违反均为 0，确定性可重放。**必须按窄口径读**：这只证明**输入不随语料规模增长**，
   M9 既不存储也不索引 1K chunks，故**不是容量声明**；AI 路径在 CI 由确定性 stub 驱动，真实 provider 的
   延迟/成本/失败模式**未验证**；10K/100K 仍是 M8（`BLOCKED`）/ M11（拟议）依赖。
+  **评测口径已由 owner 以 plan_revision v1.5 解冻**（2026-09-22）：`M9-EVALUATION` 的延迟/成本维度由
+  `..._LATENCY_COST_DEFERRED` 改为冻结评测，**这是 M9 第一个真正触发 §4 撤销的变更**（v1.3/v1.4 都在论证
+  「为何不触发」；§4.2 末段早已逐字预言本次），过渡已登记在 `admission_history`，live 字段仍为
+  `ADMITTED / IN_PROGRESS`。冻结口径**仅限 M9 外部 AI 路径**，分两臂：**CI 臂（门禁）**在
+  `tests/M9/test_plan_ai_benchmark.py` 以冻结预算矩阵驱动**真实** `build_anthropic_proposer(client_factory=…)`
+  接缝，逐场景断言稳定原因码——`prompt` 预算在调用 provider **之前**返回（provider 调用数为 0）、`cost`
+  预算在收到**合法**置换时仍丢弃它（硬上限而非告警阈值）、`deadline` 由 `_run_blocking` 强制；**必须按窄口径读**：
+  stub 下延迟是桥接开销、成本由脚本化 usage 算出，故 CI 臂证明的是**预算被强制执行**，**不是**性能；
+  `max_input_tokens` / `model_timeout_seconds` / `max_output_tokens` **不在本地执行**（报告里有机器可读的
+  `enforced_locally` / `not_enforced_locally`），`deadline` 守卫**放弃线程而非取消它**。**真实 provider 臂
+  （非门禁）**见 `tests/M9/test_plan_ai_provider_smoke.py`（`online` + skip 门控、花费上限默认 $1.00、
+  只记脱敏字段），**本次未运行**，故真实 provider 的延迟 / 成本 / 失败模式**仍未验证**。10K/100K 仍不触碰。
 - ⬜ **M10 完整自主 Runner 与 Harness 对外**：准备计划见
   [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md)；在 M7–M9 退出后仍须先闭合写授权、
   checkpoint、幂等、EffectLedger、恢复、Agent 评测、manifest、MCP 和 rollout。状态机继续作为正式默认和
@@ -364,7 +378,21 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.32（不是产品发布版本）· 更新：2026-09-21（M9 **退出条件证据**：新增
+*创建：2026-08-10 · PLAN 文档修订：v2.33（不是产品发布版本）· 更新：2026-09-22（M9 **评测口径解冻**：
+owner 以 plan_revision v1.5 把 `M9-EVALUATION` 的延迟/成本维度由 `..._LATENCY_COST_DEFERRED` 改为冻结评测。
+这是 M9 **第一个真正触发 §4 撤销**的变更（v1.3/v1.4 都在论证「为何不触发」），`ADMITTED→REVOKED→ADMITTED`
+过渡已登记在 `admission_history`（live 字段仍 `ADMITTED / IN_PROGRESS`，理由见 M9 计划 §4.3）。冻结口径
+**仅限 M9 外部 AI 路径**，分两臂：CI 臂在 `tests/M9/test_plan_ai_benchmark.py` 以冻结预算矩阵驱动**真实**
+`build_anthropic_proposer(client_factory=…)` 接缝（用 `proposer=` 注入会绕过 `_run_blocking`，故那样断言
+deadline 是假证据），逐场景断言稳定原因码；真实 provider 臂新增 `tests/M9/test_plan_ai_provider_smoke.py`
+（`online` + skip 门控、花费上限默认 $1.00、只记脱敏字段、**非门禁、本次未运行**）。**必须按窄口径读**：
+stub 下延迟是桥接开销、成本由脚本化 usage 算出，故 CI 臂冻结的是**预算被强制执行**而非性能；
+`max_input_tokens` / `model_timeout_seconds` / `max_output_tokens` 不在本地执行（报告含机器可读的
+`enforced_locally` / `not_enforced_locally`）。`tests/M9` 324 → 327 项（`m9` 321 → 324 + `m9_benchmark` 3）；
+全量 1242/1238 → 1245/1240（另 2 项 skip）。M9 七项退出条件**在各自声明的范围内**已挣得，但**不得**读成
+「M9 完成」——真实 provider 性能被刻意排除在门禁判据外且仍未验证，`COMPLETE` 另需独立 `completion_approval`，
+本次不申请）
+· 上一修订 v2.32（2026-09-21：M9 **退出条件证据**：新增
 `tests/M9/test_mastery_write_authority.py`，以**动态枚举** `platform/app/` 全部源文件（当前 60 个）钉住
 「正式 mastery 只有一个写入权威」——写 `study_sessions`/`answer_attempts` 的模块**恰好**是 `learning_store.py`，
 M9 的 8 个模块与写权威**导入不可达**（AST 闭包断言）。既有测试是逐模块证明「我没写」，本次补上**闭包**证明；

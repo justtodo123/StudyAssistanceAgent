@@ -226,7 +226,9 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-21（M8 active execution protocol `draft-0.10` 曾到达
+*创建：2026-08-11 · 更新：2026-09-22（M8 active execution protocol `draft-0.10` 曾到达
 `BINDING_FROZEN`，但独立 P3 文本审计为 `REJECTED / stop`；不得 `request-p4`，M8 与 M10–M12 仍阻断；
-M9 已于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内获批为 `ADMITTED / IN_PROGRESS`）·
+M9 已于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内获批为 `ADMITTED / IN_PROGRESS`，并于 2026-09-22 以
+plan_revision v1.5 解冻 `M9-EVALUATION` 的延迟/成本维度——**范围仅限 M9 外部 AI 路径**，CI 臂冻结预算
+**执行**、真实 provider 读数为 opt-in 非门禁且**本次未运行**；该变更触发 §4 撤销过渡，**未**启动收口）·
 维护：随项目演进同步更新*

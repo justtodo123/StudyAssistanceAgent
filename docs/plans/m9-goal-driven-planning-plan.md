@@ -49,7 +49,7 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 | `M9-MASTERY-AUTHORITY` | `RESOLVED` | `StudySessionService`/领域仓储唯一写；Planner 建议隔离；先粗粒度 mastery；采纳由 SessionService 记录 |
 | `M9-EXECUTION-DEVIATION` | `RESOLVED` | completed/skipped/overdue/replanned 事件；**未消费的**跳过+逾期≥3 或目标/约束变化触发重规划；触发时按 revision 追加消费台账；parent_revision 前向链；复用 review_scheduler 的 days_overdue |
 | `M9-EXTERNAL-AI` | `RESOLVED` | 默认关闭、显式 opt-in；最小披露（不送 chunk 正文/用户数据/路径/凭据）；硬超时+成本预算；确定性 fallback |
-| `M9-EVALUATION` | `RESOLVED` | 先修违反=0、stale/deleted Source 进入=0、确定性可重放=100%、输入有界可证明；遵循度先定性，延迟/成本暂缓 |
+| `M9-EVALUATION` | `RESOLVED` | 先修违反=0、stale/deleted Source 进入=0、确定性可重放=100%、输入有界可证明；遵循度先定性；延迟/成本已由 v1.5 解冻为**冻结评测**，但**范围仅限 M9 外部 AI 路径**（不是全项目评测声明）：CI 侧冻结**预算被强制执行**（确定性 stub，门禁），真实 provider 读数为显式 opt-in 且**非门禁** |
 | `M9-COMPATIBILITY` | `RESOLVED` | review-plan/study-session API 不变；SQLite 可恢复可迁移不回写历史；90 题不退化；关闭时回退确定性 review-plan |
 
 所有决策都需明确默认、覆盖、输入校验、失败、隐私/兼容影响、适用阈值、证据、责任人和日期。外部模型可以生成
@@ -65,16 +65,17 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 - [x] 外部 AI 最小披露、失败和无 LLM fallback 可验证（v1.4 窄口径兑现：`tests/M9/test_plan_ai_adapter.py`
   逐字段断言载荷白名单、每一类失败收敛为回退、关闭时与无 adapter 逐字节相同；**注意**这只覆盖 1K 与
   stub provider，真实 provider 的延迟/成本/失败模式仍未验证）；
-- [ ] evaluation workload、样本、阈值和人工评审口径冻结；
+- [x] evaluation workload、样本与阈值口径冻结——**范围仅限 M9 外部 AI 路径**（v1.5，见 §4.3）；
+  遵循度的人工评审口径**仍未**冻结（保持定性），故这不是全项目评测口径冻结；
 - [ ] [`docs/PLAN.md`](../PLAN.md)、本计划与 JSON 登记表一致；
 - [ ] 用户或项目负责人完成批准。
 
 | 批准字段 | 当前值 |
 | --- | --- |
 | approved_by | justtodo123 |
-| approved_at | 2026-09-21 |
-| approval_reference | User instruction: 快速推进授权扩张范围到步骤 6；经裁定取窄口径（外部 AI + 仅 1K）——把 m9.external-ai 从 excluded 移入 included，在冻结任务集上比较确定性与 AI 路径，容量只在 1K 跑；不动 M9-EVALUATION（延迟/成本保持 deferred），故不需要 REVOKED；10K/100K 逐字记为 M8/M11 依赖、不触碰；mastery 写入仍在范围外 |
-| plan_revision | v1.4 |
+| approved_at | 2026-09-22 |
+| approval_reference | User instruction: 解冻 M9-EVALUATION 的延迟/成本维度（选项 1）；经裁定证据取两臂——CI 冻结预算执行用确定性 stub 且为门禁，真实 provider 读数为显式 opt-in、由 owner 自行运行且非门禁；评测 workload 冻结但限定在 M9 外部 AI 路径，不作全项目评测声明；本次不启动 M9 收口 |
+| plan_revision | v1.5 |
 | decision_set_version | m9-decision-set-v1 |
 
 **批准历史**（`approval` 字段只承载当前批准，故历史在此保留；登记表侧的历史见 `admission_history`）：
@@ -85,6 +86,15 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 | v1.2 | User instruction: 批准 M9 偏差触发语义由累计改为未消费（消费台账按 revision 追加，仅在阈值真正触发时消费，纯目标/约束变化不消费）；外部 AI 与 mastery 写入仍在范围外 |
 | v1.3 | User instruction: 授权 M9 步骤 4（按需受限检索 + stale/deleted Source 拒绝），拆为 4a（受限检索接缝与预算）与 4b（principal 内部接缝与计划身份往返保真）；principal_id 保持内部接缝、不开公开请求字段；4a 为纯只读 accessor；范围扩张不写 admission_history；外部 AI 与 mastery 写入仍在范围外 |
 | v1.4 | User instruction: 快速推进授权扩张范围到步骤 6；经裁定取窄口径（外部 AI + 仅 1K）——把 m9.external-ai 从 excluded 移入 included，在冻结任务集上比较确定性与 AI 路径，容量只在 1K 跑；不动 M9-EVALUATION（延迟/成本保持 deferred），故不需要 REVOKED；10K/100K 逐字记为 M8/M11 依赖、不触碰；mastery 写入仍在范围外 |
+| v1.5 | User instruction: 解冻 M9-EVALUATION 的延迟/成本维度（选项 1）；经裁定证据取两臂——CI 冻结预算执行用确定性 stub 且为门禁，真实 provider 读数为显式 opt-in、由 owner 自行运行且非门禁；评测 workload 冻结但限定在 M9 外部 AI 路径，不作全项目评测声明；本次不启动 M9 收口 |
+
+**v1.5 批准的具体依据**（供审计；不得拔高为「评测已完成」「延迟/成本已验证」「M9 退出条件达标」或
+「M9 完成」）：owner 在候选项中选择**解冻 `M9-EVALUATION` 的延迟/成本维度**（这是唯一能真正解开 M9 收口的
+动作）。随后三项裁定逐字为——证据口径取**两臂**（「两者都要：CI 冻结预算执行 + 本地标注真实读数」）；
+workload 冻结范围取**「冻结，但限定在 M9 外部 AI 路径」**；arm B 执行取**「只建 harness，读数由你自己跑」**；
+收口取**「不启动，只做解冻」**。故本批准**只解冻评测口径**：它**不**授予 M9 收口、**不**产生真实 provider
+读数（arm B 本次未运行）、**不**作任何全项目评测声明、**不**冻结遵循度数值阈值。本变更**必然触发 §4 撤销**
+（理由见 §4.3），与 v1.3 / v1.4 相反——那两次都在论证「为何不触发」。
 
 **v1.4 批准的具体依据**（供审计；不得拔高为「步骤 6 已完成」或「评测 workload 已冻结」）：owner 的
 指令原文为「快速推进授权扩张范围到步骤 6（含外部 AI 接入与 1K/10K/100K 容量验证，后者触及 M8 尚阻断的
@@ -169,6 +179,48 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 **本次明确不做**（逐字记为后续阶段依赖，不触碰）：10K/100K 容量验证（M8 / M11）、`M9-EVALUATION` 的
 延迟/成本维度解冻、评测 workload 的整体冻结、mastery 写入。
 
+### 4.3 v1.5 决策值变更为何**触发** §4 撤销
+
+本节是 §4.1 / §4.2 的**镜像**：那两节论证「为何不触发」，本节论证「为何必然触发」。§4.2 末段早已逐字
+预言本次——「解除该暂缓属对已 `RESOLVED` 决策的**实质变更**，按 §4 会强制 `REVOKED`」。v1.5 做的正是
+解除该暂缓，故这是 M9 **第一次真正触发** §4 的变更。
+
+`M9-EVALUATION` 的 `RESOLVED` 值由 `..._ADHERENCE_QUALITATIVE_FIRST_LATENCY_COST_DEFERRED` 改为
+`..._ADHERENCE_QUALITATIVE_FIRST__LATENCY_COST_FROZEN_M9_EXTERNAL_AI_PATH_ONLY__
+DETERMINISTIC_STUB_BUDGET_ENFORCEMENT_CI_GATING__REAL_PROVIDER_READING_OPT_IN_NON_GATING`。前五段逐字
+保留；新增三段分别承载范围限定（只限 M9 外部 AI 路径）、CI 臂证明的对象（**预算被强制执行**，而非
+性能被测量）与 arm B 的地位（opt-in、非门禁）。按
+[`stage-admission-gates.md`](../standards/stage-admission-gates.md) §4，这要求撤销过渡留痕：
+
+| 过渡 | 时间 | 依据 |
+| --- | --- | --- |
+| `ADMITTED`（v1.4 批准）→ `REVOKED` | 2026-09-22 | `M9-EVALUATION` 决策值在 v1.5 实质变更（延迟/成本维度解冻为冻结评测），v1.4 批准条件失效 |
+| `REVOKED` → `ADMITTED`（v1.5 批准） | 2026-09-22 | owner 记录 v1.5 批准（五项批准字段齐全）后重新准入 |
+
+**live 字段仍保持 `ADMITTED / IN_PROGRESS`**，与 §4.1 同理（这是该机制**第二次**使用）：把阶段真实翻转为
+`REVOKED / NOT_STARTED` 会让 [`tests/M9/`](../../tests/M9/) 成为「未开工阶段的生产面」，与
+`test_unstarted_stages_do_not_add_future_production_surfaces` 冲突，必须放宽该检查才能通过——即削弱一道真实
+门禁。owner 的重新批准与决策变更同时发生，阶段从未处于「停止实施」的运行状态，故 `admission_history`
+记录 §4 要求留痕的判定序列，`admission_status` 继续表达当前权威状态。
+
+**未变项**（逐条核对，防止把本次读成范围扩张）：`approval_scope` 与 `scope_id`（仍 `m9-plan-lifecycle-v1`）、
+`implementation_start`（仍 `AUTHORIZED`）、其余七项强制决策、以及 `M9-EXTERNAL-AI`——后者**刻意不动**，
+因为本次是**兑现**其既有的 `HARD_TIMEOUT_COST_BUDGET__DETERMINISTIC_FALLBACK`，改它会是第二次实质变更、
+第二次 §4 过渡。
+
+**本次明确不做**（逐字清单）：10K/100K 容量验证（M8 `BLOCKED` / M11 拟议）；任何**全项目**评测声明
+（本次口径只覆盖 M9 外部 AI 路径）；遵循度的**数值**阈值（保持定性）；把 arm B 用作门禁或退出证据
+（它是 opt-in、非门禁、本次未运行）；mastery 写入（`m9.mastery-write` 仍在 `excluded`）；M9 收口
+（`COMPLETE` 需要 §4 要求的独立 `completion_approval`，本次**不申请**）。
+
+**冻结口径的诚实边界**（写入本节以免被后读高估）：CI 臂用确定性 stub 驱动**真实**的
+`build_anthropic_proposer(client_factory=…)` 接缝，证明的是**预算被强制执行**——其中 `prompt` 预算在调用
+provider 之前返回（provider 调用数为 0），`cost` 预算在收到**合法**置换时仍丢弃它（硬上限而非告警阈值）。
+但 stub 下**没有任何性能读数**：延迟是桥接开销，成本由脚本化 usage 算出。真实 provider 的延迟 / 成本 /
+失败模式**仍未验证**，只能由 arm B 读，且必须由人显式启动。另有三项预算**不在本地执行**：
+`max_input_tokens`（本地无 tokenizer，故用字节预算）、`model_timeout_seconds` 与 `max_output_tokens`
+（均传给 provider）；`deadline_seconds` 的守卫**放弃线程而非取消它**。
+
 ## 5. 获准后的拟实施顺序
 
 1. 先冻结 planner input、plan、mastery 和 progress event schema；
@@ -177,19 +229,25 @@ study-sessions API 保持兼容；旧 SQLite 状态可恢复；无外部 LLM 时
 4. 接入按需受限检索，冻结 top-k/token/source/time 预算和 stale/deleted Source 拒绝行为；
 5. 实现偏差事件与版本化重规划，再增加可选外部 AI adapter；
 6. 在冻结任务集上比较确定性与 AI 路径，并在 1K capacity 规模下验证输入预算，达标后才扩大 rollout。
-   **10K/100K 与延迟/成本维度不在 v1.4 范围内**（见 §4.2）：前者是 M8（`BLOCKED`）/ M11 依赖，后者需先对
-   `M9-EVALUATION` 作实质变更并走 §4 撤销流程。
+   **延迟/成本维度已由 v1.5 解冻并冻结在 M9 外部 AI 路径范围内**（见 §4.3）：CI 侧冻结预算执行，
+   真实 provider 读数走显式 opt-in。**10K/100K 仍不在范围内**：那是 M8（`BLOCKED`）/ M11 依赖。
 
 拟新增 `tests/M9/` 覆盖 schema、authority、deviation/replan、provider privacy/failure、fallback 和兼容；评测必须验证
 source grounding 与先修关系，而非只检查 JSON 可解析。退出条件包括正式 mastery 只有一个写入权威、计划可重放、
 Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入、默认学习闭环与 90 题不退化、无 LLM 路径可
 运行，以及冻结评测达标。
 
-**退出条件的挣得情况**（截至 2026-09-21）：已挣得——正式 mastery 只有一个写入权威
-（`tests/M9/test_mastery_write_authority.py`，见 §5.1 末行）、计划可重放、Planner 输入不随 chunk 总量线性膨胀
-（1K 规模已证）、stale/deleted Source 零进入、默认学习闭环与 90 题不退化、无 LLM 路径可运行。
-**未挣得——冻结评测达标**（`M9-EVALUATION` 的延迟/成本维度仍 `DEFERRED`，解冻构成实质变更并强制 `REVOKED`）。
-因此 M9 **尚不具备退出条件**，任何 closeout 提法在此不成立。
+**退出条件的挣得情况**（截至 2026-09-22，v1.5）：**在各自声明的范围内**，七项条件已全部挣得——正式
+mastery 只有一个写入权威（`tests/M9/test_mastery_write_authority.py`，见 §5.1）、计划可重放、Planner 输入
+不随 chunk 总量线性膨胀（1K 规模已证）、stale/deleted Source 零进入、默认学习闭环与 90 题不退化、无 LLM
+路径可运行，以及**冻结评测达标**（`M9-EVALUATION` 的延迟/成本维度已由 v1.5 解冻，冻结口径见 §4.3）。
+
+**但这不等于「M9 退出条件已全部挣得」可以读成「M9 完成」**，三处限定必须一起读：
+
+1. 冻结评测的**范围**是 M9 外部 AI 路径，**不是**全项目评测；遵循度仍是定性，无数值阈值；
+2. 真实 provider 的延迟 / 成本 / 失败模式被**刻意**排除在门禁判据之外，且**仍未验证**（arm B 本次未运行）；
+3. `COMPLETE` 需要 §4 要求的**独立 `completion_approval`**，本次**不申请**。是否作退出就绪声明是
+   **另一个决定**，不得从 v1.5 推定。
 
 ### 5.1 实现进度
 
@@ -203,7 +261,8 @@ Planner 输入不随 chunk 总量线性膨胀、stale/deleted Source 零进入�
 | 4c 复习历史活投影（`m9.review-history-projection`）——步骤 3 已记录残留的修复，**非**范围扩张 | 已完成 | `platform/app/review_history_projection.py`、`tests/M9/test_review_history_projection.py`；装配于 `main.py` |
 | 4d 准入留痕字段覆盖（`m9.admission-history-reference-coverage`）——关闭 §4 已记录缺口，**纯治理测试硬化、非能力** | 已完成 | `tests/regression/test_governance_contract.py` 的 `_registry_references` 与 `test_admission_history_records_are_well_formed` |
 | 5 偏差事件与版本化重规划 | 已完成 | `tests/M9/test_deviation_signals.py`：跳过+逾期 ≥ 3、目标/约束变化、parent 前向链、确定性重放；`tests/M9/test_deviation_consumption.py`：未消费阈值、消费台账、重复调用幂等 |
-| 6 可选外部 AI adapter 与冻结任务集比较（`m9.external-ai`，**窄口径**） | 已完成（**窄口径**） | v1.4 批准（见 §4.2）；实现见 `platform/app/plan_ai_adapter.py`、`tests/M9/test_plan_ai_adapter.py`；冻结任务集比较见 `tests/M9/test_plan_ai_benchmark.py`。**步骤 6 整体未闭合**：10K/100K 容量验证逐字记为 M8（`BLOCKED`）/ M11（拟议）依赖，本次不触碰；`M9-EVALUATION` 未动，延迟/成本仍 `DEFERRED`，评测 workload 未冻结 |
+| 6 可选外部 AI adapter 与冻结任务集比较（`m9.external-ai`，**窄口径**） | 已完成（**窄口径**） | v1.4 批准（见 §4.2）；实现见 `platform/app/plan_ai_adapter.py`、`tests/M9/test_plan_ai_adapter.py`；冻结任务集比较见 `tests/M9/test_plan_ai_benchmark.py`。**步骤 6 整体未闭合**：10K/100K 容量验证逐字记为 M8（`BLOCKED`）/ M11（拟议）依赖，本次不触碰 |
+| 6+ 评测口径冻结：`M9-EVALUATION` 延迟/成本维度解冻（**治理变更，非新能力**） | 已完成 | v1.5 批准（见 §4.3，**触发 §4 撤销过渡**）；CI 臂见 `tests/M9/test_plan_ai_benchmark.py`（冻结预算矩阵，驱动真实 `client_factory=` 接缝，`-m m9_benchmark`）；opt-in 真实读数见 `tests/M9/test_plan_ai_provider_smoke.py`（`online` + skip 门控，**本次未运行**、非门禁）。**范围仅限 M9 外部 AI 路径**；真实 provider 性能仍未验证 |
 | **退出条件证据**：唯一写权威（**非步骤、非能力、非范围扩张**） | 已交付 | `tests/M9/test_mastery_write_authority.py`：动态枚举 `platform/app/` 全部源文件（当前 60 个）后断言写 `study_sessions`/`answer_attempts` 的模块**恰好**是 `learning_store.py`，且 M9 的 8 个模块与写权威**导入不可达**（AST 闭包断言）。**它不新增任何写路径**——`m9.mastery-write` 仍在 `excluded`，本增量只把 §1/§2 的继承不变量从当前事实钉成可测不变量，故**不改 `plan_revision`、不写 `admission_history`** |
 
 **步骤 6 窄口径的实现约定（含一处跨阶段只读耦合，逐字登记）**：
@@ -462,6 +521,8 @@ caller-selected `principal_id` 一致），与 `_user_source_search` 同一形�
 
 > **v1.4 更新**（不修改上述历史记录）：外部 AI 已由 §4.2 的窄口径纳入 `included`；
 > **评测 workload 冻结与延迟 / 成本暂缓两条仍然成立**。
+> **v1.5 更新**（不修改上述历史记录）：延迟 / 成本暂缓已由 §4.3 解冻，故「延迟 / 成本暂缓」**不再成立**；
+> 「评测 workload 冻结」**仅在该范围内**成立，**不是**全项目评测口径冻结。本条取代 §4.3 之前的表述。
 `tests/M9` 自本次起 187 → 219 项；步骤 4b 再追加 26 项，共 245 项。
 
 计划身份修复：`_plan_id` 原先只哈希 `goal|target|course|required|excluded`，而任务顺序与 `summary`
@@ -539,6 +600,8 @@ mastery 投影是实时的——两条同源只读输入一个冻结一个实时
 
 > **v1.4 更新**（不修改上述历史记录）：外部 AI 已由 §4.2 的窄口径纳入 `included`；
 > **评测 workload 冻结仍然成立**。
+> **v1.5 更新**（不修改上述历史记录）：评测 workload 冻结**仅在该范围内**成立（见 §4.3），
+> 且延迟 / 成本维度已解冻，故本条不再表述为「全项目评测口径冻结」。
 
 复习历史活投影（步骤 4c）实现约定：
 
@@ -581,6 +644,8 @@ mastery 投影是实时的——两条同源只读输入一个冻结一个实时
 
 > **v1.4 更新**（不修改上述历史记录）：外部 AI 已由 §4.2 的窄口径纳入 `included`；
 > **评测 workload 冻结仍然成立**。
+> **v1.5 更新**（不修改上述历史记录）：评测 workload 冻结**仅在该范围内**成立（见 §4.3），
+> 且延迟 / 成本维度已解冻，故本条不再表述为「全项目评测口径冻结」。
 
 准入留痕字段覆盖（步骤 4d）实现约定：
 
@@ -613,6 +678,8 @@ mastery 投影是实时的——两条同源只读输入一个冻结一个实时
 
 > **v1.4 更新**（不修改上述历史记录）：外部 AI 已由 §4.2 的窄口径纳入 `included`；
 > **评测 workload 冻结仍然成立**。
+> **v1.5 更新**（不修改上述历史记录）：评测 workload 冻结**仅在该范围内**成立（见 §4.3），
+> 且延迟 / 成本维度已解冻，故本条不再表述为「全项目评测口径冻结」。
 
 跨阶段登记（owner 已追认）：M9 的 5 条公开路由已补登到 `tests/M6a/test_closeout_contracts.py` 的
 `PUBLIC_API_PATHS`，逐项为 `/api/v1/plans`、`/api/v1/plans/{plan_id}`、`/api/v1/plans/{plan_id}/adopt`、
@@ -640,5 +707,5 @@ mastery 投影是实时的——两条同源只读输入一个冻结一个实时
 
 ## 6. 撤销与后续边界
 
-mastery 定义、Source scope、计划 schema、provider 隐私政策或 evaluation workload 变化时必须 `REVOKED`。
-M10 必须等待 M9 的真实退出证据，不能把 planner 建议误作自主写入授权。
+mastery 定义、Source scope、计划 schema、provider 隐私政策，或 **M9 外部 AI 评测 workload / 阈值**变化时
+必须 `REVOKED`；当前冻结口径见 §4.3。M10 必须等待 M9 的真实退出证据，不能把 planner 建议误作自主写入授权。

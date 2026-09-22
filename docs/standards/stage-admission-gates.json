@@ -327,13 +327,15 @@
         {"id": "M9-MASTERY-AUTHORITY", "status": "RESOLVED", "value": "STUDY_SESSION_SERVICE_PLUS_DOMAIN_REPO_SOLE_WRITER__PLANNER_ADVISORY_SUGGESTIONS_ISOLATED__COARSE_GRAINED_MASTERY_FIRST__ADOPTION_RECORDED_BY_SESSION_SERVICE", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]},
         {"id": "M9-EXECUTION-DEVIATION", "status": "RESOLVED", "value": "COMPLETED_SKIPPED_OVERDUE_REPLANNED_EVENTS__REPLAN_ON_UNCONSUMED_SKIP_PLUS_OVERDUE_GE_3_OR_GOAL_CONSTRAINT_CHANGE__CONSUME_DEVIATION_ON_NEW_REVISION__PARENT_REVISION_FORWARD_CHAIN__REUSE_REVIEW_SCHEDULER_DAYS_OVERDUE", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]},
         {"id": "M9-EXTERNAL-AI", "status": "RESOLVED", "value": "OPT_IN_DISABLED_BY_DEFAULT__MINIMAL_DISCLOSURE_NO_CHUNK_BODY_USER_DATA_PATHS_CREDENTIALS__HARD_TIMEOUT_COST_BUDGET__DETERMINISTIC_FALLBACK", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]},
-        {"id": "M9-EVALUATION", "status": "RESOLVED", "value": "PREREQUISITE_VIOLATION_ZERO__STALE_DELETED_SOURCE_ENTRY_ZERO__DETERMINISTIC_REPLAY_100__BOUNDED_INPUT_PROVABLE__ADHERENCE_QUALITATIVE_FIRST_LATENCY_COST_DEFERRED", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]},
+        {"id": "M9-EVALUATION", "status": "RESOLVED", "value": "PREREQUISITE_VIOLATION_ZERO__STALE_DELETED_SOURCE_ENTRY_ZERO__DETERMINISTIC_REPLAY_100__BOUNDED_INPUT_PROVABLE__ADHERENCE_QUALITATIVE_FIRST__LATENCY_COST_FROZEN_M9_EXTERNAL_AI_PATH_ONLY__DETERMINISTIC_STUB_BUDGET_ENFORCEMENT_CI_GATING__REAL_PROVIDER_READING_OPT_IN_NON_GATING", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]},
         {"id": "M9-COMPATIBILITY", "status": "RESOLVED", "value": "REVIEW_PLAN_AND_STUDY_SESSION_APIS_UNCHANGED__SQLITE_RECOVERABLE_MIGRATABLE_NO_HISTORY_REWRITE__90_QUESTION_NO_REGRESSION__FALLBACK_TO_DETERMINISTIC_REVIEW_PLAN", "evidence": ["docs/plans/references/m9-decision-design-draft.md"]}
       ],
-      "approval": {"approved_by": "justtodo123", "approved_at": "2026-09-21", "approval_reference": "User instruction: 快速推进授权扩张范围到步骤 6；经裁定取窄口径（外部 AI + 仅 1K）——把 m9.external-ai 从 excluded 移入 included，在冻结任务集上比较确定性与 AI 路径，容量只在 1K 跑；不动 M9-EVALUATION（延迟/成本保持 deferred），故不需要 REVOKED；10K/100K 逐字记为 M8/M11 依赖、不触碰；mastery 写入仍在范围外", "plan_revision": "v1.4", "decision_set_version": "m9-decision-set-v1"},
+      "approval": {"approved_by": "justtodo123", "approved_at": "2026-09-22", "approval_reference": "User instruction: 解冻 M9-EVALUATION 的延迟/成本维度（选项 1）；经裁定证据取两臂——CI 冻结预算执行用确定性 stub 且为门禁，真实 provider 读数为显式 opt-in、由 owner 自行运行且非门禁；评测 workload 冻结但限定在 M9 外部 AI 路径，不作全项目评测声明；本次不启动 M9 收口", "plan_revision": "v1.5", "decision_set_version": "m9-decision-set-v1"},
       "admission_history": [
         {"from": "ADMITTED", "to": "REVOKED", "at": "2026-09-21", "reason": "M9-EXECUTION-DEVIATION 决策值在 plan_revision v1.2 实质变更，v1.1 批准条件失效", "reference": "docs/plans/m9-goal-driven-planning-plan.md"},
-        {"from": "REVOKED", "to": "ADMITTED", "at": "2026-09-21", "reason": "owner 记录 plan_revision v1.2 批准后重新准入", "reference": "docs/plans/m9-goal-driven-planning-plan.md"}
+        {"from": "REVOKED", "to": "ADMITTED", "at": "2026-09-21", "reason": "owner 记录 plan_revision v1.2 批准后重新准入", "reference": "docs/plans/m9-goal-driven-planning-plan.md"},
+        {"from": "ADMITTED", "to": "REVOKED", "at": "2026-09-22", "reason": "M9-EVALUATION 决策值在 plan_revision v1.5 实质变更（延迟/成本维度解冻为冻结评测），v1.4 批准条件失效", "reference": "docs/plans/m9-goal-driven-planning-plan.md"},
+        {"from": "REVOKED", "to": "ADMITTED", "at": "2026-09-22", "reason": "owner 记录 plan_revision v1.5 批准后重新准入", "reference": "docs/plans/m9-goal-driven-planning-plan.md"}
       ],
       "approval_scope": {
         "scope_id": "m9-plan-lifecycle-v1",
