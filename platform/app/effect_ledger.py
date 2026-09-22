@@ -161,11 +161,34 @@ class EffectLedgerStore:
             except sqlite3.IntegrityError as exc:
                 raise EffectLedgerError("JOB_DUPLICATE", "the job already exists.") from exc
 
+    def set_job_state(self, job_id: str, state: str) -> None:
+        """Record a job-level state. `cancelled` is terminal and blocks further work."""
+        with self._lock, self._connect() as connection:
+            cursor = connection.execute(
+                "UPDATE runner_jobs SET state = ?, updated_at = ? WHERE job_id = ?",
+                (state, _now(), job_id),
+            )
+            if cursor.rowcount != 1:
+                raise EffectLedgerError("JOB_UNKNOWN", "the job does not exist.")
+
+    def get_job_state(self, job_id: str) -> str | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT state FROM runner_jobs WHERE job_id = ?", (job_id,)
+            ).fetchone()
+        return row["state"] if row else None
+
     # -- effects ------------------------------------------------------------
 
     def begin_effect(self, *, effect_id: str, job_id: str, tool_name: str,
                      argument_digest: str, idempotency_key: str) -> EffectRecord:
-        """Persist `pending` **before** the domain write, or return the replay.
+        """Record the effect as `proposed`, or return the replay.
+
+        `M10-EFFECT-LEDGER` freezes six states, and the row starts at the first
+        of them: `proposed` -> `authorized` -> `pending` -> `applied`. The row
+        must reach `pending` **before** the domain write; that ordering is what
+        closes the "applied but unrecorded" crash window, and it is enforced by
+        the pipeline rather than by this method.
 
         Returns the existing record when the idempotency key was already used, so
         the caller can see the effect is already accounted for instead of
@@ -193,13 +216,13 @@ class EffectLedgerStore:
                     " argument_digest, idempotency_key, state, result_digest,"
                     " created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?)",
                     (effect_id, job_id, tool_name, argument_digest, idempotency_key,
-                     EffectState.PENDING.value, now, now),
+                     EffectState.PROPOSED.value, now, now),
                 )
             except sqlite3.IntegrityError as exc:
                 raise EffectLedgerError(
                     "EFFECT_DUPLICATE", "the effect already exists."
                 ) from exc
-            self._append_event(connection, effect_id, None, EffectState.PENDING)
+            self._append_event(connection, effect_id, None, EffectState.PROPOSED)
             row = connection.execute(
                 "SELECT * FROM effect_ledger WHERE effect_id = ?", (effect_id,)
             ).fetchone()
@@ -227,6 +250,50 @@ class EffectLedgerStore:
             ).fetchone()
             return self._record_from_row(updated)
 
+    def authorize_effect(self, effect_id: str) -> EffectRecord:
+        """`proposed` -> `authorized`: the write was approved but not yet applied."""
+        return self.transition(effect_id=effect_id, target=EffectState.AUTHORIZED)
+
+    def mark_pending(self, effect_id: str) -> EffectRecord:
+        """`authorized` -> `pending`. Must happen **before** the domain write."""
+        return self.transition(effect_id=effect_id, target=EffectState.PENDING)
+
+    def mark_applied(self, effect_id: str, result_digest: str) -> EffectRecord:
+        """`pending` -> `applied`. `result_digest` is a digest, never the payload."""
+        return self.transition(effect_id=effect_id, target=EffectState.APPLIED,
+                               result_digest=result_digest)
+
+    def mark_failed(self, effect_id: str) -> EffectRecord:
+        """Any non-terminal state -> `failed`. Terminal; never retried in place."""
+        return self.transition(effect_id=effect_id, target=EffectState.FAILED)
+
+    def mark_compensated(self, effect_id: str) -> EffectRecord:
+        """`applied` or `authorized` -> `compensated`."""
+        return self.transition(effect_id=effect_id, target=EffectState.COMPENSATED)
+
+    def find_by_idempotency_key(self, idempotency_key: str) -> EffectRecord | None:
+        """The effect already recorded under this key, if any.
+
+        Callers use this to recognise a replay **before** attempting to walk the
+        state machine again — re-walking an already-terminal effect is an illegal
+        transition, not a replay.
+        """
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM effect_ledger WHERE idempotency_key = ?",
+                (idempotency_key,),
+            ).fetchone()
+        return self._record_from_row(row) if row else None
+
+    def all_effects(self, job_id: str) -> tuple[EffectRecord, ...]:
+        """Every effect recorded for one job, oldest first."""
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM effect_ledger WHERE job_id = ? ORDER BY created_at, effect_id",
+                (job_id,),
+            ).fetchall()
+        return tuple(self._record_from_row(row) for row in rows)
+
     def get_effect(self, effect_id: str) -> EffectRecord | None:
         with self._connect() as connection:
             row = connection.execute(
@@ -243,6 +310,22 @@ class EffectLedgerStore:
             ).fetchall()
         return tuple(self._record_from_row(row) for row in rows)
 
+    def unfinished_effects(self) -> tuple[EffectRecord, ...]:
+        """Everything not in a terminal state — what a resume must account for.
+
+        `proposed` and `authorized` are included: a crash before `pending` still
+        leaves a row that a resume has to reconcile or fail closed, not ignore.
+        """
+        terminal = (EffectState.APPLIED.value, EffectState.FAILED.value,
+                    EffectState.COMPENSATED.value)
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM effect_ledger WHERE state NOT IN (?, ?, ?)"
+                " ORDER BY created_at, effect_id",
+                terminal,
+            ).fetchall()
+        return tuple(self._record_from_row(row) for row in rows)
+
     def events(self, effect_id: str) -> tuple[tuple[str | None, str], ...]:
         """The append-only transition history for one effect."""
         with self._connect() as connection:
@@ -253,6 +336,20 @@ class EffectLedgerStore:
         return tuple((row["from_state"], row["to_state"]) for row in rows)
 
     # -- checkpoints --------------------------------------------------------
+
+    def next_checkpoint_seq(self, job_id: str) -> int:
+        """The next free sequence for a job.
+
+        `job_checkpoints` is unique on `(job_id, seq)`, so a job running several
+        effects must allocate monotonically across **all** of them — a fixed
+        per-effect sequence collides on the second effect.
+        """
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT COALESCE(MAX(seq), 0) AS last FROM job_checkpoints WHERE job_id = ?",
+                (job_id,),
+            ).fetchone()
+        return int(row["last"]) + 1
 
     def record_checkpoint(self, *, checkpoint_id: str, job_id: str, seq: int, stage: str,
                           input_digest: str, state_digest: str) -> None:

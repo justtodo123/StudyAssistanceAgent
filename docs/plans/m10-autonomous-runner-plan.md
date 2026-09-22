@@ -193,7 +193,7 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 
 ## 5. 获准后的拟实施顺序
 
-> **实施进度**：步骤 1 **已完成**（2026-09-22）。其余六步未开始。
+> **实施进度**：步骤 1、2 **已完成**（2026-09-22）。其余五步未开始。
 
 1. ✅ 冻结 authority、capability 和 EffectLedger schema，先实现拒绝路径
    （2026-09-22）：`platform/app/runner_authority.py`（写 allowlist **与只读 preview 不相交**、
@@ -208,7 +208,23 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
    幂等重放，各自恰好判红对应用例。
    **实施中修正的一处口径**：测试方案 §6 原写「Runner 侧模块不 import `sqlite3`」——在独立库裁定下
    **不成立**（台账必然要自建库），已改为「不 import 领域仓储、不引用其写方法」。
-2. 为单一受控写工具实现 idempotency、checkpoint 和逐 crash point 恢复；
+2. ✅ 为单一受控写工具实现 idempotency、checkpoint 和逐 crash point 恢复（2026-09-22）：
+   `platform/app/runner_recovery.py` 把 `M10-RECOVERY` 的**十个 crash point** 落成流水线——
+   `proposed` → `authorized` → `pending` → `applied`，每个边界一次 checkpoint，且**行必须先到 `pending`
+   再执行领域写入**；`resume_job` 按**台账**分类而不猜测（`proposed`/`authorized` ⇒ 判 failed 不重放；
+   `pending` ⇒ **只由领域对账**判定落没落），并在恢复前**重新校验撤销与取消**。证据见
+   `tests/M10/test_recovery.py`（19 项）。变异验证：把 `pending` 挪到 apply 之后 / 去掉 resume 的撤销复核 /
+   去掉取消复核 / 去掉幂等预检，各自判红对应用例。
+   **步骤 2 暴露并修掉了三处真实缺陷（不是测试问题）**：① 六态里 `proposed`/`authorized` **从未被使用**
+   （步骤 1 的 `begin_effect` 直接落 `pending`），已改为走完整六态；② `execute_effect` 用「effect_id 是否不同」
+   判重放，导致**复用同一 effect_id** 时会对已终结的 effect 做非法跃迁，已改为**按幂等键预检**；
+   ③ `job_checkpoints` 的唯一约束是 `(job_id, seq)`，而流水线给每个 effect 都用固定 seq，**第二个 effect
+   必然冲突**，已改为每 job 分配单调序号。
+   **一处刻意不做的断言**：测试方案要求每个 crash point 同时断言「无重复副作用」与「无半发布 generation」。
+   后者是 **ingestion / 索引发布路径**的属性，步骤 2 不建该路径——本步骤的领域写入是复习记录，**没有 generation**。
+   故本步骤**只**断言前者，并在测试文件里写明后者为何不适用，而不是补一条空转断言。
+   **仍未接入生产**：`RUNNER_WRITE_TOOL_ALLOWLIST` 仍为空，三个模块都**未接入 `main.py`**；测试用的写工具是
+   **测试内注入**的，把它放进生产 allowlist 是一次**治理动作**，需 owner 批准具体写工具；
 3. 建立通用异步 job envelope、资源预算、进度、取消和 terminal state，并先用无生产发布的合成长任务验证；
 4. 为 ingestion/embedding/reindex 定义 manifest-bound checkpoint 与 generation publication 门禁；
 5. 建立 reconcile/人工介入和不可补偿失败处理，再扩大写工具集合；

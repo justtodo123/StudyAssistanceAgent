@@ -389,7 +389,21 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.41（不是产品发布版本）· 更新：2026-09-22（**M10 实施步骤 1 完成**：
+*创建：2026-08-10 · PLAN 文档修订：v2.42（不是产品发布版本）· 更新：2026-09-22（**M10 实施步骤 2 完成——
+crash-point 恢复**：新增 `platform/app/runner_recovery.py`，把 `M10-RECOVERY` 的**十个** crash point 落成
+流水线 `proposed → authorized → pending → applied`，每边界一次 checkpoint，**行先到 `pending` 再执行领域写入**；
+`resume_job` 按**台账**分类而不猜测（`proposed`/`authorized` ⇒ 判 failed **不重放**；`pending` ⇒ **只由领域对账**
+判定落没落），恢复前**重新校验撤销与取消**；`cancel_job` 的意图**先落盘再崩**，故 `MID_CANCEL` 可恢复而非丢失。
+新增 `tests/M10/test_recovery.py`（19 项），`tests/M10/` 34 → 53 项。**步骤 2 暴露并修掉三处真实缺陷（不是测试
+问题）**：① 六态里 `proposed`/`authorized` **从未被使用**（步骤 1 的 `begin_effect` 直接落 `pending`），已走完整
+六态；② `execute_effect` 以「effect_id 是否不同」判重放，**复用同一 effect_id** 时会对已终结的 effect 做非法跃迁，
+已改为**按幂等键预检**；③ `job_checkpoints` 的唯一约束是 `(job_id, seq)` 而流水线给每个 effect 都用固定 seq，
+**第二个 effect 必然冲突**，已改为每 job 分配单调序号。**一处刻意不做的断言**：测试方案要求每个 crash point 同时
+断言「无半发布 generation」——那是 **ingestion / 索引发布路径**的属性，本步骤的领域写入是复习记录、**没有
+generation**，故只断言「无重复副作用」并在测试文件写明后者为何不适用，**不补一条空转断言**。
+**仍未接入生产**：`RUNNER_WRITE_TOOL_ALLOWLIST` 仍为空、三个模块均未接入 `main.py`；测试用的写工具是
+**测试内注入**，把它放进生产 allowlist 是一次**治理动作**，需 owner 批准具体写工具。变异验证：把 `pending` 挪到
+apply 之后 / 去掉 resume 的撤销复核 / 去掉取消复核 / 去掉幂等预检，各自判红对应用例）· 上一修订 v2.41（2026-09-22：**M10 实施步骤 1 完成**：
 冻结 authority / capability / EffectLedger schema，**先实现拒绝路径**。新增两个生产模块——
 `platform/app/runner_authority.py`（写 allowlist **与只读 preview allowlist 不相交**、注册期与执行期双重拒绝、
 确认令牌绑定 `(job_id, tool_name, 参数摘要)`、撤销使未决授权失效、追加式审计**只留参数摘要**、六态跃迁合法性、

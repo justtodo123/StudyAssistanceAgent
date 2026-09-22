@@ -44,6 +44,7 @@ platform/
 │   ├── preview_service.py # M6b 独立认证、容量与 HTTP preview surface
 │   ├── runner_authority.py # M10 写权限：独立写 allowlist、确认令牌、撤销与追加式审计（默认拒绝，未接入）
 │   ├── effect_ledger.py   # M10 副作用台账：**独立** SQLite 文件、版本化 meta、六态与幂等键（未接入）
+│   ├── runner_recovery.py # M10 十个 crash point 的流水线与恢复：pending 先于领域写入、resume 分类不猜测（未接入）
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）
 │   ├── source_manifest.py # M7 用户源文件 manifest、格式接纳与 canonical digest
 │   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析（含墙钟上界）

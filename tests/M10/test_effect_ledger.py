@@ -80,24 +80,50 @@ def test_a_job_is_created_once(tmp_path) -> None:
     assert caught.value.code == "JOB_DUPLICATE"
 
 
-def test_an_effect_is_pending_before_any_domain_write(tmp_path) -> None:
+def test_the_six_frozen_states_are_walked_in_order(tmp_path) -> None:
+    """`proposed` -> `authorized` -> `pending` -> `applied`, all six states real.
+
+    Step 1 shipped `begin_effect` writing straight to `pending`, which left
+    `proposed` and `authorized` unused — a decision that freezes six states
+    deserves an implementation that uses six.
+    """
+    store = _store(tmp_path)
+    _job(store)
+
+    assert _begin(store).state is EffectState.PROPOSED
+    assert store.authorize_effect("eff-1").state is EffectState.AUTHORIZED
+    assert store.mark_pending("eff-1").state is EffectState.PENDING
+    assert [row.effect_id for row in store.pending_effects()] == ["eff-1"]
+    assert store.mark_applied("eff-1", "b" * 64).state is EffectState.APPLIED
+
+    assert store.events("eff-1") == (
+        (None, "proposed"), ("proposed", "authorized"),
+        ("authorized", "pending"), ("pending", "applied"),
+    )
+    assert store.pending_effects() == ()
+    assert store.unfinished_effects() == ()
+
+
+def test_pending_is_reached_before_the_domain_write_not_after(tmp_path) -> None:
     """The ordering that closes the "applied but unrecorded" crash window."""
     store = _store(tmp_path)
     _job(store)
-    record = _begin(store)
+    _begin(store)
+    store.authorize_effect("eff-1")
 
-    assert record.state is EffectState.PENDING
-    assert [row.effect_id for row in store.pending_effects()] == ["eff-1"]
-    # The pending row exists while nothing has been applied yet.
-    assert store.events("eff-1") == ((None, "pending"),)
+    # An effect that has not been marked pending is still unfinished, so a resume
+    # has to account for it rather than treat it as applied.
+    assert [row.effect_id for row in store.unfinished_effects()] == ["eff-1"]
+    assert store.get_effect("eff-1").state is EffectState.AUTHORIZED
 
 
 def test_replaying_a_key_returns_the_recorded_effect_instead_of_a_second_one(tmp_path) -> None:
     store = _store(tmp_path)
     _job(store)
-    first = _begin(store)
-    store.transition(effect_id=first.effect_id, target=EffectState.APPLIED,
-                     result_digest="b" * 64)
+    _begin(store)
+    store.authorize_effect("eff-1")
+    store.mark_pending("eff-1")
+    store.mark_applied("eff-1", "b" * 64)
 
     replay = _begin(store, effect_id="eff-2")  # a caller retrying after a crash
     assert replay.effect_id == "eff-1"
@@ -120,15 +146,26 @@ def test_illegal_state_transitions_are_refused(tmp_path) -> None:
     store = _store(tmp_path)
     _job(store)
     _begin(store)
-    store.transition(effect_id="eff-1", target=EffectState.APPLIED)
+    store.authorize_effect("eff-1")
+    store.mark_pending("eff-1")
+    store.mark_applied("eff-1", "b" * 64)
 
+    # An applied effect is never silently moved back.
     with pytest.raises(RunnerAuthorityError) as caught:
         store.transition(effect_id="eff-1", target=EffectState.PENDING)
     assert caught.value.code == "EFFECT_TRANSITION_INVALID"
+    # Nor may it skip straight past pending on the way in.
+    with pytest.raises(RunnerAuthorityError) as caught:
+        _begin(store, effect_id="eff-9", key="key-9")
+        store.transition(effect_id="eff-9", target=EffectState.APPLIED)
+    assert caught.value.code == "EFFECT_TRANSITION_INVALID"
 
-    # The refusal left the ledger unchanged and the history append-only.
+    # The refusals left the ledger unchanged and the history append-only.
     assert store.get_effect("eff-1").state is EffectState.APPLIED
-    assert store.events("eff-1") == ((None, "pending"), ("pending", "applied"))
+    assert store.events("eff-1") == (
+        (None, "proposed"), ("proposed", "authorized"),
+        ("authorized", "pending"), ("pending", "applied"),
+    )
 
 
 def test_an_unknown_effect_cannot_be_transitioned(tmp_path) -> None:
@@ -178,7 +215,9 @@ def test_using_the_ledger_leaves_the_learning_store_untouched(tmp_path) -> None:
     store = _store(tmp_path)
     _job(store)
     _begin(store)
-    store.transition(effect_id="eff-1", target=EffectState.APPLIED)
+    store.authorize_effect("eff-1")
+    store.mark_pending("eff-1")
+    store.mark_applied("eff-1", "b" * 64)
 
     assert store.path != learning_path
     assert hashlib.sha256(learning_path.read_bytes()).hexdigest() == before
