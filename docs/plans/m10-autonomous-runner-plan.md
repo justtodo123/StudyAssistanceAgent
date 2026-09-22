@@ -88,8 +88,8 @@ M10 必须支持 M8 100K capacity 和拟议 M11 10K 真实数据带来的长任�
 
 | Decision ID | 状态 | 准入前必须选定并留证的内容 |
 | --- | --- | --- |
-| `M10-AUTHORITY` | `OPEN` | `StudySessionService`、可选 Runner、repository 和 tool 的唯一权威边界、冲突处理与状态机默认规则 |
-| `M10-WRITE-AUTHORIZATION` | `OPEN` | 写 capability、用户/learner/source scope、显式确认、拒绝/撤销语义和不可变审计字段 |
+| `M10-AUTHORITY` | `RESOLVED` | `StudySessionService`、可选 Runner、repository 和 tool 的唯一权威边界、冲突处理与状态机默认规则（2026-09-22 闭合批次 ①，`value` 见登记表与 [`references/m10-decision-closure-v1.md`](references/m10-decision-closure-v1.md) §1.1） |
+| `M10-WRITE-AUTHORIZATION` | `RESOLVED` | 写 capability、用户/learner/source scope、显式确认、拒绝/撤销语义和不可变审计字段（2026-09-22 闭合批次 ①，`value` 见登记表与 [`references/m10-decision-closure-v1.md`](references/m10-decision-closure-v1.md) §1.2） |
 | `M10-CHECKPOINT` | `OPEN` | checkpoint schema/version、边界、频率、存储、加密/保留、取消、兼容和 resume 校验 |
 | `M10-IDEMPOTENCY` | `OPEN` | idempotency key 派生、作用域、唯一约束、保留、重放、并发、冲突和结果复用 |
 | `M10-EFFECT-LEDGER` | `OPEN` | proposed/authorized/pending/applied/failed/compensated 状态、事务边界、outbox/reconcile 和审计 |

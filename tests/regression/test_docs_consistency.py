@@ -811,6 +811,35 @@ class TestStageAdmissionConsistency:
         # 非空性：登记表若把 prerequisites 清空，「逐项一致」会平凡成立。
         assert checked > 0
 
+    def test_stage_plans_track_registry_decision_status(self, repo_root):
+        """每个阶段计划的决策表必须与登记表逐项一致。
+
+        回归：M10 闭合批次 ① 把登记表的 `M10-AUTHORITY` 与 `M10-WRITE-AUTHORIZATION`
+        由 `OPEN` 改为 `RESOLVED`，但 M10 计划的 §3 决策表仍写着 `OPEN`——**同一次改动**引入的
+        漂移，而当时新增的前置护栏只覆盖 `prerequisites`，覆盖不到决策，故无人发现。
+        """
+        registry = _load_admission_registry(repo_root)
+        checked = 0
+        for stage in registry["stages"]:
+            plan = _read(repo_root, stage["plan"])
+            for decision in stage["mandatory_decisions"]:
+                pattern = re.compile(
+                    rf"^\|\s*`{re.escape(decision['id'])}`\s*\|\s*`([A-Z_]+)`\s*\|",
+                    re.MULTILINE,
+                )
+                match = pattern.search(plan)
+                assert match, (
+                    f"{stage['stage']}: 决策 {decision['id']} 未出现在 "
+                    f"{stage['plan']} 的决策表"
+                )
+                assert match.group(1) == decision["status"], (
+                    f"{stage['stage']}: {decision['id']} 计划记为 {match.group(1)}，"
+                    f"登记表为 {decision['status']}"
+                )
+                checked += 1
+        # 非空性：登记表若把 mandatory_decisions 清空，「逐项一致」会平凡成立。
+        assert checked > 0
+
     def test_navigation_docs_do_not_contradict_registry_state(self, repo_root):
         """当前状态导航文档里的阶段状态断言必须与登记表一致。
 
