@@ -46,6 +46,7 @@ platform/
 │   ├── effect_ledger.py   # M10 副作用台账：**独立** SQLite 文件、版本化 meta、六态与幂等键（未接入）
 │   ├── runner_recovery.py # M10 十个 crash point 的流水线与恢复：pending 先于领域写入、resume 分类不猜测（未接入）
 │   ├── job_envelope.py    # M10 通用异步 job：预算（每项标注执行点）、进度、取消、终态（未接入，合成长任务验证）
+│   ├── generation_publication.py # M10 manifest 绑定 checkpoint 与原子发布门禁：读取方复验，杜绝半发布 generation（未接入）
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）
 │   ├── source_manifest.py # M7 用户源文件 manifest、格式接纳与 canonical digest
 │   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析（含墙钟上界）

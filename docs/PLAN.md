@@ -389,7 +389,19 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.43（不是产品发布版本）· 更新：2026-09-22（**M10 实施步骤 3 完成——
+*创建：2026-08-10 · PLAN 文档修订：v2.44（不是产品发布版本）· 更新：2026-09-22（**M10 实施步骤 4 完成——
+manifest 绑定 checkpoint 与原子发布门禁**：新增 `platform/app/generation_publication.py`。**「无半发布
+generation」由此结构性成立**，靠两条机制而非约定：① generation id **由 manifest 摘要派生**（同一输入不可能
+产出两个 generation，顺序无关，reindex 不 churn 身份）；② **读取方复验**——`visible()` 只报告磁盘 manifest
+能重现其声称 id 的 generation，故半写目录与「指针指向内容未落地的 generation」都**不可见**而非部分可见；
+指针切换用 temp + fsync + `os.replace`（与 M7 同形）。`resume` 在输入摘要变化时丢弃 checkpoint 记录的暂存
+目录并 fail closed。新增 `tests/M10/test_generation_publication.py`（18 项），`tests/M10/` 71 → 89 项；
+全量 1353 → 1371 collected、1348 → 1366 passed、2 skipped、3 failed。**修掉一处真实缺陷**：`resume` 原先丢弃
+的是**变更后**候选的 staging 路径（两者按定义不同），原暂存目录因此被留下——已改为按 checkpoint 的
+`staged_generation` 丢弃。**并明确那条断言的适用点**：步骤 2 记录过「无半发布 generation」不适用于无 generation
+的领域写入，当时**只断言无重复副作用**、不补空转断言；本步骤起它适用，并在**每个发布 crash point** 上断言。
+变异验证：`visible()` 不再复验 / `resume` 不再比对输入摘要 / `stage` 不再校验摘要 / `stage` 不再校验数量，
+各自判红对应用例。**无生产发布**：未接入 `main.py`）· 上一修订 v2.43（2026-09-22：**M10 实施步骤 3 完成——
 通用异步 job envelope**：新增 `platform/app/job_envelope.py`（`JobBudget` / `JobProgress` / `ConcurrencyGate` /
 `JobEnvelope` / `SyntheticJobRunner`），**按计划要求只用合成长任务验证、无生产发布**。每项预算做**三分类**——
 `ENFORCED_LOCALLY`（wall-clock / CPU / disk / concurrency）、`ENFORCED_ELSEWHERE`（`retention_seconds` 由

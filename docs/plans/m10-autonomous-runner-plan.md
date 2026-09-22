@@ -193,7 +193,7 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 
 ## 5. 获准后的拟实施顺序
 
-> **实施进度**：步骤 1、2、3 **已完成**（2026-09-22）。其余四步未开始。
+> **实施进度**：步骤 1、2、3、4 **已完成**（2026-09-22）。其余三步未开始。
 
 1. ✅ 冻结 authority、capability 和 EffectLedger schema，先实现拒绝路径
    （2026-09-22）：`platform/app/runner_authority.py`（写 allowlist **与只读 preview 不相交**、
@@ -240,7 +240,19 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
    已实现 `purge_expired`（且**拒绝清除有未完成 effect 的 job**——那会丢掉 resume 需要的行）并把它归到
    `ENFORCED_ELSEWHERE`。另修一条**空转的并发用例**（先取消 envelope 使 `check()` 在取门之前就抛，
    「已释放」因此平凡成立）。**无生产发布**：本步骤按要求只用合成长任务验证，未接入 `main.py`；
-4. 为 ingestion/embedding/reindex 定义 manifest-bound checkpoint 与 generation publication 门禁；
+4. ✅ 为 ingestion/embedding/reindex 定义 manifest-bound checkpoint 与 generation publication 门禁
+   （2026-09-22）：`platform/app/generation_publication.py` 交付 `GenerationGate`（stage → validate → publish）
+   与 `GenerationCheckpoint`。两条机制使「无半发布 generation」**结构性**成立而非靠约定——
+   ① generation id **由 manifest 摘要派生**（同一输入不可能产出两个 generation，reindex 不 churn 身份）；
+   ② **读取方复验**：`visible()` 只报告磁盘 manifest 能重现其声称 id 的 generation，故半写目录与「指针指向
+   内容未落地的 generation」都不可见。`resume` 在输入摘要变化时**丢弃 checkpoint 记录的那个暂存目录**
+   （不是调用方新提的那个——两者按定义不同）并 fail closed。
+   证据见 `tests/M10/test_generation_publication.py`（18 项）。变异验证：`visible()` 不再复验 / `resume` 不再
+   比对输入摘要 / `stage` 不再校验摘要 / `stage` 不再校验数量，各自判红对应用例。
+   **本步骤修掉一处真实缺陷**：`resume` 原先丢弃的是**变更后**候选的 staging 路径，于是原暂存目录被留下——
+   已改为按 checkpoint 的 `staged_generation` 丢弃。**这也是那条断言的适用点**：步骤 2 明确记录过
+   「无半发布 generation」不适用于无 generation 的领域写入，故当时**只断言无重复副作用**；本步骤起它适用，
+   并在**每个发布 crash point** 上断言。**无生产发布**：未接入 `main.py`；
 5. 建立 reconcile/人工介入和不可补偿失败处理，再扩大写工具集合；
 6. 接入默认关闭的可选 Runner，并保持状态机路径与数据兼容；
 7. 在冻结 Agent 任务集达标后，分阶段交付 manifest 和最小 MCP surface。
