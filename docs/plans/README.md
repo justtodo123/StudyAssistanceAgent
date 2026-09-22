@@ -67,7 +67,7 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | `m8-specialized-storage-plan.md` | 阶段准入准备计划 | `BLOCKED / NOT_STARTED`；八项 Decision 已 `RESOLVED`；100K capacity 后端实证与 admission 未授权 |
 | `m8-metadata-discovery-governance.md` | M8 Metadata Discovery 治理规范 | 通用 intent 仍为 `METADATA_DISCOVERY_INTENT_OWNER_SELECTION_REQUIRED`；pypdf==6.0.0 selected-scope 尚处 implementation hardening，验证完成后最多 `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW`；无独立通过、Owner Gate readiness 或 M8 执行授权 |
 | `m9-goal-driven-planning-plan.md` | 阶段执行计划 | M9 目标驱动计划、mastery 与偏差；`ADMITTED / COMPLETE`（2026-09-22 收口，范围 `m9-plan-lifecycle-v1`，plan_revision v1.5，完成批准见 §4.5）；生成/采纳/进度/偏差重规划已实现，mastery 写入仍 `excluded`；步骤 3 的三个只读投影（mastery、授权 Source 摘要、先修关系 topic graph）均已实现并接入 Planner；v1.5 解冻 `M9-EVALUATION` 的延迟/成本维度（**范围仅限 M9 外部 AI 路径**，CI 臂冻结预算执行、真实 provider 读数 opt-in 非门禁且本次未运行），并因此触发 §4 撤销过渡（见 §4.3）；已于 2026-09-22 完成收口（完成批准见 §4.5） |
-| `m10-autonomous-runner-plan.md` | 阶段准入准备计划 | M10 自主 Runner、写副作用、长任务恢复与 Harness；`BLOCKED / NOT_STARTED` |
+| `m10-autonomous-runner-plan.md` | 阶段准入准备计划 | M10 自主 Runner、写副作用、长任务恢复与 Harness；`BLOCKED / NOT_STARTED`；三项前置自 2026-09-22 起均已 `SATISFIED`（`M10-M8-EXIT` 以 owner 批准的**维持现状结论**兑现，见该计划 §2.1，**不是容量证据**），阻断项只剩十一项强制决策与独立批准 |
 | `m11-data-scaling-plan.md` | 阶段准入准备计划 | 10K 高质量真实 approved chunks；`BLOCKED / NOT_STARTED` |
 | `m12-cloud-deployment-plan.md` | 阶段准入准备计划 | 可选云端单用户部署，本地离线仍默认；`BLOCKED / NOT_STARTED` |
 

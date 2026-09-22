@@ -129,7 +129,12 @@ M11 的唯一正式退出目标是：
 
 ## 8. 准入检查与批准记录
 
-- [ ] M8/M9/M10 真实退出证据有效；
+- [ ] M8/M9/M10 真实退出证据有效；**2026-09-22 就地标注**：M8 已由 owner 以「维持现状结论」分支结掉
+  （`references/m8-owner-policy-only-scope-decision-20260919.md`：`POLICY_ONLY_SCOPE_ACCEPTED` /
+  `record-policy-only-scope-and-stop`，所有真实动作 `NOT_AUTHORIZED / NOT_PERFORMED`），**不会**产生
+  「真实退出证据」。因此本项在 M11 准入前必须**重新澄清**——要么接受 M8 侧的维持现状结论（与 M9 的
+  `M9-M8-EXIT`、M10 的 `M10-M8-EXIT` 同一分支），要么明确 M11 另有 10K 真实数据需求而**另行**为 M8 立项。
+  不得把本项读成「M8 迟早会给出真实退出证据」而无限期挂起；
 - [ ] 十项强制 Decision 全部 `RESOLVED`；
 - [ ] Baseline/3K workload、来源、许可、parser、chunk、质量和检索阈值冻结；
 - [ ] 数据目录、manifest、报告和隐私边界可验证；

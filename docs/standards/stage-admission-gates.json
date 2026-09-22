@@ -358,7 +358,7 @@
       "delivery_status": "NOT_STARTED",
       "prerequisites": [
         {"id": "M10-M7-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m7-source-lifecycle-plan.md", "docs/baselines.md"]},
-        {"id": "M10-M8-EXIT", "status": "OPEN", "evidence": []},
+        {"id": "M10-M8-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m10-autonomous-runner-plan.md", "docs/plans/m8-specialized-storage-plan.md"]},
         {"id": "M10-M9-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m9-goal-driven-planning-plan.md"]}
       ],
       "mandatory_decisions": [

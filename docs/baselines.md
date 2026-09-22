@@ -701,6 +701,11 @@ authorization 记录保持不变。当前 M7 为 `ADMITTED / COMPLETE`。
 阶段。M8、M9、M10 仍为 `BLOCKED / NOT_STARTED`；Network 文档晋升、P0 语料治理闭环、任意 corpus 自动批准、
 M8 专业化存储、Milvus/LanceDB/Qdrant 选择以及 M9/M10 实现继续处于原批准范围之外。
 
+> **2026-09-22 更新**（不修改上述历史记录）：该段描述的是 2026-09-06 时的状态。此后 M9 已 `ADMITTED /
+> COMPLETE`，M10 的三项前置（含以**维持现状结论**兑现的 `M10-M8-EXIT`）亦已全部 `SATISFIED`；
+> **M8 与 M10 仍为 `BLOCKED / NOT_STARTED`**（M10 等待自身十一项强制决策与独立批准）。本节其余内容
+> ——尤其是「M8 专业化存储与 Milvus/LanceDB/Qdrant 选择仍在原批准范围之外」——**仍然成立**。
+
 ## M9 v1.5 外部 AI 路径评测读数 — 2026-09-22
 
 本节记录 `M9-EVALUATION` 延迟/成本维度解冻（plan_revision v1.5）后的**本地复现读数**。范围**仅限

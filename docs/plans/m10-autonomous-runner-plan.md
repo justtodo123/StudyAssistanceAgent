@@ -34,11 +34,52 @@ M10 必须支持 M8 100K capacity 和拟议 M11 10K 真实数据带来的长任�
 | Prerequisite ID | 当前状态 | 准入所需证据 |
 | --- | --- | --- |
 | `M10-M7-EXIT` | `SATISFIED` | M7 Source lifecycle/delete/isolation/fallback 与独立完成批准；证据见 `docs/PLAN.md`、M7 计划与 `docs/baselines.md` |
-| `M10-M8-EXIT` | `OPEN` | control schema、后端 parity/migration/fallback 或批准的维持现状结论 |
+| `M10-M8-EXIT` | `SATISFIED` | 2026-09-22 owner 批准的**维持现状结论**（见 §2.1）：M10 数据面维持当前 SQLite registry + linear cosine + 默认 BM25，100K 专业化存储容量验证保持待命参考；证据见 `docs/PLAN.md`、本节与 [`m8-specialized-storage-plan.md`](m8-specialized-storage-plan.md) |
 | `M10-M9-EXIT` | `SATISFIED` | plan/mastery authority、deviation/replan、外部 AI fallback 和评测退出证据；证据见 `docs/PLAN.md` 与 [`m9-goal-driven-planning-plan.md`](m9-goal-driven-planning-plan.md) §4.5（2026-09-22 收口时同步） |
 
 正式默认仍是 `StudySessionService` 状态机；旧 SQLite session 可恢复；M0–M5 API/OpenAPI、默认 90 题与离线路径
 保持兼容；M6b 只读 preview 不能作为写权限、checkpoint 或副作用幂等已实现的证据。
+
+### 2.1 `M10-M8-EXIT` 维持现状结论（2026-09-22 owner 裁定）
+
+`M10-M8-EXIT` 的准入所需证据原文即含「**或批准的维持现状结论**」分支，本节兑现该分支——与 M9 的
+`M9-M8-EXIT` 走同一条路径（M9 计划 §2 记「明确维持当前 SQLite/BM25 后端作为 M9 数据面基线」）。
+
+| 裁定字段 | 值 |
+| --- | --- |
+| decided_by | justtodo123 |
+| decided_at | 2026-09-22 |
+| decision_reference | User instruction: 在「`M10-M8-EXIT` 怎么处理」的三选一裁定中选择「走维持现状结论分支」——与 M9 的 `M9-M8-EXIT` 同一分支，维持当前 SQLite/BM25 为 M10 数据面，100K 专业化存储保持待命参考；只需 owner 裁定 + 一份证据记录，不新建协议、不做实验、不冻结 digest |
+| data_plane | 维持当前 SQLite registry（唯一控制面）+ SQLite linear cosine + 默认 BM25 |
+| deferred | 100K 专业化存储容量验证（LanceDB / Qdrant）保持**待命参考**，不阻塞 M10 |
+
+**结论的依据**（三条，均可追溯）：
+
+1. **M10 不需要 100K 数据面**：M10 的范围是自主 Runner 与写副作用治理——authority、写授权、checkpoint、
+   幂等、EffectLedger、恢复、评测、manifest/MCP、rollout（§3 十一项），没有任何一项依赖专业向量后端。
+2. **M8 侧已由 owner 亲手封存**：`references/m8-owner-policy-only-scope-decision-20260919.md` 记
+   `POLICY_ONLY_SCOPE_ACCEPTED`、`allowed_next_action: record-policy-only-scope-and-stop`，network /
+   wheel_download / resolver / installation / s1 / s2 / s3 / backend_selection 逐项 `authorized: false`；
+   M8 计划抬头亦记「100K 专业化存储容量验证…转为待命参考，不阻塞当前学习闭环」。
+3. **重启 M8 的边际产出有历史证据**：`references/m8-eleven-rounds-governance-review.md` 记 V1–V12 全部未
+   通过准入，失败性质由数值/结果逐层下移到流程纪律与源码完整性；其后 `draft-0.10` 与 `draft-0.11` 的独立
+   P3 均 `REJECTED / stop`，minimal-1k v3 的 s0/s1 又经多轮 r01–r09。再开一轮的期望产出是**再下探一层
+   约束**，不是 M10 所需的任何前置。
+
+**本裁定做什么**：把 `M10-M8-EXIT` 由 `OPEN` 改为 `SATISFIED`，并在登记表写入上述证据路径。
+
+**本裁定不做什么**（逐条，防止被后读高估）：
+
+- **不构成 M10 的准入批准**：`admission_status` 仍为 `BLOCKED`、`approval` 五个字段仍为空；M10 仍需
+  §3 全部十一项强制决策 `RESOLVED` 与 owner 的独立准入批准（§4）。
+- **不批准 M8 的任何执行**：不选择后端、不建 `tests/M8/`、不做 100K 实证、不触碰 Network / Milvus；
+  M8 保持 `BLOCKED / NOT_STARTED`，其 §9 的剩余准入项**不因本裁定减少**。
+- **不产生任何容量证据**：这是**维持现状**，不是「容量已验证」；10K 真实数据仍属拟议 M11。
+- **不改写历史**：不修改 `references/` 下的任何治理记录，也不改变 M7 / M9 的既有结论。
+- **不触发 §4 撤销、不写 `admission_history`**：§4 的撤销前提是**已准入阶段**的强制决策、前置证据或
+  兼容不变量发生实质变化，而 M10 从未准入（`admission_status` 恒为 `BLOCKED`、`approval` 从未填写），
+  故不存在可撤销的准入；`admission_history` 的 `from` / `to` 语义是准入状态，本次为 `BLOCKED → BLOCKED`，
+  写入会造成语义错配，且会被 `test_admission_history_records_are_well_formed` 的 `from != to` 断言判红。
 
 ## 3. 强制决策
 
@@ -61,7 +102,7 @@ M10 必须支持 M8 100K capacity 和拟议 M11 10K 真实数据带来的长任�
 
 ## 4. 准入检查与批准记录
 
-- [ ] M7–M9 退出证据全部真实有效；
+- [x] M7–M9 退出证据全部真实有效（`M10-M8-EXIT` 以 §2.1 的维持现状结论兑现，不是容量证据）；
 - [ ] 十一项强制决策全部 `RESOLVED`，authority、authorization、ledger 和 recovery 一致；
 - [ ] 写副作用 crash-point、越权和重放测试方案可执行；
 - [ ] Agent 评测任务集、样本、硬件/provider、成本与发布阈值冻结；
@@ -77,7 +118,9 @@ M10 必须支持 M8 100K capacity 和拟议 M11 10K 真实数据带来的长任�
 | plan_revision | — |
 | decision_set_version | — |
 
-批准为空，M10 保持 `BLOCKED / NOT_STARTED`。`M10-M7-EXIT` 已满足，但 M8/M9 退出、十一项强制决策与独立批准仍为阻断项。Agent 不得自行批准。
+批准为空，M10 保持 `BLOCKED / NOT_STARTED`。三项前置（`M10-M7-EXIT` / `M10-M8-EXIT` / `M10-M9-EXIT`）
+自 2026-09-22 起均已 `SATISFIED`，**阻断项只剩 §3 的十一项强制决策与 owner 的独立准入批准**；
+前置满足不构成准入。Agent 不得自行批准。
 
 ## 5. 获准后的拟实施顺序
 
