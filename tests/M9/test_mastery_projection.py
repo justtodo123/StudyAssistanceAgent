@@ -624,14 +624,16 @@ def test_plan_id_changes_when_mastery_changes(tmp_path: Path) -> None:
 
 
 def test_plan_id_changes_when_hours_per_day_changes() -> None:
-    """第二个独立实例：hours_per_day 经 _distribute 决定分日，必须进身份键。"""
+    """第二个独立实例：hours_per_day 直接进身份键，同时经 _distribute 决定分日。"""
     planner = GoalPlannerService()
 
     short = planner.generate(_request(hours_per_day=1.0))
     long = planner.generate(_request(hours_per_day=8.0))
 
     assert short.plan_id != long.plan_id
-    assert (short.total_days, long.total_days) == (15, 2)
+    # 19 = 14 天请求窗口 + 5 天逐日追加；追加的天与窗口内的天受**同一**容量约束。
+    # 修复前是 15：窗口 14 天 + 一个不设上限的溢出天（6 个任务 / 190 分钟，而当日可用仅 50 分钟）。
+    assert (short.total_days, long.total_days) == (19, 2)
 
 
 def test_plan_id_is_stable_when_derived_inputs_are_unchanged(tmp_path: Path) -> None:

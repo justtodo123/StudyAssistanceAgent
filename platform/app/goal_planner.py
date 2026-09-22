@@ -450,9 +450,26 @@ class GoalPlannerService:
         total_days: int,
         daily_minutes: int,
     ) -> list[GoalPlanDay]:
+        """按每日容量贪心分日：**窗口是起点，容量才是硬约束**。
+
+        `total_days` 是请求窗口，不再把分日截断。先按窗口排满前 `total_days` 天（每天受
+        `daily_minutes` 约束，第 2 天起扣除 `REVIEW_BUFFER_MINUTES`）；任务仍未排完就**逐天追加**，
+        追加的每一天受**同一容量**约束，直到任务耗尽。调用方以 `len(days)` 回报真实天数，故
+        `total_days` 可以大于请求窗口——窗口表达「希望多久学完」，容量表达「每天能学多久」，
+        二者冲突时以容量为准。
+
+        绝不把余量倾倒进一个不设上限的「第 total_days + 1 天」：那会让某一天的 `total_minutes`
+        变成 `daily_minutes` 的任意倍数，静默违反 `hours_per_day`（实测 74 倍）。
+
+        已知下界：`and day_tasks` 守卫保证每天的第一个任务必被放入，故单条任务的时长若超过当日
+        容量（`hours_per_day=0.5` 时容量 20 分钟，而进阶任务 50 分钟），该天仍会超出——保证是
+        「每天至多一条任务造成超出」，不是「绝不超出」。空任务集仍产出 1 个空天（保持既有行为）。
+        """
         days: list[GoalPlanDay] = []
         task_idx = 0
-        for d in range(total_days):
+
+        def build_day(d: int) -> None:
+            nonlocal task_idx
             current_date = start_date + timedelta(days=d)
             available = daily_minutes
             if d > 0:
@@ -477,20 +494,15 @@ class GoalPlannerService:
                     total_minutes=used + (REVIEW_BUFFER_MINUTES if d > 0 and day_tasks else 0),
                 )
             )
-            if task_idx >= len(tasks):
-                break
 
-        if task_idx < len(tasks):
-            remaining = tasks[task_idx:]
-            extra_date = start_date + timedelta(days=total_days)
-            days.append(
-                GoalPlanDay(
-                    day=len(days) + 1,
-                    date=str(extra_date),
-                    tasks=remaining,
-                    total_minutes=sum(t.estimated_minutes for t in remaining),
-                )
-            )
+        # 第一段：请求窗口内的天
+        for d in range(total_days):
+            build_day(d)
+            if task_idx >= len(tasks):
+                return days
+        # 第二段：窗口已用尽但仍有任务 → 逐天追加，每天同样受容量约束
+        while task_idx < len(tasks):
+            build_day(len(days))
         return days
 
     @staticmethod
