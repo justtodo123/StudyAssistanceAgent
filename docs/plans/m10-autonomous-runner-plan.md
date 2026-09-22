@@ -193,7 +193,8 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 
 ## 5. 获准后的拟实施顺序
 
-> **实施进度**：步骤 1、2、3、4 **已完成**（2026-09-22）。其余三步未开始。
+> **实施进度**：步骤 1–5 **已完成**（2026-09-22）。步骤 5 的「扩大写工具集合」一项**未做**——它需要
+> owner 批准具体写工具（见 §5 步骤 5）。其余两步未开始。
 
 1. ✅ 冻结 authority、capability 和 EffectLedger schema，先实现拒绝路径
    （2026-09-22）：`platform/app/runner_authority.py`（写 allowlist **与只读 preview 不相交**、
@@ -253,7 +254,21 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
    已改为按 checkpoint 的 `staged_generation` 丢弃。**这也是那条断言的适用点**：步骤 2 明确记录过
    「无半发布 generation」不适用于无 generation 的领域写入，故当时**只断言无重复副作用**；本步骤起它适用，
    并在**每个发布 crash point** 上断言。**无生产发布**：未接入 `main.py`；
-5. 建立 reconcile/人工介入和不可补偿失败处理，再扩大写工具集合；
+5. ✅ 建立 reconcile/人工介入和不可补偿失败处理（2026-09-22）；**「再扩大写工具集合」一项未做**
+   （理由见下）：`platform/app/effect_reconcile.py` 交付 `Reconciler`——present ⇒ applied、absent ⇒ failed、
+   **unknown ⇒ defer 而非猜**（既不 applied 也不 failed，仍留 `pending`）；**第二次 sweep 无事可做**
+   （幂等性以可观测性质表述：`examined == 0` 且台账不增长）；**重复 defer 有界升级**而非死循环；
+   **已升级的 effect 不会被后续 sweep 收敛**（否则升级就只是建议），`open_interventions()` 是它唯一出口、
+   **人工裁定是它唯一的移动方式**；补偿把 `applied` 移到 `compensated`，但**对从未 apply 的 failed effect
+   不谎称已撤销**。台账 schema **v1 → v2**（新增 `reconcile_attempts`，`CREATE TABLE IF NOT EXISTS` 使迁移
+   可安全重跑）——这是本阶段第一个真正需要迁移的改动。
+   证据见 `tests/M10/test_reconcile.py`（12 项）。变异验证：sweep 不再跳过已升级 / 不再有界升级 /
+   对未 apply 的 effect 谎称已补偿 / 去掉 v1→v2 迁移 / present 分支不再收敛，各自判红对应用例。
+   **本步骤修掉一处真实缺陷**：`sweep` 原先不跳过已升级的条目，于是**升级后的 effect 会被后续 sweep
+   收敛掉**——升级就只是建议，而不是终态。
+   **「扩大写工具集合」为何未做**：它要把具体写工具放进 `RUNNER_WRITE_TOOL_ALLOWLIST`，按
+   `M10-WRITE-AUTHORIZATION` 那是一次**治理动作**（不是代码改动），需 owner 批准该具体工具。步骤 5 的
+   机制部分（reconcile / 人工介入 / 不可补偿）**不需要**它，故先交付机制、把该动作留给 owner；
 6. 接入默认关闭的可选 Runner，并保持状态机路径与数据兼容；
 7. 在冻结 Agent 任务集达标后，分阶段交付 manifest 和最小 MCP surface。
 

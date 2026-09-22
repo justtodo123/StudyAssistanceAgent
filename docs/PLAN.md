@@ -389,7 +389,20 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.44（不是产品发布版本）· 更新：2026-09-22（**M10 实施步骤 4 完成——
+*创建：2026-08-10 · PLAN 文档修订：v2.45（不是产品发布版本）· 更新：2026-09-22（**M10 实施步骤 5 完成——
+reconcile / 补偿 / 人工介入**（「扩大写工具集合」一项**未做**）：新增 `platform/app/effect_reconcile.py`。
+present ⇒ applied、absent ⇒ failed、**unknown ⇒ defer 而非猜**；**第二次 sweep 无事可做**（幂等性以可观测
+性质表述）；**重复 defer 有界升级**而非死循环；**已升级的 effect 不会被后续 sweep 收敛**——否则升级就只是
+建议而非终态，`open_interventions()` 是其唯一出口、**人工裁定是其唯一移动方式**；补偿把 `applied` 移到
+`compensated`，但**对从未 apply 的 failed effect 不谎称已撤销**。台账 schema **v1 → v2**（新增
+`reconcile_attempts`，`CREATE TABLE IF NOT EXISTS` 使迁移可安全重跑）——**本阶段第一个真正需要迁移的改动**，
+已加迁移用例（保留数据）与「未来版本仍被拒绝」的反面用例。新增 `tests/M10/test_reconcile.py`（12 项），
+`tests/M10/` 89 → 101 项；全量 1371 → 1383 collected、1366 → 1378 passed、2 skipped、3 failed。
+**修掉一处真实缺陷**：`sweep` 原先不跳过已升级的条目，升级后的 effect 会被后续 sweep 收敛掉。
+变异验证：sweep 不再跳过已升级 / 不再有界升级 / 对未 apply 的 effect 谎称已补偿 / 去掉 v1→v2 迁移 /
+present 分支不再收敛，各自判红对应用例。**「扩大写工具集合」为何未做**：它要把具体写工具放进
+`RUNNER_WRITE_TOOL_ALLOWLIST`，按 `M10-WRITE-AUTHORIZATION` 那是**治理动作**而非代码改动，需 owner 批准该
+具体工具；步骤 5 的机制部分不需要它）· 上一修订 v2.44（2026-09-22：**M10 实施步骤 4 完成——
 manifest 绑定 checkpoint 与原子发布门禁**：新增 `platform/app/generation_publication.py`。**「无半发布
 generation」由此结构性成立**，靠两条机制而非约定：① generation id **由 manifest 摘要派生**（同一输入不可能
 产出两个 generation，顺序无关，reindex 不 churn 身份）；② **读取方复验**——`visible()` 只报告磁盘 manifest

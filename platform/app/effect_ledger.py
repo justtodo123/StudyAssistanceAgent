@@ -31,7 +31,10 @@ from .runner_authority import EffectState, RunnerAuthorityError, assert_transiti
 # `source_delete.py` deliberately does not apply — this database is new, so there
 # is no older one to migrate.
 LEDGER_SCHEMA_FAMILY = "sa.runner.effect-ledger.v1"
-LEDGER_SCHEMA_VERSION = 1
+#: v2 adds `reconcile_attempts`. No existing column changed, so the v1 -> v2
+#: migration is a new table plus a version bump — the numeric-version path
+#: `source_delete.py` uses, which v1 did not need.
+LEDGER_SCHEMA_VERSION = 2
 
 _SCHEMA = """
 CREATE TABLE runner_meta (
@@ -80,6 +83,17 @@ CREATE TABLE job_checkpoints (
     state_digest TEXT NOT NULL,
     created_at TEXT NOT NULL,
     UNIQUE(job_id, seq)
+);
+"""
+
+#: Added in v2. Append-only: each reconcile pass over an effect records one row,
+#: so "how many times have we tried" is answerable without mutating anything.
+_RECONCILE_ATTEMPTS = """
+CREATE TABLE IF NOT EXISTS reconcile_attempts (
+    attempt_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    effect_id TEXT NOT NULL REFERENCES effect_ledger(effect_id),
+    outcome TEXT NOT NULL,
+    recorded_at TEXT NOT NULL
 );
 """
 
@@ -142,6 +156,7 @@ class EffectLedgerStore:
         if existing is None:
             now = _now()
             connection.executescript(_SCHEMA)
+            connection.execute(_RECONCILE_ATTEMPTS)
             connection.execute(
                 "INSERT INTO runner_meta (singleton, schema_family, schema_version,"
                 " created_at, updated_at) VALUES (1, ?, ?, ?, ?)",
@@ -151,13 +166,29 @@ class EffectLedgerStore:
         row = connection.execute(
             "SELECT schema_family, schema_version FROM runner_meta WHERE singleton = 1"
         ).fetchone()
-        if row is None or row["schema_family"] != LEDGER_SCHEMA_FAMILY \
-                or row["schema_version"] != LEDGER_SCHEMA_VERSION:
+        if row is None or row["schema_family"] != LEDGER_SCHEMA_FAMILY:
             # Fail closed rather than guess at an unknown layout.
             raise EffectLedgerError(
                 "LEDGER_SCHEMA_UNSUPPORTED",
                 "the runner ledger schema is not the supported version.",
             )
+        version = row["schema_version"]
+        if version == LEDGER_SCHEMA_VERSION:
+            return
+        if version == 1:
+            # v1 -> v2: one new table, no column changed and no data rewritten.
+            # `CREATE TABLE IF NOT EXISTS` makes the migration safe to re-run if
+            # the process dies between the table and the version bump.
+            connection.execute(_RECONCILE_ATTEMPTS)
+            connection.execute(
+                "UPDATE runner_meta SET schema_version = ?, updated_at = ? WHERE singleton = 1",
+                (LEDGER_SCHEMA_VERSION, _now()),
+            )
+            return
+        raise EffectLedgerError(
+            "LEDGER_SCHEMA_UNSUPPORTED",
+            "the runner ledger schema is not the supported version.",
+        )
 
     # -- jobs ---------------------------------------------------------------
 
@@ -282,6 +313,23 @@ class EffectLedgerStore:
     def mark_compensated(self, effect_id: str) -> EffectRecord:
         """`applied` or `authorized` -> `compensated`."""
         return self.transition(effect_id=effect_id, target=EffectState.COMPENSATED)
+
+    def record_reconcile_attempt(self, *, effect_id: str, outcome: str) -> None:
+        """Append one reconcile pass over an effect. Never mutates prior rows."""
+        with self._lock, self._connect() as connection:
+            connection.execute(
+                "INSERT INTO reconcile_attempts (effect_id, outcome, recorded_at)"
+                " VALUES (?, ?, ?)", (effect_id, outcome, _now()),
+            )
+
+    def reconcile_attempts(self, effect_id: str) -> tuple[str, ...]:
+        """The outcomes of every reconcile pass over one effect, oldest first."""
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT outcome FROM reconcile_attempts WHERE effect_id = ?"
+                " ORDER BY attempt_id", (effect_id,),
+            ).fetchall()
+        return tuple(row["outcome"] for row in rows)
 
     def find_by_idempotency_key(self, idempotency_key: str) -> EffectRecord | None:
         """The effect already recorded under this key, if any.
