@@ -7,8 +7,8 @@
 **当前状态**：M6a-P0 crawler 已收口；M6a、M6b、M7 均为 `ADMITTED / COMPLETE`；M7 生产开工门禁保持
 `AUTHORIZED`，并于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准；M8–M10 的事实型
 M7 退出前置已满足，但 M8 与 M10–M12 仍为 `BLOCKED / NOT_STARTED`；M9 八项 Decision 已 `RESOLVED`，于
-2026-09-20 在 `m9-plan-lifecycle-v1` 范围内获批为 `ADMITTED / IN_PROGRESS`，并于 **2026-09-22 在同一范围内
-取得独立 `completion_approval`、转为 `ADMITTED / COMPLETE`**（三条 caveat 随收口一并接受：冻结评测范围仅限
+2026-09-20 在 `m9-plan-lifecycle-v1` 范围内获批准入（当时交付状态为 `IN_PROGRESS`），并于 **2026-09-22 在同一
+范围内取得独立 `completion_approval`、交付状态转为 `COMPLETE`**（三条 caveat 随收口一并接受：冻结评测范围仅限
 M9 外部 AI 路径、真实 provider 延迟/成本/失败模式仍未验证、10K/100K 属 M8/M11）。M8 八项 Decision 已于 2026-09-10 逐项批准并
 `RESOLVED`。active execution protocol `draft-0.10` 曾完成 P0/P1/P2 并到达 `BINDING_FROZEN`，但 2026-09-14
 独立 P3 文本审计发现三项阻断性 schema/治理闭合缺陷，结论为 `REJECTED / stop`（`FAILED / RETURNED`），该链保持

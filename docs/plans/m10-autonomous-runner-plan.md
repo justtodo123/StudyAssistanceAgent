@@ -35,7 +35,7 @@ M10 必须支持 M8 100K capacity 和拟议 M11 10K 真实数据带来的长任�
 | --- | --- | --- |
 | `M10-M7-EXIT` | `SATISFIED` | M7 Source lifecycle/delete/isolation/fallback 与独立完成批准；证据见 `docs/PLAN.md`、M7 计划与 `docs/baselines.md` |
 | `M10-M8-EXIT` | `OPEN` | control schema、后端 parity/migration/fallback 或批准的维持现状结论 |
-| `M10-M9-EXIT` | `OPEN` | plan/mastery authority、deviation/replan、外部 AI fallback 和评测退出证据 |
+| `M10-M9-EXIT` | `SATISFIED` | plan/mastery authority、deviation/replan、外部 AI fallback 和评测退出证据；证据见 `docs/PLAN.md` 与 [`m9-goal-driven-planning-plan.md`](m9-goal-driven-planning-plan.md) §4.5（2026-09-22 收口时同步） |
 
 正式默认仍是 `StudySessionService` 状态机；旧 SQLite session 可恢复；M0–M5 API/OpenAPI、默认 90 题与离线路径
 保持兼容；M6b 只读 preview 不能作为写权限、checkpoint 或副作用幂等已实现的证据。

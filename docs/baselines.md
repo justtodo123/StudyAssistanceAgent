@@ -756,8 +756,10 @@ M9 外部 AI 路径（`m9.external-ai`）**，**不是**全项目评测，也**�
    全项目、**不**给出 mastery 写入能力。
 
 该变更是 M9 **第一次触发** `stage-admission-gates.md` §4 撤销的变更（决策值实质变更 ⇒
-`admission_history` 追加 `ADMITTED→REVOKED`、`REVOKED→ADMITTED` 两条），live 字段仍为
-`ADMITTED / IN_PROGRESS`；理由与未变项清单见 M9 计划 §4.3。
+`admission_history` 追加 `ADMITTED→REVOKED`、`REVOKED→ADMITTED` 两条），v1.5 当时 live 字段仍为
+`ADMITTED / IN_PROGRESS`（**2026-09-22 收口后 `delivery_status` 已改为 `COMPLETE`**）；理由与未变项清单见
+M9 计划 §4.3。
 
-*创建：2026-08-12 · 更新：2026-09-22（追加 M9 v1.5 外部 AI 评测读数；不启动 M9 收口）·
+*创建：2026-08-12 · 更新：2026-09-22（追加 M9 v1.5 外部 AI 评测读数；同日 owner 另行批准 M9 `COMPLETE`，
+`completion_approval` 见 M9 计划 §4.5——本文件上列的读数与 caveat 不因收口而改变）·
 维护：知识库、评测集或检索策略变化后复测并追加记录*

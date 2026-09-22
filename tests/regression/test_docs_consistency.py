@@ -11,6 +11,73 @@ _MILESTONE_ROW = re.compile(
     r"^\|\s*(M\d+[a-z]?)\s*\|\s*`([A-Z_]+)`\s*\|\s*`([A-Z_]+)`\s*\|"
 )
 
+# 导航文档里的「当前状态」断言：阶段名、`A / D` 状态对、`M8–M12` 形式的区间与阻断表述。
+_STAGE_NAME = re.compile(r"\bM(?:6a|6b|7|8|9|10|11|12)\b")
+_STAGE_RANGE = re.compile(r"M(\d+)\s*[–\-]\s*M(\d+)")
+# 阻断表述：中文「阻断」，或与登记表 `BLOCKED` + `NOT_STARTED` 逐字相同的状态对。
+_BLOCKED_CLAIM = re.compile(r"阻断|`BLOCKED / NOT_STARTED`")
+
+
+def _state_pair_pattern(registry: dict) -> re.Pattern:
+    """只匹配**准入 / 交付状态对**，词表直接取自登记表。
+
+    刻意不是 `\\`([A-Z_]+) / ([A-Z_]+)\\``：那会连 `FAILED / RETURNED`、`REJECTED / stop`
+    这类**协议链处置**一并捕获，把 M8 的失败链叙述误判成阶段状态断言。
+    """
+    admission = "|".join(registry["admission_statuses"])
+    delivery = "|".join(registry["delivery_statuses"])
+    return re.compile(rf"`((?:{admission}) / (?:{delivery}))`")
+
+
+def _paragraphs(text: str):
+    """按空行切段，逐段返回 `(起始行号, 段落文本)`。
+
+    表格行各自成段：连续的表格行是**多条独立断言**，合在一起会把前一行的阶段名
+    误当成后一行状态对的归属者（`docs/plans/README.md` 的计划表即如此）。
+    """
+    blocks = []
+    start = 1
+    current: list[str] = []
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        if line.lstrip().startswith("|"):
+            if current:
+                blocks.append((start, "\n".join(current)))
+                current = []
+            blocks.append((lineno, line))
+        elif line.strip():
+            if not current:
+                start = lineno
+            current.append(line)
+        elif current:
+            blocks.append((start, "\n".join(current)))
+            current = []
+    if current:
+        blocks.append((start, "\n".join(current)))
+    return blocks
+
+
+def _line_of(paragraph: str, start: int, offset: int) -> int:
+    """把段落内偏移换算回文件行号，便于报错定位。"""
+    return start + paragraph.count("\n", 0, offset)
+
+
+def _logical_lines(paragraph: str):
+    """把 markdown 软换行拼回逻辑行，逐行返回 `(行内偏移, 文本)`。
+
+    本仓的换行惯例是「列表项 / 标题 / 表格行顶格，句子续行缩进」，故**缩进行**属上一行的
+    同一句。不拼接会让区间规则读到下一行的阶段名而误判归属——那正是它一度空转的原因。
+    """
+    lines = paragraph.splitlines()
+    joined: list[list] = []
+    offset = 0
+    for line in lines:
+        if joined and line[:1].isspace():
+            joined[-1][1] += line.strip()
+        else:
+            joined.append([offset, line])
+        offset += len(line) + 1
+    return [(position, text) for position, text in joined]
+
 
 def _read(repo_root, relative_path: str) -> str:
     return (repo_root / relative_path).read_text(encoding="utf-8")
@@ -147,6 +214,15 @@ class TestStageAdmissionConsistency:
         "authorized_by",
         "authorized_at",
         "authorization_reference",
+    )
+    # 承载「当前状态」断言的导航/政策文档。不含 `docs/PLAN.md`（另有里程碑表护栏，且正文混有
+    # append-only 修订日志）与 `docs/plans/references/`（历史治理记录，只读且不得改写）。
+    CURRENT_STATE_DOCS = (
+        "README.md",
+        "docs/README.md",
+        "docs/plans/README.md",
+        "docs/prds/README.md",
+        "docs/standards/stage-admission-gates.md",
     )
 
     def test_registry_schema_status_and_plan_files(self, repo_root):
@@ -706,6 +782,117 @@ class TestStageAdmissionConsistency:
                 f"does not match registry {expected}"
             )
         assert set(rows) == {stage["stage"] for stage in registry["stages"]}
+
+    def test_stage_plans_track_registry_prerequisites(self, repo_root):
+        """每个阶段计划的前置表必须与登记表逐项一致。
+
+        回归：M9 收口把登记表的 `M10-M9-EXIT` 由 `OPEN` 改为 `SATISFIED`，但 M10 计划的前置表
+        仍写着 `OPEN`——两份权威文档因此自相矛盾，而既有断言只检查阶段名与计划文件名出现。
+        """
+        registry = _load_admission_registry(repo_root)
+        checked = 0
+        for stage in registry["stages"]:
+            plan = _read(repo_root, stage["plan"])
+            for prereq in stage["prerequisites"]:
+                pattern = re.compile(
+                    rf"^\|\s*`{re.escape(prereq['id'])}`\s*\|\s*`([A-Z_]+)`\s*\|",
+                    re.MULTILINE,
+                )
+                match = pattern.search(plan)
+                assert match, (
+                    f"{stage['stage']}: 前置 {prereq['id']} 未出现在 "
+                    f"{stage['plan']} 的前置表"
+                )
+                assert match.group(1) == prereq["status"], (
+                    f"{stage['stage']}: {prereq['id']} 计划记为 {match.group(1)}，"
+                    f"登记表为 {prereq['status']}"
+                )
+                checked += 1
+        # 非空性：登记表若把 prerequisites 清空，「逐项一致」会平凡成立。
+        assert checked > 0
+
+    def test_navigation_docs_do_not_contradict_registry_state(self, repo_root):
+        """当前状态导航文档里的阶段状态断言必须与登记表一致。
+
+        回归：M9 收口只改了 `docs/PLAN.md` 的里程碑表，`docs/README.md`、`docs/plans/README.md`、
+        `docs/prds/README.md` 与 `stage-admission-gates.md` 仍断言 M9 未收口 / `M8–M12` 全阻断，
+        而 `test_authority_and_navigation_match_registry_state` 的状态聚合断言包在
+        `if len(current_states) == 1:` 里——登记表有 3 种状态组合，该分支永不执行。
+
+        两条规则都按**逻辑行**判定：段落内的 markdown 软换行先拼回一句（断言句常跨行），
+        而列表项 / 标题 / 表格行各自成行——不拼接会让窗口读到下一行的阶段名而误判归属。
+        两条规则都是保守的，归属不明则跳过而**不会**判红，因此**覆盖不是穷尽的**：
+
+        ① 阶段区间短语后接阻断表述时，区间内每个阶段都必须是阻断态；
+        ② `` `A / D` `` 状态对归属给它前面最近的阶段名，该状态对必须等于登记表。
+
+        已知不覆盖的形态：以「三个阶段」等**计数词**指代一组阶段，而不是写出区间或逐个命名。
+
+        因此**过渡叙述要写成**「由 `A` 改为 `B`」或「当时交付状态为 `A`」，
+        而**不要**写成 `` `A / B` `` 状态对——后者在本规则下被读作当前状态断言。
+
+        **刻意不覆盖**：`docs/PLAN.md`（其当前状态由
+        `test_plan_milestone_table_matches_registry` 负责，正文另含 append-only 修订日志，
+        混有历史时态）与 `docs/plans/references/`（历史治理记录，只读且不得改写）。
+        """
+        registry = _load_admission_registry(repo_root)
+        states = {
+            stage["stage"]: (stage["admission_status"], stage["delivery_status"])
+            for stage in registry["stages"]
+        }
+        blocked = {name for name, state in states.items() if state == ("BLOCKED", "NOT_STARTED")}
+        state_pair = _state_pair_pattern(registry)
+
+        ranges_checked = 0
+        pairs_checked = 0
+        for relative_path in self.CURRENT_STATE_DOCS:
+            for start, paragraph in _paragraphs(_read(repo_root, relative_path)):
+                for offset, sentence in _logical_lines(paragraph):
+                    def locate(inner: int, _p=paragraph, _s=start, _o=offset) -> str:
+                        return f"{relative_path}:{_line_of(_p, _s, _o + inner)}"
+
+                    for match in _STAGE_RANGE.finditer(sentence):
+                        low, high = int(match.group(1)), int(match.group(2))
+                        gap = sentence[match.end() : match.end() + 60]
+                        claim = _BLOCKED_CLAIM.search(gap)
+                        if not claim:
+                            continue
+                        # 区间与阻断表述**之间**若又出现别的阶段名，就无法把该表述归属给这个区间。
+                        # 只看到阻断表述为止——其后同句出现的阶段名（如「…仍为 `BLOCKED / NOT_STARTED`。
+                        # M8 的八项 Decision…」）不参与归属判定。
+                        if _STAGE_NAME.search(gap[: claim.end()]):
+                            continue
+                        where = locate(match.start())
+                        for number in range(low, high + 1):
+                            name = f"M{number}"
+                            assert name in states, (
+                                f"{where}: 区间 {match.group(0)} 含未登记阶段 {name}"
+                            )
+                            assert name in blocked, (
+                                f"{where}: 区间 {match.group(0)} 被表述为阻断，"
+                                f"但登记表 {name} 为 {states[name][0]} / {states[name][1]}"
+                            )
+                        ranges_checked += 1
+
+                    for pair in state_pair.finditer(sentence):
+                        owners = [
+                            name
+                            for name in _STAGE_NAME.finditer(sentence[: pair.start()])
+                            if name.group(0) in states
+                        ]
+                        if not owners:
+                            continue
+                        name = owners[-1].group(0)
+                        where = locate(pair.start())
+                        assert pair.group(1) == f"{states[name][0]} / {states[name][1]}", (
+                            f"{where}: {name} 被记为 {pair.group(0)}，"
+                            f"登记表为 {states[name][0]} / {states[name][1]}"
+                        )
+                        pairs_checked += 1
+
+        # 非空性：两条规则都被跳过时，「没有矛盾」会平凡成立。
+        assert ranges_checked > 0
+        assert pairs_checked > 0
 
     def test_prd_defers_to_plan_registry_and_stage_gates(self, repo_root):
         prd = _read(

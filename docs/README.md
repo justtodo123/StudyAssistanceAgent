@@ -106,7 +106,7 @@ docs/
 
 ### PLAN.md — 项目计划
 
-核心文件。定义项目定位（通用学习 Agent harness）、技术选型与里程碑；M0–M7 已收口，M8–M12 仍阻断。
+核心文件。定义项目定位（通用学习 Agent harness）、技术选型与里程碑；M0–M7 与 M9 已收口，M8 与 M10–M12 仍阻断。
 **每次会话开工前先看本文档**，明确当前里程碑与退出条件。
 
 ### prds/ — 需求澄清 PRD
@@ -134,8 +134,9 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
   2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准，当前为 `ADMITTED / COMPLETE`。
   Source Registry、manifest/parser、normalized document、source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline
   fail-closed 与 Search/QA 内部可信 principal overlay 已完成；技术证据本身不产生批准。M8/M9/M10 的事实型
-  M7 退出前置已满足；M8 八项 Decision 已 `RESOLVED`，但 `draft-0.10` 独立 P3 已 `REJECTED / stop`，不得
-  `request-p4`；M8–M12 阶段仍阻断，Network/Milvus/后端选择均未获批。
+  M7 退出前置已满足；M9 已于 2026-09-22 在 `m9-plan-lifecycle-v1` 范围内取得独立完成批准，现为
+  `ADMITTED / COMPLETE`；M8 八项 Decision 已 `RESOLVED`，但 `draft-0.10` 独立 P3 已 `REJECTED / stop`，不得
+  `request-p4`；M8 与 M10–M12 阶段仍阻断，Network/Milvus/后端选择均未获批。
 - M7–M12 准入准备计划：
   [plans/m7-source-lifecycle-plan.md](plans/m7-source-lifecycle-plan.md)、
   [plans/m8-specialized-storage-plan.md](plans/m8-specialized-storage-plan.md)、
@@ -228,7 +229,9 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
 
 *创建：2026-08-11 · 更新：2026-09-22（M8 active execution protocol `draft-0.10` 曾到达
 `BINDING_FROZEN`，但独立 P3 文本审计为 `REJECTED / stop`；不得 `request-p4`，M8 与 M10–M12 仍阻断；
-M9 已于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内获批为 `ADMITTED / IN_PROGRESS`，并于 2026-09-22 以
+M9 已于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内获批准入（当时交付状态为 `IN_PROGRESS`），并于 2026-09-22 以
 plan_revision v1.5 解冻 `M9-EVALUATION` 的延迟/成本维度——**范围仅限 M9 外部 AI 路径**，CI 臂冻结预算
-**执行**、真实 provider 读数为 opt-in 非门禁且**本次未运行**；该变更触发 §4 撤销过渡，**未**启动收口）·
-维护：随项目演进同步更新*
+**执行**、真实 provider 读数为 opt-in 非门禁且**本次未运行**；该变更触发 §4 撤销过渡。同日 owner 在同一
+范围内批准 `M9 COMPLETE`（§4 要求的独立 `completion_approval`，见 M9 计划 §4.5），登记表
+`delivery_status` 改为 `COMPLETE`、下游 `M10-M9-EXIT` 改为 `SATISFIED`（**只登记事实，不构成 M10 准入**）；
+三条 caveat 随收口**一并接受而非解除**）· 维护：随项目演进同步更新*

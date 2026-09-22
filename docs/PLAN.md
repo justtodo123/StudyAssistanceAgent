@@ -333,8 +333,9 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
   延迟/成本/失败模式**未验证**；10K/100K 仍是 M8（`BLOCKED`）/ M11（拟议）依赖。
   **评测口径已由 owner 以 plan_revision v1.5 解冻**（2026-09-22）：`M9-EVALUATION` 的延迟/成本维度由
   `..._LATENCY_COST_DEFERRED` 改为冻结评测，**这是 M9 第一个真正触发 §4 撤销的变更**（v1.3/v1.4 都在论证
-  「为何不触发」；§4.2 末段早已逐字预言本次），过渡已登记在 `admission_history`，live 字段仍为
-  `ADMITTED / IN_PROGRESS`。冻结口径**仅限 M9 外部 AI 路径**，分两臂：**CI 臂（门禁）**在
+  「为何不触发」；§4.2 末段早已逐字预言本次），过渡已登记在 `admission_history`，v1.5 当时 live 字段仍为
+  `ADMITTED / IN_PROGRESS`（**2026-09-22 收口后 `delivery_status` 已改为 `COMPLETE`**，见下方 v2.35）。
+  冻结口径**仅限 M9 外部 AI 路径**，分两臂：**CI 臂（门禁）**在
   `tests/M9/test_plan_ai_benchmark.py` 以冻结预算矩阵驱动**真实** `build_anthropic_proposer(client_factory=…)`
   接缝，逐场景断言稳定原因码——`prompt` 预算在调用 provider **之前**返回（provider 调用数为 0）、`cost`
   预算在收到**合法**置换时仍丢弃它（硬上限而非告警阈值）、`deadline` 由 `_run_blocking` 强制；**必须按窄口径读**：
