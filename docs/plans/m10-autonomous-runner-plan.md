@@ -289,6 +289,11 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
    **还原必须放回原模块对象，重新 import 不够**（那会造出第二个对象）。已改为 fixture 每次用完还原，全量
    因此从 6 failed 回到 3 failed；
 7. 在冻结 Agent 任务集达标后，分阶段交付 manifest 和最小 MCP surface。
+   **前置已于 2026-09-22 满足**：任务集已物化为 `tests/M10/frozen_tasks.py`（7 场景，摘要
+   `196df3dd…` 钉死在 `test_runner_evaluation.py`），**arm A 门禁通过**——0 容忍组全为 0、
+   崩溃矩阵覆盖 1.0、状态机默认路径可干净回滚。**arm B 对 M10 不适用**：runner 没有 provider 路径
+   （源码级断言钉住）。**本步骤本身尚未开始**——它要交付 manifest 与最小 MCP surface，属新能力，
+   需按 §4 判断是否落在既有 `approval_scope` 内。
 
 拟新增 `tests/M10/` 覆盖 authorization、checkpoint、idempotency、effect ledger、recovery、offline default、rollout、
 manifest/MCP conformance；真实 provider 或 transport smoke 必须显式启用且不阻断默认离线 CI。退出条件包括零越权、

@@ -73,16 +73,26 @@ class RunnerService:
     def __init__(self, *, store_path: str | Path,
                  authority: RunnerWriteRegistry | None = None,
                  revocations: RevocationRegistry | None = None,
-                 max_deferrals: int = 3) -> None:
+                 max_deferrals: int = 3,
+                 fault_hook: Callable[[CrashPoint], None] | None = None) -> None:
         self._ledger = EffectLedgerStore(store_path)
         self._revocations = revocations or RevocationRegistry()
         self._authority = authority or RunnerWriteRegistry(revocations=self._revocations)
         self._killed = False
-        # The executor's boundary hook is where the kill switch lives: it runs at
-        # every effect boundary, which is what makes a long job stoppable.
+        self._fault_hook = fault_hook
+
+        def boundary(point: CrashPoint) -> None:
+            # The kill switch first: a caller asking to stop should not be told
+            # about an injected fault. Then the caller's hook, for tests.
+            self._boundary(point)
+            if self._fault_hook is not None:
+                self._fault_hook(point)
+
+        # The boundary hook is where the kill switch lives: it runs at every
+        # effect boundary, which is what makes a long job stoppable.
         self._executor = RunnerJobExecutor(
             ledger=self._ledger, authority=self._authority,
-            revocations=self._revocations, crash_hook=self._boundary,
+            revocations=self._revocations, crash_hook=boundary,
         )
         self._reconciler = Reconciler(self._ledger, max_deferrals=max_deferrals)
         if self._authority.get(LOG_REVIEW_SPEC.name) is None:

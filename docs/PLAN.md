@@ -389,7 +389,20 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.46（不是产品发布版本）· 更新：2026-09-22（**M10 实施步骤 6 完成——
+*创建：2026-08-10 · PLAN 文档修订：v2.47（不是产品发布版本）· 更新：2026-09-22（**M10 arm A 门禁落地**——
+步骤 7 的前置）：任务集物化为 `tests/M10/frozen_tasks.py`（7 场景，`workload_digest()` 覆盖每个字段），
+摘要 `196df3dd…` **钉死**在 `tests/M10/test_runner_evaluation.py`——改任务集必须显式更新摘要否则判红；
+指标做 `ENFORCED_LOCALLY` / `NOT_ENFORCED_LOCALLY` 三分类（与 job 预算同一纪律），报告带该分类。
+门禁断言 `M10-EVALUATION` 的 0 容忍组：越权率 0、重复副作用 0、半发布 generation 0、崩溃矩阵覆盖 1.0，
+**并配非空性**（领域调用计数必须真能非零、探针必须真被拒、长任务必须真在中途停下），否则「0」可能来自
+什么都没测。**明确记录为何没有「provider 不可用」场景**：M10 的 runner **没有 provider 路径**（源码级断言
+不 import LLM 客户端），故 arm B 对 M10 不适用——把不可达的回退写成用例只会得到空转断言。
+新增 `tests/M10/test_runner_evaluation.py`（5 项）+ `frozen_tasks.py`，`tests/M10/` 115 → 120 项；
+全量 1398 → 1403 collected、1393 → 1398 passed、2 skipped、3 failed。**两道探针都经变异验证并各修过一次**：
+① 越权探针原先同时缺能力**且**无令牌，被令牌检查拦下——**删掉能力检查它照样通过**，已改为带**有效令牌**、
+只缺能力；② 发布指标原先只走原子性路径、没行使读取方复验——**删掉复验它仍为 0**，已补一个「指针指向
+manifest 不符的 generation」探针。两处修好后对应变异各自判红。**步骤 7 本身未开始**——它要交付 manifest 与
+最小 MCP surface，属新能力，需按 §4 判断是否落在既有 `approval_scope` 内）· 上一修订 v2.46（2026-09-22：**M10 实施步骤 6 完成——
 可选 Runner 接线**：owner 以「允许」批准具体写工具 `log_review`，`RUNNER_WRITE_TOOL_ALLOWLIST` 由空集变为
 `{"log_review"}`——它走**既有** `ReviewSchedulerService.log_review`（与 `POST /api/v1/review-log` 同一条），
 Runner 不新增领域权威。新增 `platform/app/runner_service.py` 与 `config.RUNNER_ENABLED = _strict_bool("SA_RUNNER")`；
