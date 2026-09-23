@@ -1,10 +1,11 @@
 # M10 自主 Runner 与写副作用测试
 
-M10 计划 §5 步骤 1 交付的是**拒绝路径**：写权限、确认令牌、幂等键与副作用台账的
-**拒绝面**先落地，接受面存在但生产上**没有任何东西能到达它**——`RUNNER_WRITE_TOOL_ALLOWLIST`
-冻结为空，且这些模块**尚未接入 `main.py`**（无路由、无开关、无后台 worker）。
+M10 计划 §5 步骤 1–7 已完成技术实施：写权限、checkpoint/恢复、EffectLedger、异步 job、
+原子 generation 发布、reconcile、默认关闭 Runner、冻结 Arm A，以及 knowledge-pack manifest 与最小只读
+stdio MCP。MCP 首发只暴露 `PREVIEW_TOOL_ALLOWLIST` 的只读子集，不含 `log_review`，不监听端口且不进入
+FastAPI/OpenAPI；manifest 复用既有 default-pack source/generation identity，不另造来源身份。
 
-`M10-AUTHORITY` 的边界是结构性的：runner 只拥有 job / checkpoint / ledger 状态，放在**独立**的
+`M10-AUTHORITY` 的边界保持结构性：runner 只拥有 job / checkpoint / ledger 状态，放在**独立**的
 SQLite 文件里；它**不 import** 领域仓储，也不引用领域写方法。状态机仍是正式默认。
 
 > **口径（易写错）**：判据是「不触碰**领域**库」，**不是**「不用 `sqlite3`」。
@@ -24,12 +25,14 @@ SQLite 文件里；它**不 import** 领域仓储，也不引用领域写方法�
 | `test_job_envelope.py` | 通用异步 job：**预算三分类**（`ENFORCED_LOCALLY` 由步进循环强制 / `ENFORCED_ELSEWHERE` 由台账 `purge_expired` 强制 / `NOT_ENFORCED_LOCALLY` 明示不强制）——分区断言保证**新增字段无法不被归类**，并对循环强制的每一项做**行为化**验证（真的把 job 停下且提前停下，而不是名字出现在源码里）；`ENFORCED_ELSEWHERE` 的名字必须**能解析到真实可调用对象**。另含：有界 job 完成并报告进度、失败步进不逃逸、**取消在每个步进边界检查**（含「取消优先于预算」的确定性顺序）、并发槽**确实被持有**（非空转）且**失败路径也释放**、预算**只能收紧**、job 状态**不含工作区路径或用户数据** |
 | `test_recovery.py` | **十个 crash point** 逐个行使：`proposed`/`authorized`/`mid_checkpoint` 上的崩溃 ⇒ 领域写入**从未发生**、resume 判 `crashed-before-apply` 而**不盲目重放**；`mid_apply` 上的崩溃 ⇒ 台账停在 `pending`，**只由领域对账**判定落没落（absent/present 两侧都测）；`after_apply_before_ledger` ⇒ 写入已落但台账不知，resume 对账而非假设；`after_ledger_before_checkpoint` ⇒ 台账已 `applied`，resume 无事可做。另含：**磁盘满 / provider 超时**经领域写入抛出而 fail closed、**取消意图**先落盘再崩溃故 resume 必须拒绝、**撤销**在崩溃窗口内到达则拒绝、revalidation 拒绝、**重放返回已记录 effect 且领域写入次数保持 1**、poison 阈值（三个**不同** effect 失败才触发；同一个 effect 重试**不会**累积——并把这个反面也钉成用例）、不可补偿失败是**独立终态**而非可重试的 failed |
 | `test_authority_boundary.py` | 源码级**动态枚举** `platform/app/` 全部 `*.py`：写 `study_sessions` / `answer_attempts` 的模块**恰好**是 `learning_store.py`；导入领域仓储的模块**恰好**是已知集合（runner 模块不在其中）；runner 模块不引用领域写方法名；台账模块不读 `LEARNING_STORE_PATH`。含检测器正反对照与**非空性**断言。闭包由 `tests/M9/test_mastery_write_authority.py` 承担，本文件钉住那条护栏仍然存在 |
+| `test_manifest.py` | knowledge-pack manifest 的 canonical bytes / digest 可复现，直接绑定现有 `SourceDescriptor` 的 source/revision/fingerprint/generation；round-trip 与 schema/version/digest/重复身份均 fail closed；inventory 非空且不含正文、路径、凭据、时间戳或原生 backend 信息 |
+| `test_mcp_conformance.py` | 最小 JSON-RPC stdio 面：token ≥32 UTF-8 字节、`initialize` / `tools/list` / `tools/call`、只读 allowlist、真实 registry 调用、请求/响应/deadline 预算、`TOOL_PERMISSION_DENIED` / `BUDGET_EXCEEDED`、NDJSON framing、隐私与无 listener/provider/backend/write import 源码护栏 |
 
 ## 关键约定
 
-- **默认关闭是恒等操作**：这些模块未接入任何路由或开关。接入属 §5 后续步骤，且须先有
-  `M10-ROLLOUT` 的 kill switch 语义。
-- **拒绝优先**：本步骤交付的每一条路径都是「拒绝」，接受面只有测试通过**注入**的 allowlist 才可达。
+- **默认关闭是恒等操作**：Runner 仍由 `SA_RUNNER` 条件注册；MCP 是单独的显式 stdio 进程，默认不构造，
+  不添加 HTTP 路由或 listener。
+- **读写面分离**：Runner 唯一获批写工具仍是 `log_review`；MCP 首发只开放既有只读工具，两个 allowlist 不相交。
 - **只留摘要**：台账与审计**只**保存 `argument_digest` / `result_digest`，不保存参数或结果原文。
 - **独立库的代价已计入**：跨库事务不可用 ⇒ outbox + reconcile 是**必需项**，故 `pending_effects()`
   是台账的对外接口之一，而不是可选优化。

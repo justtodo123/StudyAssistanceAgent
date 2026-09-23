@@ -49,6 +49,8 @@ platform/
 │   ├── generation_publication.py # M10 manifest 绑定 checkpoint 与原子发布门禁：读取方复验，杜绝半发布 generation（未接入）
 │   ├── effect_reconcile.py # M10 reconcile / 补偿 / 人工介入：幂等 sweep、有界升级、升级后不再自动收敛（未接入）
 │   ├── runner_service.py  # M10 可选自主 Runner：默认关闭、kill switch 逐边界生效、写经领域服务（`SA_RUNNER`）
+│   ├── knowledge_pack_manifest.py # M10 canonical knowledge-pack manifest（复用既有 source/generation identity）
+│   ├── mcp_server.py      # M10 显式 opt-in 的只读 stdio JSON-RPC surface；无 HTTP listener
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）
 │   ├── source_manifest.py # M7 用户源文件 manifest、格式接纳与 canonical digest
 │   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析（含墙钟上界）
@@ -439,6 +441,25 @@ Content-Type: application/json
 `log_review` 一项（登记在 `platform/app/runner_authority.py`，含批准引用）。Runner 自有状态落在
 **独立**的 `platform/.cache/runner_state.sqlite3`，不触碰 `learning_state.sqlite3`。
 
+### Knowledge-pack manifest 与最小 MCP（M10，默认关闭）
+
+`knowledge_pack_manifest.py` 生成 metadata-only、可复现的 canonical manifest，绑定现有 default pack 的
+`source_id` / `revision` / `fingerprint` / `generation`，不记录正文、宿主路径、凭据或时间戳。
+
+MCP 是显式启动的本地 stdio JSON-RPC 进程，不是 FastAPI 路由：
+
+```bash
+SA_MCP_ENABLED=true SA_MCP_TOKEN="至少 32 个 UTF-8 字节" \
+  ./platform/.venv/Scripts/python -m app.mcp_server
+```
+
+- 默认关闭；不监听端口，不进入默认 OpenAPI。
+- 只提供 `initialize`、`tools/list`、`tools/call`，工具是既有 preview read-only allowlist 的子集。
+- 首发不包含 Runner 写工具 `log_review`，不暴露 SQLite/LanceDB/Qdrant 原生能力。
+- token、request/response/deadline 预算和未授权调用均 fail closed；同步只读工具在 daemon worker 中执行，
+  stdio 主循环最多等待冻结 deadline，超时不发送迟到结果；错误码为 `TOOL_PERMISSION_DENIED` / `BUDGET_EXCEEDED`。
+- 请求认证放在 `params._meta.authorization` 的 Bearer token 中，认证字段不会传给工具或写入输出。
+
 ### Agent Preview（M6b，默认关闭）
 
 M6b 提供独立的只读 native tool-call preview，不替代正式学习会话，也不调用
@@ -546,6 +567,8 @@ immutable revision 才是 published generation 的权威，且重复请求与无
 | `SA_EXTRA_SOURCES_STRICT` | `true` | 额外源失败时拒绝整次发布 |
 | `SA_EXPECTED_DEFAULT_PACK_REVISION` | 空 | 默认包大幅缩减时的精确 revision 确认 |
 | `SA_RUNNER` | `false` | 启动期注册 M10 自主 Runner 的受控写路由；**默认路由与 OpenAPI 均不存在**（关闭是恒等操作） |
+| `SA_MCP_ENABLED` | `false` | 显式启用独立的本地 stdio MCP 进程；不影响 FastAPI/OpenAPI |
+| `SA_MCP_TOKEN` | 空 | MCP 启用时必须至少 32 个 UTF-8 字节；缺失或过短即 fail closed |
 | `SA_AGENT_PREVIEW_ENABLED` | `false` | 启动期注册只读 Agent Preview；默认路由与 OpenAPI 均不存在 |
 | `SA_AGENT_PREVIEW_TOKEN` | 空 | Preview Bearer secret；启用时至少 32 个 UTF-8 字节 |
 | `ANTHROPIC_API_KEY` | 空 | Preview 专用服务端 Anthropic 凭据；不复用 `SA_LLM_API_KEY` |

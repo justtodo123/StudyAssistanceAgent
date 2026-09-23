@@ -1,7 +1,7 @@
 # M10 自主 Runner 与 Harness 对外准备计划
 
-> 当前状态：`ADMITTED / IN_PROGRESS`（2026-09-22 获批，范围 `m10-autonomous-runner-v1`，plan_revision v1.0；
-> `implementation_start` 已 `AUTHORIZED`，见 §4.1）
+> 当前状态：`ADMITTED / COMPLETE`（2026-09-22 获批并授权开工；2026-09-23 在原
+> `m10-autonomous-runner-v1` 范围内取得独立 `completion_approval`，见 §5.3）
 > 前置：M7、M8、M9 全部退出证据（三项均已 `SATISFIED`）
 > 准入政策：[`stage-admission-gates.md`](../standards/stage-admission-gates.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
@@ -193,7 +193,9 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
 
 ## 5. 获准后的拟实施顺序
 
-> **实施进度**：步骤 1–6 **已完成**（2026-09-22）。步骤 7（manifest 与最小 MCP surface）未开始。
+> **实施进度**：步骤 1–7 **已完成技术实施**（2026-09-23）。步骤 7 交付 `knowledge_pack_manifest.py` 与
+> 默认关闭、stdio-only、只读的 `mcp_server.py`；Arm A 与 conformance 证据已落在 `tests/M10/`。
+> M10 已于 2026-09-23 在原范围内取得独立 `completion_approval`，现为 `ADMITTED / COMPLETE`。
 > 步骤 5 的「扩大写工具集合」已由 owner 于 2026-09-22 批准 `log_review` 一项（见 §5 步骤 5/6）。
 
 1. ✅ 冻结 authority、capability 和 EffectLedger schema，先实现拒绝路径
@@ -288,17 +290,48 @@ M10 **消费**、**维持单 worker**（多 worker 留给 M12）、评测取 **0
    模块对象上而真实服务照跑**（M5b 模块级 `from app.main import app` + 字符串 `patch("app.main._study_sessions")`）。
    **还原必须放回原模块对象，重新 import 不够**（那会造出第二个对象）。已改为 fixture 每次用完还原，全量
    因此从 6 failed 回到 3 failed；
-7. 在冻结 Agent 任务集达标后，分阶段交付 manifest 和最小 MCP surface。
-   **前置已于 2026-09-22 满足**：任务集已物化为 `tests/M10/frozen_tasks.py`（7 场景，摘要
-   `196df3dd…` 钉死在 `test_runner_evaluation.py`），**arm A 门禁通过**——0 容忍组全为 0、
-   崩溃矩阵覆盖 1.0、状态机默认路径可干净回滚。**arm B 对 M10 不适用**：runner 没有 provider 路径
-   （源码级断言钉住）。**本步骤本身尚未开始**——它要交付 manifest 与最小 MCP surface，属新能力，
-   需按 §4 判断是否落在既有 `approval_scope` 内。
+7. ✅ 在冻结 Agent 任务集达标后，交付 manifest 和最小 MCP surface（2026-09-23）。
+   `platform/app/knowledge_pack_manifest.py` 以 `sa-json-c14n-v1` 生成不含正文/路径/凭据/时间戳的 canonical manifest，
+   直接复用 `MarkdownPackSnapshot.descriptor` 的 source/revision/fingerprint/generation，不使用步骤 4 的合成
+   `gen-*` 作为 pack 身份；schema/version/摘要/重复身份冲突均 fail closed。`platform/app/mcp_server.py`
+   实现显式 opt-in 的 UTF-8 newline-delimited JSON-RPC stdio 面，只支持 `initialize` / `tools/list` /
+   `tools/call`，工具严格取 `PREVIEW_TOOL_ALLOWLIST` 的只读子集；token 少于 32 UTF-8 字节、未知/写工具、
+   request/response/deadline 预算分别 fail closed，并真实消费 `TOOL_PERMISSION_DENIED` / `BUDGET_EXCEEDED`。
+   它不监听端口、不添加 FastAPI/OpenAPI route、不暴露 `log_review`、provider 或 native backend。
+   证据见 `tests/M10/test_manifest.py`（12 项）与 `test_mcp_conformance.py`（16 项）；当前 `tests/M10/`
+   共 148 项全绿，M10 + regression 231 项全绿。该实现位于既有 `approval_scope` 的 `m10.manifest` /
+   `m10.mcp` 内，不扩张 M11/M12、multi-worker、M8 backend 或真实 10K/100K 范围。
 
 拟新增 `tests/M10/` 覆盖 authorization、checkpoint、idempotency、effect ledger、recovery、offline default、rollout、
 manifest/MCP conformance；真实 provider 或 transport smoke 必须显式启用且不阻断默认离线 CI。退出条件包括零越权、
 重放不重复副作用、10K/100K 合成长任务在取消/崩溃/磁盘不足下不产生半发布 generation、crash matrix 达标、
 状态机默认可回滚、旧 session 恢复、默认 90 题不退化及任务评测达到批准阈值。
+
+## 5.2 技术退出证据与已知限制（2026-09-23）
+
+七项退出条件的逐项证据、测试读数和未覆盖范围见
+[`references/m10-completion-evidence-v1.md`](references/m10-completion-evidence-v1.md)。当前读数：M10 148 项全绿、
+M10 + regression 231 项全绿、platform 40 项全绿；根级为 1426 passed / 2 skipped / 3 个既有 M7 TXT
+parser 精确合同失败。该汇总本身不产生批准；负责人已于 2026-09-23 另行批准完成，见 §5.3。
+
+已知限制随证据一并保留：真实 10K/100K、专业 backend、多 worker/云端、真实 provider 性能均未覆盖；MCP
+首发仅 stdio/read-only，manifest 为 unsigned SHA-256；不承诺 exactly-once；Python 3.13.3 的三项 M7 TXT
+fail-closed 基线仍存在。上述限制随 2026-09-23 完成批准一并接受但未解除；M10 当前为 `ADMITTED / COMPLETE`。
+
+## 5.3 独立完成批准（2026-09-23）
+
+| 完成批准字段 | 值 |
+| --- | --- |
+| approved_by | justtodo123 |
+| approved_at | 2026-09-23 |
+| approval_reference | User instruction: 「批准 M10 COMPLETE (Recommended)」——批准在原 `m10-autonomous-runner-v1` 范围内完成，并接受 `references/m10-completion-evidence-v1.md` 记录的已知限制 |
+| approval_scope | `m10-autonomous-runner-v1`（与准入 `approval_scope.scope_id` 逐字相同，不扩大） |
+| evidence | `docs/PLAN.md`、本计划、`references/m10-completion-evidence-v1.md`、`tests/M10/README.md`、`tests/TEST_PLAN.md` |
+
+本批准把 `delivery_status` 由 `IN_PROGRESS` 改为 `COMPLETE`；`admission_status` 保持 `ADMITTED`，原准入批准、
+`implementation_start`、十一项 Decision 值和三项前置均不改写。完成批准**不**解除证据汇总 §三的已知限制，
+不批准 M11/M12、多 worker、M8 backend 或真实 10K/100K 数据，也不写 `admission_history`——本次不是
+admission 状态过渡。
 
 ## 6. 撤销与发布边界
 

@@ -355,7 +355,7 @@
       "stage": "M10",
       "plan": "docs/plans/m10-autonomous-runner-plan.md",
       "admission_status": "ADMITTED",
-      "delivery_status": "IN_PROGRESS",
+      "delivery_status": "COMPLETE",
       "prerequisites": [
         {"id": "M10-M7-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m7-source-lifecycle-plan.md", "docs/baselines.md"]},
         {"id": "M10-M8-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m10-autonomous-runner-plan.md", "docs/plans/m8-specialized-storage-plan.md"]},
@@ -376,7 +376,14 @@
       ],
       "approval": {"approved_by": "justtodo123", "approved_at": "2026-09-22", "approval_reference": "User instruction: 「允许执行」——回应「下一步：M10 准入 + 开工批准。批了之后 M10 转 ADMITTED / IN_PROGRESS，我按计划 §5 从『冻结 authority/capability/EffectLedger schema，先实现拒绝路径』开始写代码」。按本仓既有惯例逐字引用原话并说明解读：本次用「执行」（而非上次推送用的「推送」），故读作批准 M10 准入与生产开工，而非仅批准推送", "plan_revision": "v1.0", "decision_set_version": "m10-decision-set-v1"},
       "approval_scope": {"scope_id": "m10-autonomous-runner-v1", "included": ["m10.authority", "m10.write-authorization", "m10.checkpoint", "m10.idempotency", "m10.effect-ledger", "m10.recovery", "m10.evaluation", "m10.manifest", "m10.mcp", "m10.offline-default", "m10.rollout"], "excluded": ["m11.data-scaling", "m12.cloud-deployment", "m10.multi-worker-topology", "m8.backend-selection", "m10.real-10k-100k-data"]},
-      "implementation_start": {"status": "AUTHORIZED", "authorized_by": "justtodo123", "authorized_at": "2026-09-22", "authorization_reference": "User instruction: 「允许执行」——回应「下一步：M10 准入 + 开工批准。批了之后 M10 转 ADMITTED / IN_PROGRESS，我按计划 §5 从『冻结 authority/capability/EffectLedger schema，先实现拒绝路径』开始写代码」。按本仓既有惯例逐字引用原话并说明解读：本次用「执行」（而非上次推送用的「推送」），故读作批准 M10 准入与生产开工，而非仅批准推送"}
+      "implementation_start": {"status": "AUTHORIZED", "authorized_by": "justtodo123", "authorized_at": "2026-09-22", "authorization_reference": "User instruction: 「允许执行」——回应「下一步：M10 准入 + 开工批准。批了之后 M10 转 ADMITTED / IN_PROGRESS，我按计划 §5 从『冻结 authority/capability/EffectLedger schema，先实现拒绝路径』开始写代码」。按本仓既有惯例逐字引用原话并说明解读：本次用「执行」（而非上次推送用的「推送」），故读作批准 M10 准入与生产开工，而非仅批准推送"},
+      "completion_approval": {
+        "approved_by": "justtodo123",
+        "approved_at": "2026-09-23",
+        "approval_reference": "User instruction: 「批准 M10 COMPLETE (Recommended)」——批准在原 `m10-autonomous-runner-v1` 范围内完成，并接受 `m10-completion-evidence-v1.md` 记录的已知限制",
+        "approval_scope": "m10-autonomous-runner-v1",
+        "evidence": ["docs/PLAN.md", "docs/plans/m10-autonomous-runner-plan.md", "docs/plans/references/m10-completion-evidence-v1.md", "tests/M10/README.md", "tests/TEST_PLAN.md"]
+      }
     },
     {
       "stage": "M11",

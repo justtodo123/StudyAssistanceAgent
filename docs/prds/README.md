@@ -41,7 +41,8 @@ PRD 将复选框分成三类，必须结合所在小节或行首标签解读：
   `ADMITTED / COMPLETE`。Network 不在 scope 内，技术证据本身不产生批准。
 - M8/M9/M10 的事实型 M7 退出前置已满足；M9 已于 2026-09-22 在 `m9-plan-lifecycle-v1` 范围内取得独立完成
   批准，现为 `ADMITTED / COMPLETE`。**M10 的十一项强制决策已全部 `RESOLVED`，并于 2026-09-22 在
-  `m10-autonomous-runner-v1` 范围内获批为 `ADMITTED / IN_PROGRESS`、`implementation_start` 已 `AUTHORIZED`**。
+  `m10-autonomous-runner-v1` 范围内获批开工，并于 2026-09-23 在原范围内取得独立完成批准，现为
+  `ADMITTED / COMPLETE`；`implementation_start` 保持 `AUTHORIZED`**。
   M8 仍因其他前置、强制决策和独立批准未闭合而保持 `BLOCKED / NOT_STARTED`。Milvus 未选定或获批。
 
 ## 当前文件
@@ -52,5 +53,5 @@ PRD 将复选框分成三类，必须结合所在小节或行首标签解读：
 
 ---
 
-*创建：2026-08-24 · 更新：2026-09-22（同步 M9 独立完成批准与下游事实型前置；M8 与 M10 仍阻断）·
+*创建：2026-08-24 · 更新：2026-09-23（同步 M10 独立完成批准；M8 与 M11–M12 仍阻断）·
 维护：新增/修订 PRD 时同步本表*

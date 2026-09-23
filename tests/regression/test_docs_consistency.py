@@ -109,7 +109,7 @@ class TestProjectStatusConsistency:
         assert "M7 退出前置已满足" in root
         assert "M8 与 M11–M12 仍为 `BLOCKED / NOT_STARTED`" in root
         assert "M9 八项 Decision 已 `RESOLVED`" in root
-        # 2026-09-22：M10 获批 `ADMITTED / IN_PROGRESS`（十一项决策已闭合）。本断言随事实移动。
+        # 2026-09-23：M10 在原范围内取得独立完成批准。本断言随事实移动。
         assert "M10 十一项 Decision 已全部 `RESOLVED`" in root
         assert "M0–M5 MVP 可用。" in root
         assert "M10" in root and "自主 Runner" in root
@@ -512,7 +512,7 @@ class TestStageAdmissionConsistency:
 
         m10 = stages["M10"]
         assert m10["admission_status"] == "ADMITTED"
-        assert m10["delivery_status"] == "IN_PROGRESS"
+        assert m10["delivery_status"] == "COMPLETE"
         m10_m7_exit = next(
             prerequisite
             for prerequisite in m10["prerequisites"]
@@ -537,8 +537,14 @@ class TestStageAdmissionConsistency:
             decision["status"] == "RESOLVED" and decision["value"]
             for decision in m10["mandatory_decisions"]
         )
-        # 尚未完成：不得有 `completion_approval`。
-        assert m10.get("completion_approval") is None
+        # 2026-09-23 独立完成批准：不得覆盖原准入批准，也不得扩大 scope。
+        completion = m10["completion_approval"]
+        assert completion["approved_by"] == "justtodo123"
+        assert completion["approved_at"] == "2026-09-23"
+        assert completion["approval_reference"].startswith("User instruction:")
+        assert completion["approval_scope"] == m10["approval_scope"]["scope_id"]
+        assert "docs/plans/references/m10-completion-evidence-v1.md" in completion["evidence"]
+        assert m10["approval"]["plan_revision"] == "v1.0"
 
         m9 = stages["M9"]
         assert m9["admission_status"] == "ADMITTED"

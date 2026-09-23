@@ -68,8 +68,8 @@ HTTP 状态码是传输层；`detail.code` 才是契约。
 | `VECTOR_DIMENSION_MISMATCH` | 500 | 否 | 查询/入库向量维不一致 |
 | `LLM_NOT_CONFIGURED` | 503 | 否 | 预留：强制 LLM 路径但未配置 key（当前 QA 降级，不抛） |
 | `LLM_GENERATION_FAILED` | 503 | 是 | 预留：生成失败且调用方要求失败而非降级 |
-| `TOOL_PERMISSION_DENIED` | 403 | 否 | 预留：M6b 只读 preview 拒绝写工具 |
-| `BUDGET_EXCEEDED` | 429 | 是 | 预留：M6b 步数/token/cost 预算耗尽 |
+| `TOOL_PERMISSION_DENIED` | 403 | 否 | M10 最小 MCP：未知、写入或未授权工具在执行前拒绝；M6b 既有 `terminated` 表达不变 |
+| `BUDGET_EXCEEDED` | 429 | 是 | M10 最小 MCP：请求、响应或 deadline 预算在本地执行点耗尽；M6b 既有预算终止表达不变 |
 | `PLAN_NOT_FOUND` | 404 | 否 | 目标驱动计划的 plan_id 不存在（采纳/进度/重规划/查询） |
 | `ILLEGAL_PLAN_PROGRESS_EVENT` | 400 | 否 | 进度事件不在 `completed` / `skipped` / `overdue` 词表内 |
 | `WORKER_TOPOLOGY_UNSUPPORTED` | 启动失败 | 否 | 多 worker、第二服务进程、5 秒拿不到 `service.lock`，或设置了不支持的 `SA_INDEX_READONLY` |
