@@ -43,7 +43,8 @@ PRD 将复选框分成三类，必须结合所在小节或行首标签解读：
   批准，现为 `ADMITTED / COMPLETE`。**M10 的十一项强制决策已全部 `RESOLVED`，并于 2026-09-22 在
   `m10-autonomous-runner-v1` 范围内获批开工，并于 2026-09-23 在原范围内取得独立完成批准，现为
   `ADMITTED / COMPLETE`；`implementation_start` 保持 `AUTHORIZED`**。
-  M8 仍因其他前置、强制决策和独立批准未闭合而保持 `BLOCKED / NOT_STARTED`。Milvus 未选定或获批。
+  M8 与 M12 仍因其他前置、强制决策和独立批准未闭合而保持 `BLOCKED / NOT_STARTED`。M11 于 2026-09-23
+  获批 `ADMITTED / IN_PROGRESS`（开工已授权，plan_revision v1.1 纳入 A1/A2/A3）。Milvus 未选定或获批。
 
 ## 当前文件
 
@@ -53,5 +54,5 @@ PRD 将复选框分成三类，必须结合所在小节或行首标签解读：
 
 ---
 
-*创建：2026-08-24 · 更新：2026-09-23（同步 M10 独立完成批准；M8 与 M11–M12 仍阻断）·
+*创建：2026-08-24 · 更新：2026-09-23（同步 M11 `ADMITTED / IN_PROGRESS`、开工已授权；M8 与 M12 仍阻断）·
 维护：新增/修订 PRD 时同步本表*

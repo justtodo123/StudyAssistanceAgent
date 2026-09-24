@@ -18,7 +18,7 @@
 
 - **最终计划依据**：[`docs/PLAN.md`](../PLAN.md)（定位、里程碑、退出方向）
 - 已完成：M3 / M4 / M5（MVP 最小实现）
-- 当前阶段：M6a、M6b、M7 与 M9 均为 `ADMITTED / COMPLETE`；M6b 默认关闭的只读 preview 已完成全部 closeout 门禁与证据同步
+- 当前阶段：M6a、M6b、M7、M9 与 M10 均为 `ADMITTED / COMPLETE`；M6b 默认关闭的只读 preview 已完成全部 closeout 门禁与证据同步
 - M6a：契约先行的兼容骨架，明确逻辑 Source 身份、快照失效/清理、Search/QA 传播边界和状态机唯一权威；
   M6b：前置、八项决策、保护基线与独立批准均已闭合，获批的独立只读原生工具调用预览已实现；
   完整自主 Runner 属于 M10
@@ -27,7 +27,7 @@
   M7 退出前置已满足；M9 已于 2026-09-22 在 `m9-plan-lifecycle-v1` 范围内取得独立完成批准，现为
   `ADMITTED / COMPLETE`；**M10 十一项 Decision 已全部 `RESOLVED`，并于 2026-09-22 获批为
   `ADMITTED / COMPLETE`、`implementation_start` 同步 `AUTHORIZED`**，并于 2026-09-23 在原范围内取得独立完成批准；M8 八项 Decision 已 `RESOLVED`，
-  但 M8 与 M11–M12 仍须分别闭合剩余前置、阶段 Decision 与批准，当前均保持阻断；`draft-0.10` 曾完成
+  但 M8 与 M12 仍须分别闭合剩余前置、阶段 Decision 或独立批准，当前均保持阻断；M11 已准入并获开工授权（plan_revision v1.1，A1/A2/A3 实施中）；`draft-0.10` 曾完成
   P0/P1/P2 并到达 `BINDING_FROZEN`，但 2026-09-14 独立 P3 文本审计
   因三项阻断缺陷判定 `REJECTED / stop`，不得 `request-p4`。
 - 不把 `references/` 中的分析或历史治理记录当作执行计划、阶段批准或验收真源
@@ -54,8 +54,9 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 2026-09-22 在同一范围内取得独立完成批准，现为 `ADMITTED / COMPLETE`；M10 的十一项 Decision 已全部
 `RESOLVED`，并于 2026-09-22 在 `m10-autonomous-runner-v1` 范围内获批开工，2026-09-23 在原范围内
 取得独立完成批准，现为 `ADMITTED / COMPLETE`；`implementation_start` 保持 `AUTHORIZED`；M8 八项 Decision
-已 `RESOLVED`，但 `draft-0.10` 独立 P3 已 `REJECTED / stop`，不得 `request-p4`；M8 与 M11–M12 均因剩余前置、
-阶段 Decision 或批准未闭合而保持 `BLOCKED / NOT_STARTED`。最终状态以
+已 `RESOLVED`，但 `draft-0.10` 独立 P3 已 `REJECTED / stop`，不得 `request-p4`；M8 与 M12 均因剩余前置、
+阶段 Decision 或独立批准未闭合而保持 `BLOCKED / NOT_STARTED`。M11 于 2026-09-23 获批 `ADMITTED / IN_PROGRESS`
+（范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1）。最终状态以
 [`docs/PLAN.md`](../PLAN.md) 为准。
 
 | 文件 | 类型 | 状态 |
@@ -72,7 +73,7 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | `m8-metadata-discovery-governance.md` | M8 Metadata Discovery 治理规范 | 通用 intent 仍为 `METADATA_DISCOVERY_INTENT_OWNER_SELECTION_REQUIRED`；pypdf==6.0.0 selected-scope 尚处 implementation hardening，验证完成后最多 `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW`；无独立通过、Owner Gate readiness 或 M8 执行授权 |
 | `m9-goal-driven-planning-plan.md` | 阶段执行计划 | M9 目标驱动计划、mastery 与偏差；`ADMITTED / COMPLETE`（2026-09-22 收口，范围 `m9-plan-lifecycle-v1`，plan_revision v1.5，完成批准见 §4.5）；生成/采纳/进度/偏差重规划已实现，mastery 写入仍 `excluded`；步骤 3 的三个只读投影（mastery、授权 Source 摘要、先修关系 topic graph）均已实现并接入 Planner；v1.5 解冻 `M9-EVALUATION` 的延迟/成本维度（**范围仅限 M9 外部 AI 路径**，CI 臂冻结预算执行、真实 provider 读数 opt-in 非门禁且本次未运行），并因此触发 §4 撤销过渡（见 §4.3）；已于 2026-09-22 完成收口（完成批准见 §4.5） |
 | `m10-autonomous-runner-plan.md` | 阶段执行计划 | M10 自主 Runner、写副作用、长任务恢复、manifest 与只读 stdio MCP；**`ADMITTED / COMPLETE`**（2026-09-22 获批开工，2026-09-23 在原 `m10-autonomous-runner-v1` 范围内取得独立完成批准）；十一项 Decision 全部 `RESOLVED`，三项前置均 `SATISFIED`，已知限制随收口接受而未解除 |
-| `m11-data-scaling-plan.md` | 阶段准入准备计划 | 10K 高质量真实 approved chunks；`BLOCKED / NOT_STARTED` |
+| `m11-data-scaling-plan.md` | 阶段执行计划 | 10K 高质量真实 approved chunks；`ADMITTED / IN_PROGRESS`（2026-09-23 准入并授权开工，范围 `m11-data-scaling-v1`，plan_revision v1.1）；十项 Decision 已 `RESOLVED`，A1/A2/A3 已纳入实施范围 |
 | `m12-cloud-deployment-plan.md` | 阶段准入准备计划 | 可选云端单用户部署，本地离线仍默认；`BLOCKED / NOT_STARTED` |
 
 ## 辅助与历史治理记录
@@ -82,6 +83,9 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | [`references/agent-alignment-analysis.md`](references/agent-alignment-analysis.md) | Agent 招聘对齐事实调查 | 辅助决策；最终依据是 PLAN.md |
 | [`references/stage-advancement-analysis.md`](references/stage-advancement-analysis.md) | M6–M10 推进分析 | 辅助决策；最终依据是 PLAN.md |
 | [`references/recruitment-driven-feasibility.md`](references/recruitment-driven-feasibility.md) | 招聘驱动可行性分析 | 辅助决策；结论已反映在 PLAN.md 的 M6a/M6b 拆分中 |
+| [`references/m11-decision-closure-v1.md`](references/m11-decision-closure-v1.md) | M11 准入前 Decision 闭合记录 | 历史记录；当前状态以 PLAN.md 与正式门禁为准 |
+| [`references/m11-baseline-3k-freeze-v1.md`](references/m11-baseline-3k-freeze-v1.md) | M11 Baseline/3K 冻结物 | 历史冻结输入；不构成正式 Gate 运行或发布授权 |
+| [`references/m11-test-plan-v1.md`](references/m11-test-plan-v1.md) | M11 准入前测试方案 | 历史方案；v1.1 后已创建 `tests/M11/` |
 | [`references/m8-m12-scope-decision-v1.md`](references/m8-m12-scope-decision-v1.md) | M8–M12 规模化范围决策 | `APPROVED / SCOPE_FROZEN`；不等于阶段 admission |
 | [`references/m8-decision-closure-v1.md`](references/m8-decision-closure-v1.md) | M8 八项 Decision 批准记录 | `APPROVED / EIGHT_DECISIONS_RESOLVED`；不选择后端或授权实现 |
 | [`references/m8-active-execution-protocol-draft-0.10.md`](references/m8-active-execution-protocol-draft-0.10.md) | M8 active execution protocol `draft-0.10` | 曾到达 `BINDING_FROZEN`；独立 P3 文本审计 `REJECTED / stop`；不得 `request-p4`，从未执行 |

@@ -45,7 +45,8 @@ tools/
 ├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   ├── requirements.txt   # crawler 独立依赖
 │   └── fetcher/cleaner/converter/dedup/pipeline
-└── evaluations/           # 课程评测集
+└── evaluations/           # 课程评测集与 M11 冻结 workload
+    ├── m11-3k-independent-v1.json # M11 3K 独立 workload；非正式 Gate 运行证据
     ├── os.json            # 操作系统 38 题（默认）
     ├── ds.json            # 数据结构 28 题（默认）
     ├── co.json            # 计算机组成原理 24 题（默认）
@@ -123,6 +124,7 @@ python tools/run_evaluation.py --smoke
 | [ds.json](evaluations/ds.json) | 数据结构 | 28 | ✅ 已建 |
 | [co.json](evaluations/co.json) | 计算机组成原理 | 24 | ✅ 默认套件 |
 | [network.json](evaluations/network.json) | 计算机网络 | 30 | 🧩 独立扩展；仅通过 `--test-set` 显式运行 |
+| [m11-3k-independent-v1.json](evaluations/m11-3k-independent-v1.json) | M11 3K 独立 workload | 90 | 🔒 冻结输入；非正式 Gate 结果或运行授权 |
 
 默认套件合计 **90 题**。2026-08-24 当前 checkout 离线 BM25 Recall@3：OS 0.987、DS 0.929、
 CO 1.000，加权 0.972；2026-08-18 的 1.000/0.929/1.000、加权 0.978 作为历史 M5a 基线保留，

@@ -388,26 +388,64 @@
     {
       "stage": "M11",
       "plan": "docs/plans/m11-data-scaling-plan.md",
-      "admission_status": "BLOCKED",
-      "delivery_status": "NOT_STARTED",
+      "admission_status": "ADMITTED",
+      "delivery_status": "IN_PROGRESS",
       "prerequisites": [
-        {"id": "M11-M8-EXIT", "status": "OPEN", "evidence": []},
-        {"id": "M11-M9-EXIT", "status": "OPEN", "evidence": []},
-        {"id": "M11-M10-EXIT", "status": "OPEN", "evidence": []}
+        {"id": "M11-M8-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m11-data-scaling-plan.md", "docs/plans/m8-specialized-storage-plan.md"]},
+        {"id": "M11-M9-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m9-goal-driven-planning-plan.md"]},
+        {"id": "M11-M10-EXIT", "status": "SATISFIED", "evidence": ["docs/PLAN.md", "docs/plans/m10-autonomous-runner-plan.md", "docs/plans/references/m10-completion-evidence-v1.md"]}
       ],
       "mandatory_decisions": [
-        {"id": "M11-SCALE-GATES", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M11-SOURCE-ALLOWLIST", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M11-PARSER-QUALITY", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M11-CHUNK-POLICY", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M11-LICENSE-PROVENANCE", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M11-QUALITY-EVALUATION", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M11-RETRIEVAL-EVALUATION", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M11-PUBLICATION", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M11-INCREMENTAL-SYNC", "status": "OPEN", "value": null, "evidence": []},
-        {"id": "M11-PRIVACY-RETENTION", "status": "OPEN", "value": null, "evidence": []}
+        {"id": "M11-SCALE-GATES", "status": "RESOLVED", "value": "BASELINE_DEFAULT_PACK_ONLY__3K_FIRST_REAL_GATE__10K_EXIT__30K_100K_OUT_OF_SCOPE__LIMITS_MUST_BE_RAISED_AFTER_ADMISSION_NOT_BEFORE", "evidence": ["docs/plans/references/m11-decision-closure-v1.md"]},
+        {"id": "M11-SOURCE-ALLOWLIST", "status": "RESOLVED", "value": "P0_PROJECT_PACK_AND_LICENSE_CLEAR_OPEN_COURSES_ONLY_AT_3K__NETWORK_AND_STACKEXCHANGE_NOT_IN_FIRST_GATE__DOMAIN_QUOTAS_FROZEN_PER_GATE", "evidence": ["docs/plans/references/m11-decision-closure-v1.md"]},
+        {"id": "M11-PARSER-QUALITY", "status": "RESOLVED", "value": "MARKDOWN_IS_3K_PRODUCTION_TEXT__M7_FIVE_FORMAT_FAIL_CLOSED__NO_SILENT_DROP__TIMEOUT_TIGHTEN_ONLY__TXT_UNAVAILABLE_ON_313_IS_CONTRACT", "evidence": ["docs/plans/references/m11-decision-closure-v1.md"]},
+        {"id": "M11-CHUNK-POLICY", "status": "RESOLVED", "value": "DEFAULT_PACK_MARKDOWN_H2_V1__USER_SOURCE_M7_NORMALIZED_UNITS__NO_OVERLAP_INFLATION__IDENTITY_FROM_DOCUMENT_KEY_SCHEMA", "evidence": ["docs/plans/references/m11-decision-closure-v1.md"]},
+        {"id": "M11-LICENSE-PROVENANCE", "status": "RESOLVED", "value": "EVERY_APPROVED_DOCUMENT_HAS_CANONICAL_URL_OR_PROJECT_AUTHORED__LICENSE_APPROVED__DIGEST_REVISION_CAPTURE_TIME__UNRESOLVED_STAYS_CANDIDATE", "evidence": ["docs/plans/references/m11-decision-closure-v1.md"]},
+        {"id": "M11-QUALITY-EVALUATION", "status": "RESOLVED", "value": "REAL_CORPUS_ONLY__LICENSE_URL_DIGEST_COMPLETE__NO_SILENT_PARSE_DROP__NO_EXACT_DUPES__NO_PRIVATE_CORPUS__DOMAIN_QUOTAS_PRE_FROZEN", "evidence": ["docs/plans/references/m11-decision-closure-v1.md"]},
+        {"id": "M11-RETRIEVAL-EVALUATION", "status": "RESOLVED", "value": "DEFAULT_90_QUESTION_BASELINE_PROTECTED__3K_10K_USE_SEPARATE_REAL_QUERY_GOLD__SYNTHETIC_100K_NOT_QUALITY_PASS__PLANNER_INPUT_STAYS_BOUNDED", "evidence": ["docs/plans/references/m11-decision-closure-v1.md"]},
+        {"id": "M11-PUBLICATION", "status": "RESOLVED", "value": "CANDIDATE_THEN_APPROVED_THEN_GENERATION_GATE__READER_REVALIDATES__ATOMIC_POINTER__NO_HALF_PUBLISHED__NO_GATE_WITHOUT_APPROVAL", "evidence": ["docs/plans/references/m11-decision-closure-v1.md"]},
+        {"id": "M11-INCREMENTAL-SYNC", "status": "RESOLVED", "value": "FINGERPRINT_INCREMENTAL_UPSERT_DELETE_IS_THE_DEFAULT__REPLACE_ALL_FORBIDDEN_AS_ROUTINE__RETRY_IDEMPOTENT__DELETE_PROPAGATES", "evidence": ["docs/plans/references/m11-decision-closure-v1.md"]},
+        {"id": "M11-PRIVACY-RETENTION", "status": "RESOLVED", "value": "NO_PRIVATE_USER_CORPUS_IN_APPROVED_VIEW__RAW_OUTSIDE_GIT__REPORTS_DIGEST_ONLY__DELETE_PROPAGATES__RETENTION_BOUNDED", "evidence": ["docs/plans/references/m11-decision-closure-v1.md"]}
       ],
-      "approval": {"approved_by": null, "approved_at": null, "approval_reference": null, "plan_revision": null, "decision_set_version": null}
+      "approval": {
+        "approved_by": "justtodo123",
+        "approved_at": "2026-09-23",
+        "approval_reference": "User instruction: 「允许进入下一个阶段」——批准 M11 准入（治理范围）。同日后续「允许执行」及「A1 A2 A3 全部批准」分别授权开工并将 A1/A2/A3 纳入 plan_revision v1.1；本字段只记录准入时点，不回写后续授权。",
+        "plan_revision": "v1.1",
+        "decision_set_version": "m11-decision-set-v1"
+      },
+      "approval_scope": {
+        "scope_id": "m11-data-scaling-v1",
+        "included": [
+          "m11.scale-gates",
+          "m11.source-allowlist",
+          "m11.parser-quality",
+          "m11.chunk-policy",
+          "m11.license-provenance",
+          "m11.quality-evaluation",
+          "m11.retrieval-evaluation",
+          "m11.publication",
+          "m11.incremental-sync",
+          "m11.privacy-retention",
+          "m11.create-tests-m11",
+          "m11.raise-chunk-limits",
+          "m11.download-or-ingest-corpus"
+        ],
+        "excluded": [
+          "m8.backend-selection",
+          "m12.cloud-deployment",
+          "network.document-promotion",
+          "m11.stackexchange-dump",
+          "m11.raise-limits-beyond-3k",
+          "m11.linux-kernel-docs-at-3k"
+        ]
+      },
+      "implementation_start": {
+        "status": "AUTHORIZED",
+        "authorized_by": "justtodo123",
+        "authorized_at": "2026-09-23",
+        "authorization_reference": "User instruction: 「允许执行」与「A1 A2 A3 全部批准」——批准 `m11-data-scaling-v1` 范围内的生产开工，并将创建 tests/M11、total chunk hard max 4000、冻结 P0 白名单下载/入库纳入 plan_revision v1.1；不扩大 excluded"
+      }
     },
     {
       "stage": "M12",

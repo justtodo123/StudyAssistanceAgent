@@ -21,6 +21,12 @@
 
 **M4 优化**：无明确课程过滤的学习问题优先返回课程笔记，面试问题优先返回面经条目，README 导航片段不会挤占有效知识条目。
 
+### M11 candidate pipeline
+
+`app/m11_candidate_pipeline.py` 是离线、candidate-only 的编排层：不获取网络数据、不写 Source Registry、不切换 generation、不将资产晋升为 approved，也不 publication。公开生产入口仅为 `normalize_bound_candidate()`：MIT OCW、RFC 与 IANA 资产必须匹配冻结 SHA-256 evidence；OpenDSA RST 必须匹配 pinned path manifest 的 Git blob SHA-1，随后才形成 SHA-256 normalized content fingerprint。无 evidence 绑定的 `_normalize_candidate()` 仅为私有 hermetic 测试 helper。
+
+source label 与 logical asset path 在任何 artifact 写入前校验；绝对路径、盘符、控制字符、空段和 `.` / `..` 段均 fail-closed，非法标识在 rejected artifact 中只保留不可逆短哈希。CPython 3.13.3 上 TXT 仍按 M7 精确 parser 合同 fail-closed，M11 不放宽该合同。
+
 ## 目录结构
 
 ```
@@ -51,6 +57,7 @@ platform/
 │   ├── runner_service.py  # M10 可选自主 Runner：默认关闭、kill switch 逐边界生效、写经领域服务（`SA_RUNNER`）
 │   ├── knowledge_pack_manifest.py # M10 canonical knowledge-pack manifest（复用既有 source/generation identity）
 │   ├── mcp_server.py      # M10 显式 opt-in 的只读 stdio JSON-RPC surface；无 HTTP listener
+│   ├── m11_candidate_pipeline.py # M11 离线、manifest-bound candidate-only 规范化编排
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）
 │   ├── source_manifest.py # M7 用户源文件 manifest、格式接纳与 canonical digest
 │   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析（含墙钟上界）
@@ -614,7 +621,7 @@ model 与 retry 次数不可由环境变量覆盖（沿用 Preview 的“应用�
 或不是原集合**置换**的回复都逐字回退确定性计划，**不产生半成品计划**，也不落库。
 
 > 范围：本路径只跑 **1K** 冻结比较，证明**输入有界**（prompt 不随语料规模增长），**不是**容量声明；
-> 10K/100K 属 M8（`BLOCKED`）/ M11（拟议）依赖。
+> 10K/100K 属 M8（`BLOCKED`）/ M11（ADMITTED / IN_PROGRESS）依赖。
 
 ### 预算在本地执行到什么程度（v1.5 冻结口径）
 

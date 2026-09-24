@@ -95,13 +95,12 @@ STAGE_PRODUCTION_SURFACES = {
     },
     "M11": {
         "paths": (
-            "platform/app/corpus_pipeline.py",
-            "platform/app/data_scaling.py",
+            "platform/app/m11_candidate_pipeline.py",
             "tests/M11",
         ),
-        "identifiers": ("SA_DATA_SCALING_ENABLED", "ApprovedCorpusPipeline"),
-        "api_paths": ("/api/v1/corpus-publications",),
-        "requirements": ("scrapy", "trafilatura"),
+        "identifiers": (),
+        "api_paths": (),
+        "requirements": (),
     },
     "M12": {
         "paths": (
@@ -113,6 +112,19 @@ STAGE_PRODUCTION_SURFACES = {
         "api_paths": ("/api/v1/cloud-profile",),
         "requirements": ("boto3", "celery", "psycopg", "redis"),
     },
+}
+
+# Production surfaces deliberately excluded from admitted scopes remain gated even
+# after their owning stage starts. M11 currently authorizes candidate-only
+# normalization, not crawler dependencies, approved-corpus promotion, or publication.
+ALWAYS_GATED_PRODUCTION_SURFACES = {
+    "paths": (
+        "platform/app/corpus_pipeline.py",
+        "platform/app/data_scaling.py",
+    ),
+    "identifiers": ("SA_DATA_SCALING_ENABLED", "ApprovedCorpusPipeline"),
+    "api_paths": ("/api/v1/corpus-publications",),
+    "requirements": ("scrapy", "trafilatura"),
 }
 
 # HTTP surfaces that remain future until a later increment maps them.
@@ -339,6 +351,11 @@ class TestBlockedStageProductionTree:
         gated_identifiers: set[str] = set()
         gated_api_paths: set[str] = set(UNRELEASED_API_PATHS)
         gated_requirements: set[str] = set()
+
+        gated_paths.update(ALWAYS_GATED_PRODUCTION_SURFACES["paths"])
+        gated_identifiers.update(ALWAYS_GATED_PRODUCTION_SURFACES["identifiers"])
+        gated_api_paths.update(ALWAYS_GATED_PRODUCTION_SURFACES["api_paths"])
+        gated_requirements.update(ALWAYS_GATED_PRODUCTION_SURFACES["requirements"])
 
         for stage_name, surfaces in STAGE_PRODUCTION_SURFACES.items():
             gated_paths.update(surfaces["paths"])

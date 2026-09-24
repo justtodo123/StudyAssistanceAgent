@@ -172,6 +172,18 @@ tests/
 │   ├── test_mcp_conformance.py     # stdio JSON-RPC、只读 allowlist、认证/预算/错误码、无 listener/backend
 │   └── test_authority_boundary.py  # 动态枚举：领域写者恰好唯一、runner 不 import 领域仓储、检测器正反对照
 │
+├── M11/                    # M11 真实数据规模化离线门禁与 P0 数据治理
+│   ├── README.md           # 范围、排除项与运行命令
+│   ├── conftest.py         # 独立临时数据树 fixture
+│   ├── test_scale_gate.py  # document/chunk/source 计量与隐私形状
+│   ├── test_scale_limits.py # 默认值与 4000 hard cap
+│   ├── test_3k_protocol.py # 3K 阈值、授权与 workload 闭合边界
+│   ├── test_p0_inventory.py # P0 白名单、digest evidence 与审核状态
+│   ├── test_identity_and_publication.py # 既有 logical ID 与 GenerationGate
+│   ├── test_candidate_pipeline.py # 白名单、digest evidence 接线、parser fail-closed、candidate-only normalize
+│   ├── test_privacy_boundary.py # 分层目录与 Git 边界
+│   └── test_online_boundary.py  # 显式在线下载边界（默认跳过）
+│
 ├── regression/             # 跨阶段回归套件
 │   ├── conftest.py         # 回归专用 fixtures（离线 BM25-only，恢复 vector 全局状态）
 │   ├── test_api_contract.py      # API 契约稳定性

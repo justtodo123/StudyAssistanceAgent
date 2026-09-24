@@ -1,0 +1,129 @@
+schema: sa.m11.p0-inventory.v1
+status: REVIEW_REQUIRED
+review_note: Official URLs and provisional license bases recorded; IANA Protocol Registry CC0 scope is now identified, but no external source is approved until asset-level license/revision/robots review is complete.
+created_at: "2026-09-23"
+network_execution_authorized: false
+candidate_pipeline_authorized: true
+candidate_pipeline_approval:
+  approved_by: justtodo123
+  approved_at: "2026-09-24"
+  approval_reference: "User instruction: 批准以下范围进入 candidate pipeline"
+  scope: listed candidate manifest assets only; approved view and publication remain unauthorized
+publication_authorized: false
+sources:
+  - source_id: knowledge-pack
+    layer: teaching
+    project_authored: true
+    license_status: approved
+    revision: repository-content-digest
+    official_url: null
+    max_chunk_share: 0.30
+    download_mode: local-existing
+  - source_id: project-authored-evals
+    layer: evaluation
+    project_authored: true
+    license_status: approved
+    revision: repository-content-digest
+    official_url: null
+    max_chunk_share: 0.15
+    download_mode: local-existing
+  - source_id: mit-ocw-6-004-2017
+    layer: teaching
+    project_authored: false
+    license_status: review_required
+    revision: metadata-c13ae1c81931
+    official_url: https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/
+    metadata_digest: c13ae1c8193177bc5953f53d34aaef2f3a6e6b1cc511e277b6c2542716205653
+    license_url: https://ocw.mit.edu/pages/privacy-and-terms-of-use/
+    license_basis: CC-BY-NC-SA-4.0 for eligible MIT OCW material; per-asset third-party/all-rights-reserved review required
+    license_scope_url: https://ocw.mit.edu/pages/privacy-and-terms-of-use/
+    allowed_asset_policy: MIT-hosted course PDFs and static resources only after asset attribution/license check; exclude video, podcast, external-host and all-rights-reserved assets
+    candidate_asset_categories: [problem-sets, problem-set-solutions, worksheets]
+    candidate_asset_policy: only the listed MIT-hosted PDF categories after per-asset attribution/license check
+    candidate_manifest: data/manifests/sources/m11-p0-candidate-assets-v1.json
+    metadata_receipt: artifacts/m11-controlled-metadata-acquisition-v1.json
+    portable_digest_evidence: data/manifests/m11-p0-digest-evidence-v1.json
+    candidate_asset_review_required: true
+    metadata_receipts:
+      - artifacts/m11-ocw-body-digests-b1-v1.json
+      - artifacts/m11-ocw-body-digests-b2-v1.json
+      - artifacts/m11-ocw-body-digests-b3-v1.json
+      - artifacts/m11-ocw-body-digests-b4-v1.json
+    max_chunk_share: 0.20
+    download_mode: official-course-asset
+  - source_id: opendsa-main
+    layer: teaching
+    project_authored: false
+    license_status: review_required
+    revision: 4c183682bbd84b951f2324a36399a3a077250bb9
+    official_url: https://github.com/OpenDSA/OpenDSA
+    revision_source: https://github.com/OpenDSA/OpenDSA.git@refs/heads/master
+    license_url: https://opendsa.cs.vt.edu/home/license
+    license_basis: MIT; copyright and permission notice must accompany substantial copies
+    allowed_asset_policy: inspect the pinned tree for third-party directories/licenses before selecting content; do not treat repository-wide MIT notice as coverage of third-party assets
+    candidate_asset_policy: RST/en teaching content only after per-path license/notice scan; exclude third_party, khan-exercises, bundled libraries, generated assets and non-content runtime files
+    candidate_manifest: data/manifests/sources/m11-p0-candidate-assets-v1.json
+    path_manifest: data/manifests/sources/m11-opendsa-rst-paths-v1.json
+    metadata_receipt: artifacts/m11-controlled-metadata-acquisition-v1.json
+    portable_digest_evidence: data/manifests/m11-p0-digest-evidence-v1.json
+    candidate_asset_review_required: true
+    max_chunk_share: 0.25
+    download_mode: pinned-git-commit
+  - source_id: rfc-editor-index
+    layer: authoritative
+    project_authored: false
+    license_status: review_required
+    revision: metadata-401e94f50c15
+    official_url: https://www.rfc-editor.org/
+    metadata_url: https://www.rfc-editor.org/rfc-index.xml
+    metadata_digest: 401e94f50c15f60d89b09e95ce3dd02212cb9650165c05ca0fc83436bffd7742
+    license_url: https://trustee.ietf.org/documents/trust-legal-provisions/
+    license_basis: IETF Trust TLP 5; RFCs may be copied/distributed but must not be modified outside the IETF Standards Process; preserve applicable legends, notices, copyright and disclaimers
+    license_scope_url: https://www.rfc-editor.org/series/rfc-use/
+    approved_asset_policy: explicit RFC allowlist only; linked RFCs are excluded from IANA registry license scope
+    candidate_asset_policy: RFC 9110, RFC 9293 and RFC 1034 only as initial candidates; verify current status, document notices, obsoletes/updates and IPR before approval
+    candidate_manifest: data/manifests/sources/m11-p0-candidate-assets-v1.json
+    metadata_receipt: artifacts/m11-controlled-metadata-acquisition-v1.json
+    portable_digest_evidence: data/manifests/m11-p0-digest-evidence-v1.json
+    metadata_receipts:
+      - artifacts/m11-rfc-body-digests-v1.json
+    approved_assets: []
+    max_chunk_share: 0.20
+    download_mode: approved-rfc-list-only
+  - source_id: iana-registries
+    layer: authoritative
+    project_authored: false
+    license_status: review_required
+    revision: metadata-f55d630627dc
+    official_url: https://www.iana.org/protocols
+    metadata_digest: f55d630627dccda77c03afd519a16c54d38b94d00b4070be89e4618f78e01f09
+    license_url: https://www.iana.org/help/licensing-terms
+    license_basis: CC0-1.0 public-domain dedication for Protocol Registry data directly linked from iana.org/protocols or ietf.org/assignments; excludes linked RFCs and other material
+    license_scope_url: https://www.iana.org/help/licensing-terms
+    approved_asset_policy: explicit directly-linked protocol registry allowlist only; no linked RFC or unrelated site content
+    candidate_assets:
+      - https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.csv
+      - https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xml
+      - https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
+    candidate_manifest: data/manifests/sources/m11-p0-candidate-assets-v1.json
+    metadata_receipt: artifacts/m11-controlled-metadata-acquisition-v1.json
+    portable_digest_evidence: data/manifests/m11-p0-digest-evidence-v1.json
+    metadata_receipts:
+      - artifacts/m11-iana-body-digests-v1.json
+    approved_assets: []
+    max_chunk_share: 0.10
+    download_mode: approved-registry-assets-only
+excluded_sources:
+  - network-candidates
+  - stackexchange-dump
+  - linux-kernel-docs
+  - m8-backend-assets
+  - m12-cloud-assets
+constraints:
+  authoritative_combined_max_share: 0.25
+  teaching_min_share: 0.50
+  evaluation_max_share: 0.15
+  non_allowlisted_chunk_count: 0
+  raw_in_git: false
+  real_download_requires_confirmation: true
+  publication_requires_confirmation: true

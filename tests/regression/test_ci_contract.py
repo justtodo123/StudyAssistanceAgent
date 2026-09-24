@@ -35,8 +35,9 @@ class TestOfflineCiContract:
             command.startswith("python -m pytest tests/M0_M2")
             and "tests/M6a" in command
             and "tests/M6b" in command
+            and "tests/M11" in command
             and "tests/regression" in command
-            and '-m "not slow and not m6b_benchmark and not m9_benchmark"' in command
+            and '-m "not slow and not online and not m6b_benchmark and not m9_benchmark"' in command
             for command in commands
         )
         assert (

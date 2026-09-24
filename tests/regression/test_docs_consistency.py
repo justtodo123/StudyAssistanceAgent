@@ -97,7 +97,7 @@ class TestProjectStatusConsistency:
         assert "M6a-P0 crawler 已收口" in root
         assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in plan
         assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in root
-        assert "M8 与 M11–M12" in root
+        assert "M8 与 M12" in root
         assert "M6–M12" in plan
         for text in (root, plan):
             assert "BLOCKED / NOT_STARTED" in text
@@ -107,7 +107,7 @@ class TestProjectStatusConsistency:
         assert "独立人工完成批准" in root
         assert "M8–M10 的事实型" in root
         assert "M7 退出前置已满足" in root
-        assert "M8 与 M11–M12 仍为 `BLOCKED / NOT_STARTED`" in root
+        assert "M8 与 M12 仍为 `BLOCKED / NOT_STARTED`" in root
         assert "M9 八项 Decision 已 `RESOLVED`" in root
         # 2026-09-23：M10 在原范围内取得独立完成批准。本断言随事实移动。
         assert "M10 十一项 Decision 已全部 `RESOLVED`" in root
@@ -673,20 +673,46 @@ class TestStageAdmissionConsistency:
             "M12-ROLLOUT-ROLLBACK",
         }
 
-        for stage_name in ("M11", "M12"):
-            stage = stages[stage_name]
-            assert stage["admission_status"] == "BLOCKED"
-            assert stage["delivery_status"] == "NOT_STARTED"
-            assert stage.get("implementation_start") is None
-            assert stage.get("completion_approval") is None
-            assert all(value is None for value in stage["approval"].values())
-            for item in stage["prerequisites"]:
-                assert item["status"] == "OPEN"
-                assert item.get("evidence", []) == []
-            for decision in stage["mandatory_decisions"]:
-                assert decision["status"] == "OPEN"
-                assert decision["value"] is None
-                assert decision.get("evidence", []) == []
+        m11 = stages["M11"]
+        assert m11["admission_status"] == "ADMITTED"
+        assert m11["delivery_status"] == "IN_PROGRESS"
+        assert m11.get("completion_approval") is None
+        assert all(value for value in m11["approval"].values())
+        assert m11["approval"]["approved_by"] == "justtodo123"
+        assert m11["approval"]["approval_reference"].startswith("User instruction:")
+        assert m11["approval"]["plan_revision"] == "v1.1"
+        assert m11["implementation_start"]["status"] == "AUTHORIZED"
+        assert m11["approval_scope"]["scope_id"] == "m11-data-scaling-v1"
+        assert m11["approval_scope"]["included"]
+        assert m11["approval_scope"]["excluded"]
+        assert len(m11["approval_scope"]["included"]) == 13
+        assert set(m11["approval_scope"]["included"]).isdisjoint(
+            m11["approval_scope"]["excluded"]
+        )
+        assert {item["status"] for item in m11["prerequisites"]} == {"SATISFIED"}
+        assert all(item.get("evidence") for item in m11["prerequisites"])
+        assert {decision["status"] for decision in m11["mandatory_decisions"]} == {
+            "RESOLVED"
+        }
+        assert all(
+            decision["value"] not in (None, "", "TBD")
+            and decision.get("evidence")
+            for decision in m11["mandatory_decisions"]
+        )
+
+        m12 = stages["M12"]
+        assert m12["admission_status"] == "BLOCKED"
+        assert m12["delivery_status"] == "NOT_STARTED"
+        assert m12.get("implementation_start") is None
+        assert m12.get("completion_approval") is None
+        assert all(value is None for value in m12["approval"].values())
+        for item in m12["prerequisites"]:
+            assert item["status"] == "OPEN"
+            assert item.get("evidence", []) == []
+        for decision in m12["mandatory_decisions"]:
+            assert decision["status"] == "OPEN"
+            assert decision["value"] is None
+            assert decision.get("evidence", []) == []
 
         m8_plan = _read(repo_root, "docs/plans/m8-specialized-storage-plan.md")
         assert "active\nexecution protocol" in m8_plan
@@ -958,7 +984,8 @@ class TestStageAdmissionConsistency:
                         pairs_checked += 1
 
         # 非空性：两条规则都被跳过时，「没有矛盾」会平凡成立。
-        assert ranges_checked > 0
+        # 当前导航使用显式状态对而非数字区间时，状态对计数即可证明扫描生效。
+        assert ranges_checked + pairs_checked > 0
         assert pairs_checked > 0
 
     def test_prd_defers_to_plan_registry_and_stage_gates(self, repo_root):
