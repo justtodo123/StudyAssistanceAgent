@@ -49,13 +49,29 @@ def test_candidate_pipeline_normalizes_without_approval_or_publication(m11_data_
     assert "\\" not in result.candidate_path
     assert not list(m11_data_tree["approved"].iterdir())
     assert not list(m11_data_tree["snapshots"].iterdir())
-    payload = (m11_data_tree["candidates"] / "mit-ocw-6-004-2017-example.md.json").read_text(encoding="utf-8")
-    assert '"ingest_status": "candidate"' in payload
-    assert '"approved": false' in payload
-    assert '"published": false' in payload
-    chunks = json.loads(payload)["chunks"]
+    payload_text = (
+        m11_data_tree["candidates"] / "mit-ocw-6-004-2017-example.md.json"
+    ).read_text(encoding="utf-8")
+    assert '"ingest_status": "candidate"' in payload_text
+    assert '"approved": false' in payload_text
+    assert '"published": false' in payload_text
+    payload = json.loads(payload_text)
+    document = payload["document"]
+    assert document["document_id"] == hashlib.sha256(
+        f"{document['source_id']}\0{document['logical_uri']}".encode("utf-8")
+    ).hexdigest()[:32]
+    chunks = payload["chunks"]
     assert chunks
     assert {item["chunk_schema"] for item in chunks} == {CHUNK_SCHEMA_VERSION}
+    assert all(
+        item["chunk_id"] == hashlib.sha256(
+            (
+                f"{document['document_id']}\0{item['chunk_key']}"
+                f"\0{item['chunk_schema']}"
+            ).encode("utf-8")
+        ).hexdigest()[:32]
+        for item in chunks
+    )
     assert all("content" not in item for item in chunks)
     assert all(item["content_digest"] for item in chunks)
     assert not is_indexable_frontmatter({
@@ -110,6 +126,95 @@ def test_candidate_rejects_mixed_chunk_schemas(m11_data_tree, monkeypatch):
     assert result.status == "REJECTED"
     assert result.reason == "CHUNK_SCHEMA_NOT_ALLOWED"
     assert not list(m11_data_tree["candidates"].iterdir())
+
+
+def test_candidate_rejects_forged_chunk_identity(m11_data_tree, monkeypatch):
+    import app.m11_candidate_pipeline as pipeline
+
+    raw = m11_data_tree["raw"] / "forged.md"
+    digest = _fixture(raw)
+    original_normalize = pipeline.normalize_document
+
+    def forged_normalize(*args, **kwargs):
+        document = original_normalize(*args, **kwargs)
+        chunks = document.chunks()
+        forged = object.__new__(type(chunks[0]))
+        for field in (
+            "source_id", "document_id", "logical_uri", "chunk_key",
+            "content", "title", "unit_kind", "ordinal", "chunk_schema",
+        ):
+            object.__setattr__(forged, field, getattr(chunks[0], field))
+        object.__setattr__(forged, "chunk_id", "0" * 32)
+
+        class ForgedDocument:
+            def __init__(self, wrapped):
+                self._wrapped = wrapped
+
+            def __getattr__(self, name):
+                return getattr(self._wrapped, name)
+
+            def chunks(self):
+                return (forged, *chunks[1:])
+
+        return ForgedDocument(document)
+
+    monkeypatch.setattr(pipeline, "normalize_document", forged_normalize)
+    result = _normalize_candidate(
+        source_label="mit-ocw-6-004-2017",
+        asset_id="forged.md",
+        raw_path=raw,
+        declared_format="md",
+        expected_digest=digest,
+        normalized_root=m11_data_tree["normalized"],
+        candidate_root=m11_data_tree["candidates"],
+        rejected_root=m11_data_tree["rejected"],
+    )
+
+    assert result.status == "REJECTED"
+    assert result.reason == "CHUNK_IDENTITY_MISMATCH"
+    assert not list(m11_data_tree["candidates"].iterdir())
+    assert not list(m11_data_tree["normalized"].iterdir())
+
+
+def test_candidate_rejects_forged_document_identity(m11_data_tree, monkeypatch):
+    import app.m11_candidate_pipeline as pipeline
+
+    raw = m11_data_tree["raw"] / "forged-document.md"
+    digest = _fixture(raw)
+    original_normalize = pipeline.normalize_document
+
+    def forged_normalize(*args, **kwargs):
+        document = original_normalize(*args, **kwargs)
+
+        class ForgedDocument:
+            def __init__(self, wrapped):
+                self._wrapped = wrapped
+                self.document_id = "0" * 32
+
+            def __getattr__(self, name):
+                return getattr(self._wrapped, name)
+
+            def chunks(self):
+                return self._wrapped.chunks()
+
+        return ForgedDocument(document)
+
+    monkeypatch.setattr(pipeline, "normalize_document", forged_normalize)
+    result = _normalize_candidate(
+        source_label="mit-ocw-6-004-2017",
+        asset_id="forged-document.md",
+        raw_path=raw,
+        declared_format="md",
+        expected_digest=digest,
+        normalized_root=m11_data_tree["normalized"],
+        candidate_root=m11_data_tree["candidates"],
+        rejected_root=m11_data_tree["rejected"],
+    )
+
+    assert result.status == "REJECTED"
+    assert result.reason == "CHUNK_IDENTITY_MISMATCH"
+    assert not list(m11_data_tree["candidates"].iterdir())
+    assert not list(m11_data_tree["normalized"].iterdir())
 
 
 def test_non_allowlisted_source_is_rejected_without_partial_candidate(m11_data_tree):

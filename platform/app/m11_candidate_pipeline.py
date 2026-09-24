@@ -280,6 +280,7 @@ def _safe_reason(exc: Exception) -> str:
             "SOURCE_PARSER_UNAVAILABLE",
             "EMPTY_NORMALIZED_DOCUMENT",
             "CHUNK_SCHEMA_NOT_ALLOWED",
+            "CHUNK_IDENTITY_MISMATCH",
             "DECLARED_FORMAT_UNSUPPORTED",
             "DIGEST_EVIDENCE_ASSET_NOT_FOUND",
             "DIGEST_EVIDENCE_SHA256_INVALID",
@@ -472,6 +473,28 @@ def _normalize_candidate(
         schemas = {chunk.chunk_schema for chunk in chunks}
         if schemas != _ALLOWED_CHUNK_SCHEMAS:
             raise CandidatePipelineError("CHUNK_SCHEMA_NOT_ALLOWED")
+        expected_document_id = hashlib.sha256(
+            f"{source_id}\0{asset_id}".encode("utf-8")
+        ).hexdigest()[:32]
+        if (
+            document.source_id != source_id
+            or document.logical_uri != asset_id
+            or document.document_id != expected_document_id
+        ):
+            raise CandidatePipelineError("CHUNK_IDENTITY_MISMATCH")
+        for chunk in chunks:
+            expected_chunk_id = hashlib.sha256(
+                f"{document.document_id}\0{chunk.chunk_key}\0{chunk.chunk_schema}".encode(
+                    "utf-8"
+                )
+            ).hexdigest()[:32]
+            if (
+                chunk.source_id != document.source_id
+                or chunk.document_id != document.document_id
+                or chunk.logical_uri != document.logical_uri
+                or chunk.chunk_id != expected_chunk_id
+            ):
+                raise CandidatePipelineError("CHUNK_IDENTITY_MISMATCH")
         result = CandidateResult(
             source_label,
             source_id,
