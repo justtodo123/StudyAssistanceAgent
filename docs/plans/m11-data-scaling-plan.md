@@ -276,6 +276,11 @@ Linux docs 或 SE dump；不发起新的网络获取；不把 10K 限额上调�
 `ACCEPT_FOR_PROMOTION_REVIEW` 记录。已 REJECTED 的两份 MIT OCW PDF 仍须核验，normalization 失败不等于移出名单。
 TXT parser 合同与 3 条 rejected 身份保持不变。`formal_run_authorized` 与 `publication_authorized` 继续为 `false`。
 
+2026-09-26 已对 RFC 3 + IANA 3 写入 `DEFER` 记录，见
+`data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`。原因是 TXT parser fail-closed、无 candidate 文档/chunks、
+无 ACQUIRED receipt；来源级 IETF TLP / CC0 说明不关闭逐 asset 核验。MIT OCW 20 仍未核验。`DEFER` 不计入 Gate 0
+`reviewed` 集合，Formal Gate 0 仍未执行。
+
 ## 9. 撤销与后续边界
 
 来源许可、parser/chunk/embedding profile、质量/检索 workload、控制面权威或删除语义实质变化时，阶段 admission 必须

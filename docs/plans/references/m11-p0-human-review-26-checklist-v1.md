@@ -6,8 +6,10 @@
 
 ## 使用边界
 
-本清单只列出 26 项 digest-captured 资产的人工核验工作单。授权批次不等于完成 review，也不写入任何
-human-review 决策记录。
+本清单只列出 26 项 digest-captured 资产的人工核验工作单。授权批次不等于完成 review。完整 26 项
+决策记录尚未写完；RFC+IANA 6 项 `DEFER` 记录在单独 manifest
+[`data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`](../../../data/manifests/m11-p0-human-review-rfc-iana-6-v1.json)
+中。`DEFER` 不关闭 license、robots、notice/IPR、schema 或内容核验，也不执行 Formal Gate 0。
 
 - `verified` 只表示该批次的 HUMAN_REVIEW authority 已按冻结 digest 身份绑定，不表示许可、robots 或内容已通过。
 - `pending` 表示对应核验字段尚未由 owner 填写。
@@ -30,6 +32,7 @@ human-review 决策记录。
 | approved assets/documents/chunks | 0 / 0 / 0 |
 | Formal Gate 0 | 未授权、未执行 |
 | publication | 未授权 |
+| RFC+IANA 切片 | 6 项已 `DEFER`；MIT OCW 20 仍未核验 |
 
 ## 核验工作单
 
@@ -45,7 +48,8 @@ human-review 决策记录。
 | `rfc-notice-ipr-review` | `pending` | RFC 3 项 notice/IPR review 尚未完成。 |
 | `iana-schema-review` | `pending` | IANA 3 项 schema review 尚未完成。 |
 | `content-quality-review` | `pending` | 26 项内容核验尚未完成。 |
-| `review-records` | `pending` | 尚未写入任何 `sa.m11.human-review.v1` 决策记录。 |
+| `rfc-iana-slice` | `verified` | RFC 3 + IANA 3 已写入 `DEFER` 记录；无 candidate 文档/chunks，无 ACQUIRED receipt。 |
+| `review-records` | `in-progress` | 完整 26 项决策记录尚未写完；RFC+IANA 6 项已 `DEFER`，MIT OCW 20 仍未核验。 |
 | `formal-gate0` | `blocked` | 本批次不授权 Formal Gate 0 执行。 |
 | `candidate-promotion` | `blocked` | 本批次不授权 candidate→approved 晋升。 |
 | `publication` | `blocked` | 本批次不授权 publication。 |
@@ -74,6 +78,10 @@ human-review 决策记录。
   "includes_rejected_ocw_assets": true,
   "opendsa_included": false,
   "review_records_written": false,
+  "rfc_iana_slice_written": true,
+  "rfc_iana_slice_asset_count": 6,
+  "rfc_iana_slice_decision": "DEFER",
+  "rfc_iana_slice_record": "data/manifests/m11-p0-human-review-rfc-iana-6-v1.json",
   "formal_gate0_executed": false,
   "formal_3k_executed": false,
   "candidate_approval_granted": false,
@@ -94,7 +102,8 @@ human-review 决策记录。
     {"id": "rfc-notice-ipr-review", "status": "pending"},
     {"id": "iana-schema-review", "status": "pending"},
     {"id": "content-quality-review", "status": "pending"},
-    {"id": "review-records", "status": "pending"},
+    {"id": "rfc-iana-slice", "status": "verified"},
+    {"id": "review-records", "status": "in-progress"},
     {"id": "formal-gate0", "status": "blocked"},
     {"id": "candidate-promotion", "status": "blocked"},
     {"id": "publication", "status": "blocked"},

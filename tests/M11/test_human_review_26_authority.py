@@ -16,12 +16,22 @@ from app.m11_execution_authority import (
     scope_digest,
     validate_execution_authority,
 )
+from app.m11_review import gate0_status, validate_review_history
 
 pytestmark = pytest.mark.m11
 
 AUTHORITY_PATH = Path("data/manifests/m11-p0-human-review-26-authority-v1.json")
 DIGEST_PATH = Path("data/manifests/m11-p0-digest-evidence-v1.json")
 CHECKLIST_PATH = Path("docs/plans/references/m11-p0-human-review-26-checklist-v1.md")
+REVIEW_SLICE_PATH = Path("data/manifests/m11-p0-human-review-rfc-iana-6-v1.json")
+RFC_IANA_ASSETS = {
+    "rfc-editor-index": ["rfc9110", "rfc9293", "rfc1034"],
+    "iana-registries": [
+        "service-names-port-numbers-csv",
+        "service-names-port-numbers-xml",
+        "service-names-port-numbers-txt",
+    ],
+}
 NOW = datetime(2026, 9, 26, 12, 0, tzinfo=timezone.utc)
 EXPIRES_AT = datetime(2026, 10, 10, tzinfo=timezone.utc)
 REJECTED_OCW = {"digital_answers", "information_worksheet"}
@@ -50,6 +60,10 @@ def _checklist_contract(repo_root: Path) -> dict:
     matches = re.findall(r"```json\s*\n(.*?)\n```", text, flags=re.DOTALL)
     assert len(matches) == 1
     return json.loads(matches[0])
+
+
+def _review_slice(repo_root: Path) -> dict:
+    return json.loads((repo_root / REVIEW_SLICE_PATH).read_text(encoding="utf-8"))
 
 
 def test_human_review_26_authority_binds_digest_identities_only(repo_root):
@@ -130,6 +144,10 @@ def test_human_review_26_checklist_stays_review_required(repo_root):
     assert contract["includes_rejected_ocw_assets"] is True
     assert contract["opendsa_included"] is False
     assert contract["review_records_written"] is False
+    assert contract["rfc_iana_slice_written"] is True
+    assert contract["rfc_iana_slice_asset_count"] == 6
+    assert contract["rfc_iana_slice_decision"] == "DEFER"
+    assert contract["rfc_iana_slice_record"] == str(REVIEW_SLICE_PATH).replace("\\", "/")
     for field in (
         "formal_gate0_executed",
         "formal_3k_executed",
@@ -153,7 +171,8 @@ def test_human_review_26_checklist_stays_review_required(repo_root):
     assert statuses["rfc-notice-ipr-review"] == "pending"
     assert statuses["iana-schema-review"] == "pending"
     assert statuses["content-quality-review"] == "pending"
-    assert statuses["review-records"] == "pending"
+    assert statuses["rfc-iana-slice"] == "verified"
+    assert statuses["review-records"] == "in-progress"
     assert statuses["formal-gate0"] == "blocked"
     assert statuses["candidate-promotion"] == "blocked"
     assert statuses["publication"] == "blocked"
@@ -161,3 +180,87 @@ def test_human_review_26_checklist_stays_review_required(repo_root):
     assert statuses["network-acquisition"] == "blocked"
     text = (repo_root / CHECKLIST_PATH).read_text(encoding="utf-8")
     assert "ACCEPT_FOR_PROMOTION_REVIEW" not in text
+
+
+def test_rfc_iana_slice_is_deferred_and_does_not_pass_gate0(repo_root):
+    payload = _review_slice(repo_root)
+    digest = json.loads((repo_root / DIGEST_PATH).read_text(encoding="utf-8"))
+    sha_by_asset = {
+        (item["source_id"], item["asset_id"]): item["sha256"] for item in digest["assets"]
+    }
+    records = payload["records"]
+    validated = validate_review_history(records)
+
+    assert payload["schema"] == "sa.m11.p0.human-review-slice.v1"
+    assert payload["slice_id"] == "rfc-iana-6-20260926"
+    assert payload["authority_id"] == "m11-human-review-26-20260926"
+    assert payload["authority_record"] == str(AUTHORITY_PATH).replace("\\", "/")
+    assert payload["asset_count"] == 6
+    assert payload["remaining_in_batch"] == 20
+    assert payload["decision"] == "DEFER"
+    assert payload["reviewer_id"] == "justtodo123"
+    assert payload["source_ids"] == ["rfc-editor-index", "iana-registries"]
+    for field in (
+        "formal_gate0_executed",
+        "candidate_approval_granted",
+        "publication_authorized",
+        "network_used",
+        "source_expansion",
+        "lifecycle_mutation",
+        "host_paths_included",
+        "bodies_included",
+    ):
+        assert payload[field] is False
+    assert len(records) == 6
+    assert len(validated) == 6
+
+    expected_pairs = [
+        (source_id, asset_id)
+        for source_id, asset_ids in RFC_IANA_ASSETS.items()
+        for asset_id in asset_ids
+    ]
+    assert [(item.source_id, item.asset_id) for item in validated] == expected_pairs
+    assert {item.decision for item in validated} == {"DEFER"}
+    assert {item.document_id for item in validated} == {None}
+    assert {item.chunk_ids for item in validated} == {()}
+    assert {item.reviewer_id for item in validated} == {"justtodo123"}
+    assert {item.reviewer_role for item in validated} == {"owner"}
+    assert {item.scope_digest for item in validated} == {payload["scope_digest"]}
+    for item in validated:
+        assert item.candidate_digest == sha_by_asset[(item.source_id, item.asset_id)]
+        assert item.signed_at == "2026-09-26T12:00:00Z"
+        assert item.supersedes is None
+        assert item.comment.startswith("DEFER:")
+        assert "ACCEPT_FOR_PROMOTION_REVIEW" not in item.comment
+        assert item.source_id not in {"mit-ocw-6-004-2017", "opendsa-main"}
+
+    authority = load_execution_authority(
+        repo_root / AUTHORITY_PATH,
+        operation=M11Operation.HUMAN_REVIEW,
+        expected_scope_digest=payload["scope_digest"],
+        now=NOW,
+    )
+    batch = {
+        source_id: [item.asset_id for item in validated if item.source_id == source_id]
+        for source_id in payload["source_ids"]
+    }
+    assert_batch_authorized(authority, batch)
+
+    status = gate0_status(
+        required_assets=expected_pairs,
+        reviews=records,
+        acquisition_receipts=[],
+        authority_present=True,
+        scope_digest=payload["scope_digest"],
+    )
+    assert status["status"] == "BLOCKED"
+    assert status["reviewed_asset_count"] == 0
+    assert status["candidate_promotion_authorized"] is False
+    assert status["publication_authorized"] is False
+
+    raw = (repo_root / REVIEW_SLICE_PATH).read_text(encoding="utf-8")
+    assert "ACCEPT_FOR_PROMOTION_REVIEW" not in raw
+    assert '"decision": "APPROVED"' not in raw
+    assert "D:\\" not in raw
+    assert "C:\\" not in raw
+    assert "111_Others" not in raw
