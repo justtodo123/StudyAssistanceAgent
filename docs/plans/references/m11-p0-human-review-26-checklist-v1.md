@@ -11,6 +11,9 @@
 [`data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`](../../../data/manifests/m11-p0-human-review-rfc-iana-6-v1.json)，
 MIT OCW 20 项见
 [`data/manifests/m11-p0-human-review-mit-ocw-20-v1.json`](../../../data/manifests/m11-p0-human-review-mit-ocw-20-v1.json)。
+获取后再核验切片见
+[`data/manifests/m11-p0-human-review-acq-defer-26-v1.json`](../../../data/manifests/m11-p0-human-review-acq-defer-26-v1.json)，
+仍全部为 `DEFER` 并 `supersedes` 历史记录。
 `DEFER` 不关闭 license、robots、notice/IPR、schema 或内容核验，也不执行 Formal Gate 0。
 
 - `verified` 只表示该批次的 HUMAN_REVIEW authority 已按冻结 digest 身份绑定，不表示许可、robots 或内容已通过。
@@ -20,6 +23,8 @@ MIT OCW 20 项见
 - OpenDSA 861 条路径不在本批次。
 - 本清单不读取或保存来源正文、凭据、私密学习状态或宿主机路径。
 - 本清单不执行 Formal Gate 0、不晋升 candidate、不发布、不扩张来源、不发起新的网络获取。
+- 独立 `acquisition` authority 与 ACQUIRED receipts 不改变本 HUMAN_REVIEW 清单的
+  `network_used=false` / `network-acquisition=blocked`。
 
 ## 当前摘要
 
@@ -36,6 +41,7 @@ MIT OCW 20 项见
 | publication | 未授权 |
 | RFC+IANA 切片 | 6 项已 `DEFER` |
 | MIT OCW 切片 | 20 项已 `DEFER`（含两份已 REJECTED 的 PDF） |
+| 获取后再核验切片 | 26 项仍 `DEFER`，supersedes 历史切片 |
 | 26 项决策 | 已写完，全部 `DEFER`；不通过 Formal Gate 0 |
 
 ## 核验工作单
@@ -54,6 +60,7 @@ MIT OCW 20 项见
 | `content-quality-review` | `pending` | 26 项内容核验尚未完成。 |
 | `rfc-iana-slice` | `verified` | RFC 3 + IANA 3 已写入 `DEFER` 记录；无 candidate 文档/chunks，无 ACQUIRED receipt。 |
 | `mit-ocw-slice` | `verified` | MIT OCW 20 已写入 `DEFER` 记录；无 committed candidate 文档/chunks，无 ACQUIRED receipt；两份已 REJECTED 的 PDF 仍在切片内。 |
+| `acq-defer-slice` | `verified` | 26 项获取后再核验仍为 `DEFER` 并 supersedes 历史记录；不关闭 pending 核验，不通过 Formal Gate 0。 |
 | `review-records` | `verified` | 完整 26 项决策记录已写完且全部为 `DEFER`；不关闭 pending 核验字段，不通过 Formal Gate 0。 |
 | `formal-gate0` | `blocked` | 本批次不授权 Formal Gate 0 执行。 |
 | `candidate-promotion` | `blocked` | 本批次不授权 candidate→approved 晋升。 |
@@ -91,6 +98,14 @@ MIT OCW 20 项见
   "mit_ocw_slice_asset_count": 20,
   "mit_ocw_slice_decision": "DEFER",
   "mit_ocw_slice_record": "data/manifests/m11-p0-human-review-mit-ocw-20-v1.json",
+  "acq_defer_slice_written": true,
+  "acq_defer_slice_asset_count": 26,
+  "acq_defer_slice_decision": "DEFER",
+  "acq_defer_slice_record": "data/manifests/m11-p0-human-review-acq-defer-26-v1.json",
+  "acquisition_authority_id": "m11-acquisition-26-20260926",
+  "acquisition_receipts_written": true,
+  "acquisition_receipt_count": 26,
+  "acquisition_receipts_record": "data/manifests/m11-p0-acquisition-26-receipts-v1.json",
   "formal_gate0_executed": false,
   "formal_3k_executed": false,
   "candidate_approval_granted": false,
@@ -113,6 +128,7 @@ MIT OCW 20 项见
     {"id": "content-quality-review", "status": "pending"},
     {"id": "rfc-iana-slice", "status": "verified"},
     {"id": "mit-ocw-slice", "status": "verified"},
+    {"id": "acq-defer-slice", "status": "verified"},
     {"id": "review-records", "status": "verified"},
     {"id": "formal-gate0", "status": "blocked"},
     {"id": "candidate-promotion", "status": "blocked"},

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import replace
 from datetime import datetime, timezone
 
@@ -56,6 +57,34 @@ def test_resolve_frozen_rfc_asset(repo_root):
     asset = resolve_frozen_asset(repo_root, "rfc-editor-index", "rfc9110")
     assert asset.canonical_url == "https://www.rfc-editor.org/rfc/rfc9110.txt"
     assert asset.sha256 == "21c1cdce6ab0e5509b04d84a28000836c7a087cf786efe6f04877ebfff47232a"
+
+
+def test_resolve_frozen_iana_registry_formats(repo_root):
+    expected = {
+        "service-names-port-numbers-csv": (
+            "https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.csv",
+            "34328ed0940d889207de6da29bf0e6e1438d604483c8e1ffb03dceab8f7ec26f",
+        ),
+        "service-names-port-numbers-xml": (
+            "https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xml",
+            "30a69353af6e017ffd9e141d079f90a7b7117f113f122d2d89ee20ffb587da19",
+        ),
+        "service-names-port-numbers-txt": (
+            "https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt",
+            "6aa4def90086ae3dd71ee8f72e2bddb57857828718d3155b42c107138a3c1d29",
+        ),
+    }
+    for asset_id, (url, sha256) in expected.items():
+        asset = resolve_frozen_asset(repo_root, "iana-registries", asset_id)
+        assert asset.canonical_url == url
+        assert asset.sha256 == sha256
+        assert asset.revision == sha256
+        assert asset.source_blob_sha1 is None
+
+
+def test_resolve_rejects_iana_html_page(repo_root):
+    with pytest.raises(AcquisitionError, match="ACQUISITION_ASSET_NOT_ALLOWLISTED"):
+        resolve_frozen_asset(repo_root, "iana-registries", "service-names-port-numbers")
 
 
 def test_resolve_rejects_unallowlisted_asset(repo_root):
@@ -382,3 +411,31 @@ def test_acquire_authorized_batch_refusal_receipts_are_idempotent(repo_root, tmp
     )
     assert first == second
     assert not (tmp_path / "raw" / "rfc-editor-index" / "rfc9110.raw").exists()
+
+
+def test_committed_26_receipts_validate_without_network(repo_root):
+    authority_payload = __import__("json").loads(
+        (repo_root / "data/manifests/m11-p0-acquisition-26-authority-v1.json")
+        .read_text(encoding="utf-8")
+    )
+    authority = validate_execution_authority(
+        authority_payload,
+        operation="acquisition",
+        expected_scope_digest=authority_payload["scope_digest"],
+        now=datetime(2026, 9, 26, 14, tzinfo=timezone.utc),
+    )
+    assets = resolve_authorized_assets(repo_root, authority)
+    wrapper = __import__("json").loads(
+        (repo_root / "data/manifests/m11-p0-acquisition-26-receipts-v1.json")
+        .read_text(encoding="utf-8")
+    )
+    receipts = [validate_receipt(payload) for payload in wrapper["receipts"]]
+    assert wrapper["asset_count"] == 26
+    assert wrapper["network_used"] is True
+    assert wrapper["bodies_included"] is False
+    assert {receipt.status for receipt in receipts} == {ACQUIRED}
+    assert validate_receipt_batch(receipts, assets, authority=authority) == tuple(
+        sorted(receipts, key=lambda item: (item.source_id, item.asset_id))
+    )
+    for receipt in receipts:
+        validate_receipt_for_asset(receipt, assets[(receipt.source_id, receipt.asset_id)])

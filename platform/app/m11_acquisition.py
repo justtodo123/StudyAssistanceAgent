@@ -167,12 +167,18 @@ def resolve_frozen_asset(repo_root: Path, source_id: str, asset_id: str) -> Froz
         if not isinstance(record, Mapping):
             continue
         candidate_id = record.get("asset_id")
+        url = record.get("url") or record.get("canonical_url")
         if candidate_id is None and "rfc" in record:
             candidate_id = f"rfc{record['rfc']}"
+        if candidate_id is None and isinstance(record.get("name"), str):
+            for ext in ("csv", "xml", "txt"):
+                if asset_id == f"{record['name']}-{ext}" and isinstance(record.get(ext), str):
+                    candidate_id = asset_id
+                    url = record[ext]
+                    break
         if candidate_id is None and "url" in record:
             candidate_id = str(record["url"]).rsplit("/", 1)[-1].rsplit(".", 1)[0]
         if candidate_id == asset_id:
-            url = record.get("url") or record.get("canonical_url")
             if not isinstance(url, str):
                 _fail("ACQUISITION_MANIFEST_INVALID")
             digest_manifest = _load_json(repo_root / "data/manifests/m11-p0-digest-evidence-v1.json")
@@ -180,7 +186,11 @@ def resolve_frozen_asset(repo_root: Path, source_id: str, asset_id: str) -> Froz
             if not isinstance(raw_evidence, list):
                 _fail("ACQUISITION_MANIFEST_INVALID")
             for evidence in raw_evidence:
-                if isinstance(evidence, Mapping) and evidence.get("source_id") == source_id and evidence.get("asset_id") == asset_id:
+                if (
+                    isinstance(evidence, Mapping)
+                    and evidence.get("source_id") == source_id
+                    and evidence.get("asset_id") == asset_id
+                ):
                     return _asset_from_digest(evidence)
             _fail("ACQUISITION_EVIDENCE_MISSING")
     _fail("ACQUISITION_ASSET_NOT_ALLOWLISTED")

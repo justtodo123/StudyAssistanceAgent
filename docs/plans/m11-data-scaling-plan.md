@@ -286,6 +286,32 @@ receipt、临时正文已删除；来源级 MIT-hosted PDF 说明不关闭逐 as
 REJECTED 的 PDF（`digital_answers`、`information_worksheet`）仍在切片内。至此 26 项决策均已写入且全部为
 `DEFER`。`DEFER` 不计入 Gate 0 `reviewed` 集合，Formal Gate 0 仍未执行。
 
+### 8.6 26 资产获取与再核验（2026-09-26）
+
+owner 明确指令「继续下一步，补全文档然后核验」。该指令确认冻结 26 项的真实获取与再核验，
+不授权 Formal Gate 0、candidate 晋升、publication、OpenDSA 扩张、10K 提额或 M8。
+
+HUMAN_REVIEW authority 不能驱动获取（`AUTHORITY_OPERATION_MISMATCH`）。因此另签发
+`data/manifests/m11-p0-acquisition-26-authority-v1.json`：`operation=acquisition`，
+`authority_id=m11-acquisition-26-20260926`，同一冻结 scope digest，同一 26 项，
+`metadata_only=false`，`publication_authorized=false`，`issued_at=2026-09-26T14:00:00Z`，
+`expires_at=2026-10-10T00:00:00Z` 不含该时刻。
+
+可提交 receipts 见 `data/manifests/m11-p0-acquisition-26-receipts-v1.json`（26/26 `ACQUIRED`，
+`network_used=true`，`bodies_included=false`，`host_paths_included=false`）。正文留在 gitignored
+raw 层，不入库。IANA allowlist 解析补上 `{name}-{csv|xml|txt}` 匹配，仍必须命中 digest evidence。
+MIT OCW 20 项经模块 bounded HTTPS transport 获取并校验 SHA-256。RFC 3 与 IANA 3 在本机 urllib
+SSL 握手超时，改由 curl 取得字节后经注入 transport 在 `acquire_asset` 内完成 digest 校验；
+不把 digest 证据直接写成 ACQUIRED receipt。
+
+再核验仍使用 HUMAN_REVIEW authority，切片见
+`data/manifests/m11-p0-human-review-acq-defer-26-v1.json`。26 项均 `DEFER` 并 `supersedes`
+既有 RFC+IANA / MIT OCW 记录：已有 ACQUIRED receipt，但仍无 committed candidate 文档/chunks
+（TXT parser fail-closed；PDF 正文不入库），license / robots / notice / schema / 内容核验仍 pending。
+该切片 `network_used=false`。HUMAN_REVIEW 工作单继续把 `network-acquisition` 记为 blocked。
+`DEFER` 不计入 Gate 0 `reviewed` 集合；即使传入 26 份 ACQUIRED receipts，`reviewed_asset_count`
+仍为 0，Formal Gate 0 仍未执行。
+
 ## 9. 撤销与后续边界
 
 来源许可、parser/chunk/embedding profile、质量/检索 workload、控制面权威或删除语义实质变化时，阶段 admission 必须

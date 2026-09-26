@@ -27,6 +27,7 @@ data/snapshots/      # 发布快照清单，不重复保存原始文件
 ```
 
 这些目录只可由获批的 M11 可重放流水线创建和填充；真实下载前必须先完成 manifest、许可/revision 核验并取得单次确认。
+2026-09-26 owner 已确认冻结 26 项真实获取；可提交 receipts 位于 `data/manifests/`，正文仍不入库，不构成 publication。
 
 ## 3. 隐私与路径
 

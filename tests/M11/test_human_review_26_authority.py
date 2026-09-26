@@ -7,6 +7,11 @@ from pathlib import Path
 
 import pytest
 
+from app.m11_acquisition import (
+    resolve_authorized_assets,
+    validate_receipt,
+    validate_receipt_batch,
+)
 from app.m11_execution_authority import (
     AUTHORITY_SCHEMA,
     ExecutionAuthorityError,
@@ -25,6 +30,9 @@ DIGEST_PATH = Path("data/manifests/m11-p0-digest-evidence-v1.json")
 CHECKLIST_PATH = Path("docs/plans/references/m11-p0-human-review-26-checklist-v1.md")
 REVIEW_SLICE_PATH = Path("data/manifests/m11-p0-human-review-rfc-iana-6-v1.json")
 OCW_SLICE_PATH = Path("data/manifests/m11-p0-human-review-mit-ocw-20-v1.json")
+ACQ_AUTHORITY_PATH = Path("data/manifests/m11-p0-acquisition-26-authority-v1.json")
+ACQ_RECEIPTS_PATH = Path("data/manifests/m11-p0-acquisition-26-receipts-v1.json")
+ACQ_DEFER_SLICE_PATH = Path("data/manifests/m11-p0-human-review-acq-defer-26-v1.json")
 RFC_IANA_ASSETS = {
     "rfc-editor-index": ["rfc9110", "rfc9293", "rfc1034"],
     "iana-registries": [
@@ -401,6 +409,59 @@ def test_mit_ocw_slice_is_deferred_and_does_not_pass_gate0(repo_root):
     raw = (repo_root / OCW_SLICE_PATH).read_text(encoding="utf-8")
     assert "ACCEPT_FOR_PROMOTION_REVIEW" not in raw
     assert '"decision": "APPROVED"' not in raw
-    assert "D:\\" not in raw
-    assert "C:\\" not in raw
+    assert "D:\\\\" not in raw
+    assert "C:\\\\" not in raw
     assert "111_Others" not in raw
+
+
+def test_acquired_receipts_and_superseding_re_review_stay_deferred(repo_root):
+    acq_payload = json.loads((repo_root / ACQ_AUTHORITY_PATH).read_text(encoding="utf-8"))
+    acquisition = load_execution_authority(
+        repo_root / ACQ_AUTHORITY_PATH,
+        operation=M11Operation.ACQUISITION,
+        expected_scope_digest=acq_payload["scope_digest"],
+        now=datetime(2026, 9, 26, 14, tzinfo=timezone.utc),
+    )
+    assets = resolve_authorized_assets(repo_root, acquisition)
+    wrapper = json.loads((repo_root / ACQ_RECEIPTS_PATH).read_text(encoding="utf-8"))
+    receipts = [validate_receipt(item) for item in wrapper["receipts"]]
+    assert len(validate_receipt_batch(receipts, assets, authority=acquisition)) == 26
+
+    payload = json.loads((repo_root / ACQ_DEFER_SLICE_PATH).read_text(encoding="utf-8"))
+    records = payload["records"]
+    validated = validate_review_history(records)
+    assert payload["decision"] == "DEFER"
+    assert payload["network_used"] is False
+    assert len(validated) == 26
+    assert {item.decision for item in validated} == {"DEFER"}
+    historical = (
+        _review_slice(repo_root)["records"] + _ocw_review_slice(repo_root)["records"]
+    )
+    historical_by_asset = {
+        (item["source_id"], item["asset_id"]): item["review_id"]
+        for item in historical
+    }
+    assert all(
+        item.supersedes == historical_by_asset[(item.source_id, item.asset_id)]
+        for item in validated
+    )
+    assert all(item.document_id is None and item.chunk_ids == () for item in validated)
+
+    validate_review_history(historical + records)
+    required = [
+        (source_id, asset_id)
+        for source_id, asset_ids in {**RFC_IANA_ASSETS, **OCW_ASSETS}.items()
+        for asset_id in asset_ids
+    ]
+    status = gate0_status(
+        required_assets=required,
+        reviews=historical + records,
+        acquisition_receipts=[item.as_dict() for item in receipts],
+        authority_present=True,
+        scope_digest=payload["scope_digest"],
+    )
+    assert status["status"] == "BLOCKED"
+    assert status["reviewed_asset_count"] == 0
+    assert status["receipt_asset_count"] == 26
+    assert status["candidate_promotion_authorized"] is False
+    assert status["publication_authorized"] is False

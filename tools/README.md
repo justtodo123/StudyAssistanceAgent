@@ -59,13 +59,20 @@ tools/
 
 `platform/app/m11_execution_authority.py` 是纯校验模块，不是授权签发器。它要求 authority record 明确绑定冻结 P0
 scope digest、operation、有效期和精确 source/asset 子集，并强制 publication 仍为 false；metadata-only 清单、
-M8/M12、排除源及 batch 越界均拒绝。当前唯一可提交的可执行记录是
+M8/M12、排除源及 batch 越界均拒绝。当前可提交的可执行记录有两份，均绑定同一 26 项 digest 身份、不含 OpenDSA，且都不授予 Gate 0 /
+晋升 / publication：
 [`data/manifests/m11-p0-human-review-26-authority-v1.json`](../data/manifests/m11-p0-human-review-26-authority-v1.json)
-（`human_review`，26 项 digest 身份，不含 OpenDSA；不授予 Gate 0 / 晋升 / publication）。
-RFC+IANA 6 项 `DEFER` 记录见
-[`data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`](../data/manifests/m11-p0-human-review-rfc-iana-6-v1.json)；
-MIT OCW 20 项 `DEFER` 记录见
-[`data/manifests/m11-p0-human-review-mit-ocw-20-v1.json`](../data/manifests/m11-p0-human-review-mit-ocw-20-v1.json)。
+（`human_review`）与
+[`data/manifests/m11-p0-acquisition-26-authority-v1.json`](../data/manifests/m11-p0-acquisition-26-authority-v1.json)
+（`acquisition`）。26 项 `ACQUIRED` receipts 见
+[`data/manifests/m11-p0-acquisition-26-receipts-v1.json`](../data/manifests/m11-p0-acquisition-26-receipts-v1.json)。
+RFC+IANA 6 项与 MIT OCW 20 项历史 `DEFER` 记录见
+[`data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`](../data/manifests/m11-p0-human-review-rfc-iana-6-v1.json)
+与
+[`data/manifests/m11-p0-human-review-mit-ocw-20-v1.json`](../data/manifests/m11-p0-human-review-mit-ocw-20-v1.json)；
+获取后再核验切片见
+[`data/manifests/m11-p0-human-review-acq-defer-26-v1.json`](../data/manifests/m11-p0-human-review-acq-defer-26-v1.json)
+（仍全部 `DEFER`）。
 `platform/app/m11_acquisition.py` 提供冻结资产解析、注入式或 bounded HTTPS transport、digest 校验、外部 raw
 目录的原子写入、receipt root 路径约束、receipt loader/目录加载器及幂等、重复/冲突安全的隐私安全 receipt 持久化；默认入口仍不自动执行网络下载，且不调用 candidate normalization、
 promotion 或 publication。`platform/app/m11_gate0.py`

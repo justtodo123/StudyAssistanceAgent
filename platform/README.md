@@ -36,9 +36,13 @@ source label 与 logical asset path 在任何 artifact 写入前校验；绝对�
 `app/m11_execution_authority.py` 提供 M11 执行 authority 的纯校验契约：authority 必须绑定调用方提供的冻结 P0
 scope digest、明确 operation、有效期、精确 source/asset 子集，并固定 `publication_authorized=false`。metadata-only
 清单不能升级为执行授权，M8/M12、排除源、scope 扩展和 batch 越界均 fail-closed；该模块不下载、不修改
-lifecycle，也不发布。当前唯一可提交的可执行 authority 是 `data/manifests/m11-p0-human-review-26-authority-v1.json`
-（26 项 digest 身份的 `human_review`；不含 OpenDSA，不授予 Gate 0 / 晋升 / publication）。
-RFC+IANA 6 项 `DEFER` 记录见 `data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`；MIT OCW 20 项 `DEFER` 记录见 `data/manifests/m11-p0-human-review-mit-ocw-20-v1.json`。
+lifecycle，也不发布。当前可提交的可执行 authority 有两份，均绑定同一 26 项 digest 身份、不含 OpenDSA，且都不授予
+Gate 0 / 晋升 / publication：`data/manifests/m11-p0-human-review-26-authority-v1.json`（`human_review`）与
+`data/manifests/m11-p0-acquisition-26-authority-v1.json`（`acquisition`）。26 项 `ACQUIRED` receipts 见
+`data/manifests/m11-p0-acquisition-26-receipts-v1.json`。RFC+IANA 6 项与 MIT OCW 20 项历史 `DEFER` 记录见
+`data/manifests/m11-p0-human-review-rfc-iana-6-v1.json` 与
+`data/manifests/m11-p0-human-review-mit-ocw-20-v1.json`；获取后再核验切片见
+`data/manifests/m11-p0-human-review-acq-defer-26-v1.json`（仍全部 `DEFER`）。
 
 `app/m11_acquisition.py` 提供冻结资产解析、注入式或 bounded HTTPS transport、digest/Git blob 校验、外部 raw
 目录原子写入、receipt root 路径约束、receipt loader/目录加载器、冻结 asset linkage 和批次级 authority/scope 完整性校验，以及幂等、重复/冲突安全的隐私安全 receipt 持久化；默认入口不自动联网，不调用 candidate normalization、promotion 或 publication。`app/m11_review.py`
