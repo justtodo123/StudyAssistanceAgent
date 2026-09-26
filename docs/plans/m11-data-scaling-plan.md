@@ -262,6 +262,20 @@ parser 按精确 `cpython-textio==3.11.9` 合同为 `SOURCE_PARSER_UNAVAILABLE`�
 OpenDSA RST 在本机 fail-closed；Markdown 仍可规范化。M11 **不**为凑数放宽该合同。PDF 分支跟随 `pypdf` 是否按
 M7 pin 可用。candidate 结果只返回相对 artifact 名，不含宿主绝对路径。
 
+### 8.5 26 资产人工核验批次授权（2026-09-26）
+
+owner 明确指令「授权「26 资产人工核验批次」」，范围仅限 `data/manifests/m11-p0-digest-evidence-v1.json` 已捕获 SHA-256 的 26 项：MIT OCW 20 个 PDF（含当前 `REJECTED` 的 `digital_answers` 与 `information_worksheet`）、RFC 9110/9293/1034、IANA Service Name and Transport Protocol Port Number Registry 的 CSV/XML/TXT。OpenDSA 861 条路径不在本批次。
+
+该授权只允许对上述 26 项做 license / revision / robots，以及 RFC notice/IPR 与 IANA schema 的人工核验准备。可执行记录见
+`data/manifests/m11-p0-human-review-26-authority-v1.json`（`operation=human_review`，`metadata_only=false`，
+`publication_authorized=false`，`issued_at=2026-09-26T00:00:00Z`，`expires_at=2026-10-10T00:00:00Z` 不含该时刻）。
+非权威工作单见 [`references/m11-p0-human-review-26-checklist-v1.md`](references/m11-p0-human-review-26-checklist-v1.md)。
+
+**本授权不做什么**：不执行 Formal Gate 0；不把任何 asset 晋升为 approved；不授权 publication；不扩张 OpenDSA、Network、
+Linux docs 或 SE dump；不发起新的网络获取；不把 10K 限额上调；不打开 M8；不把授权批次写成 26 条
+`ACCEPT_FOR_PROMOTION_REVIEW` 记录。已 REJECTED 的两份 MIT OCW PDF 仍须核验，normalization 失败不等于移出名单。
+TXT parser 合同与 3 条 rejected 身份保持不变。`formal_run_authorized` 与 `publication_authorized` 继续为 `false`。
+
 ## 9. 撤销与后续边界
 
 来源许可、parser/chunk/embedding profile、质量/检索 workload、控制面权威或删除语义实质变化时，阶段 admission 必须
