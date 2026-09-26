@@ -6,6 +6,7 @@
 - 每个外部 asset 必须同时通过 license、revision、robots 和（适用时）notice/IPR/schema 审查；任一字段为 `pending` 或 digest 缺失时，保持 `approved: false`。
 - `data/manifests/m11-p0-digest-evidence-v1.json` 是可提交的 26 项 digest 汇总；`artifacts/` 下的逐批 receipt 仅为本机审计留痕。
 - `sources/m11-opendsa-rst-paths-v1.json` 固定 pinned commit 的 861 个 RST 路径与 blob SHA；已获 candidate pipeline 授权，但不是内容批准。candidate asset 清单中的 `rst_en_blobs: 865` 只是更宽的树统计；多出的 4 个 blob 不在显式 path manifest 中，不能执行、计数或静默扩入 candidate scope。
+- `m11-p0-asset-review-v1.json` 是 `REVIEW_REQUIRED` 的 metadata-only review manifest，覆盖 887 条冻结 P0 记录；approved asset/document/chunk 均为 0，formal run 与 publication 均未授权。
 - `platform/app/m11_candidate_pipeline.py` 是编排层：复用 M7 parser/normalized identity，只物化 candidate/rejected 证据，禁止 publication 和 approved 晋升。公开入口仅有 `normalize_bound_candidate()`：MIT OCW、RFC 与 IANA 必须命中 `m11-p0-digest-evidence-v1.json` 的 SHA-256，OpenDSA 必须命中 pinned path manifest 并按 Git blob SHA-1 验证本地 bytes；无 evidence 绑定的规范化仅保留为私有 hermetic helper。当前 CPython 3.13.3 上 TXT parser 按 M7 合同不可用，RFC/IANA/OpenDSA 文本路径 fail-closed；Markdown 仍可规范化。
 - 2026-09-24 受控 metadata 获取先执行 HEAD，26/26 asset 与 3/3 robots 入口可达；receipt 位于 gitignored 的 `artifacts/m11-controlled-metadata-acquisition-v1.json`。
 - 随后按小批次临时获取 bytes 并立即删除：MIT OCW 20/20 PDF、RFC 3/3 TXT、IANA 3/3 格式均取得 SHA-256；IANA 三格式 schema 探针通过，PDF 魔数通过。receipts 均位于 gitignored 的 `artifacts/`。这只关闭 revision/digest 证据，不自动关闭 license、robots、notice/IPR 或 publication。

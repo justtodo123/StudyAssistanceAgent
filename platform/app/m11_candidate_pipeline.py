@@ -212,19 +212,10 @@ def _git_blob_sha1(data: bytes) -> str:
 
 
 def _candidate_source_id(source_label: str) -> str:
-    """Derive a stable runtime-shaped ID without registering a source.
+    """Derive a stable runtime-shaped ID without registering a source."""
+    from .m11_candidate_artifact_contract import candidate_source_id_for_label
 
-    The value is UUIDv7-shaped so M7 identity validators accept it, but every
-    bit after the version/variant nibble is taken from a digest of the inventory
-    label. Reruns of the same candidate therefore keep the same source_id
-    without writing anything to the Source Registry.
-    """
-    digest = hashlib.sha256(source_label.encode("utf-8")).digest()
-    timestamp_ms = int.from_bytes(digest[:6], "big") & ((1 << 48) - 1)
-    random_a = int.from_bytes(digest[6:8], "big") & 0x0FFF
-    random_b = int.from_bytes(digest[8:16], "big") & ((1 << 62) - 1)
-    value = (timestamp_ms << 80) | (0x7 << 76) | (random_a << 64) | (0b10 << 62) | random_b
-    return validate_user_source_id(f"user-{uuid.UUID(int=value)}")
+    return validate_user_source_id(candidate_source_id_for_label(source_label))
 
 
 def _safe_identifier(value: str, *, error_code: str, allow_path: bool = True) -> str:
@@ -293,6 +284,8 @@ def _safe_reason(exc: Exception) -> str:
             "SOURCE_NOT_ALLOWLISTED",
             "SOURCE_LABEL_INVALID",
             "ASSET_ID_INVALID",
+            "PROVENANCE_IDENTITY_INCOMPLETE",
+            "CANDIDATE_LICENSE_STATUS_INVALID",
         }
         code = str(exc)
         return code if code in known else "CANDIDATE_PIPELINE_ERROR"
@@ -306,6 +299,24 @@ def _write_rejection(root: Path, result: CandidateResult) -> str:
     return path.as_posix()
 
 
+def _validate_candidate_provenance(
+    *,
+    canonical_url: str | None,
+    revision: str | None,
+    blob_sha1: str | None,
+) -> None:
+    """Require identity evidence before a bound asset can become a candidate."""
+    if not isinstance(canonical_url, str) or not canonical_url.startswith("https://"):
+        raise CandidatePipelineError("PROVENANCE_IDENTITY_INCOMPLETE")
+    if not isinstance(revision, str) or not revision:
+        raise CandidatePipelineError("PROVENANCE_IDENTITY_INCOMPLETE")
+    if blob_sha1 is not None and (
+        len(blob_sha1) != 40
+        or any(char not in "0123456789abcdef" for char in blob_sha1)
+    ):
+        raise CandidatePipelineError("PROVENANCE_IDENTITY_INCOMPLETE")
+
+
 def _write_candidate(
     root: Path,
     document: NormalizedDocument,
@@ -313,7 +324,17 @@ def _write_candidate(
     *,
     canonical_url: str | None,
     license_status: str = "review_required",
+    revision: str | None = None,
+    blob_sha1: str | None = None,
 ) -> str:
+    if revision is not None or blob_sha1 is not None:
+        _validate_candidate_provenance(
+            canonical_url=canonical_url,
+            revision=revision,
+            blob_sha1=blob_sha1,
+        )
+    if license_status != "review_required":
+        raise CandidatePipelineError("CANDIDATE_LICENSE_STATUS_INVALID")
     root.mkdir(parents=True, exist_ok=True)
     path = root / _artifact_name(result.source_label, result.asset_id)
     chunks = list(document.chunks())
@@ -324,6 +345,8 @@ def _write_candidate(
         "asset_id": result.asset_id,
         "canonical_url": canonical_url,
         "content_digest": result.content_fingerprint,
+        "revision": revision,
+        "source_blob_sha1": blob_sha1,
         "document": {
             "source_id": document.source_id,
             "document_id": document.document_id,
@@ -369,6 +392,8 @@ def _normalize_candidate(
     rejected_root: str | Path,
     canonical_url: str | None = None,
     license_status: str = "review_required",
+    revision: str | None = None,
+    blob_sha1: str | None = None,
     raw_data: bytes | None = None,
 ) -> CandidateResult:
     """Hermetic normalization helper; public callers must use frozen evidence."""
@@ -454,7 +479,12 @@ def _normalize_candidate(
             raise CandidatePipelineError("CONTENT_DIGEST_MISMATCH")
         if not parser_availability(declared_format):
             raise CandidatePipelineError("SOURCE_PARSER_UNAVAILABLE")
-        parsed = parse_document(data, declared_format, filename=path.name)
+        parser_filename = (
+            path.name
+            if path.suffix.lower() == f".{declared_format}"
+            else f"{path.stem}.{declared_format}"
+        )
+        parsed = parse_document(data, declared_format, filename=parser_filename)
         document = normalize_document(
             parsed,
             source_id=source_id,
@@ -517,6 +547,8 @@ def _normalize_candidate(
             result,
             canonical_url=canonical_url,
             license_status=license_status,
+            revision=revision,
+            blob_sha1=blob_sha1,
         )
         return CandidateResult(
             source_label,
@@ -643,6 +675,24 @@ def normalize_bound_candidate(
             evidence_url_value = evidence.get("url")
             evidence_url = evidence_url_value if isinstance(evidence_url_value, str) else None
             expected_digest = str(evidence["sha256"])
+        revision = (
+            str(evidence["revision"])
+            if safe_source_label == "opendsa-main"
+            else expected_digest
+        )
+        _validate_candidate_provenance(
+            canonical_url=(
+                f"https://github.com/OpenDSA/OpenDSA@{evidence['revision']}:{safe_asset_id}"
+                if safe_source_label == "opendsa-main"
+                else evidence_url
+            ),
+            revision=revision,
+            blob_sha1=(
+                str(evidence["git_blob_sha1"])
+                if safe_source_label == "opendsa-main"
+                else None
+            ),
+        )
         declared_format = declared_format_for(safe_asset_id, evidence_url)
         return _normalize_candidate(
             source_label=safe_source_label,
@@ -653,7 +703,17 @@ def normalize_bound_candidate(
             normalized_root=normalized_root,
             candidate_root=candidate_root,
             rejected_root=rejected_root,
-            canonical_url=evidence_url,
+            canonical_url=(
+                f"https://github.com/OpenDSA/OpenDSA@{evidence['revision']}:{safe_asset_id}"
+                if safe_source_label == "opendsa-main"
+                else evidence_url
+            ),
+            revision=revision,
+            blob_sha1=(
+                str(evidence["git_blob_sha1"])
+                if safe_source_label == "opendsa-main"
+                else None
+            ),
             raw_data=raw_bytes if safe_source_label == "opendsa-main" else None,
         )
     except (OSError, CandidatePipelineError) as exc:

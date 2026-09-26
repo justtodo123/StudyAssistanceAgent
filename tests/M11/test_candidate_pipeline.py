@@ -575,7 +575,7 @@ def test_bound_candidate_rfc_txt_follows_parser_availability(m11_data_tree, tmp_
     )
     from app.parser_matrix import parser_availability
     if parser_availability("txt"):
-        assert result.status == "CANDIDATE"
+        assert result.status == "CANDIDATE", result.reason
         payload = json.loads((m11_data_tree["candidates"] / "rfc-editor-index-rfc9110.json").read_text(encoding="utf-8"))
         assert payload["canonical_url"] == "https://www.rfc-editor.org/rfc/rfc9110.txt"
         assert payload["content_digest"] == digest
@@ -608,7 +608,7 @@ def test_bound_candidate_iana_csv_follows_parser_availability(m11_data_tree, tmp
     )
     from app.parser_matrix import parser_availability
     if parser_availability("txt"):
-        assert result.status == "CANDIDATE"
+        assert result.status == "CANDIDATE", result.reason
         payload = json.loads(
             (m11_data_tree["candidates"] / "iana-registries-service-names-port-numbers-csv.json").read_text(encoding="utf-8")
         )
@@ -642,7 +642,7 @@ def test_bound_candidate_opendsa_rst_follows_parser_availability(m11_data_tree, 
     )
     from app.parser_matrix import parser_availability
     if parser_availability("txt"):
-        assert result.status == "CANDIDATE"
+        assert result.status == "CANDIDATE", result.reason
         payload = json.loads(
             (m11_data_tree["candidates"] / "opendsa-main-RST__en__List__ListIntro.rst.json").read_text(encoding="utf-8")
         )
@@ -768,7 +768,7 @@ def test_bound_candidate_iana_xml_follows_parser_availability(m11_data_tree, tmp
     )
     from app.parser_matrix import parser_availability
     if parser_availability("txt"):
-        assert result.status == "CANDIDATE"
+        assert result.status == "CANDIDATE", result.reason
         payload = json.loads(
             (m11_data_tree["candidates"] / "iana-registries-service-names-port-numbers-xml.json").read_text(encoding="utf-8")
         )
@@ -779,3 +779,57 @@ def test_bound_candidate_iana_xml_follows_parser_availability(m11_data_tree, tmp
         assert result.status == "REJECTED"
         assert result.reason == "SOURCE_PARSER_UNAVAILABLE"
         assert not list(m11_data_tree["candidates"].iterdir())
+
+
+def test_bound_candidate_requires_provenance_identity(m11_data_tree, tmp_path):
+    raw = m11_data_tree["raw"] / "rfc9110.md"
+    digest = _fixture(raw)
+    evidence = tmp_path / "digest.json"
+    _write_digest_evidence(evidence, "rfc-editor-index", "rfc9110", None, digest)
+
+    result = normalize_bound_candidate(
+        source_label="rfc-editor-index",
+        asset_id="rfc9110",
+        raw_path=raw,
+        normalized_root=m11_data_tree["normalized"],
+        candidate_root=m11_data_tree["candidates"],
+        rejected_root=m11_data_tree["rejected"],
+        digest_evidence_path=evidence,
+    )
+
+    assert result.status == "REJECTED"
+    assert result.reason == "PROVENANCE_IDENTITY_INCOMPLETE"
+    assert not list(m11_data_tree["candidates"].iterdir())
+    payload = json.loads((m11_data_tree["rejected"] / result.rejected_path).read_text(encoding="utf-8"))
+    assert payload["approved"] is False
+    assert payload["published"] is False
+    assert "raw_path" not in payload
+
+
+def test_bound_candidate_opendsa_records_https_revision_locator(m11_data_tree, tmp_path):
+    raw = m11_data_tree["raw"] / "ListIntro.rst"
+    content = b"Lists\n=====\n\nA list stores ordered items.\n"
+    _fixture(raw, content)
+    path_manifest = tmp_path / "opendsa-paths.json"
+    _write_opendsa_path_manifest(path_manifest, "RST/en/List/ListIntro.rst", content)
+
+    result = normalize_bound_candidate(
+        source_label="opendsa-main",
+        asset_id="RST/en/List/ListIntro.rst",
+        raw_path=raw,
+        normalized_root=m11_data_tree["normalized"],
+        candidate_root=m11_data_tree["candidates"],
+        rejected_root=m11_data_tree["rejected"],
+        opendsa_path_manifest_path=path_manifest,
+    )
+
+    from app.parser_matrix import parser_availability
+    if parser_availability("txt"):
+        assert result.status == "CANDIDATE", result.reason
+        payload = json.loads((m11_data_tree["candidates"] / result.candidate_path).read_text(encoding="utf-8"))
+        assert payload["canonical_url"].startswith("https://github.com/OpenDSA/OpenDSA@")
+        assert payload["license_status"] == "review_required"
+        assert payload["approved"] is False
+    else:
+        assert result.status == "REJECTED"
+        assert result.reason == "SOURCE_PARSER_UNAVAILABLE"

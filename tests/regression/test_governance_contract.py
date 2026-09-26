@@ -96,6 +96,12 @@ STAGE_PRODUCTION_SURFACES = {
     "M11": {
         "paths": (
             "platform/app/m11_candidate_pipeline.py",
+            "platform/app/m11_candidate_artifact_contract.py",
+            "platform/app/m11_candidate_artifact_validator.py",
+            "platform/app/m11_execution_authority.py",
+            "platform/app/m11_acquisition.py",
+            "platform/app/m11_review.py",
+            "platform/app/m11_gate0.py",
             "tests/M11",
         ),
         "identifiers": (),

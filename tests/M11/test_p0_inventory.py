@@ -1,7 +1,17 @@
 from __future__ import annotations
 
+import json
 import yaml
 import pytest
+
+from tools.validate_m11_p0_metadata_gate0 import (
+    ChecklistValidationError,
+    validate_checklist,
+)
+from tools.validate_m11_p0_evidence_gaps import (
+    EvidenceGapValidationError,
+    validate_evidence_gaps,
+)
 
 pytestmark = pytest.mark.m11
 
@@ -81,6 +91,145 @@ def test_candidate_asset_manifest_is_metadata_only_and_matches_inventory(repo_ro
     assert registries[0]["robots_review_status"] == "pending"
     assert registries[0]["schema_review_status"] == "pending"
     assert registries[0]["approved"] is False
+
+
+def test_asset_review_manifest_matches_frozen_p0_scope_and_stays_fail_closed(repo_root):
+    review_path = repo_root / "data/manifests/m11-p0-asset-review-v1.json"
+    candidate_path = repo_root / "data/manifests/sources/m11-p0-candidate-assets-v1.json"
+    digest_path = repo_root / "data/manifests/m11-p0-digest-evidence-v1.json"
+    opendsa_path = repo_root / "data/manifests/sources/m11-opendsa-rst-paths-v1.json"
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+    digest = json.loads(digest_path.read_text(encoding="utf-8"))
+    opendsa = json.loads(opendsa_path.read_text(encoding="utf-8"))
+
+    expected = []
+    for source_id, source in candidate["sources"].items():
+        if source_id == "opendsa-main":
+            expected.extend((source_id, item["path"]) for item in opendsa["files"])
+        elif source_id == "mit-ocw-6-004-2017":
+            expected.extend((source_id, item["asset_id"]) for item in source["assets"])
+        elif source_id == "rfc-editor-index":
+            expected.extend((source_id, f"rfc{item['rfc']}") for item in source["candidate_rfcs"])
+        elif source_id == "iana-registries":
+            expected.extend(
+                (source_id, f"service-names-port-numbers-{suffix}")
+                for suffix in ("csv", "xml", "txt")
+            )
+
+    records = review["records"]
+    actual = [(item["source_id"], item["asset_id"]) for item in records]
+    assert len(records) == len(expected) == review["asset_count"] == 887
+    assert len(set(actual)) == len(actual)
+    assert set(actual) == set(expected)
+    assert review["candidate_count"] == 884
+    assert review["rejected_count"] == 3
+    assert review["candidate_count"] + review["rejected_count"] == review["asset_count"]
+    assert review["review_policy"]["approved_assets"] == []
+    assert review["review_policy"]["approved_asset_count"] == 0
+    assert review["review_policy"]["approved_document_count"] == 0
+    assert review["review_policy"]["approved_chunk_count"] == 0
+    assert review["review_policy"]["formal_run_authorized"] is False
+    assert review["review_policy"]["publication_authorized"] is False
+    assert all(item["approved"] is False for item in records)
+    assert all(item["normalization_status"] in {"CANDIDATE", "REJECTED"} for item in records)
+    assert review["host_paths_included"] is False
+    assert review["bodies_included"] is False
+
+    rejected = [item for item in records if item["normalization_status"] == "REJECTED"]
+    candidates = [item for item in records if item["normalization_status"] == "CANDIDATE"]
+    assert len(rejected) == review["rejected_count"]
+    assert len(candidates) == review["candidate_count"]
+    assert {
+        (item["source_id"], item["asset_id"], item["rejection_reason"])
+        for item in rejected
+    } == {
+        (
+            "mit-ocw-6-004-2017",
+            "digital_answers",
+            "SOURCE_PARSE_FAILED",
+        ),
+        (
+            "mit-ocw-6-004-2017",
+            "information_worksheet",
+            "INVALID_CANDIDATE_INPUT",
+        ),
+        (
+            "opendsa-main",
+            "RST/en/Database/ERDTORDDExample.rst",
+            "SOURCE_PARSE_FAILED",
+        ),
+    }
+    assert all(item.get("rejection_reason") in review["rejection_reasons"] for item in rejected)
+    assert all(item["rejection_reason"] for item in rejected)
+    assert all("rejection_reason" not in item for item in candidates)
+
+    body_fields = {"body", "content", "text", "raw_content", "normalized_content"}
+    private_fields = {
+        "credential",
+        "credentials",
+        "password",
+        "token",
+        "learning_state",
+        "private_learning_state",
+        "raw_path",
+        "normalized_path",
+        "candidate_path",
+        "rejected_path",
+    }
+    for item in rejected:
+        assert body_fields.isdisjoint(item)
+        assert private_fields.isdisjoint(item)
+        assert item["source_id"] and item["asset_id"]
+        assert item["approved"] is False
+        assert item["locator"].startswith(("https://", "git://"))
+
+    digest_ids = {item["asset_id"] for item in digest["assets"]}
+    direct_ids = {
+        item["asset_id"]
+        for item in records
+        if item["source_id"] != "opendsa-main"
+    }
+    assert direct_ids == digest_ids
+
+
+
+def _normalization_report_path(repo_root):
+    return repo_root / "data/reports/m11-p0-candidate-normalization-report.json"
+
+
+def _require_normalization_report(repo_root):
+    path = _normalization_report_path(repo_root)
+    if not path.is_file():
+        pytest.skip("gitignored normalization report is absent")
+    return path
+
+
+def test_candidate_report_reconciles_with_review_manifest(repo_root):
+    review_path = repo_root / "data/manifests/m11-p0-asset-review-v1.json"
+    report_path = _require_normalization_report(repo_root)
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+
+    for field in (
+        "asset_count",
+        "candidate_count",
+        "rejected_count",
+        "rejection_reasons",
+        "host_paths_included",
+        "bodies_included",
+    ):
+        assert report[field] == review[field]
+    assert report["status"] == "CANDIDATE_ONLY"
+    assert report["approved_count"] == 0
+    assert report["published_count"] == 0
+    assert report["document_count"] == review["candidate_count"]
+    assert report["approved_asset_count"] == 0
+    assert report["approved_document_count"] == 0
+    assert report["approved_chunk_count"] == 0
+    assert report["publication_authorized"] is False
+    assert review["review_policy"]["formal_run_authorized"] is False
+    assert review["review_policy"]["publication_authorized"] is False
 
 
 def test_portable_digest_evidence_is_complete_but_does_not_approve_assets(repo_root):
@@ -165,3 +314,173 @@ def test_frozen_3k_layer_quotas_are_present(repo_root):
     assert constraints["evaluation_max_share"] == 0.15
     assert constraints["non_allowlisted_chunk_count"] == 0
     assert constraints["real_download_requires_confirmation"] is True
+
+
+
+def _checklist_paths(repo_root):
+    return (
+        repo_root / "docs/plans/references/m11-p0-metadata-only-gate0-checklist-v1.md",
+        repo_root / "data/manifests/m11-p0-asset-review-v1.json",
+        _require_normalization_report(repo_root),
+    )
+
+
+def _checklist_contract(repo_root):
+    checklist_path, _, _ = _checklist_paths(repo_root)
+    text = checklist_path.read_text(encoding="utf-8")
+    start = text.index("```json\n") + len("```json\n")
+    end = text.index("\n```", start)
+    return json.loads(text[start:end])
+
+
+def _write_checklist_contract(repo_root, tmp_path, mutate):
+    checklist_path, review_path, report_path = _checklist_paths(repo_root)
+    contract = _checklist_contract(repo_root)
+    mutate(contract)
+    checklist_copy = tmp_path / "checklist.md"
+    checklist_copy.write_text(
+        "# test checklist\n\n```json\n"
+        + json.dumps(contract, indent=2)
+        + "\n```\n",
+        encoding="utf-8",
+    )
+    return checklist_copy, review_path, report_path
+
+
+def test_metadata_only_gate0_checklist_validates(repo_root):
+    validate_checklist(*_checklist_paths(repo_root))
+
+
+@pytest.mark.parametrize(
+    "mutate, expected",
+    [
+        (lambda contract: contract.pop("counts"), "contract fields differ"),
+        (lambda contract: contract.update({"unexpected": True}), "contract fields differ"),
+        (
+            lambda contract: contract["statuses"][0].update({"status": "approved"}),
+            "unsupported checklist status",
+        ),
+        (
+            lambda contract: contract["counts"].update({"candidate_count": 883}),
+            "frozen count drift",
+        ),
+        (
+            lambda contract: contract.update({"formal_3k_executed": True}),
+            "unsafe true value",
+        ),
+        (
+            lambda contract: contract.update({"candidate_approval_granted": True}),
+            "unsafe true value",
+        ),
+        (
+            lambda contract: contract.update({"publication_authorized": True}),
+            "unsafe true value",
+        ),
+        (
+            lambda contract: contract.update({"source_expansion": True}),
+            "unsafe true value",
+        ),
+        (
+            lambda contract: contract.update({"network_used": True}),
+            "unsafe true value",
+        ),
+        (
+            lambda contract: contract.update({"lifecycle_mutation": True}),
+            "unsafe true value",
+        ),
+        (
+            lambda contract: contract.update({"body": "source body"}),
+            "contract fields differ",
+        ),
+    ],
+)
+def test_metadata_only_gate0_checklist_rejects_unsafe_contract(
+    repo_root, tmp_path, mutate, expected
+):
+    paths = _write_checklist_contract(repo_root, tmp_path, mutate)
+    with pytest.raises(ChecklistValidationError, match=expected):
+        validate_checklist(*paths)
+
+
+def test_metadata_only_gate0_checklist_rejects_privacy_fields_in_status_rows(
+    repo_root, tmp_path
+):
+    def mutate(contract):
+        contract["statuses"][0]["body"] = "source body"
+
+    paths = _write_checklist_contract(repo_root, tmp_path, mutate)
+    with pytest.raises(ChecklistValidationError, match="each checklist status row"):
+        validate_checklist(*paths)
+
+
+def test_metadata_only_gate0_checklist_rejects_manifest_privacy_field(
+    repo_root, tmp_path
+):
+    checklist_path, review_path, report_path = _checklist_paths(repo_root)
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    review["records"][0]["content"] = "source body"
+    review_copy = tmp_path / "review.json"
+    review_copy.write_text(json.dumps(review), encoding="utf-8")
+
+    with pytest.raises(ChecklistValidationError, match="privacy-bearing fields"):
+        validate_checklist(checklist_path, review_copy, report_path)
+
+
+def test_metadata_only_gate0_checklist_rejects_report_count_drift(repo_root, tmp_path):
+    checklist_path, review_path, report_path = _checklist_paths(repo_root)
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["candidate_count"] = 883
+    report_copy = tmp_path / "report.json"
+    report_copy.write_text(json.dumps(report), encoding="utf-8")
+
+    with pytest.raises(ChecklistValidationError, match="report/review mismatch"):
+        validate_checklist(checklist_path, review_path, report_copy)
+
+
+
+def _evidence_gap_paths(repo_root):
+    return (
+        repo_root / "docs/plans/references/m11-p0-evidence-gap-checklist-v1.md",
+        repo_root / "data/manifests/sources/m11-p0-candidate-assets-v1.json",
+        repo_root / "data/manifests/m11-p0-asset-review-v1.json",
+        _require_normalization_report(repo_root),
+    )
+
+
+def _write_evidence_gap_contract(repo_root, tmp_path, mutate):
+    checklist_path, candidate_path, review_path, report_path = _evidence_gap_paths(repo_root)
+    text = checklist_path.read_text(encoding="utf-8")
+    start = text.index("```json\n") + len("```json\n")
+    end = text.index("\n```", start)
+    contract = json.loads(text[start:end])
+    mutate(contract)
+    checklist_copy = tmp_path / "evidence-gaps.md"
+    checklist_copy.write_text(
+        "# test checklist\n\n```json\n"
+        + json.dumps(contract, indent=2)
+        + "\n```\n",
+        encoding="utf-8",
+    )
+    return checklist_copy, candidate_path, review_path, report_path
+
+
+def test_evidence_gap_checklist_validates(repo_root):
+    validate_evidence_gaps(*_evidence_gap_paths(repo_root))
+
+
+@pytest.mark.parametrize(
+    "mutate, expected",
+    [
+        (lambda contract: contract.pop("counts"), "contract fields differ"),
+        (lambda contract: contract["gap_categories"][0].update({"status": "verified"}), "unsupported evidence-gap status"),
+        (lambda contract: contract["counts"].update({"candidate_count": 883}), "frozen count drift"),
+        (lambda contract: contract.update({"candidate_approval_granted": True}), "unsafe true value"),
+        (lambda contract: contract.update({"owner_decisions_filled": True}), "unsafe true value"),
+        (lambda contract: contract["source_gaps"][0]["gaps"].update({"schema": 2}), "source-category gap drift"),
+        (lambda contract: contract["gap_categories"][0].update({"body": "source body"}), "privacy-bearing fields in checklist"),
+    ],
+)
+def test_evidence_gap_checklist_rejects_unsafe_drift(repo_root, tmp_path, mutate, expected):
+    paths = _write_evidence_gap_contract(repo_root, tmp_path, mutate)
+    with pytest.raises(EvidenceGapValidationError, match=expected):
+        validate_evidence_gaps(*paths)

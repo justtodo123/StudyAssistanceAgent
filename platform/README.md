@@ -27,6 +27,29 @@
 
 source label 与 logical asset path 在任何 artifact 写入前校验；绝对路径、盘符、控制字符、空段和 `.` / `..` 段均 fail-closed，非法标识在 rejected artifact 中只保留不可逆短哈希。CPython 3.13.3 上 TXT 仍按 M7 精确 parser 合同 fail-closed，M11 不放宽该合同。
 
+#### Serialized candidate artifact validator
+
+`app/m11_candidate_artifact_validator.py` 提供离线、只读的单 artifact 完整性检查：
+`validate_candidate_artifact()` 检查已有 `sa.m11.candidate.normalized.v1` JSON 的精确字段、metadata、identity linkage、
+ digest syntax/linkage 和 candidate-only lifecycle；`load_and_validate_candidate_artifact()` 只读取调用方指定的 UTF-8 JSON 文件。
+
+`app/m11_execution_authority.py` 提供 M11 执行 authority 的纯校验契约：authority 必须绑定调用方提供的冻结 P0
+scope digest、明确 operation、有效期、精确 source/asset 子集，并固定 `publication_authorized=false`。metadata-only
+清单不能升级为执行授权，M8/M12、排除源、scope 扩展和 batch 越界均 fail-closed；该模块不下载、不修改
+lifecycle，也不发布。
+
+`app/m11_acquisition.py` 提供冻结资产解析、注入式或 bounded HTTPS transport、digest/Git blob 校验、外部 raw
+目录原子写入、receipt root 路径约束、receipt loader/目录加载器、冻结 asset linkage 和批次级 authority/scope 完整性校验，以及幂等、重复/冲突安全的隐私安全 receipt 持久化；默认入口不自动联网，不调用 candidate normalization、promotion 或 publication。`app/m11_review.py`
+提供 append-only 人工 review metadata 校验和 legacy 的只读 Gate 0 coverage projection；`app/m11_gate0.py` 提供
+独立的只读 Formal Gate 0 runner，分别检查 acquisition receipt、candidate validation、人工 review 与八类资产证据；提供冻结 asset metadata 时还执行 receipt 的 exact-batch、authority/scope、canonical URL、revision 与 digest linkage 校验。
+缺失签署、receipt、authority 或任一必要证据时保持 `BLOCKED`，显式证据失败时返回 `FAIL`；两个模块都不会把
+metadata-only checklist 当作正式 Gate 0，也不会授予 promotion/publication。
+
+该 validator 不解析 raw source、不恢复 chunk plaintext、不重新计算 chunk digest preimage，也不访问网络、registry、parser、embedding、
+index 或学习状态。通过校验只表示该 JSON 在结构和内部 linkage 上符合 candidate artifact contract，不表示 license、robots、notice/IPR、
+schema、provenance 或 content-quality review gap 已关闭，更不产生 approval、promotion、publication、Formal Gate 0、正式 3K、
+source expansion 或 network-acquisition authorization。测试使用临时目录，不创建 tracked runtime artifacts。
+
 ## 目录结构
 
 ```
@@ -58,6 +81,12 @@ platform/
 │   ├── knowledge_pack_manifest.py # M10 canonical knowledge-pack manifest（复用既有 source/generation identity）
 │   ├── mcp_server.py      # M10 显式 opt-in 的只读 stdio JSON-RPC surface；无 HTTP listener
 │   ├── m11_candidate_pipeline.py # M11 离线、manifest-bound candidate-only 规范化编排
+│   ├── m11_candidate_artifact_contract.py # serialized candidate artifact 身份常量
+│   ├── m11_candidate_artifact_validator.py # 只读 candidate artifact 字段/linkage 校验
+│   ├── m11_execution_authority.py # M11 执行 authority 纯校验；不签发、不升级 metadata-only
+│   ├── m11_acquisition.py # 冻结 asset 解析、receipt 与外部 raw 原子写入；默认不联网
+│   ├── m11_review.py # 人工 review metadata 与只读 Gate 0 coverage projection
+│   ├── m11_gate0.py # 只读 Formal Gate 0 runner；缺失 BLOCKED，永不授予 promotion/publication
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）
 │   ├── source_manifest.py # M7 用户源文件 manifest、格式接纳与 canonical digest
 │   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析（含墙钟上界）
