@@ -1,0 +1,605 @@
+{
+  "schema": "sa.m11.p0.human-review-slice.v1",
+  "slice_id": "mit-ocw-20-20260926",
+  "authority_id": "m11-human-review-26-20260926",
+  "authority_record": "data/manifests/m11-p0-human-review-26-authority-v1.json",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "source_ids": [
+    "mit-ocw-6-004-2017"
+  ],
+  "asset_count": 20,
+  "remaining_in_batch": 0,
+  "decision": "DEFER",
+  "reviewer_id": "justtodo123",
+  "signed_at": "2026-09-26T12:00:00Z",
+  "formal_gate0_executed": false,
+  "candidate_approval_granted": false,
+  "publication_authorized": false,
+  "network_used": false,
+  "source_expansion": false,
+  "lifecycle_mutation": false,
+  "host_paths_included": false,
+  "bodies_included": false,
+  "records": [
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-beta_answers",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "beta_answers",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "157252328a5b4a04f77b6a78a59d220a9ce795583987ac4e66236f03316ecea1",
+      "receipt_digest": "b3d1e174890211b26d91b1eb6ad467649a65a5fca238e19ae31796b6aafcaae7",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "7b3dacd3b2671eeed0c2d118920cce61c0f5053f321470f4801f125db6b46206",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-caches_answers",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "caches_answers",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "d2f4c92620659948613a848d6e9363df014b86973b9c00d2f83c058cfe762ff7",
+      "receipt_digest": "5a10233f8170bd465f2a775a97fcf3975f10cb6a869157d9b866b7498c08fa28",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "e593ffeb1636d3bcb2ee97c7679fabda5bf5ed79551dd230aa1500c65150047f",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-cmos_answers",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "cmos_answers",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "8e722626e82f7e1f4a3bc79fbbec1a8340e982fd5f6f8b098d13532bdaa9a36f",
+      "receipt_digest": "459c29fe32a13f3198266cd0c996548d298e2c89e93977b45ea0b561573d8f99",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "730947fbb353382942e3f2b584357d32372023e2e0490c55552018d99ff41163",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-combinational_answers",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "combinational_answers",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "a1c6e63e9d32f4b0b9c0d3fa175856c2f8ae5d7d6323bde3a3543edcb4e21326",
+      "receipt_digest": "7b4d7d4ca8a1087ec6676ced66ca2dc1e3660d32391a83e9d1807339ca7a0d62",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "aa1b55238e928cac3bfef8bb9d219c13ec52e205a78b041a04637a1cebbe2e13",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-compilation_answers",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "compilation_answers",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "fbfbaa272b15f7bf3385f7d9184769b110eee0111da78a0539e24a17ea456fad",
+      "receipt_digest": "7369f374bf50808f1ae6e3b8b06054a0e2028e0a5262804c968bd56817e997b4",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "091d91f328d62620db17542b985e1e10c7b2bc19d2bcf443cc994070db9d7114",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-digital_answers",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "digital_answers",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "4952128b9969642958a217aea10c095cd0646e54acbd14e1957e9ccb7969ee58",
+      "receipt_digest": "67b9ac3fee6c8b4419061f31d730e58cf9264a89a3bf3c8f2a39279ef412f2db",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "b6d71dadcefca1546b1009718c8a0faec8ef4baa08df2a9d8b162540561e87b8",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: already REJECTED at normalization (SOURCE_PARSE_FAILED) but remains in the HUMAN_REVIEW batch. No committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only. License, robots, and content-quality remain pending. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-fsm_answers",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "fsm_answers",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "796f0e9dfc9c5dfca280a9824381dea21358670d85f63a59f00a5066cd4c8c02",
+      "receipt_digest": "ae002362dd22a4855237c9c822aa5326c9215df166ad09d669458b58910adbda",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "8ceed1b6569e113aef2480c05771bf3cdc67056956610be3afd293b6b198cf67",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-information_answers",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "information_answers",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "8f20a2162d5d1657cbacf63743ab2258e5ae823fdd6331f9c49b05a21f02105a",
+      "receipt_digest": "353270bb1ab4e99377a43d59bcbad0704773507cab6d3c6e19a606e761255d9c",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "d482ea0dbe623254e2439e6f89ccee38523a577568c800a8aeec47fcc542345a",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-interrupts_answers",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "interrupts_answers",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "01f084b7bc627f2da040414f270de3848ca21ed6716ac728922cf213d2e646f7",
+      "receipt_digest": "03d26e7d47d189b990a50a3482bbf716066aee39a0d2b84834e001c54c4b6c0c",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "35a155055ed820c704413de69d45bf149733c5c5bb1d09919fca0f1c1288fc58",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-isa_answers",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "isa_answers",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "0b5b7632c55badc94c4a7f081b7edb066f0d1323a067f9fcc16d0fdcce4dadf5",
+      "receipt_digest": "b8b044fe60652fba8ac1faa9b0652f3b9f9c87928959d23dae5ba1e9ca4599c8",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "0ac4c26981f44a24c1575c2141264a777dbc8b73895579be542698b617bb7013",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-beta_worksheet",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "beta_worksheet",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "dc4f73a05d9b25ed3db3c2b748602d38f7a69ab762c1782cee7a36536580bb2f",
+      "receipt_digest": "2a836c984cbc8724f7208cc9b225b84b096409bd639e4e32337785b9dee08ad0",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "596a05e1d5ace38f75b1620e051156150abe3cd9ff35b2aa4a3a247c32897117",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-caches_worksheet",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "caches_worksheet",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "ea630f333cab3602d0b6a1d11d30ab8090d34202d88da6d81bc7e2b24d01467f",
+      "receipt_digest": "8b9b89d3b9105e938a2457be5eb962c2924570725f87201284ebcea7b67c2c22",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "b82b68fd7d6581d027201ffdf182a360081badeec5bbff7775e079793efe366f",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-cmos_worksheet",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "cmos_worksheet",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "217f292c6b3a509072b78fe87f4e0136b9ad7e53ecffb92a56303565ca3ae6a6",
+      "receipt_digest": "9780c72ece8359a3698465001dadb608cd00d4202a28d3059a6734262df66ddb",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "67761cae58eabc747336ed9bcecaeee479496802362804366907e9defb131990",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-combinational_worksheet",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "combinational_worksheet",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "3ba8b9188537114d508bd85e2d964578563e240439df11a688ae91e22de5f901",
+      "receipt_digest": "825add81005a2959f14d5c7fe73b78c66e9c9491abe434899b0da4ec052c3e2e",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "4ac25d56fac6a6caeaa8a9ac48302126df4face63bce4500fafaf1855333823a",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-compilation_worksheet",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "compilation_worksheet",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "8838a7f592e645cedfe427dd58eee5578f82b93618581e3fb09b2c73a3d5aa1c",
+      "receipt_digest": "5f02afd2577a18d83f490f201dd8ebef0305b7be8b532a48c444b4235460b988",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "ba76e1c2da0c887de2baaac21f4675db667dd936bf39352e61b6471a0033198f",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-digital_worksheet",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "digital_worksheet",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "6d1821d8cbb6f2556dfe1aa4537f53a06db8e22c96c186d85087bf3048aaf82f",
+      "receipt_digest": "d6a4639e245a4ae6eb0434a89bbf76f11c1db47096f539481c3e73f1d28c5d29",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "2198e1c2cae3ae54adeb8d55ffa9077644841bf2c94cc4408e4942c213905a2d",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-fsm_worksheet",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "fsm_worksheet",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "03ddb555219642e84e760ba4af5f498cb7a8422009dc99e8845700a3910e566b",
+      "receipt_digest": "77fe3d50a33bfcfa8533fa73be4037e0958ea066c5e7b94ca7c41ca2971978aa",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "b004e9398dc7b9d201ddf103a6e7345b97b025a517fe02cd61011d3376bc5330",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-information_worksheet",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "information_worksheet",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "3b6f2746c3c4a9573884f9daf542d2d33779b94d9d6259c40f6ae3bb4cc86764",
+      "receipt_digest": "9b48912aa970e7175aa750b29d59bc9b782667b0b123c4827c42fadfcac03c7c",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "60040d7f608d6a87b282ad27c88e9c0e8404c77cf9afdbe0e205422dac2ac261",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: already REJECTED at normalization (INVALID_CANDIDATE_INPUT) but remains in the HUMAN_REVIEW batch. No committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only. License, robots, and content-quality remain pending. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-interrupts_worksheet",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "interrupts_worksheet",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "15155b1882831b8012a812de26a258a9dd831ac10ba6301b2c4313456520d394",
+      "receipt_digest": "74149d5c1695f93c136bcb3593ccf2ced16e622ef140dd2a1866ba180cfbb126",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "c82c6d80619e26811f5d251b04654181f3a7bf9764cbf4bd1766c004b2fa599f",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-isa_worksheet",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "mit-ocw-6-004-2017",
+      "asset_id": "isa_worksheet",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "96f4647004011b85d000d9f69fa61297b0defc5db8ebb2008a96bece289cadb5",
+      "receipt_digest": "dc02ff05c262c1a18841b162b66429bf51fa7a3558178446df3c8a03ce16ace7",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 20,
+        "stratification": "mit-ocw-pdf-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "mit-ocw-20"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "5a3825063900e4bae2bfabb00b52370e7788d655ab7e1c2a56e8bd909704242e",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no committed candidate document/chunks and no ACQUIRED receipt. Digest SHA-256 is content identity only; temporary body deleted. Source-level MIT-hosted PDF notes do not close per-asset license, robots, or content-quality. Gate 0 remains blocked."
+    }
+  ]
+}

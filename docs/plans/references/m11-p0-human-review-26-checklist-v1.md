@@ -7,9 +7,11 @@
 ## 使用边界
 
 本清单只列出 26 项 digest-captured 资产的人工核验工作单。授权批次不等于完成 review。完整 26 项
-决策记录尚未写完；RFC+IANA 6 项 `DEFER` 记录在单独 manifest
-[`data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`](../../../data/manifests/m11-p0-human-review-rfc-iana-6-v1.json)
-中。`DEFER` 不关闭 license、robots、notice/IPR、schema 或内容核验，也不执行 Formal Gate 0。
+决策记录已写入且全部为 `DEFER`：RFC+IANA 6 项见
+[`data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`](../../../data/manifests/m11-p0-human-review-rfc-iana-6-v1.json)，
+MIT OCW 20 项见
+[`data/manifests/m11-p0-human-review-mit-ocw-20-v1.json`](../../../data/manifests/m11-p0-human-review-mit-ocw-20-v1.json)。
+`DEFER` 不关闭 license、robots、notice/IPR、schema 或内容核验，也不执行 Formal Gate 0。
 
 - `verified` 只表示该批次的 HUMAN_REVIEW authority 已按冻结 digest 身份绑定，不表示许可、robots 或内容已通过。
 - `pending` 表示对应核验字段尚未由 owner 填写。
@@ -32,7 +34,9 @@
 | approved assets/documents/chunks | 0 / 0 / 0 |
 | Formal Gate 0 | 未授权、未执行 |
 | publication | 未授权 |
-| RFC+IANA 切片 | 6 项已 `DEFER`；MIT OCW 20 仍未核验 |
+| RFC+IANA 切片 | 6 项已 `DEFER` |
+| MIT OCW 切片 | 20 项已 `DEFER`（含两份已 REJECTED 的 PDF） |
+| 26 项决策 | 已写完，全部 `DEFER`；不通过 Formal Gate 0 |
 
 ## 核验工作单
 
@@ -49,7 +53,8 @@
 | `iana-schema-review` | `pending` | IANA 3 项 schema review 尚未完成。 |
 | `content-quality-review` | `pending` | 26 项内容核验尚未完成。 |
 | `rfc-iana-slice` | `verified` | RFC 3 + IANA 3 已写入 `DEFER` 记录；无 candidate 文档/chunks，无 ACQUIRED receipt。 |
-| `review-records` | `in-progress` | 完整 26 项决策记录尚未写完；RFC+IANA 6 项已 `DEFER`，MIT OCW 20 仍未核验。 |
+| `mit-ocw-slice` | `verified` | MIT OCW 20 已写入 `DEFER` 记录；无 committed candidate 文档/chunks，无 ACQUIRED receipt；两份已 REJECTED 的 PDF 仍在切片内。 |
+| `review-records` | `verified` | 完整 26 项决策记录已写完且全部为 `DEFER`；不关闭 pending 核验字段，不通过 Formal Gate 0。 |
 | `formal-gate0` | `blocked` | 本批次不授权 Formal Gate 0 执行。 |
 | `candidate-promotion` | `blocked` | 本批次不授权 candidate→approved 晋升。 |
 | `publication` | `blocked` | 本批次不授权 publication。 |
@@ -77,11 +82,15 @@
   ],
   "includes_rejected_ocw_assets": true,
   "opendsa_included": false,
-  "review_records_written": false,
+  "review_records_written": true,
   "rfc_iana_slice_written": true,
   "rfc_iana_slice_asset_count": 6,
   "rfc_iana_slice_decision": "DEFER",
   "rfc_iana_slice_record": "data/manifests/m11-p0-human-review-rfc-iana-6-v1.json",
+  "mit_ocw_slice_written": true,
+  "mit_ocw_slice_asset_count": 20,
+  "mit_ocw_slice_decision": "DEFER",
+  "mit_ocw_slice_record": "data/manifests/m11-p0-human-review-mit-ocw-20-v1.json",
   "formal_gate0_executed": false,
   "formal_3k_executed": false,
   "candidate_approval_granted": false,
@@ -103,7 +112,8 @@
     {"id": "iana-schema-review", "status": "pending"},
     {"id": "content-quality-review", "status": "pending"},
     {"id": "rfc-iana-slice", "status": "verified"},
-    {"id": "review-records", "status": "in-progress"},
+    {"id": "mit-ocw-slice", "status": "verified"},
+    {"id": "review-records", "status": "verified"},
     {"id": "formal-gate0", "status": "blocked"},
     {"id": "candidate-promotion", "status": "blocked"},
     {"id": "publication", "status": "blocked"},

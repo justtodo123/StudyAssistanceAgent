@@ -278,8 +278,13 @@ TXT parser 合同与 3 条 rejected 身份保持不变。`formal_run_authorized`
 
 2026-09-26 已对 RFC 3 + IANA 3 写入 `DEFER` 记录，见
 `data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`。原因是 TXT parser fail-closed、无 candidate 文档/chunks、
-无 ACQUIRED receipt；来源级 IETF TLP / CC0 说明不关闭逐 asset 核验。MIT OCW 20 仍未核验。`DEFER` 不计入 Gate 0
-`reviewed` 集合，Formal Gate 0 仍未执行。
+无 ACQUIRED receipt；来源级 IETF TLP / CC0 说明不关闭逐 asset 核验。
+
+2026-09-26 已对 MIT OCW 20 个 PDF 写入 `DEFER` 记录，见
+`data/manifests/m11-p0-human-review-mit-ocw-20-v1.json`。原因是无 committed candidate 文档/chunks、无 ACQUIRED
+receipt、临时正文已删除；来源级 MIT-hosted PDF 说明不关闭逐 asset 的 license、robots 或内容核验。两份已
+REJECTED 的 PDF（`digital_answers`、`information_worksheet`）仍在切片内。至此 26 项决策均已写入且全部为
+`DEFER`。`DEFER` 不计入 Gate 0 `reviewed` 集合，Formal Gate 0 仍未执行。
 
 ## 9. 撤销与后续边界
 

@@ -38,7 +38,7 @@ scope digest、明确 operation、有效期、精确 source/asset 子集，并�
 清单不能升级为执行授权，M8/M12、排除源、scope 扩展和 batch 越界均 fail-closed；该模块不下载、不修改
 lifecycle，也不发布。当前唯一可提交的可执行 authority 是 `data/manifests/m11-p0-human-review-26-authority-v1.json`
 （26 项 digest 身份的 `human_review`；不含 OpenDSA，不授予 Gate 0 / 晋升 / publication）。
-RFC+IANA 6 项 `DEFER` 记录见 `data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`；MIT OCW 20 仍未核验。
+RFC+IANA 6 项 `DEFER` 记录见 `data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`；MIT OCW 20 项 `DEFER` 记录见 `data/manifests/m11-p0-human-review-mit-ocw-20-v1.json`。
 
 `app/m11_acquisition.py` 提供冻结资产解析、注入式或 bounded HTTPS transport、digest/Git blob 校验、外部 raw
 目录原子写入、receipt root 路径约束、receipt loader/目录加载器、冻结 asset linkage 和批次级 authority/scope 完整性校验，以及幂等、重复/冲突安全的隐私安全 receipt 持久化；默认入口不自动联网，不调用 candidate normalization、promotion 或 publication。`app/m11_review.py`

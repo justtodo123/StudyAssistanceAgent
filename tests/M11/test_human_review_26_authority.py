@@ -24,12 +24,37 @@ AUTHORITY_PATH = Path("data/manifests/m11-p0-human-review-26-authority-v1.json")
 DIGEST_PATH = Path("data/manifests/m11-p0-digest-evidence-v1.json")
 CHECKLIST_PATH = Path("docs/plans/references/m11-p0-human-review-26-checklist-v1.md")
 REVIEW_SLICE_PATH = Path("data/manifests/m11-p0-human-review-rfc-iana-6-v1.json")
+OCW_SLICE_PATH = Path("data/manifests/m11-p0-human-review-mit-ocw-20-v1.json")
 RFC_IANA_ASSETS = {
     "rfc-editor-index": ["rfc9110", "rfc9293", "rfc1034"],
     "iana-registries": [
         "service-names-port-numbers-csv",
         "service-names-port-numbers-xml",
         "service-names-port-numbers-txt",
+    ],
+}
+OCW_ASSETS = {
+    "mit-ocw-6-004-2017": [
+        "beta_answers",
+        "caches_answers",
+        "cmos_answers",
+        "combinational_answers",
+        "compilation_answers",
+        "digital_answers",
+        "fsm_answers",
+        "information_answers",
+        "interrupts_answers",
+        "isa_answers",
+        "beta_worksheet",
+        "caches_worksheet",
+        "cmos_worksheet",
+        "combinational_worksheet",
+        "compilation_worksheet",
+        "digital_worksheet",
+        "fsm_worksheet",
+        "information_worksheet",
+        "interrupts_worksheet",
+        "isa_worksheet",
     ],
 }
 NOW = datetime(2026, 9, 26, 12, 0, tzinfo=timezone.utc)
@@ -64,6 +89,10 @@ def _checklist_contract(repo_root: Path) -> dict:
 
 def _review_slice(repo_root: Path) -> dict:
     return json.loads((repo_root / REVIEW_SLICE_PATH).read_text(encoding="utf-8"))
+
+
+def _ocw_review_slice(repo_root: Path) -> dict:
+    return json.loads((repo_root / OCW_SLICE_PATH).read_text(encoding="utf-8"))
 
 
 def test_human_review_26_authority_binds_digest_identities_only(repo_root):
@@ -143,11 +172,15 @@ def test_human_review_26_checklist_stays_review_required(repo_root):
     assert contract["authority_id"] == "m11-human-review-26-20260926"
     assert contract["includes_rejected_ocw_assets"] is True
     assert contract["opendsa_included"] is False
-    assert contract["review_records_written"] is False
+    assert contract["review_records_written"] is True
     assert contract["rfc_iana_slice_written"] is True
     assert contract["rfc_iana_slice_asset_count"] == 6
     assert contract["rfc_iana_slice_decision"] == "DEFER"
     assert contract["rfc_iana_slice_record"] == str(REVIEW_SLICE_PATH).replace("\\", "/")
+    assert contract["mit_ocw_slice_written"] is True
+    assert contract["mit_ocw_slice_asset_count"] == 20
+    assert contract["mit_ocw_slice_decision"] == "DEFER"
+    assert contract["mit_ocw_slice_record"] == str(OCW_SLICE_PATH).replace("\\", "/")
     for field in (
         "formal_gate0_executed",
         "formal_3k_executed",
@@ -172,7 +205,8 @@ def test_human_review_26_checklist_stays_review_required(repo_root):
     assert statuses["iana-schema-review"] == "pending"
     assert statuses["content-quality-review"] == "pending"
     assert statuses["rfc-iana-slice"] == "verified"
-    assert statuses["review-records"] == "in-progress"
+    assert statuses["mit-ocw-slice"] == "verified"
+    assert statuses["review-records"] == "verified"
     assert statuses["formal-gate0"] == "blocked"
     assert statuses["candidate-promotion"] == "blocked"
     assert statuses["publication"] == "blocked"
@@ -259,6 +293,112 @@ def test_rfc_iana_slice_is_deferred_and_does_not_pass_gate0(repo_root):
     assert status["publication_authorized"] is False
 
     raw = (repo_root / REVIEW_SLICE_PATH).read_text(encoding="utf-8")
+    assert "ACCEPT_FOR_PROMOTION_REVIEW" not in raw
+    assert '"decision": "APPROVED"' not in raw
+    assert "D:\\" not in raw
+    assert "C:\\" not in raw
+    assert "111_Others" not in raw
+
+
+def test_mit_ocw_slice_is_deferred_and_does_not_pass_gate0(repo_root):
+    payload = _ocw_review_slice(repo_root)
+    digest = json.loads((repo_root / DIGEST_PATH).read_text(encoding="utf-8"))
+    sha_by_asset = {
+        (item["source_id"], item["asset_id"]): item["sha256"] for item in digest["assets"]
+    }
+    records = payload["records"]
+    validated = validate_review_history(records)
+
+    assert payload["schema"] == "sa.m11.p0.human-review-slice.v1"
+    assert payload["slice_id"] == "mit-ocw-20-20260926"
+    assert payload["authority_id"] == "m11-human-review-26-20260926"
+    assert payload["authority_record"] == str(AUTHORITY_PATH).replace("\\", "/")
+    assert payload["asset_count"] == 20
+    assert payload["remaining_in_batch"] == 0
+    assert payload["decision"] == "DEFER"
+    assert payload["reviewer_id"] == "justtodo123"
+    assert payload["source_ids"] == ["mit-ocw-6-004-2017"]
+    for field in (
+        "formal_gate0_executed",
+        "candidate_approval_granted",
+        "publication_authorized",
+        "network_used",
+        "source_expansion",
+        "lifecycle_mutation",
+        "host_paths_included",
+        "bodies_included",
+    ):
+        assert payload[field] is False
+    assert len(records) == 20
+    assert len(validated) == 20
+
+    expected_pairs = [
+        (source_id, asset_id)
+        for source_id, asset_ids in OCW_ASSETS.items()
+        for asset_id in asset_ids
+    ]
+    assert [(item.source_id, item.asset_id) for item in validated] == expected_pairs
+    assert {item.decision for item in validated} == {"DEFER"}
+    assert {item.document_id for item in validated} == {None}
+    assert {item.chunk_ids for item in validated} == {()}
+    assert {item.reviewer_id for item in validated} == {"justtodo123"}
+    assert {item.reviewer_role for item in validated} == {"owner"}
+    assert {item.scope_digest for item in validated} == {payload["scope_digest"]}
+    assert REJECTED_OCW <= {item.asset_id for item in validated}
+    for item in validated:
+        assert item.candidate_digest == sha_by_asset[(item.source_id, item.asset_id)]
+        assert item.signed_at == "2026-09-26T12:00:00Z"
+        assert item.supersedes is None
+        assert item.comment.startswith("DEFER:")
+        assert "ACCEPT_FOR_PROMOTION_REVIEW" not in item.comment
+        assert item.source_id == "mit-ocw-6-004-2017"
+
+    authority = load_execution_authority(
+        repo_root / AUTHORITY_PATH,
+        operation=M11Operation.HUMAN_REVIEW,
+        expected_scope_digest=payload["scope_digest"],
+        now=NOW,
+    )
+    batch = {
+        source_id: [item.asset_id for item in validated if item.source_id == source_id]
+        for source_id in payload["source_ids"]
+    }
+    assert_batch_authorized(authority, batch)
+
+    status = gate0_status(
+        required_assets=expected_pairs,
+        reviews=records,
+        acquisition_receipts=[],
+        authority_present=True,
+        scope_digest=payload["scope_digest"],
+    )
+    assert status["status"] == "BLOCKED"
+    assert status["reviewed_asset_count"] == 0
+    assert status["candidate_promotion_authorized"] is False
+    assert status["publication_authorized"] is False
+
+    rfc_records = _review_slice(repo_root)["records"]
+    combined = rfc_records + records
+    assert len(combined) == 26
+    validate_review_history(combined)
+    combined_pairs = [
+        (source_id, asset_id)
+        for source_id, asset_ids in {**RFC_IANA_ASSETS, **OCW_ASSETS}.items()
+        for asset_id in asset_ids
+    ]
+    combined_status = gate0_status(
+        required_assets=combined_pairs,
+        reviews=combined,
+        acquisition_receipts=[],
+        authority_present=True,
+        scope_digest=payload["scope_digest"],
+    )
+    assert combined_status["status"] == "BLOCKED"
+    assert combined_status["reviewed_asset_count"] == 0
+    assert combined_status["candidate_promotion_authorized"] is False
+    assert combined_status["publication_authorized"] is False
+
+    raw = (repo_root / OCW_SLICE_PATH).read_text(encoding="utf-8")
     assert "ACCEPT_FOR_PROMOTION_REVIEW" not in raw
     assert '"decision": "APPROVED"' not in raw
     assert "D:\\" not in raw

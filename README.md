@@ -240,7 +240,7 @@ cd ..
 | [docs/plans/m8-specialized-storage-plan.md](docs/plans/m8-specialized-storage-plan.md) | M8 专业化检索存储准入准备（被阻断） |
 | [docs/plans/m9-goal-driven-planning-plan.md](docs/plans/m9-goal-driven-planning-plan.md) | M9 目标驱动学习计划执行计划（`ADMITTED / COMPLETE`，2026-09-22 收口，范围 `m9-plan-lifecycle-v1`） |
 | [docs/plans/m10-autonomous-runner-plan.md](docs/plans/m10-autonomous-runner-plan.md) | M10 自主 Runner 与 Harness 对外实施（`ADMITTED / COMPLETE`，步骤 1–7 已交付，2026-09-23 收口） |
-| [docs/plans/m11-data-scaling-plan.md](docs/plans/m11-data-scaling-plan.md) | M11 真实数据规模化；10K approved chunks 退出目标（`ADMITTED / IN_PROGRESS`，范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1；2026-09-26 授权 26 资产 HUMAN_REVIEW 批次，RFC+IANA 6 项已 `DEFER`，MIT OCW 20 仍未核验，Formal Gate 0 / 晋升 / publication 仍未授权） |
+| [docs/plans/m11-data-scaling-plan.md](docs/plans/m11-data-scaling-plan.md) | M11 真实数据规模化；10K approved chunks 退出目标（`ADMITTED / IN_PROGRESS`，范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1；2026-09-26 授权 26 资产 HUMAN_REVIEW 批次，RFC+IANA 6 项与 MIT OCW 20 项均已 `DEFER`，Formal Gate 0 / 晋升 / publication 仍未授权） |
 | [docs/plans/m12-cloud-deployment-plan.md](docs/plans/m12-cloud-deployment-plan.md) | M12 可选云端单用户部署准入准备 |
 | [knowledge/README.md](knowledge/README.md) | 知识库导航与写作规范（含 51 条面经） |
 | [CLAUDE.md](CLAUDE.md) | Agent 项目级开发指导 |
