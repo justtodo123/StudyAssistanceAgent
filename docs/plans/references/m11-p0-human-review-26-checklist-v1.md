@@ -15,6 +15,11 @@ MIT OCW 20 项见
 [`data/manifests/m11-p0-human-review-acq-defer-26-v1.json`](../../../data/manifests/m11-p0-human-review-acq-defer-26-v1.json)，
 仍全部为 `DEFER` 并 `supersedes` 历史记录。
 `DEFER` 不关闭 license、robots、notice/IPR、schema 或内容核验，也不执行 Formal Gate 0。
+新增的 metadata-only evidence closure matrix 见
+[`data/manifests/m11-p0-evidence-closure-26-v1.json`](../../../data/manifests/m11-p0-evidence-closure-26-v1.json)，
+其 superseding closure slice 见
+[`data/manifests/m11-p0-human-review-closure-defer-26-v1.json`](../../../data/manifests/m11-p0-human-review-closure-defer-26-v1.json)。
+两者仅记录八类证据的未闭合状态，仍为 `REVIEW_REQUIRED`，不构成 Formal Gate 0 输入。
 
 - `verified` 只表示该批次的 HUMAN_REVIEW authority 已按冻结 digest 身份绑定，不表示许可、robots 或内容已通过。
 - `pending` 表示对应核验字段尚未由 owner 填写。

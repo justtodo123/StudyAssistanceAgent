@@ -93,6 +93,7 @@ platform/
 │   ├── m11_acquisition.py # 冻结 asset 解析、receipt 与外部 raw 原子写入；默认不联网
 │   ├── m11_review.py # 人工 review metadata 与只读 Gate 0 coverage projection
 │   ├── m11_gate0.py # 只读 Formal Gate 0 runner；缺失 BLOCKED，永不授予 promotion/publication
+│   ├── m11_evidence_closure.py # 26 项 metadata-only 八类证据闭环投影校验；不执行 Formal Gate 0
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）
 │   ├── source_manifest.py # M7 用户源文件 manifest、格式接纳与 canonical digest
 │   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析（含墙钟上界）

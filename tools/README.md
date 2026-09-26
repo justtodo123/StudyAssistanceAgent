@@ -12,6 +12,7 @@ tools/
 ├── source_inventory.py    # 外部资料只读盘点（不复制、不解析全文、不建索引）
 ├── validate_m11_p0_metadata_gate0.py # 离线校验 P0 metadata-only Gate 0 checklist；不执行 Gate 0
 ├── validate_m11_p0_evidence_gaps.py # 离线校验 source-qualified evidence-gap projection
+├── validate_m11_p0_evidence_closure.py # 离线校验 26 项八类证据闭环投影；不执行 Gate 0
 ├── m8_prepare_p2_draft011.py # 校验并在仓库外生成 draft-0.11 P2 binding 候选；不签发 P2
 ├── m8_generate_minimal_1k_v3_fixtures.py # 生成 v3 validator 微型持久 fixture；不是 1K evidence
 ├── m8_validate_minimal_1k_graph_v3.py # 读取真实 artifact directory，校验跨文件证据图
