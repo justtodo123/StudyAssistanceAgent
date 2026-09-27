@@ -14,6 +14,7 @@ tools/
 ├── validate_m11_p0_evidence_gaps.py # 离线校验 source-qualified evidence-gap projection
 ├── validate_m11_p0_evidence_closure.py # 离线校验 26 项八类证据闭环投影；不执行 Gate 0
 ├── validate_m11_p0_official_observations.py # 离线校验 26 项官方来源观察层；不改变 closure、不执行 Gate 0
+├── validate_m11_p0_rfc_iana_evidence_review.py # 离线校验 RFC/IANA exact-six evidence review；48 cells 保持 PENDING
 ├── m8_prepare_p2_draft011.py # 校验并在仓库外生成 draft-0.11 P2 binding 候选；不签发 P2
 ├── m8_generate_minimal_1k_v3_fixtures.py # 生成 v3 validator 微型持久 fixture；不是 1K evidence
 ├── m8_validate_minimal_1k_graph_v3.py # 读取真实 artifact directory，校验跨文件证据图
@@ -110,6 +111,17 @@ PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_eviden
 PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_official_observations.py
 ```
 
+## validate_m11_p0_rfc_iana_evidence_review.py — RFC/IANA exact-six validator
+
+该工具离线、只读地校验 RFC 9110/9293/1034 与 IANA CSV/XML/TXT 的 application → 专用 authority → result →
+successor `DEFER` 链。它只读取仓库内 metadata，不读取 source body、不联网、不写文件；scope、identity、reference、
+privacy 或 escalation 漂移均 fail-closed。成功只证明六项 identity 与 append-only review 链一致：48 个 evidence cell
+仍全为 `PENDING`，closure effect 为 `NONE`，IANA XML 冲突为 `UNRESOLVED`，IANA TXT parser 为 `FAIL_CLOSED`，
+Formal Gate 0 未执行且仍 `BLOCKED`。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_iana_evidence_review.py
+```
 
 ## run_evaluation.py — RAG 效果评估
 

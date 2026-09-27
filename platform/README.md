@@ -34,9 +34,15 @@ candidate 层，失败只写入 privacy-safe rejected metadata。该流程不写
 `app/m11_evidence_closure.py` 校验 26 项 metadata-only 八类证据闭环投影；其 substantive evidence cells 保持
 `PENDING`，不执行 Formal Gate 0。`app/m11_official_observation.py` 校验独立的 append-only 官方来源观察层和 successor
 `DEFER` review slice：只保存 source-level robots/policy/schema metadata facts，显式保留 MIT third-party limitation
-与 IANA XML 日期冲突，不把观察转换为 evidence closure。对应 manifest 为
+与 IANA XML 日期冲突，不把观察转换为 evidence closure。`app/m11_rfc_iana_evidence_review.py` 进一步校验 RFC 3 +
+IANA 3 的 exact-six application、专用 HUMAN_REVIEW authority、结果与 successor 链；六项 48 个 evidence cell 仍全
+`PENDING`，XML 冲突仍为 `UNRESOLVED`，TXT parser 仍 fail-closed，六条 review 仍为 `DEFER`。观察层 manifest 为
 `data/manifests/m11-p0-official-source-observations-26-v1.json`，对应 review 为
-`data/manifests/m11-p0-human-review-official-observation-defer-26-v1.json`。validator 离线、只读、metadata-only，
+`data/manifests/m11-p0-human-review-official-observation-defer-26-v1.json`；exact-six application、authority、result 与
+successor slice 分别见 `data/manifests/m11-p0-rfc-iana-evidence-review-application-v1.json`、
+`data/manifests/m11-p0-rfc-iana-evidence-review-authority-v1.json`、
+`data/manifests/m11-p0-rfc-iana-evidence-review-result-v1.json` 与
+`data/manifests/m11-p0-human-review-rfc-iana-evidence-defer-6-v1.json`。validator 离线、只读、metadata-only，
 保持 closure `REVIEW_REQUIRED`、Gate 0 `BLOCKED`，不联网、不读取正文、不创建 document/chunk、不授权晋升或
 publication。
 
@@ -51,9 +57,11 @@ source label 与 logical asset path 在任何 artifact 写入前校验；绝对�
 `app/m11_execution_authority.py` 提供 M11 执行 authority 的纯校验契约：authority 必须绑定调用方提供的冻结 P0
 scope digest、明确 operation、有效期、精确 source/asset 子集，并固定 `publication_authorized=false`。metadata-only
 清单不能升级为执行授权，M8/M12、排除源、scope 扩展和 batch 越界均 fail-closed；该模块不下载、不修改
-lifecycle，也不发布。当前可提交的可执行 authority 有两份，均绑定同一 26 项 digest 身份、不含 OpenDSA，且都不授予
-Gate 0 / 晋升 / publication：`data/manifests/m11-p0-human-review-26-authority-v1.json`（`human_review`）与
-`data/manifests/m11-p0-acquisition-26-authority-v1.json`（`acquisition`）。26 项 `ACQUIRED` receipts 见
+lifecycle，也不发布。当前可提交的可执行 authority 有三份，均绑定同一 26 项 digest 身份、不含 OpenDSA，且都不授予
+Gate 0 / 晋升 / publication：`data/manifests/m11-p0-human-review-26-authority-v1.json`（26 项 `human_review`）、
+`data/manifests/m11-p0-acquisition-26-authority-v1.json`（26 项 `acquisition`）与
+`data/manifests/m11-p0-rfc-iana-evidence-review-authority-v1.json`（仅 RFC/IANA exact-six `human_review`）。第三份的
+source/asset 集合必须精确等于六项，不能替代或扩张为 Gate 0、promotion、publication authority。26 项 `ACQUIRED` receipts 见
 `data/manifests/m11-p0-acquisition-26-receipts-v1.json`。RFC+IANA 6 项与 MIT OCW 20 项历史 `DEFER` 记录见
 `data/manifests/m11-p0-human-review-rfc-iana-6-v1.json` 与
 `data/manifests/m11-p0-human-review-mit-ocw-20-v1.json`；获取后再核验切片见
@@ -110,6 +118,7 @@ platform/
 │   ├── m11_gate0.py # 只读 Formal Gate 0 runner；缺失 BLOCKED，永不授予 promotion/publication
 │   ├── m11_evidence_closure.py # 26 项 metadata-only 八类证据闭环投影校验；不执行 Formal Gate 0
 │   ├── m11_official_observation.py # append-only 官方来源观察层校验；不改变 closure、不执行 Gate 0
+│   ├── m11_rfc_iana_evidence_review.py # RFC/IANA exact-six evidence review 组合校验；48 cells 保持 PENDING
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）
 │   ├── source_manifest.py # M7 用户源文件 manifest、格式接纳与 canonical digest
 │   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析（含墙钟上界）

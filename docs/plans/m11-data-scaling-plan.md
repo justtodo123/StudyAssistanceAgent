@@ -323,6 +323,30 @@ SSL 握手超时，改由 curl 取得字节后经注入 transport 在 `acquire_a
 
 该观察层只提高事实可追溯性，不改变本计划的 Gate 0、3K、10K 或 M11 完成条件；任何 evidence closure 或生命周期变化仍需后续独立授权和 owner-controlled review。
 
+### 8.8 RFC/IANA exact-six 资产级证据核验（2026-09-27）
+
+owner 指令「先完成本地合并收尾，然后申请并执行‘RFC/IANA 6 项资产级证据核验批次’」只覆盖 RFC 9110、
+RFC 9293、RFC 1034 与 IANA CSV/XML/TXT；MIT OCW 20 项、OpenDSA 和其他来源均不进入本批次。
+
+- 非执行 application、exact-six `human_review` authority、result 与 successor slice 分别记录在
+  `data/manifests/m11-p0-rfc-iana-evidence-review-application-v1.json`、
+  `data/manifests/m11-p0-rfc-iana-evidence-review-authority-v1.json`、
+  `data/manifests/m11-p0-rfc-iana-evidence-review-result-v1.json` 和
+  `data/manifests/m11-p0-human-review-rfc-iana-evidence-defer-6-v1.json`。
+- authority 继续使用冻结 26 项父 `scope_digest`，但 source/asset 集合精确等于六项；独立的版本化 batch digest
+  `5608977cfec79b7d911f64f278bf3e8ee4e502d9ec6b64f894bb4228f78d37bd` 绑定父 scope 与排序后的六项
+  candidate/receipt/revision identity，宽范围 authority 不能替代该精确批准。
+- 六项 × 八类共 48 个 evidence cell 全部保持 `PENDING`；结果为 `REVIEW_REQUIRED`，closure effect 为 `NONE`。
+  IANA XML 日期冲突继续 `UNRESOLVED`，IANA TXT parser 继续 `FAIL_CLOSED`，source-level observation 不被提升为
+  asset-level evidence closure。
+- 六条 successor review 全部为 `DEFER`，逐条 supersede 六个 official-observation current head；不创建
+  candidate document/chunk，也不改变 MIT 的 20 个 current head。
+- `formal_gate0_executed=false`，Gate 0 投影继续 `BLOCKED` 且 `reviewed_asset_count=0`；没有 promotion、publication、
+  normalization、embedding、indexing、source expansion、新 acquisition 或 lifecycle mutation。
+
+该批次记录了“已核验但证据仍不足”的事实，不改变 M11 的 `ADMITTED / IN_PROGRESS`、plan_revision v1.1、3K/10K
+退出条件或任何后续授权边界。
+
 ## 9. 撤销与后续边界
 
 来源许可、parser/chunk/embedding profile、质量/检索 workload、控制面权威或删除语义实质变化时，阶段 admission 必须
