@@ -10,7 +10,7 @@
 ## 1. 允许出现在 Git 里的内容
 
 - 本文件 `data/README.md`
-- `data/manifests/`（Source / license 元数据、审核结果、digest；不含正文）
+- `data/manifests/`（Source / license 元数据、审核结果、digest；不含正文；M11 官方来源观察层仍为 metadata-only、non-closing）
 
 ## 2. 禁止进入 Git 的层
 

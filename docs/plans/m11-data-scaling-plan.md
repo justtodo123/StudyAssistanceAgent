@@ -312,6 +312,17 @@ SSL 握手超时，改由 curl 取得字节后经注入 transport 在 `acquire_a
 `DEFER` 不计入 Gate 0 `reviewed` 集合；即使传入 26 份 ACQUIRED receipts，`reviewed_asset_count`
 仍为 0，Formal Gate 0 仍未执行。
 
+### 8.7 官方来源只读观察层（2026-09-26）
+
+在上述获取后再核验和全 `PENDING` evidence-closure projection 之后，追加了一个 append-only、metadata-only 的官方来源观察层：
+
+- `data/manifests/m11-p0-official-source-observations-26-v1.json` 只记录三份 robots digest match、来源政策元数据、RFC 日期、IANA XML 结构信号和 live/frozen 更新日期冲突；source-level observation 不等于八类资产级 evidence closure。
+- `data/manifests/m11-p0-human-review-official-observation-defer-26-v1.json` 是对应的 successor `DEFER` review slice，26 条记录逐条 supersede closure review，不创建 document/chunk。
+- MIT third-party-rights limitation 与 IANA XML 日期冲突保持 `UNRESOLVED`；原 closure matrix 不修改，26 项八类 substantive evidence 仍全部为 `PENDING`，结果仍为 `REVIEW_REQUIRED`。
+- `platform/app/m11_official_observation.py` 和 `tools/validate_m11_p0_official_observations.py` 仅做离线、只读、metadata-only 校验，不联网、不读取正文、不写 raw、不执行 Formal Gate 0，也不授权 candidate promotion、publication、source expansion 或新的 acquisition。
+
+该观察层只提高事实可追溯性，不改变本计划的 Gate 0、3K、10K 或 M11 完成条件；任何 evidence closure 或生命周期变化仍需后续独立授权和 owner-controlled review。
+
 ## 9. 撤销与后续边界
 
 来源许可、parser/chunk/embedding profile、质量/检索 workload、控制面权威或删除语义实质变化时，阶段 admission 必须

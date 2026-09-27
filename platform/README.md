@@ -23,7 +23,22 @@
 
 ### M11 candidate pipeline
 
-`app/m11_candidate_pipeline.py` 是离线、candidate-only 的编排层：不获取网络数据、不写 Source Registry、不切换 generation、不将资产晋升为 approved，也不 publication。公开生产入口仅为 `normalize_bound_candidate()`：MIT OCW、RFC 与 IANA 资产必须匹配冻结 SHA-256 evidence；OpenDSA RST 必须匹配 pinned path manifest 的 Git blob SHA-1，随后才形成 SHA-256 normalized content fingerprint。无 evidence 绑定的 `_normalize_candidate()` 仅为私有 hermetic 测试 helper。
+`app/m11_candidate_pipeline.py` 提供离线、manifest-bound 的 candidate-only 规范化编排。公开入口
+`normalize_bound_candidate()` 只接受本地文件、冻结 digest/path manifest 和白名单 source/asset；成功结果写入
+candidate 层，失败只写入 privacy-safe rejected metadata。该流程不写 approved、不切 generation、不触碰学习状态库，
+不执行 Gate 0、不晋升或发布，也不自动联网；CPython 3.13.3 上 TXT parser 不可用时继续遵守 M7 的
+`SOURCE_PARSER_UNAVAILABLE` fail-closed 合同。
+
+### M11 evidence closure and official observation
+
+`app/m11_evidence_closure.py` 校验 26 项 metadata-only 八类证据闭环投影；其 substantive evidence cells 保持
+`PENDING`，不执行 Formal Gate 0。`app/m11_official_observation.py` 校验独立的 append-only 官方来源观察层和 successor
+`DEFER` review slice：只保存 source-level robots/policy/schema metadata facts，显式保留 MIT third-party limitation
+与 IANA XML 日期冲突，不把观察转换为 evidence closure。对应 manifest 为
+`data/manifests/m11-p0-official-source-observations-26-v1.json`，对应 review 为
+`data/manifests/m11-p0-human-review-official-observation-defer-26-v1.json`。validator 离线、只读、metadata-only，
+保持 closure `REVIEW_REQUIRED`、Gate 0 `BLOCKED`，不联网、不读取正文、不创建 document/chunk、不授权晋升或
+publication。
 
 source label 与 logical asset path 在任何 artifact 写入前校验；绝对路径、盘符、控制字符、空段和 `.` / `..` 段均 fail-closed，非法标识在 rejected artifact 中只保留不可逆短哈希。CPython 3.13.3 上 TXT 仍按 M7 精确 parser 合同 fail-closed，M11 不放宽该合同。
 
@@ -94,6 +109,7 @@ platform/
 │   ├── m11_review.py # 人工 review metadata 与只读 Gate 0 coverage projection
 │   ├── m11_gate0.py # 只读 Formal Gate 0 runner；缺失 BLOCKED，永不授予 promotion/publication
 │   ├── m11_evidence_closure.py # 26 项 metadata-only 八类证据闭环投影校验；不执行 Formal Gate 0
+│   ├── m11_official_observation.py # append-only 官方来源观察层校验；不改变 closure、不执行 Gate 0
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）
 │   ├── source_manifest.py # M7 用户源文件 manifest、格式接纳与 canonical digest
 │   ├── parser_matrix.py   # M7 五格式冻结 parser contract 与 fail-closed 解析（含墙钟上界）

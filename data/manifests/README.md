@@ -15,6 +15,8 @@
 - `m11-p0-human-review-acq-defer-26-v1.json` 是获取后的 26 项再核验切片：全部 `DEFER`，逐条 `supersedes` 历史 review；ACQUIRED receipts 与 DEFER reviews 仍不足以执行 Formal Gate 0。
 - `m11-p0-evidence-closure-26-v1.json` 是严格 metadata-only 的 26 项八类证据闭环投影：所有 substantive evidence 保持 `PENDING`，结果为 `REVIEW_REQUIRED`，不执行 Formal Gate 0，也不产生晋升或 publication 授权。
 - `m11-p0-human-review-closure-defer-26-v1.json` 是对应的最终 superseding review slice：26 条记录仍为 `DEFER`，逐条引用 closure matrix 并 supersede 获取后再核验记录；不创建 document/chunk。
+- `m11-p0-official-source-observations-26-v1.json` 是 append-only、metadata-only 的官方来源观察层：记录 robots digest match、政策元数据、RFC 日期和 IANA XML 日期冲突；不把 source-level observation 当作八类资产级证据闭合，closure 仍全为 `PENDING`，IANA 冲突保持 `UNRESOLVED`。
+- `m11-p0-human-review-official-observation-defer-26-v1.json` 是观察后的 successor review slice：26 条仍为 `DEFER`，逐条 supersede closure slice，不创建 document/chunk；观察层和该 slice 均不授权 Gate 0、晋升、publication、来源扩张或新的网络获取。
 - `platform/app/m11_candidate_pipeline.py` 是编排层：复用 M7 parser/normalized identity，只物化 candidate/rejected 证据，禁止 publication 和 approved 晋升。公开入口仅有 `normalize_bound_candidate()`：MIT OCW、RFC 与 IANA 必须命中 `m11-p0-digest-evidence-v1.json` 的 SHA-256，OpenDSA 必须命中 pinned path manifest 并按 Git blob SHA-1 验证本地 bytes；无 evidence 绑定的规范化仅保留为私有 hermetic helper。当前 CPython 3.13.3 上 TXT parser 按 M7 合同不可用，RFC/IANA/OpenDSA 文本路径 fail-closed；Markdown 仍可规范化。
 - 2026-09-24 受控 metadata 获取先执行 HEAD，26/26 asset 与 3/3 robots 入口可达；receipt 位于 gitignored 的 `artifacts/m11-controlled-metadata-acquisition-v1.json`。
 - 随后按小批次临时获取 bytes 并立即删除：MIT OCW 20/20 PDF、RFC 3/3 TXT、IANA 3/3 格式均取得 SHA-256；IANA 三格式 schema 探针通过，PDF 魔数通过。receipts 均位于 gitignored 的 `artifacts/`。这只关闭 revision/digest 证据，不自动关闭 license、robots、notice/IPR 或 publication。

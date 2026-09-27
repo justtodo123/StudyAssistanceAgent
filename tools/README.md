@@ -13,6 +13,7 @@ tools/
 ├── validate_m11_p0_metadata_gate0.py # 离线校验 P0 metadata-only Gate 0 checklist；不执行 Gate 0
 ├── validate_m11_p0_evidence_gaps.py # 离线校验 source-qualified evidence-gap projection
 ├── validate_m11_p0_evidence_closure.py # 离线校验 26 项八类证据闭环投影；不执行 Gate 0
+├── validate_m11_p0_official_observations.py # 离线校验 26 项官方来源观察层；不改变 closure、不执行 Gate 0
 ├── m8_prepare_p2_draft011.py # 校验并在仓库外生成 draft-0.11 P2 binding 候选；不签发 P2
 ├── m8_generate_minimal_1k_v3_fixtures.py # 生成 v3 validator 微型持久 fixture；不是 1K evidence
 ├── m8_validate_minimal_1k_graph_v3.py # 读取真实 artifact directory，校验跨文件证据图
@@ -100,6 +101,15 @@ PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_eviden
 校验器会 fail closed 拒绝 contract/schema/count/status 漂移、批准或授权标志、来源扩展、生命周期变更、隐私字段
 以及按来源聚合的 gap 与冻结记录不一致。对应的非权威清单见
 [`docs/plans/references/m11-p0-evidence-gap-checklist-v1.md`](../docs/plans/references/m11-p0-evidence-gap-checklist-v1.md)。
+
+## validate_m11_p0_official_observations.py — official-source observation validator
+
+`platform/app/m11_official_observation.py` 与本工具只校验 append-only、metadata-only 的官方来源观察层及其 successor `DEFER` review slice。它们离线读取已提交 JSON，记录 source-level robots/policy/schema metadata facts，但不解析正文、不联网、不写 raw、不改变 closure、不创建 document/chunk、不执行 Gate 0，也不授权 promotion/publication；IANA XML 日期冲突保持 `UNRESOLVED`。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_official_observations.py
+```
+
 
 ## run_evaluation.py — RAG 效果评估
 
