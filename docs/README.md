@@ -22,6 +22,9 @@ docs/
 │   │   ├── agent-alignment-analysis.md
 │   │   ├── recruitment-driven-feasibility.md
 │   │   ├── stage-advancement-analysis.md
+│   │   ├── m11-decision-closure-v1.md # M11 准入前十项 Decision 闭合记录；当前状态见 PLAN.md
+│   │   ├── m11-baseline-3k-freeze-v1.md # M11 Baseline/3K 历史冻结物；非正式 Gate 授权
+│   │   ├── m11-test-plan-v1.md # M11 历史测试方案；v1.1 已创建 tests/M11/
 │   │   ├── m8-m12-scope-decision-v1.md # M8–M12 规模化范围决策；已批准
 │   │   ├── m8-decision-closure-v1.md # 八项 Decision 批准记录；全部 RESOLVED
 │   │   ├── m8-active-execution-protocol-draft-0.10.md # draft-0.10 冻结正文；P3 REJECTED / stop；从未执行
@@ -107,7 +110,7 @@ docs/
 ### PLAN.md — 项目计划
 
 核心文件。定义项目定位（通用学习 Agent harness）、技术选型与里程碑；M0–M7、M9、M10 已收口，
-M8 与 M11–M12 仍阻断。
+M8 与 M12 仍阻断；M11 已准入并获开工授权（plan_revision v1.1，A1/A2/A3 实施中）。
 **每次会话开工前先看本文档**，明确当前里程碑与退出条件。
 
 ### prds/ — 需求澄清 PRD
@@ -138,7 +141,7 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
   M7 退出前置已满足；M9 已于 2026-09-22 在 `m9-plan-lifecycle-v1` 范围内取得独立完成批准，现为
   `ADMITTED / COMPLETE`；M8 八项 Decision 已 `RESOLVED`，但 `draft-0.10` 独立 P3 已 `REJECTED / stop`，不得
   `request-p4`；M10 已于 2026-09-22 在 `m10-autonomous-runner-v1` 范围内获批开工，并于 2026-09-23
-  取得独立完成批准，现为 `ADMITTED / COMPLETE`；M8 与 M11–M12 阶段仍阻断，Network/Milvus/后端选择均未获批。
+  取得独立完成批准，现为 `ADMITTED / COMPLETE`；M8 与 M12 阶段仍阻断；M11 于 2026-09-23 获批 `ADMITTED / IN_PROGRESS`（开工已授权，plan_revision v1.1）；Network/Milvus/后端选择均未获批。
 - M7–M12 准入准备计划：
   [plans/m7-source-lifecycle-plan.md](plans/m7-source-lifecycle-plan.md)、
   [plans/m8-specialized-storage-plan.md](plans/m8-specialized-storage-plan.md)、
@@ -229,8 +232,9 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-22（M8 active execution protocol `draft-0.10` 曾到达
-`BINDING_FROZEN`，但独立 P3 文本审计为 `REJECTED / stop`；不得 `request-p4`，M8 与 M11–M12 仍阻断；
+*创建：2026-08-11 · 更新：2026-09-23（M11 获批 `ADMITTED / IN_PROGRESS`，范围 `m11-data-scaling-v1`，
+开工已授权，plan_revision v1.1 纳入 A1/A2/A3；十项 Decision 已 `RESOLVED`。此前：M8 active execution protocol `draft-0.10` 曾到达
+`BINDING_FROZEN`，但独立 P3 文本审计为 `REJECTED / stop`；不得 `request-p4`，M8 与 M12 仍阻断；
 M9 已于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内获批准入（当时交付状态为 `IN_PROGRESS`），并于 2026-09-22 以
 plan_revision v1.5 解冻 `M9-EVALUATION` 的延迟/成本维度——**范围仅限 M9 外部 AI 路径**，CI 臂冻结预算
 **执行**、真实 provider 读数为 opt-in 非门禁且**本次未运行**；该变更触发 §4 撤销过渡。同日 owner 在同一

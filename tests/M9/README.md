@@ -103,7 +103,7 @@
   （不含 `llm_client` / `content` / `split_headings` 字样）成立。
 - **1K 比较是窄口径证据，不是容量声明**：`test_plan_ai_benchmark.py` 只跑 **1K**（M7 生成器，
   `sources=1, documents=100, units=10`），证明的是**输入有界**——送往 AI 的 prompt 不随语料规模增长。
-  M9 既不存储也不索引 1K chunks，故这不是容量通过。**10K/100K 逐字记为 M8（`BLOCKED`）/ M11（拟议）
+  M9 既不存储也不索引 1K chunks，故这不是容量通过。**10K/100K 逐字记为 M8（`BLOCKED`）/ M11（ADMITTED / IN_PROGRESS）
   依赖**；CI 里 AI 路径由**确定性 stub** 驱动，真实 provider 的延迟 / 成本 / 失败模式**未在 CI 验证**。
 - **v1.5 解冻的是「预算被强制执行」，不是性能**：`M9-EVALUATION` 的延迟/成本维度自 plan_revision v1.5 起
   为冻结评测，范围**仅限 M9 外部 AI 路径**（不是全项目评测声明）。CI 臂（门禁）证明四件事——`prompt`
@@ -129,8 +129,8 @@
   节**驱动真实桥**（`build_anthropic_proposer`），并有一条配置层用例钉住
   `SA_PLAN_AI_MAX_TURN_OUTPUT_TOKENS` 真的被读、且只能收紧。
 - **真实 provider 读数必须显式 opt-in，且不得成为门禁**：`test_plan_ai_provider_smoke.py` 的 skip 门控是
-  **承重**的——本目录在 CI 阶段测试步骤内，而该步骤**不排除** `online` 标记，故「默认不跑」完全靠
-  `M9_PROVIDER_SMOKE` 未设时的 `pytest.skip`。该文件**绝不**触碰 workflow：
+  **承重**的——该文件标记为 `online`，而 blocking shared CI command 明确排除 `online`；独立运行时则由
+  `M9_PROVIDER_SMOKE` 未设时的 `pytest.skip` 保持默认不跑。该文件**绝不**触碰 workflow：
   `tests/regression/test_ci_contract.py` 明文禁止 `ANTHROPIC_API_KEY` / `SA_PLAN_AI_TOKEN` /
   `SA_PLAN_AI_ENABLED` 出现在其中。**任何门禁、退出条件与登记表都不得依赖它**。
 - **mastery 写入只有一个权威，且这条不变量靠动态枚举守住**：权威是 `StudySessionService` + 领域仓储，

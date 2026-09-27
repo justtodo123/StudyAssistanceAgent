@@ -10,6 +10,10 @@ on:
         description: Run crawler online smoke against the public web
         type: boolean
         default: false
+      m8_source_commit:
+        description: Full ordinary commit OID for M8 governance fixtures
+        type: string
+        required: true
 
 jobs:
   offline:
@@ -22,6 +26,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          # The M8 fixture commit can differ from the checked-out merge result.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,9 +43,44 @@ jobs:
         run: |
           python -m pytest platform/tests -q --tb=short
 
+      - name: Select M8 fixture commit
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_SHA: ${{ github.sha }}
+          DISPATCH_SHA: ${{ inputs.m8_source_commit }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            candidate="$PR_HEAD_SHA"
+          elif [[ "$EVENT_NAME" == "push" ]]; then
+            candidate="$PUSH_SHA"
+            read -r -a push_lineage <<< "$(git rev-list --parents -n 1 "$candidate")"
+            push_parent_count=$((${#push_lineage[@]} - 1))
+            if [[ "$push_parent_count" -eq 2 ]]; then
+              candidate="${push_lineage[2]}"
+            elif [[ "$push_parent_count" -ne 1 ]]; then
+              echo "M8 fixture selection requires an ordinary or two-parent push commit" >&2
+              exit 1
+            fi
+          else
+            candidate="$DISPATCH_SHA"
+          fi
+
+          if [[ ! "$candidate" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "M8 fixture commit must be a full lowercase 40-character OID" >&2
+            exit 1
+          fi
+          read -r -a fixture_lineage <<< "$(git rev-list --parents -n 1 "$candidate")"
+          if [[ "$((${#fixture_lineage[@]} - 1))" -ne 1 ]]; then
+            echo "M8 fixture commit must have exactly one parent" >&2
+            exit 1
+          fi
+          echo "M8_SOURCE_COMMIT=$candidate" >> "$GITHUB_ENV"
+
       - name: Run stage tests and regression
         run: |
-          python -m pytest tests/M0_M2 tests/M3a tests/M3b tests/M3c tests/M3d tests/M4 tests/M5a tests/M5b tests/M5c tests/M5d tests/M5e tests/M6a tests/M6b tests/M8_metadata_discovery tests/M9 tests/M10 tests/regression -q --tb=short -m "not slow and not m6b_benchmark and not m9_benchmark"
+          python -m pytest tests/M0_M2 tests/M3a tests/M3b tests/M3c tests/M3d tests/M4 tests/M5a tests/M5b tests/M5c tests/M5d tests/M5e tests/M6a tests/M6b tests/M8_metadata_discovery tests/M9 tests/M10 tests/M11 tests/regression -q --tb=short -m "not slow and not online and not m6b_benchmark and not m9_benchmark"
 
       - name: Run blocking M6b offline preview benchmark
         env:

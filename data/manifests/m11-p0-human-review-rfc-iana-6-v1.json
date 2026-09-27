@@ -1,0 +1,200 @@
+{
+  "schema": "sa.m11.p0.human-review-slice.v1",
+  "slice_id": "rfc-iana-6-20260926",
+  "authority_id": "m11-human-review-26-20260926",
+  "authority_record": "data/manifests/m11-p0-human-review-26-authority-v1.json",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "source_ids": [
+    "rfc-editor-index",
+    "iana-registries"
+  ],
+  "asset_count": 6,
+  "remaining_in_batch": 20,
+  "decision": "DEFER",
+  "reviewer_id": "justtodo123",
+  "signed_at": "2026-09-26T12:00:00Z",
+  "formal_gate0_executed": false,
+  "candidate_approval_granted": false,
+  "publication_authorized": false,
+  "network_used": false,
+  "source_expansion": false,
+  "lifecycle_mutation": false,
+  "host_paths_included": false,
+  "bodies_included": false,
+  "records": [
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-rfc9110",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "rfc-editor-index",
+      "asset_id": "rfc9110",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "21c1cdce6ab0e5509b04d84a28000836c7a087cf786efe6f04877ebfff47232a",
+      "receipt_digest": "c4482d14d999f1084574b7937ae7683fb03df49965e2dacbb1a14de7d4ce9e92",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-text-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "rfc-3-iana-3"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "fd05e35d0664ca7fe34f474802e5f530880a86f4e5c6a5e8a7de5796a420cc1a",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no candidate document/chunks (TXT parser fail-closed) and no ACQUIRED receipt. Digest SHA-256 is content identity only. Source-level IETF TLP notes do not close per-asset license, robots, notice, or IPR. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-rfc9293",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "rfc-editor-index",
+      "asset_id": "rfc9293",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "6d9ac8be4b0286f8c3d337addf442b2eb6a9b14e1366594ea7fbc273f93dc2d9",
+      "receipt_digest": "479f4bff2fffc76934fc8a115e2ea1e1f4ac3e65063ce8f5de2bd15298e0cf30",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-text-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "rfc-3-iana-3"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "266d2b7c386eeb2ebe9095829b96f35edf190d391b47c3f26b71f0f289c292f2",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no candidate document/chunks (TXT parser fail-closed) and no ACQUIRED receipt. Digest SHA-256 is content identity only. Source-level IETF TLP notes do not close per-asset license, robots, notice, or IPR. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-rfc1034",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "rfc-editor-index",
+      "asset_id": "rfc1034",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "d6b10a71441df879cc2817d23f2dad120c8a5f87e74eba1e4ed4b743a76a891a",
+      "receipt_digest": "7b8675f2957eddd926e55ff22be8e06b286ff9a77121c0f8d8c8790a6bed10d0",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-text-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "rfc-3-iana-3"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "a15f3e7ef8b6e0200dabd61c8173feeedad19638ff55fc4900b09691043bf29e",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no candidate document/chunks (TXT parser fail-closed) and no ACQUIRED receipt. Digest SHA-256 is content identity only. Source-level IETF TLP notes do not close per-asset license, robots, notice, or IPR. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-iana-csv",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-csv",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "34328ed0940d889207de6da29bf0e6e1438d604483c8e1ffb03dceab8f7ec26f",
+      "receipt_digest": "35fd62d094c9a2fdcc26a17c7eff0e8ed51af4d12d82ed75809f828719a63a44",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-text-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "rfc-3-iana-3"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "6ee1cd1b779cbbcfe0e141da7d502c4309b5a2818ce9e56d0aa4ca346ed62eb3",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no candidate document/chunks (TXT parser fail-closed) and no ACQUIRED receipt. Digest SHA-256 is content identity only. CC0 scope-confirmed does not close robots, schema, provenance, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-iana-xml",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-xml",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "30a69353af6e017ffd9e141d079f90a7b7117f113f122d2d89ee20ffb587da19",
+      "receipt_digest": "48f68cb0a8f1d898667744e7e1d27d83099409db7475681d8863aa97ca60165d",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-text-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "rfc-3-iana-3"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "84c6d69309aa8e27488ef2058716870c04b493c6367c91ae694ef7b01001c60c",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no candidate document/chunks (TXT parser fail-closed) and no ACQUIRED receipt. Digest SHA-256 is content identity only. CC0 scope-confirmed does not close robots, schema, provenance, or content-quality. Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260926-iana-txt",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-txt",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "6aa4def90086ae3dd71ee8f72e2bddb57857828718d3155b42c107138a3c1d29",
+      "receipt_digest": "645ac807c2327204cee4111e16f4b5f043857fb9334f86a428d1d011801014b7",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-text-slice",
+        "batch": "human-review-26-20260926",
+        "slice": "rfc-3-iana-3"
+      },
+      "signed_at": "2026-09-26T12:00:00Z",
+      "attestation_digest": "6fbad3f05784ab3f48d77b4a13e4176e7aa979dfa9657c9a18594045bae7eaae",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-human-review-26-20260926",
+        "m11-p0-candidate-assets-v1"
+      ],
+      "supersedes": null,
+      "comment": "DEFER: no candidate document/chunks (TXT parser fail-closed) and no ACQUIRED receipt. Digest SHA-256 is content identity only. CC0 scope-confirmed does not close robots, schema, provenance, or content-quality. Gate 0 remains blocked."
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "sa.m11.3k-gate-protocol.v1",
+  "status": "THRESHOLDS_APPROVED_REVIEW_PENDING",
+  "threshold_approval": {
+    "approved_by": "justtodo123",
+    "approved_at": "2026-09-24",
+    "approval_reference": "User instruction: 保守门槛（推荐）",
+    "scope": "M11 3K Gate only; does not authorize formal run or publication"
+  },
+  "workload_id": "m11-3k-independent-v1",
+  "workload_digest": "4069d835477c50ce0edc5c6117a269500997deed91f1154b0304a2bb85f83a54",
+  "baseline": {
+    "question_count": 90,
+    "recall_at_3_minimum": {
+      "os": 1.0,
+      "ds": 0.929,
+      "co": 1.0,
+      "weighted": 0.978
+    },
+    "latest_run": {
+      "date": "2026-09-23",
+      "os": 1.0,
+      "ds": 0.929,
+      "co": 1.0,
+      "weighted": 0.978
+    }
+  },
+  "thresholds": {
+    "human_fact_accuracy_minimum": 0.95,
+    "recall_at_3_minimum": 0.85,
+    "recall_at_5_minimum": 0.90,
+    "mrr_minimum": 0.75,
+    "no_hit_max_errors": 3,
+    "hard_negative_max_errors": 3
+  },
+  "human_review": {
+    "sample_size": null,
+    "stratification": "source-layer-and-domain",
+    "reviewer": null,
+    "signed_at": null
+  },
+  "gate_invariants": {
+    "approved_chunk_target": 3000,
+    "license_provenance_completeness": 1.0,
+    "silent_parse_loss": 0,
+    "exact_duplicates": 0,
+    "private_corpus_chunks": 0,
+    "non_allowlisted_chunks": 0,
+    "deleted_source_recall": 0
+  },
+  "formal_run_authorized": false,
+  "publication_authorized": false
+}

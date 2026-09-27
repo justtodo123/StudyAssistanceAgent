@@ -73,3 +73,13 @@ platform/**/__pycache__/
 
 # ===== Local test/run artifacts (not source of truth) =====
 /artifacts/
+
+# ===== M11 data expansion layers (raw/normalized stay outside Git) =====
+# Only data/README.md and small metadata manifests under data/manifests/ may be committed.
+/data/raw/
+/data/normalized/
+/data/candidates/
+/data/approved/
+/data/rejected/
+/data/reports/
+/data/snapshots/

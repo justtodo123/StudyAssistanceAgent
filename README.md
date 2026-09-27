@@ -6,7 +6,7 @@
 
 **当前状态**：M6a-P0 crawler 已收口；M6a、M6b、M7 均为 `ADMITTED / COMPLETE`；M7 生产开工门禁保持
 `AUTHORIZED`，并于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准；M8–M10 的事实型
-M7 退出前置已满足，但 **M8 与 M11–M12 仍为 `BLOCKED / NOT_STARTED`**；M9 八项 Decision 已 `RESOLVED`，于
+M7 退出前置已满足，但 **M8 与 M12 仍为 `BLOCKED / NOT_STARTED`**；M11 于 2026-09-23 获批 `ADMITTED / IN_PROGRESS`（范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1）；M9 八项 Decision 已 `RESOLVED`，于
 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内获批准入（当时交付状态为 `IN_PROGRESS`），并于 **2026-09-22 在同一
 范围内取得独立 `completion_approval`、交付状态转为 `COMPLETE`**（三条 caveat 随收口一并接受：冻结评测范围仅限
 M9 外部 AI 路径、真实 provider 延迟/成本/失败模式仍未验证、10K/100K 属 M8/M11）。**M10 十一项 Decision 已全部 `RESOLVED`**，
@@ -51,9 +51,9 @@ M7 完成不批准 Network，也不改变其 `review / candidate / unresolved` �
 | RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 2026-08-31 复测 Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 目标驱动 Planner 已按 Goal + 约束确定性生成版本化计划 |
 | 用户数据源 | 自定义知识目录，真实数据当前→3K→10K，30K/100K 分级扩展 | ✅ M7 Source Registry、FTS5/vector/offline、delete/isolation 与 Search/QA 的受信任内部 principal overlay 已完成；preview/quiz/sessions 仍不含用户源。冻结技术证据通过，随后于 2026-09-06 取得独立人工完成批准，当前为 `ADMITTED / COMPLETE` |
-| 专业化存储 | SQLite/M7 控制面；M8 验证 100K capacity，LanceDB 为单机第一候选，Qdrant 为云端条件候选 | ⬜ M8（八项 Decision 已 `RESOLVED`；`draft-0.10` P3 拒绝链冻结；`draft-0.11` 已 P0/P1/P2、等待独立 P3；执行、后端选择与 admission 未授权） |
+| 专业化存储 | SQLite/M7 控制面；M8 验证 100K capacity，LanceDB 为单机第一候选，Qdrant 为云端条件候选 | ⬜ M8（八项 Decision 已 `RESOLVED`；`draft-0.10` 与 `draft-0.11` 的 P3 拒绝链均冻结；执行、后端选择与 admission 未授权） |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ✅ M9 `ADMITTED / COMPLETE`（2026-09-22 收口，范围 `m9-plan-lifecycle-v1`）：确定性生成 + 显式采纳 + 进度事件 + 跳过/逾期偏差触发重规划已实现（API 层）；三个只读投影（mastery / 授权 Source 摘要 / 先修关系）已接入 Planner，先修违反由 `summary.prerequisites.violations` 可测。**工作台接入仍未完成**，且默认关闭的外部 AI 路径有一条已登记的采纳率上限（`PlanAIRequest` 不含先修关系，见 M9 计划 §4.5） |
-| Harness 框架 | M6a/M6b/M7/M9/M10 已收口；真实数据规模化与云部署未实现 | ✅ M6a/M6b/M7/M9/M10 `ADMITTED / COMPLETE`；M10 已于 2026-09-23 在原范围内取得独立完成批准；M8 与 M11–M12 `BLOCKED / NOT_STARTED` |
+| Harness 框架 | M6a/M6b/M7/M9/M10 已收口；真实数据规模化与云部署未实现 | ✅ M6a/M6b/M7/M9/M10 `ADMITTED / COMPLETE`；M10 已于 2026-09-23 在原范围内取得独立完成批准；M8 与 M12 `BLOCKED / NOT_STARTED`；M11 `ADMITTED / IN_PROGRESS`（开工已授权，A1/A2/A3 实施中） |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
@@ -67,6 +67,9 @@ M7 完成不批准 Network，也不改变其 `review / candidate / unresolved` �
 StudyAssistanceAgent/
 ├── CLAUDE.md              # Agent 项目指导（开发规范、知识库约定）
 ├── README.md              # 本文件（项目概览）
+├── data/                  # M11 数据分层边界说明（raw/normalized 不入库）
+│   ├── README.md          # 目录约定与 Git 边界；不含正文
+│   └── manifests/         # 小型来源、digest、Gate 元数据；不含正文
 ├── knowledge/             # ★ 本地知识库（Markdown 笔记，项目核心资产）
 │   ├── README.md          # 知识库导航与写作约定
 │   ├── _templates/        # 条目模板
@@ -116,6 +119,7 @@ StudyAssistanceAgent/
 │   │   ├── user_source_vector.py # M7 generation-bound source-local vector 索引
 │   │   ├── source_offline.py # M7 离线 fail-closed 校验与显式 FULL repair
 │   │   ├── user_source_search.py # M7 用户源 Search/cache/RRF/provenance overlay
+│   │   ├── m11_candidate_pipeline.py # M11 manifest-bound candidate-only 规范化编排
 │   │   └── static/           # 最小学习工作台静态页
 │   ├── tests/             # 冒烟测试
 │   ├── requirements.txt   # Python 依赖
@@ -236,7 +240,7 @@ cd ..
 | [docs/plans/m8-specialized-storage-plan.md](docs/plans/m8-specialized-storage-plan.md) | M8 专业化检索存储准入准备（被阻断） |
 | [docs/plans/m9-goal-driven-planning-plan.md](docs/plans/m9-goal-driven-planning-plan.md) | M9 目标驱动学习计划执行计划（`ADMITTED / COMPLETE`，2026-09-22 收口，范围 `m9-plan-lifecycle-v1`） |
 | [docs/plans/m10-autonomous-runner-plan.md](docs/plans/m10-autonomous-runner-plan.md) | M10 自主 Runner 与 Harness 对外实施（`ADMITTED / COMPLETE`，步骤 1–7 已交付，2026-09-23 收口） |
-| [docs/plans/m11-data-scaling-plan.md](docs/plans/m11-data-scaling-plan.md) | M11 真实数据规模化准入准备；10K approved chunks 退出目标 |
+| [docs/plans/m11-data-scaling-plan.md](docs/plans/m11-data-scaling-plan.md) | M11 真实数据规模化；10K approved chunks 退出目标（`ADMITTED / IN_PROGRESS`，范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1；2026-09-26 授权 26 资产 HUMAN_REVIEW 批次，RFC+IANA 6 项与 MIT OCW 20 项均已 `DEFER`，Formal Gate 0 / 晋升 / publication 仍未授权） |
 | [docs/plans/m12-cloud-deployment-plan.md](docs/plans/m12-cloud-deployment-plan.md) | M12 可选云端单用户部署准入准备 |
 | [knowledge/README.md](knowledge/README.md) | 知识库导航与写作规范（含 51 条面经） |
 | [CLAUDE.md](CLAUDE.md) | Agent 项目级开发指导 |

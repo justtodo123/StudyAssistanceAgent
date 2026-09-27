@@ -1,0 +1,4326 @@
+{
+  "schema": "sa.m11.opendsa-path-manifest.v1",
+  "status": "CANDIDATE_PIPELINE_AUTHORIZED",
+  "pipeline_approval": {
+    "approved_by": "justtodo123",
+    "approved_at": "2026-09-24",
+    "approval_reference": "User instruction: 批准以下范围进入 candidate pipeline",
+    "scope": "RST/en pinned path manifest only; content approval and publication remain unauthorized"
+  },
+  "source_id": "opendsa-main",
+  "revision": "4c183682bbd84b951f2324a36399a3a077250bb9",
+  "candidate_root": "RST/en/",
+  "file_count": 861,
+  "total_bytes": 6246635,
+  "approved": false,
+  "license_review_status": "pending-per-path",
+  "robots_review_status": "not-applicable-git-api-metadata",
+  "files": [
+    {
+      "blob_sha": "0e771092500daed3df7cf205ed027d0615f3e0be",
+      "path": "RST/en/AlgAnal/AlgAnalSummCS2.rst",
+      "size": 908
+    },
+    {
+      "blob_sha": "a3ac607013d0e592ca8af467e60fad82b2b3fb15",
+      "path": "RST/en/AlgAnal/AlgAnalSummCS3.rst",
+      "size": 1021
+    },
+    {
+      "blob_sha": "0ca405d7e73ca4a2630b59a9ca57469841cd02c7",
+      "path": "RST/en/AlgAnal/AnalAsymptotic.rst",
+      "size": 13641
+    },
+    {
+      "blob_sha": "fcf6211a54c14e572acda4d8bbf603d634e81e0f",
+      "path": "RST/en/AlgAnal/AnalCases.rst",
+      "size": 4301
+    },
+    {
+      "blob_sha": "70b3778d22633bd010c371dfe24cc10967b9d795",
+      "path": "RST/en/AlgAnal/AnalChap.rst",
+      "size": 2290
+    },
+    {
+      "blob_sha": "95596b97dd239e079476980e5ace83b810ead249",
+      "path": "RST/en/AlgAnal/AnalCompvsAlg.rst",
+      "size": 8501
+    },
+    {
+      "blob_sha": "7c8e8e6d6f3bfbbadea4f5f6274e0d6e39c29bab",
+      "path": "RST/en/AlgAnal/AnalIntro.rst",
+      "size": 15163
+    },
+    {
+      "blob_sha": "77196970f39462bba5fcc0e973b5f8151163d7f5",
+      "path": "RST/en/AlgAnal/AnalLower.rst",
+      "size": 10207
+    },
+    {
+      "blob_sha": "b5d16983e56ab95486336355fff1f1e63ed7f031",
+      "path": "RST/en/AlgAnal/AnalMisunderstanding.rst",
+      "size": 4932
+    },
+    {
+      "blob_sha": "4c44997a46b5ccea2f42651f8cff9c6d77e0b531",
+      "path": "RST/en/AlgAnal/AnalMultiple.rst",
+      "size": 3473
+    },
+    {
+      "blob_sha": "6e4619e9b1d1a0eb650a91614b2fd6962285b81b",
+      "path": "RST/en/AlgAnal/AnalPrelim.rst",
+      "size": 9425
+    },
+    {
+      "blob_sha": "87bd36325f66cd9c15caa8c8b1f854cfffc1dfea",
+      "path": "RST/en/AlgAnal/AnalProblem.rst",
+      "size": 6244
+    },
+    {
+      "blob_sha": "c73ccbcc427e4f01a91d29ad2a0f551787f6d3a0",
+      "path": "RST/en/AlgAnal/AnalProgram.rst",
+      "size": 11423
+    },
+    {
+      "blob_sha": "cd0f33f5f3a417711401240a7bc2eb555a54c7fb",
+      "path": "RST/en/AlgAnal/AnalSpace.rst",
+      "size": 7606
+    },
+    {
+      "blob_sha": "aac047f5a708052e337b6c858d405e85ae20ac28",
+      "path": "RST/en/AlgAnal/AnalTuning.rst",
+      "size": 9285
+    },
+    {
+      "blob_sha": "af0cd7a83ba94368714db9185ed581c16d7db423",
+      "path": "RST/en/Algorithms/ProofsAlg.rst",
+      "size": 22415
+    },
+    {
+      "blob_sha": "1422585c7d1eadce8d9270f42b9a106b28e91628",
+      "path": "RST/en/Algorithms/ToAIntro.rst",
+      "size": 2246
+    },
+    {
+      "blob_sha": "b93a39c2e9ab8e435f206c0d5cad3f3c4f78a24c",
+      "path": "RST/en/BIO/Dot Matrix.rst",
+      "size": 1344
+    },
+    {
+      "blob_sha": "5811ff7ad7bf76bda0dcbd61dfdf3cfa3cd51ae9",
+      "path": "RST/en/BIO/Global Alignment.rst",
+      "size": 7743
+    },
+    {
+      "blob_sha": "6c67392293c2279b8553109cca53c889f49261c9",
+      "path": "RST/en/BIO/Local Alignment.rst",
+      "size": 2626
+    },
+    {
+      "blob_sha": "595bb634c4ac4c19d7c1426ca76d55fad9c3fa61",
+      "path": "RST/en/BIO/Manhattan.rst",
+      "size": 11459
+    },
+    {
+      "blob_sha": "202117b243054994699b22b565b39e45bb815ade",
+      "path": "RST/en/BIO/Suffix Tree.rst",
+      "size": 655
+    },
+    {
+      "blob_sha": "3293c574b6aaa6decfaa6181422546073eef5f81",
+      "path": "RST/en/BTRecurTutor/BSTCheck.rst",
+      "size": 2406
+    },
+    {
+      "blob_sha": "d2d4ac74cf3cae044289335d431f85ea9cc5c18d",
+      "path": "RST/en/BTRecurTutor/BinaryTreeGuidedInfFlw.rst",
+      "size": 2666
+    },
+    {
+      "blob_sha": "a3c18a2a88c28d705d814a82b66178174a87f90b",
+      "path": "RST/en/BTRecurTutor/BinaryTreeInfFlw.rst",
+      "size": 5656
+    },
+    {
+      "blob_sha": "c84df33adca2fe5872ad9e6d80d1e9dd6d6887cc",
+      "path": "RST/en/BTRecurTutor/MultipleBinaryTrees.rst",
+      "size": 1088
+    },
+    {
+      "blob_sha": "76a34817245634a359ed974e35bc40e1bf7db25b",
+      "path": "RST/en/Background/Estimation.rst",
+      "size": 5125
+    },
+    {
+      "blob_sha": "c85fbb8fdb31daecff54dcf2466b7a5bd37c822f",
+      "path": "RST/en/Background/IntroDSA.rst",
+      "size": 16199
+    },
+    {
+      "blob_sha": "9acbecfc25c381d03e100852ba928f8eac8f8699",
+      "path": "RST/en/Background/Logarithms.rst",
+      "size": 5571
+    },
+    {
+      "blob_sha": "d08b574f322b473d249ee66be1a82967d4180dab",
+      "path": "RST/en/Background/MathpreIntro.rst",
+      "size": 1369
+    },
+    {
+      "blob_sha": "172836ceac1be5b548a9863ba10840363021d206",
+      "path": "RST/en/Background/MathpreSumm.rst",
+      "size": 998
+    },
+    {
+      "blob_sha": "ca6e5c09f1b3fc64df0bfbdab4e1fbf149045c28",
+      "path": "RST/en/Background/MiscMath.rst",
+      "size": 7236
+    },
+    {
+      "blob_sha": "ef8f00bd3f927d845657cb2325f44ce1a42d8283",
+      "path": "RST/en/Background/Proofs.rst",
+      "size": 21644
+    },
+    {
+      "blob_sha": "bf3f235e6d0e4b0543d35c44cdb6d3723eee4938",
+      "path": "RST/en/Background/RecurrenceIntro.rst",
+      "size": 3254
+    },
+    {
+      "blob_sha": "dba4666243db8b9a5553766d159149b6bbd6dcbe",
+      "path": "RST/en/Background/SetDef.rst",
+      "size": 13456
+    },
+    {
+      "blob_sha": "1adb6788d7bff6dd0aa3444cb99744e7522f08e2",
+      "path": "RST/en/Background/Summations.rst",
+      "size": 4401
+    },
+    {
+      "blob_sha": "22e09eb372a7cf976e5637ce9727e26fe468a8c8",
+      "path": "RST/en/Bibliography.rst",
+      "size": 2156
+    },
+    {
+      "blob_sha": "755de1a3705f2080ae1e2678e130011274e6585a",
+      "path": "RST/en/Binary/BST.rst",
+      "size": 11329
+    },
+    {
+      "blob_sha": "7b609e11598fceed9f70915fb5a409b971853bba",
+      "path": "RST/en/Binary/BSTDict.rst",
+      "size": 2452
+    },
+    {
+      "blob_sha": "e2228247872aef5be0aa5458caa06f7ac0c1e4b7",
+      "path": "RST/en/Binary/BinaryChapSumm.rst",
+      "size": 860
+    },
+    {
+      "blob_sha": "f63e49e4a6b4cf5405c2a8254b2a99b968cd2ad3",
+      "path": "RST/en/Binary/BinaryTree.rst",
+      "size": 6270
+    },
+    {
+      "blob_sha": "1b871f55a6a1bec80aaf17537bbb99649f450e16",
+      "path": "RST/en/Binary/BinaryTreeFullThm.rst",
+      "size": 6669
+    },
+    {
+      "blob_sha": "5da923d71adfdee4eff3a370f13668d3e21241c5",
+      "path": "RST/en/Binary/BinaryTreeImpl.rst",
+      "size": 6878
+    },
+    {
+      "blob_sha": "2042c95c9cdef70cd6efc462fa6196ddbe8e6496",
+      "path": "RST/en/Binary/BinaryTreeIntro.rst",
+      "size": 1449
+    },
+    {
+      "blob_sha": "eafa2289ea080ff3fe1ba18d424a436096866877",
+      "path": "RST/en/Binary/BinaryTreeNodeSpace.rst",
+      "size": 5255
+    },
+    {
+      "blob_sha": "3e69ac198bb3dc2b34448ac2c35921e7b9efca33",
+      "path": "RST/en/Binary/BinaryTreeTraversal.rst",
+      "size": 6723
+    },
+    {
+      "blob_sha": "97fbf56175c1e0dfc8e8151b15e6551d7cfa703a",
+      "path": "RST/en/Binary/CompleteTree.rst",
+      "size": 4635
+    },
+    {
+      "blob_sha": "111e9fd0f58ce70b1e99fcc0bf37d38ef88b570c",
+      "path": "RST/en/Binary/Composite.rst",
+      "size": 4544
+    },
+    {
+      "blob_sha": "10fc4ac23da23a6645e2c8f817cd8fda4fb28979",
+      "path": "RST/en/Binary/Heaps.rst",
+      "size": 16540
+    },
+    {
+      "blob_sha": "0d36da90e71eae2d4b46d24300037c4125313ba2",
+      "path": "RST/en/Binary/HeapsTest.rst",
+      "size": 900
+    },
+    {
+      "blob_sha": "beae7f9ec09f196909f1d9d3719f784fda6ef342",
+      "path": "RST/en/Binary/HuffProof.rst",
+      "size": 4599
+    },
+    {
+      "blob_sha": "026e55ec60a721ada59fd534327b22f83850809a",
+      "path": "RST/en/Binary/Huffman.rst",
+      "size": 15617
+    },
+    {
+      "blob_sha": "705c35f4161b7a0bb9d9cd79f8dbd8c218fa1240",
+      "path": "RST/en/Binary/RecursiveDS.rst",
+      "size": 2118
+    },
+    {
+      "blob_sha": "5a0396ff633a39bb0d050c425310174faed6bfd5",
+      "path": "RST/en/Binary/TreeTrie.rst",
+      "size": 2045
+    },
+    {
+      "blob_sha": "7d11b425e3d16432e60621782edc1c8a49120052",
+      "path": "RST/en/Binary/WritingTraversals.rst",
+      "size": 5386
+    },
+    {
+      "blob_sha": "e966c522e9f34a28b86566206be33b19b6d044ee",
+      "path": "RST/en/Biography/CarlGauss.rst",
+      "size": 4192
+    },
+    {
+      "blob_sha": "c7a388f3862a5c47f1255cbbdeecd7dd5d315b16",
+      "path": "RST/en/Biography/FrancisBacon.rst",
+      "size": 2412
+    },
+    {
+      "blob_sha": "aed2a21ca204ba11cb2fb9aa7f827a42779f5bad",
+      "path": "RST/en/Blockchain/BitCoin.rst",
+      "size": 10983
+    },
+    {
+      "blob_sha": "c032a94cea2d0381d7719a39a461d082af454362",
+      "path": "RST/en/Blockchain/BlockchainGlossary.rst",
+      "size": 14939
+    },
+    {
+      "blob_sha": "bbd3e0f4e7ed0c3b7966ccefe2d4850d39b5a58e",
+      "path": "RST/en/Blockchain/Blocks.rst",
+      "size": 5450
+    },
+    {
+      "blob_sha": "1145d25573a179c9d5180aab6c7705ae693d98cc",
+      "path": "RST/en/Blockchain/Consensus.rst",
+      "size": 6499
+    },
+    {
+      "blob_sha": "810fa904ce8499277e5da652d64a3cf1b714e547",
+      "path": "RST/en/Blockchain/Cryptography.rst",
+      "size": 8753
+    },
+    {
+      "blob_sha": "4944f72a21ce210ac4e1d3d3db2ca31cda40997e",
+      "path": "RST/en/Blockchain/Cryptohacking.rst",
+      "size": 7606
+    },
+    {
+      "blob_sha": "c780dc83dcdab165859ad27fc4814b4a8a1c6866",
+      "path": "RST/en/Blockchain/EVMandGAS.rst",
+      "size": 17880
+    },
+    {
+      "blob_sha": "64db736c9b0b64ffc9c475d1c7dc0e524ea97c0c",
+      "path": "RST/en/Blockchain/Ethereum.rst",
+      "size": 7794
+    },
+    {
+      "blob_sha": "420eb1886308d2133513817392f96c2d38a7788a",
+      "path": "RST/en/Blockchain/HardForks.rst",
+      "size": 4923
+    },
+    {
+      "blob_sha": "767d2724b64789e1281aff4d2c254fad4949cea5",
+      "path": "RST/en/Blockchain/Introduction.rst",
+      "size": 9240
+    },
+    {
+      "blob_sha": "1b5240d99d394af227f947271e595549945ab2ce",
+      "path": "RST/en/Blockchain/Ledgers.rst",
+      "size": 4913
+    },
+    {
+      "blob_sha": "2af0eeda0b2f102adb20159f88dd26c32853983c",
+      "path": "RST/en/Blockchain/MerkleTrees.rst",
+      "size": 4797
+    },
+    {
+      "blob_sha": "adbe13179bb4ba33a48b132d3bebe9a115788844",
+      "path": "RST/en/Blockchain/OtherApplications.rst",
+      "size": 3747
+    },
+    {
+      "blob_sha": "bc06a18a4cf2d289adeea17e0324da8ab93252d5",
+      "path": "RST/en/Blockchain/OtherCrypto.rst",
+      "size": 413
+    },
+    {
+      "blob_sha": "a05cd417bb3d7c7d9325f81dca4fa2291a761dec",
+      "path": "RST/en/Blockchain/Permissioned.rst",
+      "size": 3809
+    },
+    {
+      "blob_sha": "4424029c71321b2db08466e6b75ca36e740f5c07",
+      "path": "RST/en/Blockchain/Permissionless.rst",
+      "size": 18290
+    },
+    {
+      "blob_sha": "2ca52e2b9e45b97daa63d2524195eaaf210a5ffc",
+      "path": "RST/en/Blockchain/ProofOfStake.rst",
+      "size": 21569
+    },
+    {
+      "blob_sha": "673c77621a4692744b3737aaa9a68d0765f13627",
+      "path": "RST/en/Blockchain/SmartContracts.rst",
+      "size": 2697
+    },
+    {
+      "blob_sha": "49cbb9ba8bda3017e9f8f59a4296605a23b996fb",
+      "path": "RST/en/Bounds/BoundAdversary.rst",
+      "size": 12159
+    },
+    {
+      "blob_sha": "41310f92282c26c0f345b84135a6b23db9ef96d8",
+      "path": "RST/en/Bounds/BoundMax.rst",
+      "size": 5320
+    },
+    {
+      "blob_sha": "cc84e9e6ff409292764e8ac4f0e56b855f67107c",
+      "path": "RST/en/Bounds/BoundState.rst",
+      "size": 10227
+    },
+    {
+      "blob_sha": "d9247717dfff6f179b80dab05a7f665f56502cc4",
+      "path": "RST/en/Bounds/BoundiBest.rst",
+      "size": 8363
+    },
+    {
+      "blob_sha": "850f8b50cd3d30f5920974aa416f4fe1023576f8",
+      "path": "RST/en/Bounds/SortingOptimal.rst",
+      "size": 7165
+    },
+    {
+      "blob_sha": "805f7ec9e6972652d7838009b935f4ed5269d19a",
+      "path": "RST/en/CS3slides/23Tree.rst",
+      "size": 3188
+    },
+    {
+      "blob_sha": "d8a59954176a875442d142fabc66c58a08c2cccb",
+      "path": "RST/en/CS3slides/AlgAnal.rst",
+      "size": 11468
+    },
+    {
+      "blob_sha": "c306460cf864f001e12f8a1d5e83e9362dbb5fd9",
+      "path": "RST/en/CS3slides/AlgAnal1.rst",
+      "size": 3725
+    },
+    {
+      "blob_sha": "f3b8c4fdaee921a8114a85b8a7119b5106884444",
+      "path": "RST/en/CS3slides/AlgAnal2.rst",
+      "size": 8071
+    },
+    {
+      "blob_sha": "8b62f441d4c17ec06ef9c006b02290f667a7a340",
+      "path": "RST/en/CS3slides/BTrees.rst",
+      "size": 5616
+    },
+    {
+      "blob_sha": "6f0bdb99354d005f9c67615e8e2e716bda06c474",
+      "path": "RST/en/CS3slides/Binary.rst",
+      "size": 6609
+    },
+    {
+      "blob_sha": "816e145b793880f7de7eba150b73aac7f0cd3dff",
+      "path": "RST/en/CS3slides/Coding.rst",
+      "size": 1829
+    },
+    {
+      "blob_sha": "519fa789c0b92381e78bd0975a795f135c63d78a",
+      "path": "RST/en/CS3slides/DesignPatt.rst",
+      "size": 3356
+    },
+    {
+      "blob_sha": "1e9ada1ab86342b049b1bb47c8c1960966126640",
+      "path": "RST/en/CS3slides/ExternalSorting.rst",
+      "size": 9860
+    },
+    {
+      "blob_sha": "a0b4752516c4ff2f2572f907630dea9d8fc52eea",
+      "path": "RST/en/CS3slides/FileProc.rst",
+      "size": 9376
+    },
+    {
+      "blob_sha": "bea8a64da2e20eabb1983fe915fcbdaa39709515",
+      "path": "RST/en/CS3slides/Final.rst",
+      "size": 2904
+    },
+    {
+      "blob_sha": "2fa69e2d2a128176b65b240e87846387b7aeb769",
+      "path": "RST/en/CS3slides/FormattingTest.rst",
+      "size": 656
+    },
+    {
+      "blob_sha": "3181b8816b4dc8327932ab9b6737ff233ca360a8",
+      "path": "RST/en/CS3slides/General.rst",
+      "size": 3288
+    },
+    {
+      "blob_sha": "a1d3e7d1f1791d1d28c26da12d6ea77fa1eadd85",
+      "path": "RST/en/CS3slides/Graphs.rst",
+      "size": 10452
+    },
+    {
+      "blob_sha": "47833330484d9dc11695b5a861c93d953f807a22",
+      "path": "RST/en/CS3slides/Hashing.rst",
+      "size": 11890
+    },
+    {
+      "blob_sha": "b2704e31fbd82086c93487777d28153d1a0f2490",
+      "path": "RST/en/CS3slides/Heaps.rst",
+      "size": 3026
+    },
+    {
+      "blob_sha": "c4616c863dc13120bee095124a47a2e86c0ea7a7",
+      "path": "RST/en/CS3slides/Huffman.rst",
+      "size": 1937
+    },
+    {
+      "blob_sha": "b80b2800792ad02947b97ae65ee4985423a8e876",
+      "path": "RST/en/CS3slides/Interruptions.rst",
+      "size": 2434
+    },
+    {
+      "blob_sha": "ebfcbefa89c7bf938784f3c2854450619efce4c1",
+      "path": "RST/en/CS3slides/Intro.rst",
+      "size": 2288
+    },
+    {
+      "blob_sha": "0bd5f95e2b4b9dea9fbdcf3a3d70afcea528c065",
+      "path": "RST/en/CS3slides/JUnit.rst",
+      "size": 6419
+    },
+    {
+      "blob_sha": "6eaa73b24ec9b1f3d7f1995bbf3e70b4c4d213fc",
+      "path": "RST/en/CS3slides/LinearIndex.rst",
+      "size": 1785
+    },
+    {
+      "blob_sha": "15ba4914161406be4df414c4c983f30812d65f1a",
+      "path": "RST/en/CS3slides/Lists.rst",
+      "size": 6878
+    },
+    {
+      "blob_sha": "5e7b764acd0c05718ce895b9c6d7bfbbbb3c55d9",
+      "path": "RST/en/CS3slides/MTAdvanced.rst",
+      "size": 4319
+    },
+    {
+      "blob_sha": "6edfa672b24c0190b8a8fbff947190a6469e04c0",
+      "path": "RST/en/CS3slides/Math.rst",
+      "size": 1355
+    },
+    {
+      "blob_sha": "d5c2f8f2e9c8162915e9cf0d0ed9eaf0fab3addf",
+      "path": "RST/en/CS3slides/MemManage.rst",
+      "size": 4380
+    },
+    {
+      "blob_sha": "504b4bd7789d6bea9f18407db3ec065b4d1c30b2",
+      "path": "RST/en/CS3slides/Mid1.rst",
+      "size": 1432
+    },
+    {
+      "blob_sha": "0d9cb0c68d3f4c677d5ac6a829a2b82a238cb6ea",
+      "path": "RST/en/CS3slides/Mid2.rst",
+      "size": 1759
+    },
+    {
+      "blob_sha": "b242ec87825de448e39c3b342ee9487e9a19f1f4",
+      "path": "RST/en/CS3slides/OverConstrained.rst",
+      "size": 2497
+    },
+    {
+      "blob_sha": "b3d7a2e8ec610d6540051d8e8d8fc066d0005552",
+      "path": "RST/en/CS3slides/P1.rst",
+      "size": 1439
+    },
+    {
+      "blob_sha": "0fbff2d08e7e14469dcf47e661e629ea6cad4968",
+      "path": "RST/en/CS3slides/P1F25.rst",
+      "size": 3418
+    },
+    {
+      "blob_sha": "55ce5a1f338807952c881154e88fe11eac49f457",
+      "path": "RST/en/CS3slides/P1S26.rst",
+      "size": 6831
+    },
+    {
+      "blob_sha": "31f2b6cc3a53ea25a7d2eeb5b09a02daa1ec251b",
+      "path": "RST/en/CS3slides/P2F25.rst",
+      "size": 2186
+    },
+    {
+      "blob_sha": "b0138ff166257ebd032b0c3c3deab79672e7aca8",
+      "path": "RST/en/CS3slides/P2S26.rst",
+      "size": 2186
+    },
+    {
+      "blob_sha": "897b2c2693307ea395f6c98e71f93b7567b5edfb",
+      "path": "RST/en/CS3slides/P3F25.rst",
+      "size": 2521
+    },
+    {
+      "blob_sha": "4e7c5dbf65444918db6a0428bf0bc4616c77d308",
+      "path": "RST/en/CS3slides/P3S26.rst",
+      "size": 3539
+    },
+    {
+      "blob_sha": "06d59193d58a9cec277a912178472bb6936c40de",
+      "path": "RST/en/CS3slides/P4F25.rst",
+      "size": 2310
+    },
+    {
+      "blob_sha": "5380053e83f8c786478da2b6ea78ee135d370f18",
+      "path": "RST/en/CS3slides/P4S26.rst",
+      "size": 4083
+    },
+    {
+      "blob_sha": "c7981405bf30278076cf73cf71e9894e9a26de4c",
+      "path": "RST/en/CS3slides/Pathways.rst",
+      "size": 3611
+    },
+    {
+      "blob_sha": "09bcddf0aba2327020c9e6c6f4a80772cc5f5389",
+      "path": "RST/en/CS3slides/ProjManage.rst",
+      "size": 6272
+    },
+    {
+      "blob_sha": "2f84683b173f1f44aa9a8ea3b62c68bb864148e4",
+      "path": "RST/en/CS3slides/QuickHash.rst",
+      "size": 4990
+    },
+    {
+      "blob_sha": "a9a081c169e21ff54b3c5a114bd27bac2516b435",
+      "path": "RST/en/CS3slides/Recommender.rst",
+      "size": 3778
+    },
+    {
+      "blob_sha": "2935e80d09b100532b0a6edd2c5300d52c1f1791",
+      "path": "RST/en/CS3slides/SkipList.rst",
+      "size": 1659
+    },
+    {
+      "blob_sha": "4f79e27a01d18a6f8542e322189e7ce082a04b45",
+      "path": "RST/en/CS3slides/Sorting1.rst",
+      "size": 4549
+    },
+    {
+      "blob_sha": "d00d88a9456e0405969eb9673062aeeda92fec72",
+      "path": "RST/en/CS3slides/Sorting2.rst",
+      "size": 3212
+    },
+    {
+      "blob_sha": "d1b7d890654e9ccc63d126f98bb3e8c5e9c86b29",
+      "path": "RST/en/CS3slides/Sorting3.rst",
+      "size": 3317
+    },
+    {
+      "blob_sha": "7c95a20cd818d62fbdfaa4fa2d6edfe4c8de0cf8",
+      "path": "RST/en/CS3slides/Spatial.rst",
+      "size": 3923
+    },
+    {
+      "blob_sha": "6388ca144b516c8422d92e165e0f97772fc257d5",
+      "path": "RST/en/CS3slides/StackQueue.rst",
+      "size": 2858
+    },
+    {
+      "blob_sha": "c8d2ea5e20d387d0b28404004667ac2f655bab63",
+      "path": "RST/en/CS3slides/StressTest.rst",
+      "size": 1002
+    },
+    {
+      "blob_sha": "1d363609261e6ef683ac957accf0062933249fc1",
+      "path": "RST/en/CS3slides/TreeIndex.rst",
+      "size": 2756
+    },
+    {
+      "blob_sha": "3fe1ce3a5db409c5736780f822aaf03ea88fcbb9",
+      "path": "RST/en/CS3slides/Trie.rst",
+      "size": 735
+    },
+    {
+      "blob_sha": "e37a11af726d2074a0a286533260ee8ae9b5af4c",
+      "path": "RST/en/CS3slides/Union-Find.rst",
+      "size": 2176
+    },
+    {
+      "blob_sha": "7d2594ee53eca938b3bc5476b257f05f2b0dc561",
+      "path": "RST/en/CS3slides/VTIntro.rst",
+      "size": 3643
+    },
+    {
+      "blob_sha": "db1117ad8d0ff4ec1bf7cd80bd467ec6429b807d",
+      "path": "RST/en/CS3slides/WFUIntro.rst",
+      "size": 3259
+    },
+    {
+      "blob_sha": "41f6b1a23050f6b56bf277d729ffa47c7a383d80",
+      "path": "RST/en/CS3slides/WFUP1F26.rst",
+      "size": 3493
+    },
+    {
+      "blob_sha": "79d2308e18ba3848ead2eaab1c7af08a45440fac",
+      "path": "RST/en/CS3slides/Week5.rst",
+      "size": 718
+    },
+    {
+      "blob_sha": "805f7ec9e6972652d7838009b935f4ed5269d19a",
+      "path": "RST/en/CS5040slides/23Tree.rst",
+      "size": 3188
+    },
+    {
+      "blob_sha": "8d31206e96fee8dafaa91a104981563138c111a5",
+      "path": "RST/en/CS5040slides/AlgAnal.rst",
+      "size": 10054
+    },
+    {
+      "blob_sha": "b178a9c9b166a5982bf8bcf73ba6b25967c4cede",
+      "path": "RST/en/CS5040slides/BST.rst",
+      "size": 1642
+    },
+    {
+      "blob_sha": "f1bae7c85b57a05fabe5ebf74b8df5bd871928d5",
+      "path": "RST/en/CS5040slides/BTree.rst",
+      "size": 5627
+    },
+    {
+      "blob_sha": "a1f5dac082c93ebef3a725938d7dc775e0a7b63c",
+      "path": "RST/en/CS5040slides/BinTree.rst",
+      "size": 3959
+    },
+    {
+      "blob_sha": "fef8377f4a4341a2f2180e7f5bff22d9a90c1db7",
+      "path": "RST/en/CS5040slides/Binary.rst",
+      "size": 5038
+    },
+    {
+      "blob_sha": "fb71cee3e8d7a8651710ab947e23a47752354500",
+      "path": "RST/en/CS5040slides/Binary3.rst",
+      "size": 2653
+    },
+    {
+      "blob_sha": "512a23e7069bda54bc383fb746087b472ebba599",
+      "path": "RST/en/CS5040slides/Buffering.rst",
+      "size": 9626
+    },
+    {
+      "blob_sha": "9ed704a744068a6f16b635bb8c4c7c8e5d881cc1",
+      "path": "RST/en/CS5040slides/Coding.rst",
+      "size": 2466
+    },
+    {
+      "blob_sha": "b7c60003db8885234fe49e03a081e99004231b54",
+      "path": "RST/en/CS5040slides/Comparison.rst",
+      "size": 1361
+    },
+    {
+      "blob_sha": "b7c3a292a3744cd02e756fab4b3887c8aa3d9321",
+      "path": "RST/en/CS5040slides/CourseIntro.rst",
+      "size": 5386
+    },
+    {
+      "blob_sha": "ce1a0e7617274ac2a1a083d6c3d6b04155691465",
+      "path": "RST/en/CS5040slides/FileProc.rst",
+      "size": 5695
+    },
+    {
+      "blob_sha": "95c2d0daa092e73a576c429c0e8bd4f225164383",
+      "path": "RST/en/CS5040slides/General.rst",
+      "size": 3136
+    },
+    {
+      "blob_sha": "79eef35ca0d878fd631735d312feed81ed659dde",
+      "path": "RST/en/CS5040slides/Graphs.rst",
+      "size": 9126
+    },
+    {
+      "blob_sha": "b2828b9421de562c56b8999bf494d803c364904b",
+      "path": "RST/en/CS5040slides/Hashing.rst",
+      "size": 11419
+    },
+    {
+      "blob_sha": "3b166b646206a2ce2794905e8f3deb809a7f3658",
+      "path": "RST/en/CS5040slides/Heaps.rst",
+      "size": 2309
+    },
+    {
+      "blob_sha": "5f8b45e25cc25654a49c5335e9272896330e3966",
+      "path": "RST/en/CS5040slides/Huffman.rst",
+      "size": 2001
+    },
+    {
+      "blob_sha": "7904ae68b05ea2e270a85e5b1688feba4139f934",
+      "path": "RST/en/CS5040slides/Indexing.rst",
+      "size": 2661
+    },
+    {
+      "blob_sha": "b80b2800792ad02947b97ae65ee4985423a8e876",
+      "path": "RST/en/CS5040slides/Interruptions.rst",
+      "size": 2434
+    },
+    {
+      "blob_sha": "ae8fc01fceae65ce668cc8da4a6a24fbfc0cafcc",
+      "path": "RST/en/CS5040slides/Intro.rst",
+      "size": 2409
+    },
+    {
+      "blob_sha": "0db044b2e14c6286a2438cf5dc47120a16c2c79f",
+      "path": "RST/en/CS5040slides/JUnit.rst",
+      "size": 4537
+    },
+    {
+      "blob_sha": "3077296580c1ab262f8b4fad8d8b4a5b07e22151",
+      "path": "RST/en/CS5040slides/Lists.rst",
+      "size": 7110
+    },
+    {
+      "blob_sha": "18bc0c85ceb9fec3c4069f68b93b091af3bd6cd3",
+      "path": "RST/en/CS5040slides/Math.rst",
+      "size": 5112
+    },
+    {
+      "blob_sha": "337e633bed72b73dc48d553195a63b3057f7f406",
+      "path": "RST/en/CS5040slides/MemManage.rst",
+      "size": 4441
+    },
+    {
+      "blob_sha": "40680f57c7ac88a4a94ca94f8863f9d599ff8d40",
+      "path": "RST/en/CS5040slides/Mid1.rst",
+      "size": 741
+    },
+    {
+      "blob_sha": "ed285784dd5f8275746e8bf344182dcf3cf4cb45",
+      "path": "RST/en/CS5040slides/Mid2.rst",
+      "size": 1211
+    },
+    {
+      "blob_sha": "801a025e83f1a88eb59e3c3b4819a2309a424368",
+      "path": "RST/en/CS5040slides/Midterm1.rst",
+      "size": 465
+    },
+    {
+      "blob_sha": "7cc039f8dd23e47efb418ae9d48d68d8a5825581",
+      "path": "RST/en/CS5040slides/Overconstrained.rst",
+      "size": 2510
+    },
+    {
+      "blob_sha": "ce716e49f7a635606cdbc8281017751c0a696f9a",
+      "path": "RST/en/CS5040slides/P1.rst",
+      "size": 5969
+    },
+    {
+      "blob_sha": "cc4d794e59b7d2a80acedd729a0c84c4ed67c14f",
+      "path": "RST/en/CS5040slides/P1Hash.rst",
+      "size": 2279
+    },
+    {
+      "blob_sha": "27606bcf0cdfcad61bdb488080150e885260f914",
+      "path": "RST/en/CS5040slides/P2.rst",
+      "size": 5294
+    },
+    {
+      "blob_sha": "b4afa5af7a2ecb65764755ffdfce8fdbd8b4214e",
+      "path": "RST/en/CS5040slides/P3.rst",
+      "size": 2596
+    },
+    {
+      "blob_sha": "b6bb9a8ef647fcdb55a937f421c876ca62d7767c",
+      "path": "RST/en/CS5040slides/P4.rst",
+      "size": 5914
+    },
+    {
+      "blob_sha": "cfe10b05751c98a236f4ae842f2b4058e1a3a8e7",
+      "path": "RST/en/CS5040slides/Pointers.rst",
+      "size": 2512
+    },
+    {
+      "blob_sha": "c92cb7bc10f7b7cfc74bb00dc3922873799a20d1",
+      "path": "RST/en/CS5040slides/ProjManage.rst",
+      "size": 8308
+    },
+    {
+      "blob_sha": "2f84683b173f1f44aa9a8ea3b62c68bb864148e4",
+      "path": "RST/en/CS5040slides/QuickHash.rst",
+      "size": 4990
+    },
+    {
+      "blob_sha": "c844329367be929062e1cb77d3f0f691f507015c",
+      "path": "RST/en/CS5040slides/SkipList.rst",
+      "size": 1449
+    },
+    {
+      "blob_sha": "47afc31bcca04ceae6330dcee6fa24cd394e9645",
+      "path": "RST/en/CS5040slides/Sorting1.rst",
+      "size": 4554
+    },
+    {
+      "blob_sha": "4bcf9972cf12aeb695f75528ea0d347362397e2c",
+      "path": "RST/en/CS5040slides/Sorting2.rst",
+      "size": 3086
+    },
+    {
+      "blob_sha": "c464741cc7f5c2b255eb2da8f91302d9a3961561",
+      "path": "RST/en/CS5040slides/Sorting3.rst",
+      "size": 3371
+    },
+    {
+      "blob_sha": "f36ff1914415f160778f4e5e49ec278e3a09c1c2",
+      "path": "RST/en/CS5040slides/StackQueue.rst",
+      "size": 2983
+    },
+    {
+      "blob_sha": "cd45ee8c101b7247fb60182382755e1fc12f4880",
+      "path": "RST/en/CS5040slides/TTTree.rst",
+      "size": 1844
+    },
+    {
+      "blob_sha": "5d7b14590f3e4cda88652afa6c91d84fff0a2d4a",
+      "path": "RST/en/CS5040slides/Testing.rst",
+      "size": 3051
+    },
+    {
+      "blob_sha": "26fce2ec3111697d4ff82c53cc7494e7df31da68",
+      "path": "RST/en/CS5040slides/Trie.rst",
+      "size": 767
+    },
+    {
+      "blob_sha": "9588807276df61a97cdee2741df1b5d5c87aea07",
+      "path": "RST/en/CS5040slides/Union-Find.rst",
+      "size": 1824
+    },
+    {
+      "blob_sha": "79d2308e18ba3848ead2eaab1c7af08a45440fac",
+      "path": "RST/en/CS5040slides/Week5.rst",
+      "size": 718
+    },
+    {
+      "blob_sha": "195a22ad4fbb4eb67a37e57f16c890ee922b2263",
+      "path": "RST/en/CT/Iteration.rst",
+      "size": 14308
+    },
+    {
+      "blob_sha": "4900f553702406b44e84661f955a0a8dae3f4ee7",
+      "path": "RST/en/CT/IterationAV.rst",
+      "size": 1158
+    },
+    {
+      "blob_sha": "31c1e66bca4c04aa0a6c47511713f3f6e8c4e4bf",
+      "path": "RST/en/CT/IterationEX1.rst",
+      "size": 522
+    },
+    {
+      "blob_sha": "fb20ab49a5183ee02958da106a7e76173d310259",
+      "path": "RST/en/CT/IterationEX2.rst",
+      "size": 529
+    },
+    {
+      "blob_sha": "879616b5a2aca520e5eac16d77e5b7ecc9a1b10f",
+      "path": "RST/en/CommandLine/About.rst",
+      "size": 10776
+    },
+    {
+      "blob_sha": "e497b2b1f0c7563a2a9526526ebc14c55fdb0fbe",
+      "path": "RST/en/CommandLine/Exercisescmd.rst",
+      "size": 6118
+    },
+    {
+      "blob_sha": "295836bbee0fab0f83e5d494e399ab7c070bf720",
+      "path": "RST/en/Database/AggregateFunctions.rst",
+      "size": 439
+    },
+    {
+      "blob_sha": "660afef24f845083aab3bdee2a2fa165082f0a3e",
+      "path": "RST/en/Database/DBDemo.rst",
+      "size": 16988
+    },
+    {
+      "blob_sha": "c624f1e8151741ce38ff356fc344cbe669edd2fd",
+      "path": "RST/en/Database/DatabaseApplication.rst",
+      "size": 1071
+    },
+    {
+      "blob_sha": "9410cc26c0cd8d5ce52357516550783b2e153d82",
+      "path": "RST/en/Database/DemoIntro.rst",
+      "size": 16994
+    },
+    {
+      "blob_sha": "227f5e19b3ec42a17e14db834057fd6ba2323078",
+      "path": "RST/en/Database/DesignEfficiency.rst",
+      "size": 1535
+    },
+    {
+      "blob_sha": "1df00af6b4d6d9f1ce4d05e0a599656f781b0002",
+      "path": "RST/en/Database/DesignProcess.rst",
+      "size": 1696
+    },
+    {
+      "blob_sha": "59b354bb0448d5221e9b5f394e821f28ee9658b1",
+      "path": "RST/en/Database/ERDComponents.rst",
+      "size": 9209
+    },
+    {
+      "blob_sha": "d71400d2fbb2ca28220297c2865dd0b2cfe86656",
+      "path": "RST/en/Database/ERDDefinition.rst",
+      "size": 1412
+    },
+    {
+      "blob_sha": "284d529e5b52e87cb31b89c1c51646f5ad006d1e",
+      "path": "RST/en/Database/ERDExapmle.rst",
+      "size": 3348
+    },
+    {
+      "blob_sha": "3bc1b867edbb894378dd2d80b2ab7d64165ad01e",
+      "path": "RST/en/Database/ERDMappingToRDD.rst",
+      "size": 1289
+    },
+    {
+      "blob_sha": "f83f7d4ef977c0fa308a0a3b1b1e24586cfc7bc3",
+      "path": "RST/en/Database/ERDNotations.rst",
+      "size": 4575
+    },
+    {
+      "blob_sha": "c1c4785d9c502a4e661135169fd1ca76b5433dff",
+      "path": "RST/en/Database/ERDRelationships.rst",
+      "size": 10181
+    },
+    {
+      "blob_sha": "139597f9cb07c5d48bed18984ec4747f4b4f3438",
+      "path": "RST/en/Database/ERDTORDDExample.rst",
+      "size": 2
+    },
+    {
+      "blob_sha": "be1b0ee453f6fe1d125f9a5a438de3991f565f45",
+      "path": "RST/en/Database/ERDTernaryExample.rst",
+      "size": 3880
+    },
+    {
+      "blob_sha": "d52f4d4557ff85a88bd06ecaec122e5e09cfd34b",
+      "path": "RST/en/Database/ERDiagram.rst",
+      "size": 1617
+    },
+    {
+      "blob_sha": "4a3981f0cafe7f89529536a2a4f47a2c605be977",
+      "path": "RST/en/Database/Exersice.rst",
+      "size": 2638
+    },
+    {
+      "blob_sha": "8dc5b3c201595537cbfbdb1f1d518b49776caef2",
+      "path": "RST/en/Database/ModelConstraint.rst",
+      "size": 595
+    },
+    {
+      "blob_sha": "cb8fb771f185a1ecfb74a501cad79ca698de193f",
+      "path": "RST/en/Database/MoreExamples.rst",
+      "size": 1400
+    },
+    {
+      "blob_sha": "22941097ec5fe9d90a93ff1e4eaec1811866296b",
+      "path": "RST/en/Database/NestedQueries.rst",
+      "size": 657
+    },
+    {
+      "blob_sha": "8001d244adb9f8f89fdd8f2a7020286cafa4893b",
+      "path": "RST/en/Database/RDDBasicOperations.rst",
+      "size": 2241
+    },
+    {
+      "blob_sha": "2b42877a6b2de9451d14d004c88744f091608499",
+      "path": "RST/en/Database/RDDConstraints.rst",
+      "size": 4730
+    },
+    {
+      "blob_sha": "a0e0ca8af44ad544cbf2a638f387c1c41d9b0586",
+      "path": "RST/en/Database/RDDDefinition.rst",
+      "size": 1055
+    },
+    {
+      "blob_sha": "fa6567008dd1dcac2e3eecc49880d3a9d2fb451e",
+      "path": "RST/en/Database/RDDVsERD.rst",
+      "size": 2581
+    },
+    {
+      "blob_sha": "93cfc5454e2f417112e1927bcf4d69f00523e9cc",
+      "path": "RST/en/Database/RelationalModel.rst",
+      "size": 4435
+    },
+    {
+      "blob_sha": "010cef4580db16493ff2008f63ed5f5a9b5e4c9f",
+      "path": "RST/en/Database/ReviewQuestions.rst",
+      "size": 324
+    },
+    {
+      "blob_sha": "bb660fcd9fad459f8100736805ac825065005159",
+      "path": "RST/en/Database/SQLDelete.rst",
+      "size": 303
+    },
+    {
+      "blob_sha": "b17eeadbbb2d685ce49b6e955392f11385bc85af",
+      "path": "RST/en/Database/SQLInsert.rst",
+      "size": 479
+    },
+    {
+      "blob_sha": "1a3c26c554c9f556e5d43296c2a1b7f7088b9044",
+      "path": "RST/en/Database/SQLIntroduction.rst",
+      "size": 600
+    },
+    {
+      "blob_sha": "6879cb8d98b651d7f6c4feec827cbfe1834df546",
+      "path": "RST/en/Database/SQLJoin.rst",
+      "size": 582
+    },
+    {
+      "blob_sha": "31c58daec7adc590e4ea00be37bfb886b0bf9ba7",
+      "path": "RST/en/Database/SQLSelect.rst",
+      "size": 884
+    },
+    {
+      "blob_sha": "d50ce2bb2f157b3a021c883918258fec9f76ce4e",
+      "path": "RST/en/Database/SQLUpdate.rst",
+      "size": 304
+    },
+    {
+      "blob_sha": "18f57c69031586033fc7009ca7e1ca8300805aad",
+      "path": "RST/en/DeformsTesting/DeformsDemoCompactProblem.rst",
+      "size": 591
+    },
+    {
+      "blob_sha": "42fdb3f66c981292bfb62668b38ddb43934cfd7d",
+      "path": "RST/en/DeformsTesting/DeformsDifficultExample.rst",
+      "size": 614
+    },
+    {
+      "blob_sha": "602c298fd5d9cf2acb316ef1cfd7f2dfcb9c9ab9",
+      "path": "RST/en/DeformsTesting/DeformsExample.rst",
+      "size": 608
+    },
+    {
+      "blob_sha": "7dc6dd94c834656816ca5c1d6b0c92fad2fc356a",
+      "path": "RST/en/DeformsTesting/DeformsExamplenonscroll.rst",
+      "size": 631
+    },
+    {
+      "blob_sha": "054eab8a12708773ec4356e3184b53c09b94acbd",
+      "path": "RST/en/DeformsTesting/DeformsModerateExample.rst",
+      "size": 610
+    },
+    {
+      "blob_sha": "3ec1c5bb05e286af4f7e01327e99b04ce363c6b3",
+      "path": "RST/en/DeformsTesting/DeformsSimpleCompactProblem.rst",
+      "size": 593
+    },
+    {
+      "blob_sha": "ac6587c2f16efe66f3ef92055a8d676ae43b9105",
+      "path": "RST/en/DeformsTesting/NotDeformsKA.rst",
+      "size": 596
+    },
+    {
+      "blob_sha": "c29fa5ef9a202f4216c2ce4758de24b21380cfec",
+      "path": "RST/en/DeformsTesting/S23clevispart1.rst",
+      "size": 592
+    },
+    {
+      "blob_sha": "58fc51d84b9a40bf2778e5a021175e3a1fa2808f",
+      "path": "RST/en/DeformsTesting/S23clevispart2.rst",
+      "size": 592
+    },
+    {
+      "blob_sha": "c38accbb2ae71e0c409d883b7ccf0b2f4afc70f0",
+      "path": "RST/en/DeformsTesting/S23clevispart3.rst",
+      "size": 592
+    },
+    {
+      "blob_sha": "f5c53e4ae7c87e7cd7ee3c1565f146335c51868e",
+      "path": "RST/en/DeformsTesting/S23deformsSimplepart2.rst",
+      "size": 606
+    },
+    {
+      "blob_sha": "e67da3898f924d87ba96cb3594ce83f4c9bef667",
+      "path": "RST/en/DeformsTesting/S23difficultpart1.rst",
+      "size": 603
+    },
+    {
+      "blob_sha": "099ef8fb9a2176d457f6d35f4f868d25a47e67ab",
+      "path": "RST/en/DeformsTesting/S23difficultpart2.rst",
+      "size": 603
+    },
+    {
+      "blob_sha": "fe20c56c42edad7871391d7a81f03553ae171795",
+      "path": "RST/en/DeformsTesting/S23problem5part1.rst",
+      "size": 595
+    },
+    {
+      "blob_sha": "7bceb63029368e51958e849253c5eaf71837d93c",
+      "path": "RST/en/DeformsTesting/S23problem5part2.rst",
+      "size": 595
+    },
+    {
+      "blob_sha": "ee79ab02467bc619f1c2225dded6bf59948bdb79",
+      "path": "RST/en/DeformsTesting/deformsf2020p1.rst",
+      "size": 572
+    },
+    {
+      "blob_sha": "810f093a584dbfe9595c7e51f74f8d10d96bf8d8",
+      "path": "RST/en/DeformsTesting/deformsf2020p10.rst",
+      "size": 577
+    },
+    {
+      "blob_sha": "befe51341b3263cb7816605f6d9fa2c950edd0f7",
+      "path": "RST/en/DeformsTesting/deformsf2020p2.rst",
+      "size": 572
+    },
+    {
+      "blob_sha": "b38ead73c0c2313035766d3ff357bb2a44be9eaf",
+      "path": "RST/en/DeformsTesting/deformsf2020p3.rst",
+      "size": 572
+    },
+    {
+      "blob_sha": "7611fc06e918cbfbf8eff4d635f024c49ee9ed5d",
+      "path": "RST/en/DeformsTesting/deformsf2020p4.rst",
+      "size": 572
+    },
+    {
+      "blob_sha": "0baab7bf836cf8343cdc1e047d3411fcadb45c23",
+      "path": "RST/en/DeformsTesting/deformsf2020p5.rst",
+      "size": 572
+    },
+    {
+      "blob_sha": "ae2e52a3ea28f23027584fdba641fd5296346e9b",
+      "path": "RST/en/DeformsTesting/deformsf2020p6.rst",
+      "size": 572
+    },
+    {
+      "blob_sha": "1a38993c95f26bdb90864492dc4a9f1977befeaf",
+      "path": "RST/en/DeformsTesting/deformsf2020p7.rst",
+      "size": 572
+    },
+    {
+      "blob_sha": "f5d71b8932c20377c88471981591b7ecae611306",
+      "path": "RST/en/DeformsTesting/deformsf2020p8.rst",
+      "size": 572
+    },
+    {
+      "blob_sha": "56350a058d19367cc8f88227fdc071c5a6f17561",
+      "path": "RST/en/DeformsTesting/deformsf2020p9.rst",
+      "size": 572
+    },
+    {
+      "blob_sha": "3289cad02b8bfe2048bfc5e007df7362b7bae8a4",
+      "path": "RST/en/DeformsTesting/f2020p8Compact.rst",
+      "size": 579
+    },
+    {
+      "blob_sha": "1735ddc09e5c62ddc786132ff9b63cb531c29fb4",
+      "path": "RST/en/DeformsTesting/sample.rst",
+      "size": 554
+    },
+    {
+      "blob_sha": "ca99cb983d27ce78201b4794521587b247edb3c0",
+      "path": "RST/en/Design/ADT.rst",
+      "size": 13377
+    },
+    {
+      "blob_sha": "a31736aa74e2b082c736859f51fe81f526071904",
+      "path": "RST/en/Design/Comparison.rst",
+      "size": 8300
+    },
+    {
+      "blob_sha": "e3861301688c11a64159131baf95f99e8c37190a",
+      "path": "RST/en/Design/DesignAltList.rst",
+      "size": 2222
+    },
+    {
+      "blob_sha": "70eabec32810131e7d6496d4a1c39b9b58e75841",
+      "path": "RST/en/Design/DesignPatterns.rst",
+      "size": 11477
+    },
+    {
+      "blob_sha": "bcea1a4d7e1cedebbdd147087dea1a4dc615a9f4",
+      "path": "RST/en/Design/Dictionary.rst",
+      "size": 8959
+    },
+    {
+      "blob_sha": "071428668f8ce83a3361428afcf9afd164ebe635",
+      "path": "RST/en/Design/IntroOO.rst",
+      "size": 17283
+    },
+    {
+      "blob_sha": "301ce828b31abd78f785f0291c9a76af08f9a70d",
+      "path": "RST/en/Design/IntroProcess.rst",
+      "size": 19237
+    },
+    {
+      "blob_sha": "0458b461d168a9a056933c0a60258f6f62cafea6",
+      "path": "RST/en/Design/IntroUML.rst",
+      "size": 13911
+    },
+    {
+      "blob_sha": "1ffbb7ab14be4a37712635410c8b31a40dd6b929",
+      "path": "RST/en/Development/BinaryTreeSumm.rst",
+      "size": 1648
+    },
+    {
+      "blob_sha": "d544b6cdad97e0cf018d58abc2325b92a10573c6",
+      "path": "RST/en/Development/EditDistance.rst",
+      "size": 11553
+    },
+    {
+      "blob_sha": "9aaa8cd29e2ca54911c9d775563dc0fdaa2b73c5",
+      "path": "RST/en/Development/GenTreeImplement.rst",
+      "size": 11348
+    },
+    {
+      "blob_sha": "07b49697cf9ea4e1ebb882c86f1a08383abbcd4f",
+      "path": "RST/en/Development/Kary.rst",
+      "size": 2200
+    },
+    {
+      "blob_sha": "f3362699c80939c3c87657ef98334b985e69e3cd",
+      "path": "RST/en/Development/Knapsack.rst",
+      "size": 12275
+    },
+    {
+      "blob_sha": "33ec0cf1874bf024bee1335b2c3c88f6fd2328f0",
+      "path": "RST/en/Development/LambdaCalculus.rst",
+      "size": 10625
+    },
+    {
+      "blob_sha": "f35bd064e0a9b8a834fb64554d097ce92cac8a7c",
+      "path": "RST/en/Development/MMPerformance2.rst",
+      "size": 744
+    },
+    {
+      "blob_sha": "c1ecb629510371d76e0dbf65b1ac290f8775a35d",
+      "path": "RST/en/Development/NPSudoku.rst",
+      "size": 7717
+    },
+    {
+      "blob_sha": "9b3e6cad4eda2f9580be5731e54e54c69b781007",
+      "path": "RST/en/Development/NpCompletenessProofs.rst",
+      "size": 1129
+    },
+    {
+      "blob_sha": "4b34d336461b6d515220672c19788e1c998f019c",
+      "path": "RST/en/Development/PerfectHash.rst",
+      "size": 1554
+    },
+    {
+      "blob_sha": "85c847ed00700d6ac276e17f27119cdf786fc92a",
+      "path": "RST/en/Development/RefParam.rst",
+      "size": 8809
+    },
+    {
+      "blob_sha": "45be4d1d8009adf340c89e47d98fdd34f7188bd9",
+      "path": "RST/en/Development/SetSearch.rst",
+      "size": 3454
+    },
+    {
+      "blob_sha": "df6bec71f49bdab9598f15e237de252ec557f023",
+      "path": "RST/en/Development/SortProgExer.rst",
+      "size": 3240
+    },
+    {
+      "blob_sha": "57bf4b6b95451d9707902558fa780a711fcc9798",
+      "path": "RST/en/Development/SpliceCollections.rst",
+      "size": 2671
+    },
+    {
+      "blob_sha": "ff390b3e9d2665d1e66b8797fe0eba481c03184f",
+      "path": "RST/en/Development/StringSearchBoyerMoore.rst",
+      "size": 7069
+    },
+    {
+      "blob_sha": "dbb5f687cf1feeb56c7edbe718759fb296cf9d75",
+      "path": "RST/en/Development/StringSearchKMP.rst",
+      "size": 6245
+    },
+    {
+      "blob_sha": "75ba64a9481fdc96cdf26f2dd53cac8852496ae9",
+      "path": "RST/en/Development/StringSearchRabinKarp.rst",
+      "size": 3010
+    },
+    {
+      "blob_sha": "b3ad529449550051a7eeca1680149389018ebacb",
+      "path": "RST/en/Development/ToDo.rst",
+      "size": 8422
+    },
+    {
+      "blob_sha": "2aae450677daf3843c73836f29bd5595fbf826fe",
+      "path": "RST/en/Development/splice_codecheck.rst",
+      "size": 1346
+    },
+    {
+      "blob_sha": "38e76a81c48b79c3d8b3a6d4f6444ad6940e8890",
+      "path": "RST/en/FLSlides/CFL.rst",
+      "size": 16860
+    },
+    {
+      "blob_sha": "1ff72fc9c1f77276ffdcd0693c5ac2a6753f8ee2",
+      "path": "RST/en/FLSlides/CFLClosure.rst",
+      "size": 3464
+    },
+    {
+      "blob_sha": "ba226f92f6a7db0446aa43403bb598254790c689",
+      "path": "RST/en/FLSlides/CFLProp.rst",
+      "size": 7620
+    },
+    {
+      "blob_sha": "a5d49a1b4151d20198b2b51bbd4f59b4c190be50",
+      "path": "RST/en/FLSlides/CFLSimp.rst",
+      "size": 14791
+    },
+    {
+      "blob_sha": "bf2085d0511abe577fc33590913841faeb79b853",
+      "path": "RST/en/FLSlides/DFA.rst",
+      "size": 6175
+    },
+    {
+      "blob_sha": "28646b4dc027410f4b0c2c851b0f2ae7019a93f4",
+      "path": "RST/en/FLSlides/DFAprops.rst",
+      "size": 3049
+    },
+    {
+      "blob_sha": "533d0f005675b03c8a56c0d968498713cefcb676",
+      "path": "RST/en/FLSlides/DPDA.rst",
+      "size": 5479
+    },
+    {
+      "blob_sha": "9fa9f83bea8a4820946e7eb0206285d38f9132af",
+      "path": "RST/en/FLSlides/DPDAGrammar.rst",
+      "size": 4640
+    },
+    {
+      "blob_sha": "934eb9725fe6a372afd8cd763ca16357bcb9e775",
+      "path": "RST/en/FLSlides/FLConcepts.rst",
+      "size": 4205
+    },
+    {
+      "blob_sha": "d207e0f545577e98da6d069b3ca2c25f33275b6f",
+      "path": "RST/en/FLSlides/FLIntro.rst",
+      "size": 6778
+    },
+    {
+      "blob_sha": "845e3192f81973791e5a4679c1bb7401d925c086",
+      "path": "RST/en/FLSlides/Minimization.rst",
+      "size": 3374
+    },
+    {
+      "blob_sha": "a3f1f2906492de6e15a4c916a111282527e36007",
+      "path": "RST/en/FLSlides/NFA.rst",
+      "size": 7294
+    },
+    {
+      "blob_sha": "ccd5af941765f8f11c4b182c09fa1bb9e1c03e02",
+      "path": "RST/en/FLSlides/NRClosure.rst",
+      "size": 3771
+    },
+    {
+      "blob_sha": "905682f864b807c26ae7d88c8bb5adc3c0f8ef5a",
+      "path": "RST/en/FLSlides/NonRegular.rst",
+      "size": 14739
+    },
+    {
+      "blob_sha": "eb09d8c2214bea8826e14d6152276d513f0aab55",
+      "path": "RST/en/FLSlides/PDA.rst",
+      "size": 7236
+    },
+    {
+      "blob_sha": "2363cbcbba3df5668b692cebc6e41d3269ad48ce",
+      "path": "RST/en/FLSlides/PDACFL.rst",
+      "size": 4985
+    },
+    {
+      "blob_sha": "d4e7576f7d823fc6a8462b5dec9efee45f793877",
+      "path": "RST/en/FLSlides/ParseIntro.rst",
+      "size": 17926
+    },
+    {
+      "blob_sha": "36ecabc847154a70f6f1c0f382a2d4773472d298",
+      "path": "RST/en/FLSlides/Reduction.rst",
+      "size": 14991
+    },
+    {
+      "blob_sha": "c0cde4d6332622a5c73d318ae7314f6ece5207ff",
+      "path": "RST/en/FLSlides/RegClosure.rst",
+      "size": 5641
+    },
+    {
+      "blob_sha": "b13ec7be5049a2f5b4c6cf53faae90c65c442a61",
+      "path": "RST/en/FLSlides/RegEx.rst",
+      "size": 11189
+    },
+    {
+      "blob_sha": "8db6b9c787cb7052e079b161225fe870f7c44b77",
+      "path": "RST/en/FLSlides/RegGram.rst",
+      "size": 4240
+    },
+    {
+      "blob_sha": "659def3afd519cc92f1dd273d4f5e03b671e4cce",
+      "path": "RST/en/FLSlides/Theory.rst",
+      "size": 1486
+    },
+    {
+      "blob_sha": "9813a0505bc14d2413135ac04ea01f64c73e0659",
+      "path": "RST/en/FLSlides/Turing.rst",
+      "size": 7956
+    },
+    {
+      "blob_sha": "68905501f1c248f5bed3893778fbf252eaba6e3d",
+      "path": "RST/en/FLSlides/TuringCombine.rst",
+      "size": 4328
+    },
+    {
+      "blob_sha": "eb188a419543560f274bcd092af524b68ea2b5b9",
+      "path": "RST/en/FLSlides/TuringDecide.rst",
+      "size": 2512
+    },
+    {
+      "blob_sha": "4071695410a9c4c9d1e4c908d093a300571d1cd9",
+      "path": "RST/en/FLSlides/TuringExtend.rst",
+      "size": 5340
+    },
+    {
+      "blob_sha": "2c3d09977aa88809daead0e44ebdd166f47f0843",
+      "path": "RST/en/Files/BuffPool.rst",
+      "size": 20463
+    },
+    {
+      "blob_sha": "fd7072093bda9c1edb4e535cd0b148d789f3b2bb",
+      "path": "RST/en/Files/DiskDriveOldExample.rst",
+      "size": 4173
+    },
+    {
+      "blob_sha": "233a4050121063613f7af2eee2f9b35060c0788a",
+      "path": "RST/en/Files/Diskdrive.rst",
+      "size": 17055
+    },
+    {
+      "blob_sha": "07722560554f998daa158279d5d05e27a60554d4",
+      "path": "RST/en/Files/ExternalSort.rst",
+      "size": 31653
+    },
+    {
+      "blob_sha": "4ca620bf548e1c344bd09790ee05cff1bae7f5dc",
+      "path": "RST/en/Files/FileProc.rst",
+      "size": 2140
+    },
+    {
+      "blob_sha": "3c82583e280f342026f90ed90c0032f8b27c9b6f",
+      "path": "RST/en/Files/FileProg.rst",
+      "size": 2735
+    },
+    {
+      "blob_sha": "d5cc24593a2f04d57c01c68f96ce5fe3260abebe",
+      "path": "RST/en/Files/Secondary.rst",
+      "size": 6563
+    },
+    {
+      "blob_sha": "ec5f3bcd8a50289483b0910204216cce6855e747",
+      "path": "RST/en/General/GenTreeIntro.rst",
+      "size": 7738
+    },
+    {
+      "blob_sha": "e88b6ea58de6e702839bb7a1da2aadafd555bedb",
+      "path": "RST/en/General/SequentialRep.rst",
+      "size": 9865
+    },
+    {
+      "blob_sha": "a3330ecf0bfafc88eca11cc2e2a60ca3e40180d4",
+      "path": "RST/en/General/UnionFind.rst",
+      "size": 14396
+    },
+    {
+      "blob_sha": "07894510692e8505b1e413842e4fac500420247e",
+      "path": "RST/en/Git/AboutGit.rst",
+      "size": 9268
+    },
+    {
+      "blob_sha": "23123119d7f5ffa3d8206f6868f3c4cadfb37c62",
+      "path": "RST/en/Git/ExercisesGit.rst",
+      "size": 6795
+    },
+    {
+      "blob_sha": "d92590acf2812c5b91f04a427c584129a6214631",
+      "path": "RST/en/Glossary.rst",
+      "size": 227206
+    },
+    {
+      "blob_sha": "4485deea42d5a497a8e72cd64684dc2c58d17958",
+      "path": "RST/en/Graph/Floyd.rst",
+      "size": 4391
+    },
+    {
+      "blob_sha": "156e84060beb3a3c463556b780df55ba72904d1c",
+      "path": "RST/en/Graph/GraphCM.rst",
+      "size": 717
+    },
+    {
+      "blob_sha": "5ef051558f56fc99ac48a04ba9b2a9c53deefb43",
+      "path": "RST/en/Graph/GraphImpl.rst",
+      "size": 5951
+    },
+    {
+      "blob_sha": "d726c093bbb910fc46e167e5d0ce2e5341f370ab",
+      "path": "RST/en/Graph/GraphIntro.rst",
+      "size": 13967
+    },
+    {
+      "blob_sha": "4b066e002f13fb51228f95d4722efdcf8a218826",
+      "path": "RST/en/Graph/GraphShortest.rst",
+      "size": 10761
+    },
+    {
+      "blob_sha": "1831eb579a27265d07e61405abcd30313a540d04",
+      "path": "RST/en/Graph/GraphTopsort.rst",
+      "size": 5842
+    },
+    {
+      "blob_sha": "dcee2b2a590effd690fc6ee8f685f3f432babeca",
+      "path": "RST/en/Graph/GraphTraversal.rst",
+      "size": 7430
+    },
+    {
+      "blob_sha": "ed3b76b869c6f8263b567ef85a032df25aa1e67f",
+      "path": "RST/en/Graph/Kruskal.rst",
+      "size": 3007
+    },
+    {
+      "blob_sha": "45e2540b9eb37fc6384d1f6930f8307d5cdcfaa4",
+      "path": "RST/en/Graph/MCST.rst",
+      "size": 8425
+    },
+    {
+      "blob_sha": "4c2e0175a33b24838dd9afcfbc4832c89032d944",
+      "path": "RST/en/Graphics/GraphicsTest.rst",
+      "size": 1370
+    },
+    {
+      "blob_sha": "723dffdd7cf4f34391ffd82786ac8442affab5cb",
+      "path": "RST/en/Graphics/HelloWorldSetup.rst",
+      "size": 3562
+    },
+    {
+      "blob_sha": "28597490aae96528511f5f9403587272678a390d",
+      "path": "RST/en/Hashing/BucketHash.rst",
+      "size": 4426
+    },
+    {
+      "blob_sha": "b27ed690120cfb1142edc41d97db9e2dd4ab6fdb",
+      "path": "RST/en/Hashing/HashAnal.rst",
+      "size": 6813
+    },
+    {
+      "blob_sha": "fcc53c4d06f772ddad472ee7d21b53c47a1f67b8",
+      "path": "RST/en/Hashing/HashCImproved.rst",
+      "size": 13928
+    },
+    {
+      "blob_sha": "bd91d2dd63205dbc5064877d62701c5ddfbbe91e",
+      "path": "RST/en/Hashing/HashCSimple.rst",
+      "size": 5561
+    },
+    {
+      "blob_sha": "b7488df2e0b269e82ea442a3c736973febb47ffa",
+      "path": "RST/en/Hashing/HashDel.rst",
+      "size": 4964
+    },
+    {
+      "blob_sha": "1f6a5d8b86cfaab1e88f3fb5f1913d79bc47700b",
+      "path": "RST/en/Hashing/HashFunc.rst",
+      "size": 7020
+    },
+    {
+      "blob_sha": "fa909727da44a7ba9ba3f018c087fa2e2c0e0310",
+      "path": "RST/en/Hashing/HashFuncExamp.rst",
+      "size": 11878
+    },
+    {
+      "blob_sha": "f0b69622c32c36e6d24f2b988326dfaae14ac614",
+      "path": "RST/en/Hashing/HashIntro.rst",
+      "size": 5278
+    },
+    {
+      "blob_sha": "4ad5f284442b36f90ccb6a58ec25da8bdb24e0a0",
+      "path": "RST/en/Hashing/HashSumm.rst",
+      "size": 1012
+    },
+    {
+      "blob_sha": "f6914df3acea780ae98440e3f3f76290b7ae74aa",
+      "path": "RST/en/Hashing/OpenHash.rst",
+      "size": 4054
+    },
+    {
+      "blob_sha": "d4d699ef049ef3151b0f893276ad8067bce47c58",
+      "path": "RST/en/Indexing/BTree.rst",
+      "size": 21067
+    },
+    {
+      "blob_sha": "61d03cc7539364caa00831ae239df28743977c37",
+      "path": "RST/en/Indexing/ISAM.rst",
+      "size": 4207
+    },
+    {
+      "blob_sha": "3c1fc2487c84f4abb37689fc10707742a8702291",
+      "path": "RST/en/Indexing/IndexIntro.rst",
+      "size": 5942
+    },
+    {
+      "blob_sha": "d445bb02904d4cdbdc794df136647e296c7af993",
+      "path": "RST/en/Indexing/IndexingSumm.rst",
+      "size": 877
+    },
+    {
+      "blob_sha": "fa09a4741610c6caaefd4bb0c9265000824dc87e",
+      "path": "RST/en/Indexing/LinearIndexing.rst",
+      "size": 9154
+    },
+    {
+      "blob_sha": "dbd62b179309080b61cd23e403b1f824d8db3e22",
+      "path": "RST/en/Indexing/TreeIndexing.rst",
+      "size": 5233
+    },
+    {
+      "blob_sha": "dd3709cd555f6f7c1bdd1d6f1a7b7af69a0b2cc9",
+      "path": "RST/en/Indexing/TwoThreeTree.rst",
+      "size": 10000
+    },
+    {
+      "blob_sha": "6f8b0f3090b7488fe9a1d9ebc77d15c4f0719ae6",
+      "path": "RST/en/Intro.rst",
+      "size": 9526
+    },
+    {
+      "blob_sha": "8651be75371015fb6eb4850b6f2d1ba31cf72d64",
+      "path": "RST/en/IntroToSoftwareDesign/2DArrays.rst",
+      "size": 6266
+    },
+    {
+      "blob_sha": "8d813684232f1f07762d61951333c2680e1fa811",
+      "path": "RST/en/IntroToSoftwareDesign/AbstractClassesAndCommandPatterns.rst",
+      "size": 25218
+    },
+    {
+      "blob_sha": "8d1506a526692cc16e1ccd4a49dc6c2fef625514",
+      "path": "RST/en/IntroToSoftwareDesign/AggregationStringsandMoreLoops.rst",
+      "size": 35826
+    },
+    {
+      "blob_sha": "4f9c1d8d2bb13080f98d2397bc93df945522e702",
+      "path": "RST/en/IntroToSoftwareDesign/Arrays.rst",
+      "size": 27870
+    },
+    {
+      "blob_sha": "06f9fb64f5247157d88916bcf079e0fbd875caf4",
+      "path": "RST/en/IntroToSoftwareDesign/AttrsMethodsAndCompoundConditions.rst",
+      "size": 17173
+    },
+    {
+      "blob_sha": "20d48924fd01ee530bba5e80771e531dc9e6e66a",
+      "path": "RST/en/IntroToSoftwareDesign/ConditionalActions.rst",
+      "size": 53578
+    },
+    {
+      "blob_sha": "b04370a875aec79418ae4503282170e20f59e90b",
+      "path": "RST/en/IntroToSoftwareDesign/CoursePolicies.rst",
+      "size": 33695
+    },
+    {
+      "blob_sha": "84d9274142adecb34fa97f80e11c416e8e37bbc4",
+      "path": "RST/en/IntroToSoftwareDesign/FieldsEncapsulationAndImages.rst",
+      "size": 37045
+    },
+    {
+      "blob_sha": "672ad6e922e210c861e4a9323bb2041f8440cd8e",
+      "path": "RST/en/IntroToSoftwareDesign/FileIO.rst",
+      "size": 36631
+    },
+    {
+      "blob_sha": "e675725e936791bd933b3c5f2d8efcc4dbe61e89",
+      "path": "RST/en/IntroToSoftwareDesign/GettingStarted.rst",
+      "size": 61221
+    },
+    {
+      "blob_sha": "f4e7bdfa014efc023a58b38e590d396ecbfadb98",
+      "path": "RST/en/IntroToSoftwareDesign/GroupingObjects.rst",
+      "size": 791
+    },
+    {
+      "blob_sha": "20cbd27e6baf8b95377939af4469cefdcbd4d649",
+      "path": "RST/en/IntroToSoftwareDesign/GroupingObjectsUsingListsAndNestedForLoops.rst",
+      "size": 25252
+    },
+    {
+      "blob_sha": "69b60eea3470c09a5bfac3a9615be69240887afc",
+      "path": "RST/en/IntroToSoftwareDesign/GroupingUsingListsAndFixedSizeArrays.rst",
+      "size": 1249
+    },
+    {
+      "blob_sha": "18fb0ae26beadc37f99f74ced2e671f277566868",
+      "path": "RST/en/IntroToSoftwareDesign/InheritanceAndPolymorphism.rst",
+      "size": 8997
+    },
+    {
+      "blob_sha": "0be45be5e85665301cf6e04938daf480dc3ef263",
+      "path": "RST/en/IntroToSoftwareDesign/ListAndLoopsDeepDive.rst",
+      "size": 27585
+    },
+    {
+      "blob_sha": "6b2ae7c55fc4dfabd94f3b7847203d4064a94b44",
+      "path": "RST/en/IntroToSoftwareDesign/ListsAndAggregation.rst",
+      "size": 27090
+    },
+    {
+      "blob_sha": "366f7198e37eb4259f0ede650c04cf6422f2b0a2",
+      "path": "RST/en/IntroToSoftwareDesign/MapsAndSets.rst",
+      "size": 18594
+    },
+    {
+      "blob_sha": "ce0dacc500533f76f3c4ca83bc15827d571e52fa",
+      "path": "RST/en/IntroToSoftwareDesign/MoreOnFixedSizedArrays.rst",
+      "size": 872
+    },
+    {
+      "blob_sha": "34275fa3f8f8465a9a1dbca96be2f24202ea72f1",
+      "path": "RST/en/IntroToSoftwareDesign/MultiDimensionalArrays.rst",
+      "size": 16815
+    },
+    {
+      "blob_sha": "59c8a213436cddfbb4e1e8145f4878359334666d",
+      "path": "RST/en/IntroToSoftwareDesign/PicturesAndForEachLoops.rst",
+      "size": 18593
+    },
+    {
+      "blob_sha": "b30bc144425176b6cf85ce777c5d88fecb42a9b1",
+      "path": "RST/en/IntroToSoftwareDesign/ReactiveSimulationsAndDelegation.rst",
+      "size": 39159
+    },
+    {
+      "blob_sha": "d1495ce7707944fe3f97f1b8f9c494d35d47d2f3",
+      "path": "RST/en/IntroToSoftwareDesign/SoftwareTesting.rst",
+      "size": 46261
+    },
+    {
+      "blob_sha": "e8462e71ba5d2d8ee8f09dc92b8cce0d4fb67319",
+      "path": "RST/en/IntroToSoftwareDesign/StaticAndExceptions.rst",
+      "size": 993
+    },
+    {
+      "blob_sha": "7e6fa6869736cfa67fb265bfae2e066dcc7f1754",
+      "path": "RST/en/IntroToSoftwareDesign/StaticMainAndExceptions.rst",
+      "size": 25221
+    },
+    {
+      "blob_sha": "a5b0adbf10c37905bb8913ec49525e208df0a03b",
+      "path": "RST/en/IntroToSoftwareDesign/Template.rst",
+      "size": 3900
+    },
+    {
+      "blob_sha": "5334aee3c410c006202381a1930e8abef5ae827f",
+      "path": "RST/en/IntroToSoftwareDesign/UsingLists.rst",
+      "size": 1192
+    },
+    {
+      "blob_sha": "a354c1ed7ea52704a43fd769fde99194045a787b",
+      "path": "RST/en/IntroToSoftwareDesign/VariableScoping.rst",
+      "size": 1008
+    },
+    {
+      "blob_sha": "8848bb2fe9bb331fbc551d89dc6e5108f20b1903",
+      "path": "RST/en/IntroToSoftwareDesign/VariablesFieldsAndParameters.rst",
+      "size": 46393
+    },
+    {
+      "blob_sha": "ff949b6a1822415bab9802d8b85cc2f8999a4e5d",
+      "path": "RST/en/IntroToSoftwareDesign/VariablesPrimitivesAndParameters.rst",
+      "size": 35938
+    },
+    {
+      "blob_sha": "79f98c1202b9aabf86a1f2a39592504d6e8ec273",
+      "path": "RST/en/IntroToSoftwareDesign/draft.rst",
+      "size": 8265
+    },
+    {
+      "blob_sha": "765fc3757e5fe9064656a1880ac3a0fa2ebfeaf3",
+      "path": "RST/en/Jsparson/Jsparson.rst",
+      "size": 457
+    },
+    {
+      "blob_sha": "211f0ac118ae746fff9a696e45e6cd01f24b8e2b",
+      "path": "RST/en/List/Freelist.rst",
+      "size": 4266
+    },
+    {
+      "blob_sha": "b17b1ffcc336cb5b2d8206c81bd1c4a848a50793",
+      "path": "RST/en/List/ListADT.rst",
+      "size": 8049
+    },
+    {
+      "blob_sha": "938cf8afe1184b81a3e83876c90257ef3b6ac862",
+      "path": "RST/en/List/ListAnalysis.rst",
+      "size": 7627
+    },
+    {
+      "blob_sha": "01a538d14a9b904825a746260b456e4a09cd7499",
+      "path": "RST/en/List/ListArray.rst",
+      "size": 3426
+    },
+    {
+      "blob_sha": "2e6741ef4c2d01a3cc8f8f47739badabd18ac1ed",
+      "path": "RST/en/List/ListDouble.rst",
+      "size": 6519
+    },
+    {
+      "blob_sha": "5b5df75b62683d1f5d1eeac0c1a4627f910f2645",
+      "path": "RST/en/List/ListElement.rst",
+      "size": 3588
+    },
+    {
+      "blob_sha": "9be8da576f1e595ec135ace35e3babc8c426d87f",
+      "path": "RST/en/List/ListIntro.rst",
+      "size": 2446
+    },
+    {
+      "blob_sha": "daf358092c50c60faa447625ecd4578e998e4c34",
+      "path": "RST/en/List/ListLinked.rst",
+      "size": 6747
+    },
+    {
+      "blob_sha": "59d0968d50225b5e48ca4f56aac71efee4234298",
+      "path": "RST/en/List/ListSumm.rst",
+      "size": 1289
+    },
+    {
+      "blob_sha": "43166f446d503dda8ce270a798baac85126eee8e",
+      "path": "RST/en/List/Queue.rst",
+      "size": 5244
+    },
+    {
+      "blob_sha": "e1355c26c2307da4e2e37fe0d4ec2a34879ae599",
+      "path": "RST/en/List/QueueLinked.rst",
+      "size": 2358
+    },
+    {
+      "blob_sha": "37424e796bc84e3dab802b70e2397b861cc577a1",
+      "path": "RST/en/List/StackArray.rst",
+      "size": 3687
+    },
+    {
+      "blob_sha": "e08c3d667c7aa61c6a95aad687ae2a4906de4b49",
+      "path": "RST/en/List/StackLinked.rst",
+      "size": 3455
+    },
+    {
+      "blob_sha": "1073168dda46bb3730805e78c47dc15b66169d56",
+      "path": "RST/en/List/StackRecur.rst",
+      "size": 7717
+    },
+    {
+      "blob_sha": "0885f759d53132a0e250224febb769e0b4a70f91",
+      "path": "RST/en/MDTest/LinkedChain.rst",
+      "size": 2955
+    },
+    {
+      "blob_sha": "f78a3bc0b1f5a0bcf75eb969ef0ed1bcf265d11f",
+      "path": "RST/en/MDTest/MDTest1.rst",
+      "size": 7925
+    },
+    {
+      "blob_sha": "06b1d8f71abf13c483ca6fec7021e6d7c7c1f959",
+      "path": "RST/en/MemManage/BestFit.rst",
+      "size": 1896
+    },
+    {
+      "blob_sha": "a6c76d793d4b8691fbb8032e23589f87d5e03b13",
+      "path": "RST/en/MemManage/Buddy.rst",
+      "size": 6702
+    },
+    {
+      "blob_sha": "c716f30c59864da1eeee91c63ecb68fbe4606e10",
+      "path": "RST/en/MemManage/CircularFit.rst",
+      "size": 1436
+    },
+    {
+      "blob_sha": "782f396ec5d2d2fdca002fe99a5f6d1c9b0fabbd",
+      "path": "RST/en/MemManage/Dynamic.rst",
+      "size": 4362
+    },
+    {
+      "blob_sha": "cc77233fc0f7aa46dd3604dfb5e327891bfe5eb4",
+      "path": "RST/en/MemManage/FirstFit.rst",
+      "size": 1509
+    },
+    {
+      "blob_sha": "7d40725f8607daedb43c862dfc6f451ac5af3221",
+      "path": "RST/en/MemManage/Garbage.rst",
+      "size": 12451
+    },
+    {
+      "blob_sha": "5b4f3948528c4dadef5b55cb04cdafc3f5063fd2",
+      "path": "RST/en/MemManage/MMPerformance.rst",
+      "size": 1599
+    },
+    {
+      "blob_sha": "8ecb21b3d5b5aa9f61f44daf1849a70e16acc5d4",
+      "path": "RST/en/MemManage/MemmanIntro.rst",
+      "size": 5074
+    },
+    {
+      "blob_sha": "08ef3bfea69e568fdc83650a98a25244ca9bdb3e",
+      "path": "RST/en/MemManage/SequentialFit.rst",
+      "size": 6770
+    },
+    {
+      "blob_sha": "a7e98ce2ab045477263aa7327565f8ff56ae525f",
+      "path": "RST/en/MemManage/WorstFit.rst",
+      "size": 1810
+    },
+    {
+      "blob_sha": "0b7a0ef26e757dde0bea874d0a358968ac0a426a",
+      "path": "RST/en/MengBridgeCourse/1114AggregationStringsandMoreLoops.rst",
+      "size": 36269
+    },
+    {
+      "blob_sha": "d26c47dd13b35d3f81cb4ad3c3b9203b8f56ba1f",
+      "path": "RST/en/MengBridgeCourse/1114Arrays.rst",
+      "size": 28568
+    },
+    {
+      "blob_sha": "7ebfa225f8287e629be3dde2c5514cd5d8e52772",
+      "path": "RST/en/MengBridgeCourse/1114ConditionalActions.rst",
+      "size": 23550
+    },
+    {
+      "blob_sha": "7968e400d79bf7cea292c6b1405c3813cd01ed23",
+      "path": "RST/en/MengBridgeCourse/1114FileIO.rst",
+      "size": 60576
+    },
+    {
+      "blob_sha": "8a1ef6c82c92d2949df9d8d02270c6b5a1a39609",
+      "path": "RST/en/MengBridgeCourse/1114GettingStarted.rst",
+      "size": 34884
+    },
+    {
+      "blob_sha": "7554a17e4018590c57338b6f9b0cae52893d0312",
+      "path": "RST/en/MengBridgeCourse/1114GroupingObjectsUsingListsAndNestedForLoops.rst",
+      "size": 51516
+    },
+    {
+      "blob_sha": "828232a25a4b4f5b6056e69b4a0ba0e43d987c19",
+      "path": "RST/en/MengBridgeCourse/1114InheritanceAndPolymorphism.rst",
+      "size": 72357
+    },
+    {
+      "blob_sha": "56f90a389e21fdd462b80f8613ccd551d2c1ba9d",
+      "path": "RST/en/MengBridgeCourse/1114IntroAndLightBot.rst",
+      "size": 34315
+    },
+    {
+      "blob_sha": "a34edcb42fea96dd43c300dd511afa5d757c7c69",
+      "path": "RST/en/MengBridgeCourse/1114ListAndLoopsDeepDive.rst",
+      "size": 27798
+    },
+    {
+      "blob_sha": "b76db308cc1409e8d98a937cf958b2211949bc61",
+      "path": "RST/en/MengBridgeCourse/1114MDArrays.rst",
+      "size": 17834
+    },
+    {
+      "blob_sha": "6a4011151272356fb0b4cdc90d8e767648328819",
+      "path": "RST/en/MengBridgeCourse/1114MapsAndSets.rst",
+      "size": 19965
+    },
+    {
+      "blob_sha": "fdc5d4aad672bd0003f228ed806c1327e8235486",
+      "path": "RST/en/MengBridgeCourse/1114PicturesAndForEachLoops.rst",
+      "size": 18638
+    },
+    {
+      "blob_sha": "75957894cfc07719eb9570dfbcc2d90a6fbe416b",
+      "path": "RST/en/MengBridgeCourse/1114SoftwareTesting.rst",
+      "size": 54962
+    },
+    {
+      "blob_sha": "f4efb2e4fe8f77da517f27d3ef2208ff072a82c4",
+      "path": "RST/en/MengBridgeCourse/1114StaticMainAndExceptions.rst",
+      "size": 25842
+    },
+    {
+      "blob_sha": "fc899e4d4c6203031b0dfb5737066dafa22043e9",
+      "path": "RST/en/MengBridgeCourse/1114Unit1_Lab1_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "819b8f4244ee2d2531a05670ed8e12b6d1d14413",
+      "path": "RST/en/MengBridgeCourse/1114Unit1_Lab2_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "09a9e6f196be21d62a7a689fc54e9741a5b462f7",
+      "path": "RST/en/MengBridgeCourse/1114Unit2_Lab1_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "902540b379358a92a31dca899518a087bc2b34b8",
+      "path": "RST/en/MengBridgeCourse/1114Unit2_Lab2_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "b6d522e11b51bf3c63bbf39abdfaca5e866d55a5",
+      "path": "RST/en/MengBridgeCourse/1114Unit3_Lab1_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "88755f78f3154a856883bdb0567cd50570a5cddc",
+      "path": "RST/en/MengBridgeCourse/1114Unit3_Lab2_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "308c0456faf927961b385121f430b964deed51f3",
+      "path": "RST/en/MengBridgeCourse/1114Unit4_Lab1_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "88755f78f3154a856883bdb0567cd50570a5cddc",
+      "path": "RST/en/MengBridgeCourse/1114Unit4_Lab2_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "b6447dcc97b8087abe9f795173e964a1823006e7",
+      "path": "RST/en/MengBridgeCourse/1114Unit5_Lab1_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "36c5eb4d398601b85c0ee6962da20ded51094eca",
+      "path": "RST/en/MengBridgeCourse/1114Unit5_Lab2_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "ed35274c33ce4b2a2345a2c05f53605c98025eec",
+      "path": "RST/en/MengBridgeCourse/1114Unit6_Lab1_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "aed1dfc9af2c0ef2988d427c9b1197ee266f0eb2",
+      "path": "RST/en/MengBridgeCourse/1114Unit6_Lab2_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "dfc61e81c32f0d29363416ca7ef02ba1334c4df9",
+      "path": "RST/en/MengBridgeCourse/1114VariablesFieldsAndParameters.rst",
+      "size": 46876
+    },
+    {
+      "blob_sha": "3bed27e7b244f1648b4090a091fb579399b65023",
+      "path": "RST/en/MengBridgeCourse/2114Bags1.rst",
+      "size": 22494
+    },
+    {
+      "blob_sha": "80b40655b39ce829d2df12c3090b81ea6e4fb6b9",
+      "path": "RST/en/MengBridgeCourse/2114Bags2.rst",
+      "size": 8681
+    },
+    {
+      "blob_sha": "9c34bbb276ea44639e7949b98094e325e775b4ed",
+      "path": "RST/en/MengBridgeCourse/2114BinarySearch.rst",
+      "size": 3109
+    },
+    {
+      "blob_sha": "68fcdab1ecaddf087f87dc1cff9fbb4606122904",
+      "path": "RST/en/MengBridgeCourse/2114ComparingAndSorting.rst",
+      "size": 9385
+    },
+    {
+      "blob_sha": "b2647c00a6708fdb5c41dd889b8650ed7c84d58e",
+      "path": "RST/en/MengBridgeCourse/2114Efficiency.rst",
+      "size": 4249
+    },
+    {
+      "blob_sha": "acd6051870113b502f2d7787498005c2240dcd2d",
+      "path": "RST/en/MengBridgeCourse/2114Ethics.rst",
+      "size": 4716
+    },
+    {
+      "blob_sha": "608e89904449eb5a899de2de9e73f2aa037d5876",
+      "path": "RST/en/MengBridgeCourse/2114Exceptions.rst",
+      "size": 17569
+    },
+    {
+      "blob_sha": "069f56daed4a6173c169a45c5d09fbb6059bd4a3",
+      "path": "RST/en/MengBridgeCourse/2114Generics2.rst",
+      "size": 6542
+    },
+    {
+      "blob_sha": "e293c47680ac6adb67b34674eefd8347252749ee",
+      "path": "RST/en/MengBridgeCourse/2114Iterators.rst",
+      "size": 11040
+    },
+    {
+      "blob_sha": "f176c2285d89fecae1ed2fc35096aa29fdfa8127",
+      "path": "RST/en/MengBridgeCourse/2114JUNIT.rst",
+      "size": 7100
+    },
+    {
+      "blob_sha": "d732757beb2c3d18f80471e51bce430636412c1f",
+      "path": "RST/en/MengBridgeCourse/2114LinkedChainPointers.rst",
+      "size": 5848
+    },
+    {
+      "blob_sha": "c3ef510eb01c3e9180677f6cc739b75e1b30b9cf",
+      "path": "RST/en/MengBridgeCourse/2114Lists.rst",
+      "size": 14532
+    },
+    {
+      "blob_sha": "ba219371cf39a09bb0eb67484effadd5ec8fbd94",
+      "path": "RST/en/MengBridgeCourse/2114ObjectsEnumsAndUML.rst",
+      "size": 10986
+    },
+    {
+      "blob_sha": "a52c14a93f9398da91fdb6f06a1c746bdabe8719",
+      "path": "RST/en/MengBridgeCourse/2114Polymorphism2.rst",
+      "size": 5149
+    },
+    {
+      "blob_sha": "8a1845ea69cd1316c2e4335a1f428714993e3b64",
+      "path": "RST/en/MengBridgeCourse/2114Queues.rst",
+      "size": 18314
+    },
+    {
+      "blob_sha": "6758fad8595fbb72e0613acc7669be283747eff7",
+      "path": "RST/en/MengBridgeCourse/2114Recursion.rst",
+      "size": 12388
+    },
+    {
+      "blob_sha": "8f026c08060bf0bf8e9fa60c22d54d26c0b2f046",
+      "path": "RST/en/MengBridgeCourse/2114SoftwareDesignAndMVC.rst",
+      "size": 33013
+    },
+    {
+      "blob_sha": "3dd5f2f56c0362027f2de48d6befb438685a8c83",
+      "path": "RST/en/MengBridgeCourse/2114Stacks.rst",
+      "size": 8793
+    },
+    {
+      "blob_sha": "121da3bc2e86a06ec34210352fc6d8e97b5904a5",
+      "path": "RST/en/MengBridgeCourse/2114StyleReview.rst",
+      "size": 1707
+    },
+    {
+      "blob_sha": "20bda732e1a0bc845a23a8c6e11784ff6f900ea8",
+      "path": "RST/en/MengBridgeCourse/2114Unit10_Lab1_Placeholder.rst",
+      "size": 391
+    },
+    {
+      "blob_sha": "11fdacd0a8916c04884b50bb25deb8a8b577ea32",
+      "path": "RST/en/MengBridgeCourse/2114Unit11_Lab1_Placeholder.rst",
+      "size": 391
+    },
+    {
+      "blob_sha": "a027e64bc5c28ae44e57a74f07e739bb3ec1a744",
+      "path": "RST/en/MengBridgeCourse/2114Unit11_Lab2_Placeholder.rst",
+      "size": 391
+    },
+    {
+      "blob_sha": "7386f66e420b990ea2ce187b1cc504dda5d3dd97",
+      "path": "RST/en/MengBridgeCourse/2114Unit12_Program1_Placeholder.rst",
+      "size": 399
+    },
+    {
+      "blob_sha": "20610a0c265ae10276eb35d229606e4bf0c2fb4c",
+      "path": "RST/en/MengBridgeCourse/2114Unit7_Lab1_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "4dd5fde89117d25f36bdd8069d577d2ca21f7f67",
+      "path": "RST/en/MengBridgeCourse/2114Unit7_Lab2_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "d65eac2bb92c39baa7710a0a2096efdbfbe38e63",
+      "path": "RST/en/MengBridgeCourse/2114Unit7_Lab3_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "99134fd44eff8c53b5138c2da7c6ac43518df822",
+      "path": "RST/en/MengBridgeCourse/2114Unit8_Lab1_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "01b4a35a96d538c53a5ef812522beb05c076900f",
+      "path": "RST/en/MengBridgeCourse/2114Unit8_Lab2_Placeholder.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "fea6d762f8c5b1b525d45c0b3ee604f2d3b9ca62",
+      "path": "RST/en/MengBridgeCourse/2114Unit8_Program1_Placeholder.rst",
+      "size": 397
+    },
+    {
+      "blob_sha": "8b64776c3a99655f6969afb3a9c624b2d445ec10",
+      "path": "RST/en/MengBridgeCourse/2114Unit9_Program1_Placeholder.rst",
+      "size": 397
+    },
+    {
+      "blob_sha": "3985cce312b1859d9f1763861fd02ce4c9c12461",
+      "path": "RST/en/MengBridgeCourse/CourseIntro.rst",
+      "size": 6080
+    },
+    {
+      "blob_sha": "03017aebff36d6f49f93df17ea42e6a6e91c3a1d",
+      "path": "RST/en/MengBridgeCourse/GettingStarted.rst",
+      "size": 6065
+    },
+    {
+      "blob_sha": "d74a1f19c95224cec56ee2520a145332bef0df54",
+      "path": "RST/en/MengBridgeCourse/Placeholder.rst",
+      "size": 377
+    },
+    {
+      "blob_sha": "84bfcbfb424617d85a22e61fc13b742349041725",
+      "path": "RST/en/NP/LimComp.rst",
+      "size": 3642
+    },
+    {
+      "blob_sha": "b1817a564e7e6df12bb81a752206ed707eea1169",
+      "path": "RST/en/NP/NPComplete.rst",
+      "size": 15598
+    },
+    {
+      "blob_sha": "df5fb0c6025af8ed036231f5684a1a790183ba5f",
+      "path": "RST/en/NP/NPCoping.rst",
+      "size": 11585
+    },
+    {
+      "blob_sha": "ed0f49958a9daf12161e20eaaad867230445a172",
+      "path": "RST/en/NP/Reduction.rst",
+      "size": 19753
+    },
+    {
+      "blob_sha": "3e1cbbd90dac584e52514463215dbb636e9b0011",
+      "path": "RST/en/NP/SAT.rst",
+      "size": 818
+    },
+    {
+      "blob_sha": "a0c3c3fb9a7f6b78e179200665705f804ee433d5",
+      "path": "RST/en/NP/SAT_to_threeSAT.rst",
+      "size": 1553
+    },
+    {
+      "blob_sha": "36028bc856090524a9c6d2c0c7830989182f4c5f",
+      "path": "RST/en/NP/TSP.rst",
+      "size": 1140
+    },
+    {
+      "blob_sha": "17d36cf676f440ce879321bd76b0695b6ce4c63d",
+      "path": "RST/en/NP/circuitSAT.rst",
+      "size": 1040
+    },
+    {
+      "blob_sha": "1ea1e263edddd721810f24adeb13998acb730638",
+      "path": "RST/en/NP/circuitSAT_to_SAT.rst",
+      "size": 1250
+    },
+    {
+      "blob_sha": "80cdd39d162da1faf34c74dcaf684a870068a08f",
+      "path": "RST/en/NP/clique.rst",
+      "size": 1028
+    },
+    {
+      "blob_sha": "de07785b8d8f3b3a5a91c42c8dc688edee776625",
+      "path": "RST/en/NP/clique_to_independentSet.rst",
+      "size": 1662
+    },
+    {
+      "blob_sha": "87eec03d9e8e7b09cb6a3c688f9aa0011f496857",
+      "path": "RST/en/NP/hamiltonianCycle.rst",
+      "size": 1183
+    },
+    {
+      "blob_sha": "30ce3a618a5215930627fcd2b8ff06c068020a83",
+      "path": "RST/en/NP/hamiltonianCycle_to_TSP.rst",
+      "size": 1342
+    },
+    {
+      "blob_sha": "f78a4ea8adecacc7bd518e23cbd8179422590486",
+      "path": "RST/en/NP/independentSet.rst",
+      "size": 1152
+    },
+    {
+      "blob_sha": "ced837046520d4709dc0ac9899a5e96bb94824a5",
+      "path": "RST/en/NP/independentSet_to_vertexCover.rst",
+      "size": 1295
+    },
+    {
+      "blob_sha": "13226a7d4646192aed0dfd557b0a3a0d27c2d0c6",
+      "path": "RST/en/NP/provingNPC.rst",
+      "size": 7611
+    },
+    {
+      "blob_sha": "4e4b06febdf7709250c1ffc54dbac2e0b0226fb8",
+      "path": "RST/en/NP/threeSAT.rst",
+      "size": 1075
+    },
+    {
+      "blob_sha": "ed1896a7d6036c2d4f8aa6067eafa0364a59a1e3",
+      "path": "RST/en/NP/threeSAT_to_clique.rst",
+      "size": 1212
+    },
+    {
+      "blob_sha": "00de9ce9254616bd822bca46c801b1b57bfa7114",
+      "path": "RST/en/NP/threeSAT_to_hamiltonianCycle.rst",
+      "size": 1409
+    },
+    {
+      "blob_sha": "b48a32006770d94d9498cef231a5999257b59fbc",
+      "path": "RST/en/NP/threeSAT_to_hamiltonianCycleOLD.rst",
+      "size": 1167
+    },
+    {
+      "blob_sha": "55e895dfb684f03b600cf573d8fb6c9d75dbb5a3",
+      "path": "RST/en/NP/vertexCover.rst",
+      "size": 1102
+    },
+    {
+      "blob_sha": "3b45676f3313a53fa314c48ad5b91af1e0e4e533",
+      "path": "RST/en/PIFLA/BNF.rst",
+      "size": 6981
+    },
+    {
+      "blob_sha": "7f659c803283d19a73b9bad99fbd09272583bc91",
+      "path": "RST/en/PIFLA/CFG1.rst",
+      "size": 3553
+    },
+    {
+      "blob_sha": "2b4a6e4ff13bf32e0ac08ae825c5e99a97f63bde",
+      "path": "RST/en/PIFLA/CFG2.rst",
+      "size": 4905
+    },
+    {
+      "blob_sha": "8be02ed0cb9d32e785ca4970e82b6924c78f8907",
+      "path": "RST/en/PIFLA/CFGExercises.rst",
+      "size": 1205
+    },
+    {
+      "blob_sha": "3f2e650e2a720f0bbba91a842336bc68ab1d4163",
+      "path": "RST/en/PIFLA/CFGTransEx.rst",
+      "size": 1489
+    },
+    {
+      "blob_sha": "93e2329c657e9ec47137c28effdac37bfbb89284",
+      "path": "RST/en/PIFLA/CFGTransformations.rst",
+      "size": 3820
+    },
+    {
+      "blob_sha": "0c3916b89cca9b2308134ac4671f30fc01d2ac58",
+      "path": "RST/en/PIFLA/CFLProp.rst",
+      "size": 6247
+    },
+    {
+      "blob_sha": "f051c55a4a3ff940cccddb09a00b915dc0fadedd",
+      "path": "RST/en/PIFLA/DFA.rst",
+      "size": 6168
+    },
+    {
+      "blob_sha": "2100257f890889bf8aee64f20a14629eadc83e8e",
+      "path": "RST/en/PIFLA/DFAComplementEx.rst",
+      "size": 1753
+    },
+    {
+      "blob_sha": "2a0906ab41d58ecc6e3f63649b289f355394ffa8",
+      "path": "RST/en/PIFLA/DFAExercises1.rst",
+      "size": 1798
+    },
+    {
+      "blob_sha": "3d07011daf64b14ffc8e1c31814a57c6e611487c",
+      "path": "RST/en/PIFLA/DFAExercises2.rst",
+      "size": 1780
+    },
+    {
+      "blob_sha": "298ff0e8f89bd44918b755ff85cf1e44c28de159",
+      "path": "RST/en/PIFLA/DFAExercises3.rst",
+      "size": 1826
+    },
+    {
+      "blob_sha": "dc7ff428462e1d57471ca36de0d24ab41ebe2b50",
+      "path": "RST/en/PIFLA/DFAMinimization.rst",
+      "size": 6143
+    },
+    {
+      "blob_sha": "18dfbb1b019004108e310456e014df48f63c4c92",
+      "path": "RST/en/PIFLA/DPDA.rst",
+      "size": 2293
+    },
+    {
+      "blob_sha": "8434d3d26da5658ffca6d01f0f5d5b009f60a1f8",
+      "path": "RST/en/PIFLA/FLIntro.rst",
+      "size": 12677
+    },
+    {
+      "blob_sha": "a3cf1d29e757de156a3fba2b535f6c65fb9fa693",
+      "path": "RST/en/PIFLA/FLOverview.rst",
+      "size": 7696
+    },
+    {
+      "blob_sha": "fe61753568a195eaeb0a2bc288e254b806ab1b11",
+      "path": "RST/en/PIFLA/Impossible.rst",
+      "size": 942
+    },
+    {
+      "blob_sha": "7df9274918970b9ad7c30b60944b93ac6bc32569",
+      "path": "RST/en/PIFLA/IntroGrammarEx.rst",
+      "size": 2233
+    },
+    {
+      "blob_sha": "8b7b19010a8fc230ca2cbf09fc0660a8d3656859",
+      "path": "RST/en/PIFLA/LimCompFLA.rst",
+      "size": 4510
+    },
+    {
+      "blob_sha": "fcd45f7b746fdf41bd0ddea98219e71afee9e068",
+      "path": "RST/en/PIFLA/MajorConcepts.rst",
+      "size": 4238
+    },
+    {
+      "blob_sha": "e79fb157dc025d788dc8d7853c79f945629c5593",
+      "path": "RST/en/PIFLA/MathProof.rst",
+      "size": 1903
+    },
+    {
+      "blob_sha": "bdaa62decb7e970df1038fa9cfa082d21f5b3667",
+      "path": "RST/en/PIFLA/MinimizationEx.rst",
+      "size": 928
+    },
+    {
+      "blob_sha": "d8652bc55667d9f638aa958ae9ff8e5505fac7eb",
+      "path": "RST/en/PIFLA/NFA.rst",
+      "size": 6197
+    },
+    {
+      "blob_sha": "a80f72fdcee4da180e96e5fc40a8e6df056cab24",
+      "path": "RST/en/PIFLA/NFAExercises.rst",
+      "size": 1016
+    },
+    {
+      "blob_sha": "f2b93d8f17c831bc0f20a3995fec9121790243ff",
+      "path": "RST/en/PIFLA/NFAExercises2.rst",
+      "size": 1285
+    },
+    {
+      "blob_sha": "bec0b15247c61da9137674d3840099b2bf7d023b",
+      "path": "RST/en/PIFLA/NPComplete.rst",
+      "size": 1324
+    },
+    {
+      "blob_sha": "4033f7f7cab856a345d4669030d727ef8c8ce70e",
+      "path": "RST/en/PIFLA/NonRegular.rst",
+      "size": 18363
+    },
+    {
+      "blob_sha": "5a8f8ff757221125ae113ad77674f87f416410c4",
+      "path": "RST/en/PIFLA/PDA.rst",
+      "size": 4547
+    },
+    {
+      "blob_sha": "32e2852e4ba5f203243db30dc082c1f92d1367d2",
+      "path": "RST/en/PIFLA/PDACFL.rst",
+      "size": 10193
+    },
+    {
+      "blob_sha": "eae6d1dde945ba63a080a74163de21e38b52681c",
+      "path": "RST/en/PIFLA/PDAExercises.rst",
+      "size": 1217
+    },
+    {
+      "blob_sha": "a28ed5541d46a4dd1c55ca5a39036dab85155406",
+      "path": "RST/en/PIFLA/Reduction.rst",
+      "size": 3299
+    },
+    {
+      "blob_sha": "d75f10d35464322e85ece7a3b13d1dab288cf710",
+      "path": "RST/en/PIFLA/RegClosure.rst",
+      "size": 5593
+    },
+    {
+      "blob_sha": "79db501f7219edd7f643b3c9a00c2a4983c9e073",
+      "path": "RST/en/PIFLA/RegEx.rst",
+      "size": 2575
+    },
+    {
+      "blob_sha": "d5e6c53eb7616b6d39a7b3c0014d10c77298f600",
+      "path": "RST/en/PIFLA/RegExExercises.rst",
+      "size": 1457
+    },
+    {
+      "blob_sha": "df122127f342b26117098dd71d9f9c98936c6b58",
+      "path": "RST/en/PIFLA/RegExExercises2.rst",
+      "size": 1507
+    },
+    {
+      "blob_sha": "854b8749c3509e3891ee4864ae32b327ccda0d1a",
+      "path": "RST/en/PIFLA/RegExPower.rst",
+      "size": 6193
+    },
+    {
+      "blob_sha": "041518cddb0ff54a27157900f4302bdfe5f4ebfd",
+      "path": "RST/en/PIFLA/RegGramEx1.rst",
+      "size": 1321
+    },
+    {
+      "blob_sha": "b4222510a5d684c7f7f600e6b6ee6da890131fa8",
+      "path": "RST/en/PIFLA/RegGramEx2.rst",
+      "size": 1536
+    },
+    {
+      "blob_sha": "8f647bab94b191827826200fa0cca7cfcbb1f155",
+      "path": "RST/en/PIFLA/RegGrammarShort.rst",
+      "size": 4406
+    },
+    {
+      "blob_sha": "3eb92512dd528c4fd4a03385bf8f159c9babf776",
+      "path": "RST/en/PIFLA/RegularGrammars.rst",
+      "size": 4873
+    },
+    {
+      "blob_sha": "faa3d29de94186087ac5d2de154dd19ff6b84331",
+      "path": "RST/en/PIFLA/Relations.rst",
+      "size": 2179
+    },
+    {
+      "blob_sha": "d90e483b726a59ee8008e82ca90e6706c42147fe",
+      "path": "RST/en/PIFLA/SetNotation.rst",
+      "size": 6115
+    },
+    {
+      "blob_sha": "df400a754095fd3601fc8ef4891857d2547d7c75",
+      "path": "RST/en/PIFLA/SetNotationFLAFS.rst",
+      "size": 3105
+    },
+    {
+      "blob_sha": "53ef7ec753a93fe2edea71e15cd61a7b4a7b1694",
+      "path": "RST/en/PIFLA/TMExercises.rst",
+      "size": 2539
+    },
+    {
+      "blob_sha": "a0c4c2143bf4cec94da04b730511c53408a80824",
+      "path": "RST/en/PIFLA/TMExercisesS22.rst",
+      "size": 1277
+    },
+    {
+      "blob_sha": "8f2d1fbf7276a507f88b0d9b18a57b3cf42c20b5",
+      "path": "RST/en/PIFLA/TuringMachines.rst",
+      "size": 6544
+    },
+    {
+      "blob_sha": "e8a63ce7991e81414ee84de59c365dc3b64cb73a",
+      "path": "RST/en/PIFLA/TuringMachinesAdv.rst",
+      "size": 8340
+    },
+    {
+      "blob_sha": "a34e59e820282a786cc32a4a78b656c0a773d3bc",
+      "path": "RST/en/PL/AlphaConversion.rst",
+      "size": 6719
+    },
+    {
+      "blob_sha": "f231234c5960cb5b4a68d950dc0b2e3968e9e2f4",
+      "path": "RST/en/PL/BetaReduction.rst",
+      "size": 4494
+    },
+    {
+      "blob_sha": "d1b85a709dc1e587411dcf838c185ee2d5f9713f",
+      "path": "RST/en/PL/ChurchNumerals.rst",
+      "size": 5104
+    },
+    {
+      "blob_sha": "c62fce313175fbeed9ac08c55db4f4df519dbfac",
+      "path": "RST/en/PL/Environment.rst",
+      "size": 5928
+    },
+    {
+      "blob_sha": "9e5014067ed4ac2266447488c9f4232776bcf887",
+      "path": "RST/en/PL/FP1.rst",
+      "size": 7546
+    },
+    {
+      "blob_sha": "a17cce09ce2034154c4c222aa47d2a5f581a85a7",
+      "path": "RST/en/PL/FP2.rst",
+      "size": 5999
+    },
+    {
+      "blob_sha": "7884f5cc64e8d530247a9b5ab113bf656c6e3267",
+      "path": "RST/en/PL/FP3.rst",
+      "size": 5524
+    },
+    {
+      "blob_sha": "01f79c04183d114c0c0744f787aacd8df26368ec",
+      "path": "RST/en/PL/FP4.rst",
+      "size": 3399
+    },
+    {
+      "blob_sha": "b3e0fcd8e0c35efb123fe8eea663605fdfdf0500",
+      "path": "RST/en/PL/FP5.rst",
+      "size": 9635
+    },
+    {
+      "blob_sha": "04d20842503cc620cca0052bf1d7c8b9aa8be7a8",
+      "path": "RST/en/PL/FP6.rst",
+      "size": 6933
+    },
+    {
+      "blob_sha": "4fcb63f2aa24c9d07de799bf2cba83ef27f1a472",
+      "path": "RST/en/PL/FP7.rst",
+      "size": 5499
+    },
+    {
+      "blob_sha": "9c572a2a57b76307cca6361f27627149b7f32ef2",
+      "path": "RST/en/PL/FP8.rst",
+      "size": 2708
+    },
+    {
+      "blob_sha": "0dec4ad1717f0d3a2e21961fa5fd5ba01719af1c",
+      "path": "RST/en/PL/FP9.rst",
+      "size": 11602
+    },
+    {
+      "blob_sha": "e9152ccc49b620fe30bb64510775949d3afdb167",
+      "path": "RST/en/PL/FreeBoundVariables.rst",
+      "size": 9077
+    },
+    {
+      "blob_sha": "fea2b77639062e8064b3e2eab1bfb1604edd3704",
+      "path": "RST/en/PL/Grammars1.rst",
+      "size": 5917
+    },
+    {
+      "blob_sha": "630bf2ffd26d440d6a496240e08121013142f45f",
+      "path": "RST/en/PL/Grammars2.rst",
+      "size": 3918
+    },
+    {
+      "blob_sha": "4cf2d0fb0020ea182f0ed85e68227b79f95b1bfb",
+      "path": "RST/en/PL/Grammars3.rst",
+      "size": 7746
+    },
+    {
+      "blob_sha": "e259a107d1897a2f9aea11b76224ec28d799748d",
+      "path": "RST/en/PL/Grammars4.rst",
+      "size": 6117
+    },
+    {
+      "blob_sha": "34fbb888cd033053c662b53e33c4ff527637c7e7",
+      "path": "RST/en/PL/Grammars5.rst",
+      "size": 5215
+    },
+    {
+      "blob_sha": "f8934e6bf8051650863dab5859bab3d1b8332358",
+      "path": "RST/en/PL/LCSemantics.rst",
+      "size": 8517
+    },
+    {
+      "blob_sha": "3ec93ff55f7c55a21d75492e84e61cb50f5dec1f",
+      "path": "RST/en/PL/LCSyntax.rst",
+      "size": 6054
+    },
+    {
+      "blob_sha": "867896a37557d3fb0555384977ba2e89f39bce29",
+      "path": "RST/en/PL/LazyLists.rst",
+      "size": 12309
+    },
+    {
+      "blob_sha": "70c6c76fde2e8c589c61d396b0181b4b38de4459",
+      "path": "RST/en/PL/ListDataStructure.rst",
+      "size": 448
+    },
+    {
+      "blob_sha": "348f23e773205c16d02eb5d55552d201dd0eb81e",
+      "path": "RST/en/PL/PL_Glossary.rst",
+      "size": 2130
+    },
+    {
+      "blob_sha": "63314c3187ec182740b432829b4b63ba1a5717f5",
+      "path": "RST/en/PL/RecursiveFunctions.rst",
+      "size": 7822
+    },
+    {
+      "blob_sha": "eb6aa7533eb8d7a5ef4d0d2da4ba706f74dd8f6b",
+      "path": "RST/en/PL/ReductionStrategies.rst",
+      "size": 8689
+    },
+    {
+      "blob_sha": "0a85574fa5c386c3b841b1b56f2c4f4f7a41746a",
+      "path": "RST/en/PL/SLang1.rst",
+      "size": 8066
+    },
+    {
+      "blob_sha": "8797752627607e74a7bd01ee9ba862c70178c169",
+      "path": "RST/en/PL/SLang1Interpreter.rst",
+      "size": 795
+    },
+    {
+      "blob_sha": "91be97e40f125f482f68e57b10b76b3775b3b3cf",
+      "path": "RST/en/PL/SLang1InterpreterModifications.rst",
+      "size": 2223
+    },
+    {
+      "blob_sha": "80fdd41fa92b6cd868b59787a9b8e62a5448ddbb",
+      "path": "RST/en/PL/SLang1InterpreterReview.rst",
+      "size": 578
+    },
+    {
+      "blob_sha": "433d6f4f8883e367db1b3d17ab867bc30dfd5e44",
+      "path": "RST/en/PL/SLang1withLetExpressions.rst",
+      "size": 4732
+    },
+    {
+      "blob_sha": "700c59cc405a006bc7a0fe00aaf692b2629697cf",
+      "path": "RST/en/PL/SLang2.rst",
+      "size": 4342
+    },
+    {
+      "blob_sha": "d09569a29efecdeac974528f425e3f3c8d26c374",
+      "path": "RST/en/PL/SLang2ParameterPassing.rst",
+      "size": 16444
+    },
+    {
+      "blob_sha": "42e6cb1b6c40120dfada3daee2f8f1ef360849b6",
+      "path": "RST/en/PL/SLang2TTK.rst",
+      "size": 2272
+    },
+    {
+      "blob_sha": "5536d9bc4b7e556388398f57d7cf10c876f069cb",
+      "path": "RST/en/PL/SLang3abstractSyntax.rst",
+      "size": 632
+    },
+    {
+      "blob_sha": "79d96f7dd7aa496aa21ad492269dbbff8761bc1a",
+      "path": "RST/en/PL/SLang3concreteSyntax.rst",
+      "size": 603
+    },
+    {
+      "blob_sha": "fcb4e94b169e4c552e7da2d813764d50be46e2bb",
+      "path": "RST/en/PL/SLang3interpreter.rst",
+      "size": 652
+    },
+    {
+      "blob_sha": "b6656d370f3a4e880e29bef007f5b757caf08744",
+      "path": "RST/en/PL/SLang3objects.rst",
+      "size": 679
+    },
+    {
+      "blob_sha": "5ed3ef07701f576f552b66015eb2e8ed48bef2e9",
+      "path": "RST/en/PL/SLang3reviewOfOOP.rst",
+      "size": 894
+    },
+    {
+      "blob_sha": "1ff413876900ca1aa98b2ed7d11d227da7b53353",
+      "path": "RST/en/PL/Substitution.rst",
+      "size": 8961
+    },
+    {
+      "blob_sha": "cf668f85e1bb2557b80aa5012cd14d92d7f5a5e8",
+      "path": "RST/en/PL/TypeInference.rst",
+      "size": 12419
+    },
+    {
+      "blob_sha": "ca6bba10cf73e751bda296889e2da18b7192b131",
+      "path": "RST/en/PL/TypeSystems.rst",
+      "size": 12292
+    },
+    {
+      "blob_sha": "c4f2c8473ed78f620e4b5e96fc5a6b9eabb7f64c",
+      "path": "RST/en/PY4E/chap1.rst",
+      "size": 42170
+    },
+    {
+      "blob_sha": "1d861e12fe997df33f42e97ba53af587f412d8d6",
+      "path": "RST/en/PY4E/chap10.rst",
+      "size": 19566
+    },
+    {
+      "blob_sha": "748c395b35846896f9c3eaa12533245a61f68770",
+      "path": "RST/en/PY4E/chap11.rst",
+      "size": 27194
+    },
+    {
+      "blob_sha": "45ab1f947a750ad396f0eba3f0a3a781c7563c5b",
+      "path": "RST/en/PY4E/chap12.rst",
+      "size": 28295
+    },
+    {
+      "blob_sha": "463894ef9ca6b11730c51491d14459bdafe4c3c2",
+      "path": "RST/en/PY4E/chap13.rst",
+      "size": 29872
+    },
+    {
+      "blob_sha": "d4459e18bd96c73d72b2538ea5ec3b579289fd0c",
+      "path": "RST/en/PY4E/chap14.rst",
+      "size": 24894
+    },
+    {
+      "blob_sha": "931e4c6fb14ba644cc77bd13ab370bcc85ce76c7",
+      "path": "RST/en/PY4E/chap15.rst",
+      "size": 51037
+    },
+    {
+      "blob_sha": "dcc2ea3bc976280203ee34d2702fe3532a1d7a2d",
+      "path": "RST/en/PY4E/chap16.rst",
+      "size": 21304
+    },
+    {
+      "blob_sha": "d6ea412ca1922ce4f4977a16136f0ac938f44d6f",
+      "path": "RST/en/PY4E/chap2.rst",
+      "size": 22814
+    },
+    {
+      "blob_sha": "55d00de67424cfe5182d1ef6b2237aee55ee2d73",
+      "path": "RST/en/PY4E/chap3.rst",
+      "size": 18632
+    },
+    {
+      "blob_sha": "5042e4b9fb339b41a2031081e52bbabb88251c7f",
+      "path": "RST/en/PY4E/chap4.rst",
+      "size": 23418
+    },
+    {
+      "blob_sha": "99bfa366fe439921288d298fc4a7e38591242526",
+      "path": "RST/en/PY4E/chap5.rst",
+      "size": 18050
+    },
+    {
+      "blob_sha": "21061c2146cb1765ee3d3c316b48f15c08a1998f",
+      "path": "RST/en/PY4E/chap6.rst",
+      "size": 20467
+    },
+    {
+      "blob_sha": "0155c4b72cea1d8a9d61228d910eba3463606c47",
+      "path": "RST/en/PY4E/chap7.rst",
+      "size": 23622
+    },
+    {
+      "blob_sha": "c7226a703774857c1a42f55ec0d6b9c13eec5077",
+      "path": "RST/en/PY4E/chap8.rst",
+      "size": 29911
+    },
+    {
+      "blob_sha": "9fe325fe1603ef90bad3d07fe694d7735f933882",
+      "path": "RST/en/PY4E/chap9.rst",
+      "size": 20919
+    },
+    {
+      "blob_sha": "7e739aab4f05d04650f057c5ee6178ecf28f6a06",
+      "path": "RST/en/PittAcos/JSVEEJava1.rst",
+      "size": 1701
+    },
+    {
+      "blob_sha": "9d1a19358f07b560340b9a5791330151664fc303",
+      "path": "RST/en/PittAcos/JSVEEJava2.rst",
+      "size": 1796
+    },
+    {
+      "blob_sha": "8e742acf7d33a14e2aebf43831557bdb4d4525fa",
+      "path": "RST/en/PittAcos/JSVEEJava3.rst",
+      "size": 1527
+    },
+    {
+      "blob_sha": "0b95e26f115bd0616e9f34fe2fb444e44d44138c",
+      "path": "RST/en/PittAcos/JSVEEJava4.rst",
+      "size": 1490
+    },
+    {
+      "blob_sha": "86c752b4b8ae94fe99d5b751609d72ffad493aae",
+      "path": "RST/en/PittAcos/JSVEEJava5.rst",
+      "size": 1538
+    },
+    {
+      "blob_sha": "aefc4d2b177122a28581fd093692622d3d0c121f",
+      "path": "RST/en/PittAcos/JSVEEJava6.rst",
+      "size": 1564
+    },
+    {
+      "blob_sha": "dd1e73828bce8a7d6a0e5d90907f340769f81beb",
+      "path": "RST/en/PittAcos/JSVEEJava7.rst",
+      "size": 1616
+    },
+    {
+      "blob_sha": "a324d1959c22d34416ce08a5326c64ff1a12e109",
+      "path": "RST/en/PittAcos/JSVEEJava8.rst",
+      "size": 1485
+    },
+    {
+      "blob_sha": "0918ed8f50b45dc10eedd5256c767c4c0e17986e",
+      "path": "RST/en/PittAcos/JSVEEJava9.rst",
+      "size": 1333
+    },
+    {
+      "blob_sha": "db066560f26e1437efb20429c434ae362edc607b",
+      "path": "RST/en/PittAcos/JSVEEPython1.rst",
+      "size": 1528
+    },
+    {
+      "blob_sha": "8111c282873973622cff84539eb51b997e299100",
+      "path": "RST/en/PittAcos/JSVEEPython2.rst",
+      "size": 1495
+    },
+    {
+      "blob_sha": "13c930dd7d7ac8a63da00350f0f0a35c6422cb48",
+      "path": "RST/en/PittAcos/JSVEEPython3.rst",
+      "size": 1452
+    },
+    {
+      "blob_sha": "15c93de6513e053317bec66457fb97733567767d",
+      "path": "RST/en/PittAcos/JSVEEPython4.rst",
+      "size": 1498
+    },
+    {
+      "blob_sha": "200e0d7ecc0433b51f8b5ac516324a24e3142f63",
+      "path": "RST/en/PittAcos/JSVEEPython5.rst",
+      "size": 1767
+    },
+    {
+      "blob_sha": "637cbd3086af91d70e5b3390d7988f9c967fefa2",
+      "path": "RST/en/PittAcos/JSVEEPython6.rst",
+      "size": 1600
+    },
+    {
+      "blob_sha": "bc22e75418aa0a057fe012192e42390129c2fdb3",
+      "path": "RST/en/PittAcos/JSVEEPython7.rst",
+      "size": 1545
+    },
+    {
+      "blob_sha": "4d639fddb25b732c788b0a259d163ac224450e9a",
+      "path": "RST/en/PittAcos/JSVEEPython8.rst",
+      "size": 1506
+    },
+    {
+      "blob_sha": "5c2999efe738473ecba5997d817f0c407e990b3d",
+      "path": "RST/en/PittAcos/JSVEEPython9.rst",
+      "size": 1705
+    },
+    {
+      "blob_sha": "7811672c376c2016977c514533a6c9267fb52d78",
+      "path": "RST/en/PittAcos/JsParsonsPython1.rst",
+      "size": 1714
+    },
+    {
+      "blob_sha": "5a8ee6e77c7229f8a4a420561036bc50e52e364d",
+      "path": "RST/en/PittAcos/JsParsonsPython2.rst",
+      "size": 2069
+    },
+    {
+      "blob_sha": "7c636603366e6e16c434ed15b5b75b96e7b6fb27",
+      "path": "RST/en/PittAcos/JsParsonsPython3.rst",
+      "size": 2073
+    },
+    {
+      "blob_sha": "f632b1fc5a8be95b884e45e623bb1d888c0fc5af",
+      "path": "RST/en/PittAcos/JsParsonsPython4.rst",
+      "size": 2343
+    },
+    {
+      "blob_sha": "607185843c03927dbebc69bfc929cd0d233b55dd",
+      "path": "RST/en/PittAcos/JsParsonsPython5.rst",
+      "size": 1791
+    },
+    {
+      "blob_sha": "a12cdd4e24e350ce49cb98200612f6fb6d3ac00a",
+      "path": "RST/en/PittAcos/JsParsonsPython6.rst",
+      "size": 1453
+    },
+    {
+      "blob_sha": "240d95c6635d9744ae49bbc6909a15e81f978e61",
+      "path": "RST/en/PointersCPP/BasicPointers.rst",
+      "size": 19800
+    },
+    {
+      "blob_sha": "9acc29d56844e6331baacb6d10c5bc28ad9fff7c",
+      "path": "RST/en/PointersCPP/Exercises.rst",
+      "size": 644
+    },
+    {
+      "blob_sha": "15909e51cb3a2be9c8525c8755e1c1b5152e5a47",
+      "path": "RST/en/PointersCPP/HeapMem.rst",
+      "size": 20377
+    },
+    {
+      "blob_sha": "56ec3e14e621d855042f0456089f29018e8bc30d",
+      "path": "RST/en/PointersCPP/LocalMem.rst",
+      "size": 14112
+    },
+    {
+      "blob_sha": "888676b90f620e599ec5fe92ec446bd994e20679",
+      "path": "RST/en/PointersCPP/PointerIntro.rst",
+      "size": 1843
+    },
+    {
+      "blob_sha": "6397f730dcdbd5ea3a4426fa190c716a374f68fd",
+      "path": "RST/en/PointersCPP/RefParam.rst",
+      "size": 15308
+    },
+    {
+      "blob_sha": "ad76255185f35311d3587210baede3a91a6d4d70",
+      "path": "RST/en/PointersJava/BasicPointers1.rst",
+      "size": 7164
+    },
+    {
+      "blob_sha": "f46583ac0f839eae02721365a7711283436f206a",
+      "path": "RST/en/PointersJava/BasicPointers2.rst",
+      "size": 10022
+    },
+    {
+      "blob_sha": "d894661f4f77e132fa02bc5984708574521915d7",
+      "path": "RST/en/PointersJava/ExercisesPtr.rst",
+      "size": 1605
+    },
+    {
+      "blob_sha": "f60c50a2e02f90160cc2f2c41c90b32605256ed0",
+      "path": "RST/en/PointersJava/HeapMem.rst",
+      "size": 13331
+    },
+    {
+      "blob_sha": "33444a95e6eb91002056f35960a0da96ec8de088",
+      "path": "RST/en/PointersJava/LinkedChains.rst",
+      "size": 1701
+    },
+    {
+      "blob_sha": "2d3d8f5f8e2fcef09d67c100d6e0a24313790fa6",
+      "path": "RST/en/PointersJava/Links1.rst",
+      "size": 1848
+    },
+    {
+      "blob_sha": "c2826477c14223f422c225661da43f2c80b0ac2b",
+      "path": "RST/en/PointersJava/Links2.rst",
+      "size": 1716
+    },
+    {
+      "blob_sha": "1cefa3386d0f7abc49b00dd060f7177237e9a93f",
+      "path": "RST/en/PointersJava/LocalMem.rst",
+      "size": 12501
+    },
+    {
+      "blob_sha": "c3051eccb634bbbd15ded8059298f9c925a8dc57",
+      "path": "RST/en/PointersJava/PointerExercises.rst",
+      "size": 1430
+    },
+    {
+      "blob_sha": "2d7705ef346e421a2d97f78b9535656adee97201",
+      "path": "RST/en/PointersJava/PointerIntro.rst",
+      "size": 1398
+    },
+    {
+      "blob_sha": "bccd5035fa5f23c04c81f31be1fb9163067ace55",
+      "path": "RST/en/PointersJava/PointersCM.rst",
+      "size": 705
+    },
+    {
+      "blob_sha": "d012288d96f9a1868dc7e0129e256e9477cd4d6e",
+      "path": "RST/en/PointersJava/Syntax.rst",
+      "size": 6860
+    },
+    {
+      "blob_sha": "795f25fda2ad65f5790a8d1b2dd097a80ee1c745",
+      "path": "RST/en/RecurTutor/CodeCompletionEx.rst",
+      "size": 2218
+    },
+    {
+      "blob_sha": "24a4edc27495c502cd39ba66b800ed37f3fd634a",
+      "path": "RST/en/RecurTutor/HarderCodeCompletionEx.rst",
+      "size": 1217
+    },
+    {
+      "blob_sha": "abdc23662dcee8aba5fb007708aa1bd34e76ae1e",
+      "path": "RST/en/RecurTutor/HarderWrite.rst",
+      "size": 2677
+    },
+    {
+      "blob_sha": "103cf73787619f7322a820e24ef26ed152694c3e",
+      "path": "RST/en/RecurTutor/RecIntro.rst",
+      "size": 4983
+    },
+    {
+      "blob_sha": "c6a8af9e0bae8a065022f5a7b47846fa9a76b7a8",
+      "path": "RST/en/RecurTutor/RecSummaryEx.rst",
+      "size": 809
+    },
+    {
+      "blob_sha": "6e510b6f49f14d28bd850da255f005fb1f081b54",
+      "path": "RST/en/RecurTutor/Trace.rst",
+      "size": 7178
+    },
+    {
+      "blob_sha": "94be80b280b07066f31f2616db535ff630170618",
+      "path": "RST/en/RecurTutor/TracingEx.rst",
+      "size": 1833
+    },
+    {
+      "blob_sha": "f10bbb6a619ea16af6f62fd71b8751ec269b9698",
+      "path": "RST/en/RecurTutor/Write.rst",
+      "size": 2478
+    },
+    {
+      "blob_sha": "a17ea23481879b75b269d7a9eae632ae0e8f2fe1",
+      "path": "RST/en/RecurTutor/WritingEx.rst",
+      "size": 1347
+    },
+    {
+      "blob_sha": "d74a1f19c95224cec56ee2520a145332bef0df54",
+      "path": "RST/en/SWDesignAndDataStructs/AdminAcadIntegrity.rst",
+      "size": 377
+    },
+    {
+      "blob_sha": "3042f7b6b97a0e230a0685a9f5a6df962024cc44",
+      "path": "RST/en/SWDesignAndDataStructs/AdminIDESetup.rst",
+      "size": 11660
+    },
+    {
+      "blob_sha": "cb773eaca7b74d26d4a4fdd1426374a1e4d84875",
+      "path": "RST/en/SWDesignAndDataStructs/AdminPlaceholder.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "3a626407321a63b85b9f78ab4de5685bd913597a",
+      "path": "RST/en/SWDesignAndDataStructs/AdminWelcome.rst",
+      "size": 9090
+    },
+    {
+      "blob_sha": "3d06cb0821e6eaf29a345862c0d9369599598b9b",
+      "path": "RST/en/SWDesignAndDataStructs/ContentBags1.rst",
+      "size": 22274
+    },
+    {
+      "blob_sha": "569d92013643d78357718137e77467b78ec9df53",
+      "path": "RST/en/SWDesignAndDataStructs/ContentBags2isNOWLinkedBags.rst",
+      "size": 8142
+    },
+    {
+      "blob_sha": "5ebf6281f497d5f2eae56258fd1dcea6a8eb85c7",
+      "path": "RST/en/SWDesignAndDataStructs/ContentBinarySearch.rst",
+      "size": 3013
+    },
+    {
+      "blob_sha": "fac40881008671eb4f3e7730a5880d8fb9ba2568",
+      "path": "RST/en/SWDesignAndDataStructs/ContentBinarySearchTrees.rst",
+      "size": 6388
+    },
+    {
+      "blob_sha": "f86713f002b585e86fcaef605215bb0317893153",
+      "path": "RST/en/SWDesignAndDataStructs/ContentCloning.rst",
+      "size": 2801
+    },
+    {
+      "blob_sha": "dbcea2dfac161b1f938b49e2832ffebb3d2842ee",
+      "path": "RST/en/SWDesignAndDataStructs/ContentComparingAndSorting.rst",
+      "size": 9855
+    },
+    {
+      "blob_sha": "182c2c9fa58a9343317e9a265c86591238940c64",
+      "path": "RST/en/SWDesignAndDataStructs/ContentCoursePerceptions.rst",
+      "size": 380
+    },
+    {
+      "blob_sha": "b784c538bcee67084f88fa530558280f576fb56a",
+      "path": "RST/en/SWDesignAndDataStructs/ContentCoursePerceptions2.rst",
+      "size": 380
+    },
+    {
+      "blob_sha": "2931a7989ab0fd95bcade0301e8eda837cec54ba",
+      "path": "RST/en/SWDesignAndDataStructs/ContentDesignMVC.rst",
+      "size": 33461
+    },
+    {
+      "blob_sha": "cae5b1c54f129b2850d05d924b08fbb5ac489f7f",
+      "path": "RST/en/SWDesignAndDataStructs/ContentEfficiency.rst",
+      "size": 4285
+    },
+    {
+      "blob_sha": "81d5f2cf3fccddc264590ff058df78118e81a0bf",
+      "path": "RST/en/SWDesignAndDataStructs/ContentEthics.rst",
+      "size": 6217
+    },
+    {
+      "blob_sha": "35cb1485c162bcf12141927956fc6d70adb26f08",
+      "path": "RST/en/SWDesignAndDataStructs/ContentExceptions.rst",
+      "size": 17508
+    },
+    {
+      "blob_sha": "65e38f54508db32f088f4c3810adc4e6bd514724",
+      "path": "RST/en/SWDesignAndDataStructs/ContentFundamentals.rst",
+      "size": 17286
+    },
+    {
+      "blob_sha": "48df65ea0b32333a6510a5f20b64f16cca7a4973",
+      "path": "RST/en/SWDesignAndDataStructs/ContentGenerics1.rst",
+      "size": 2741
+    },
+    {
+      "blob_sha": "94c898950b94f899d72326e6c1279a5c1be28ca7",
+      "path": "RST/en/SWDesignAndDataStructs/ContentGenerics2.rst",
+      "size": 7195
+    },
+    {
+      "blob_sha": "0b8ac2fa46e21b5552018e599241a896a254a35e",
+      "path": "RST/en/SWDesignAndDataStructs/ContentIterators.rst",
+      "size": 17462
+    },
+    {
+      "blob_sha": "2606fb269e699920969b6c7e8e5b6d7ca7a07986",
+      "path": "RST/en/SWDesignAndDataStructs/ContentJUNITReview.rst",
+      "size": 19490
+    },
+    {
+      "blob_sha": "2593b3de8aea96beb3f3dc1a90b4ed817a811170",
+      "path": "RST/en/SWDesignAndDataStructs/ContentJavaArrays.rst",
+      "size": 6414
+    },
+    {
+      "blob_sha": "f047741c9983a30a0ef7a04688d59a227bfbab19",
+      "path": "RST/en/SWDesignAndDataStructs/ContentLinkedBags.rst",
+      "size": 8568
+    },
+    {
+      "blob_sha": "4d8076683123e2be3834c8d79d2f4a17f664e49f",
+      "path": "RST/en/SWDesignAndDataStructs/ContentLinkedChains.rst",
+      "size": 9408
+    },
+    {
+      "blob_sha": "82b198a4025cd66f61e7a951b10a70b2942324c6",
+      "path": "RST/en/SWDesignAndDataStructs/ContentLists.rst",
+      "size": 16303
+    },
+    {
+      "blob_sha": "1010f4da96b524cb8de169365177f6efe6328387",
+      "path": "RST/en/SWDesignAndDataStructs/ContentMidSemester.rst",
+      "size": 384
+    },
+    {
+      "blob_sha": "09c321bfce57bb5eda752b01e50b78acbabb8a4c",
+      "path": "RST/en/SWDesignAndDataStructs/ContentPolymorphism.rst",
+      "size": 11823
+    },
+    {
+      "blob_sha": "0d36fc060379e53c4d58443e99b6bf226911a010",
+      "path": "RST/en/SWDesignAndDataStructs/ContentQueues.rst",
+      "size": 18887
+    },
+    {
+      "blob_sha": "6826e0ac9dc315be3160bac7f6f9fbd091ebb630",
+      "path": "RST/en/SWDesignAndDataStructs/ContentRecursion.rst",
+      "size": 12267
+    },
+    {
+      "blob_sha": "345b740546b2dde1c45f7d8cd39d904d69879368",
+      "path": "RST/en/SWDesignAndDataStructs/ContentSortedLists.rst",
+      "size": 21883
+    },
+    {
+      "blob_sha": "4a9f4bd1a1026a9498487fc50927a0aa4217e61c",
+      "path": "RST/en/SWDesignAndDataStructs/ContentStacks.rst",
+      "size": 8727
+    },
+    {
+      "blob_sha": "7f9f7b4e95a2dd40a7755f89af15942dde6ca1c6",
+      "path": "RST/en/SWDesignAndDataStructs/ContentStyle.rst",
+      "size": 47922
+    },
+    {
+      "blob_sha": "501329e3e69f7a00a85305350f433178a8d024d7",
+      "path": "RST/en/SWDesignAndDataStructs/ContentTrees.rst",
+      "size": 5951
+    },
+    {
+      "blob_sha": "1bad82422dc4d363355a76df852266f9c1191b99",
+      "path": "RST/en/SWDesignAndDataStructs/DesignAssignment.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "7ea08c0e8a8ce2d5bb19ff5f8de71f6362761cb4",
+      "path": "RST/en/SWDesignAndDataStructs/EthicsAssignment.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "8681f45788def95556200e35820d4dd931c1d6d7",
+      "path": "RST/en/SWDesignAndDataStructs/FinalExamInfo.rst",
+      "size": 376
+    },
+    {
+      "blob_sha": "1d294b3373af1b5dc9e1bfc1e4d6cb3f97234805",
+      "path": "RST/en/SWDesignAndDataStructs/GettingStarted.rst",
+      "size": 6066
+    },
+    {
+      "blob_sha": "6bdd12a3dfedc74f8aee7b62aff599002795ffc9",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod10.rst",
+      "size": 387
+    },
+    {
+      "blob_sha": "04a92db3bc95d41f8f45b23f43770dc4acf12e5a",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod11.rst",
+      "size": 387
+    },
+    {
+      "blob_sha": "f53b1dd32cd9f8d55b0373b3e78fd489a8c65d6b",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod13.rst",
+      "size": 387
+    },
+    {
+      "blob_sha": "f53b1dd32cd9f8d55b0373b3e78fd489a8c65d6b",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod14.rst",
+      "size": 387
+    },
+    {
+      "blob_sha": "310a661c79e4f1e6892ad1cfa77c4a7fdfe9eb4e",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod2.rst",
+      "size": 386
+    },
+    {
+      "blob_sha": "8b142fa63039dba6a3108fd0a3dc59d1b0f25f58",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod3.rst",
+      "size": 386
+    },
+    {
+      "blob_sha": "61666367f73779bb17050dd1dabea64d2aec6606",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod4.rst",
+      "size": 386
+    },
+    {
+      "blob_sha": "63d078bad7d7a8678fce2eccc74d180c659cff18",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod5.rst",
+      "size": 386
+    },
+    {
+      "blob_sha": "af3aa7f8c6771c9b1407b1609a286d5aaafd926d",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod6.rst",
+      "size": 386
+    },
+    {
+      "blob_sha": "6d7cc62279c68d8b5e8e1bf2ec4688bb9e7db4e5",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod7.rst",
+      "size": 386
+    },
+    {
+      "blob_sha": "19ab4b890e950b2688cb120483b1bc46ce5050bb",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod8.rst",
+      "size": 386
+    },
+    {
+      "blob_sha": "29736185277390c9e2947d0bf05052ecc5ea3718",
+      "path": "RST/en/SWDesignAndDataStructs/KnowledgePracticeMod9.rst",
+      "size": 386
+    },
+    {
+      "blob_sha": "791b1888b47c4bb78b5467d88c6373857e22738c",
+      "path": "RST/en/SWDesignAndDataStructs/Lab10DoubleLink.rst",
+      "size": 384
+    },
+    {
+      "blob_sha": "3435786dc637e17b832eb8e29e5ef94a90e1e3ed",
+      "path": "RST/en/SWDesignAndDataStructs/Lab10DoubleLinkPost.rst",
+      "size": 395
+    },
+    {
+      "blob_sha": "cd84a140768bf0252477f76a17514852e4bc0752",
+      "path": "RST/en/SWDesignAndDataStructs/Lab13BinaryTrees.rst",
+      "size": 385
+    },
+    {
+      "blob_sha": "b01c354f315c938a5c33ed52e8304370b0a35f2a",
+      "path": "RST/en/SWDesignAndDataStructs/Lab14BST.rst",
+      "size": 376
+    },
+    {
+      "blob_sha": "f0fdc6a4fafbfb424364b3e59e324bf66fb10a46",
+      "path": "RST/en/SWDesignAndDataStructs/Lab2Polymorphism.rst",
+      "size": 384
+    },
+    {
+      "blob_sha": "a306469c686778fbf2a13353efb1c127a9a2a470",
+      "path": "RST/en/SWDesignAndDataStructs/Lab2PolymorphismPost.rst",
+      "size": 393
+    },
+    {
+      "blob_sha": "a4d36ea516caab4a74c595e7101a387422bf32e7",
+      "path": "RST/en/SWDesignAndDataStructs/Lab3MovieDatabase.rst",
+      "size": 386
+    },
+    {
+      "blob_sha": "3337ce58d05bb7cb7e4aec6bff81ba09595da4fe",
+      "path": "RST/en/SWDesignAndDataStructs/Lab3MovieDatabasePost.rst",
+      "size": 399
+    },
+    {
+      "blob_sha": "2195cab2a028d3d020ebb807025c59c261c23f71",
+      "path": "RST/en/SWDesignAndDataStructs/Lab4GroceryBags.rst",
+      "size": 384
+    },
+    {
+      "blob_sha": "cb57ec33552cc08d80987e349dbd01aec40576c8",
+      "path": "RST/en/SWDesignAndDataStructs/Lab4GroceryBagsPost.rst",
+      "size": 395
+    },
+    {
+      "blob_sha": "074d9df82878da820b9386193b0541542e2ad5d7",
+      "path": "RST/en/SWDesignAndDataStructs/Lab5IceCreamCone.rst",
+      "size": 386
+    },
+    {
+      "blob_sha": "6ffe2164eb7e304e389a80376ddda8417bc01574",
+      "path": "RST/en/SWDesignAndDataStructs/Lab5IceCreamConePost.rst",
+      "size": 399
+    },
+    {
+      "blob_sha": "d99446df17a7cd0c8027613f30aef8fc780b6259",
+      "path": "RST/en/SWDesignAndDataStructs/Lab6ArrayStack.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "8c6ae73c59c88eabba29ab4d10851e0d94fd49a0",
+      "path": "RST/en/SWDesignAndDataStructs/Lab6ArrayStackPost.rst",
+      "size": 393
+    },
+    {
+      "blob_sha": "f5dfebfc508acb2293584535498472e155615b94",
+      "path": "RST/en/SWDesignAndDataStructs/Lab8Carrano.rst",
+      "size": 379
+    },
+    {
+      "blob_sha": "09be1ab7a1217bf333e3b7c27156c8a2d8708ad6",
+      "path": "RST/en/SWDesignAndDataStructs/Lab8CarranoPost.rst",
+      "size": 388
+    },
+    {
+      "blob_sha": "73b8c77bf7e627626184b6ed195554b3777f1cfb",
+      "path": "RST/en/SWDesignAndDataStructs/Lab9SingleLink.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "d74a1f19c95224cec56ee2520a145332bef0df54",
+      "path": "RST/en/SWDesignAndDataStructs/Placeholder.rst",
+      "size": 377
+    },
+    {
+      "blob_sha": "28891833ea04e280bdd0ab294d9cea197d80f8df",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod1.rst",
+      "size": 388
+    },
+    {
+      "blob_sha": "b9502840d732358378f7202a8dec4dd5b68b99e6",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod10.rst",
+      "size": 389
+    },
+    {
+      "blob_sha": "f690b29563610e0c247ef642f05a53702e9d9622",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod11.rst",
+      "size": 389
+    },
+    {
+      "blob_sha": "ed4672ca62b35c72ce39d317ad527a4ee0b87839",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod14.rst",
+      "size": 389
+    },
+    {
+      "blob_sha": "28891833ea04e280bdd0ab294d9cea197d80f8df",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod2.rst",
+      "size": 388
+    },
+    {
+      "blob_sha": "3287be6deb0356d83b0284f49333caf05353bf13",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod3.rst",
+      "size": 388
+    },
+    {
+      "blob_sha": "7fb709a5a47a03815e976cfc147de79382fd58ce",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod4.rst",
+      "size": 388
+    },
+    {
+      "blob_sha": "f7dce9121154827557eddf2b55280a16afefde96",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod5.rst",
+      "size": 388
+    },
+    {
+      "blob_sha": "94872aabbc7f38ae85beff3f1327d86ea2ba99b3",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod6.rst",
+      "size": 388
+    },
+    {
+      "blob_sha": "1253c8f5745042e44f48ae881953197cc512c35e",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod7.rst",
+      "size": 388
+    },
+    {
+      "blob_sha": "4c5d46af51832b197a7a9586b2891f3b8782812c",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod8.rst",
+      "size": 388
+    },
+    {
+      "blob_sha": "5450aa5a69e377d3663d9693da3b9790f06f8ffd",
+      "path": "RST/en/SWDesignAndDataStructs/ProgrammingPracticeMod9.rst",
+      "size": 388
+    },
+    {
+      "blob_sha": "362df0b11e0d57870dc1a34ec84bdb68913c4314",
+      "path": "RST/en/SWDesignAndDataStructs/Project1.rst",
+      "size": 375
+    },
+    {
+      "blob_sha": "fd9f3c753d594a48f27bfefb200dced5250c9b3b",
+      "path": "RST/en/SWDesignAndDataStructs/Project2.rst",
+      "size": 375
+    },
+    {
+      "blob_sha": "ea345f47220df13b761d2ecdbcb9e45c94337189",
+      "path": "RST/en/SWDesignAndDataStructs/Project3.rst",
+      "size": 375
+    },
+    {
+      "blob_sha": "421732de9cd6d984fb8f1f450e6b37633bd17425",
+      "path": "RST/en/SWDesignAndDataStructs/Project4.rst",
+      "size": 375
+    },
+    {
+      "blob_sha": "fed199d92b45e534aaf3774b08c9a281e732a48b",
+      "path": "RST/en/SWDesignAndDataStructs/Project4Discussion.rst",
+      "size": 396
+    },
+    {
+      "blob_sha": "89a8bcd7e3f05e93bdf122c50df85962a3f33424",
+      "path": "RST/en/SWDesignAndDataStructs/Project4Milestone.rst",
+      "size": 385
+    },
+    {
+      "blob_sha": "86d80968f0b25f006fc1ec0dcd8fb9b1c6e136f6",
+      "path": "RST/en/SWDesignAndDataStructs/Project5.rst",
+      "size": 375
+    },
+    {
+      "blob_sha": "883895a4d541c98dd394f9e4a337f177b3bb4220",
+      "path": "RST/en/SWDesignAndDataStructs/Project5DesignSubmission.rst",
+      "size": 395
+    },
+    {
+      "blob_sha": "8a0ee8673f17cb994b3a07513c2a7a57dc66c9f4",
+      "path": "RST/en/SWDesignAndDataStructs/Project5Discussion.rst",
+      "size": 386
+    },
+    {
+      "blob_sha": "40274d2f9f1e0d2909ad8ce48ef00cae6ebe8805",
+      "path": "RST/en/SWDesignAndDataStructs/Project5GroupFeedback.rst",
+      "size": 390
+    },
+    {
+      "blob_sha": "4ade5f7081a18505bfb4e23b1cc95a5dcb9f2d87",
+      "path": "RST/en/SWDesignAndDataStructs/Project5GroupForming.rst",
+      "size": 389
+    },
+    {
+      "blob_sha": "e5dd7dd571ce4d95878b083494e90ba715190442",
+      "path": "RST/en/SWDesignAndDataStructs/Project5Milestone.rst",
+      "size": 385
+    },
+    {
+      "blob_sha": "fb1c687860ff1bdc49020283067543e35e191fb7",
+      "path": "RST/en/SWDesignAndDataStructs/Quiz1.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "fb1c687860ff1bdc49020283067543e35e191fb7",
+      "path": "RST/en/SWDesignAndDataStructs/Quiz1Info.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "4b27c3115ef82a104bce4a56791fb4e935f9340e",
+      "path": "RST/en/SWDesignAndDataStructs/Quiz2.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "4b27c3115ef82a104bce4a56791fb4e935f9340e",
+      "path": "RST/en/SWDesignAndDataStructs/Quiz2Info.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "f4e6914d271fdc12ebf68f79d16ebcab2fd009ee",
+      "path": "RST/en/SWDesignAndDataStructs/Quiz3.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "f4e6914d271fdc12ebf68f79d16ebcab2fd009ee",
+      "path": "RST/en/SWDesignAndDataStructs/Quiz3Info.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "9104922c1826ef0bb8a52146f2df031aa7e6f7d8",
+      "path": "RST/en/SWDesignAndDataStructs/Quiz4.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "9104922c1826ef0bb8a52146f2df031aa7e6f7d8",
+      "path": "RST/en/SWDesignAndDataStructs/Quiz4Info.rst",
+      "size": 383
+    },
+    {
+      "blob_sha": "164ed7b0c795a1762f43f93b1ac6d7f551e285f5",
+      "path": "RST/en/SWDesignAndDataStructs/RSTTemplate.rst",
+      "size": 7886
+    },
+    {
+      "blob_sha": "a1487cfedb40ce0b4e09c147a6650e5602d8dc12",
+      "path": "RST/en/SWDesignAndDataStructs/RefPythonToJava.rst",
+      "size": 8953
+    },
+    {
+      "blob_sha": "ceb1f9afd4d08e291f5a441d2c109804b12dcfaf",
+      "path": "RST/en/SearchStruct/AVL.rst",
+      "size": 4990
+    },
+    {
+      "blob_sha": "412099768336b03de5bc3a7335d30acb21aabd0c",
+      "path": "RST/en/SearchStruct/BalancedTree.rst",
+      "size": 3264
+    },
+    {
+      "blob_sha": "4884616ba7b889a1d9418da0b9dc3947fb58a989",
+      "path": "RST/en/SearchStruct/RedBlack.rst",
+      "size": 761
+    },
+    {
+      "blob_sha": "ea1efe31bdd2df5f122c758c7f47f608c499c52d",
+      "path": "RST/en/SearchStruct/SkipList.rst",
+      "size": 8525
+    },
+    {
+      "blob_sha": "e050bc9e746af1396074d60335f8599a266b14d1",
+      "path": "RST/en/SearchStruct/Sparse.rst",
+      "size": 9422
+    },
+    {
+      "blob_sha": "9018566ff8d57f65d8b0aaa222d2e6747f3d7ebd",
+      "path": "RST/en/SearchStruct/Splay.rst",
+      "size": 9030
+    },
+    {
+      "blob_sha": "3a8123aba2fec464ada31c84c0182bd5123a15bd",
+      "path": "RST/en/Searching/BinarySearch.rst",
+      "size": 5044
+    },
+    {
+      "blob_sha": "1b231a8c5fea9b13a03a8bd16786e915bbbad794",
+      "path": "RST/en/Searching/SearchIntro.rst",
+      "size": 3584
+    },
+    {
+      "blob_sha": "2ad3f8f099e20dcb3d5676ddfa93c888c5ee4f54",
+      "path": "RST/en/Searching/SelfOrg.rst",
+      "size": 15257
+    },
+    {
+      "blob_sha": "ebdd6504ed257d4395ff35196b7499bfca7bd0d1",
+      "path": "RST/en/Searching/SortedSearch.rst",
+      "size": 24060
+    },
+    {
+      "blob_sha": "5cbec8ca7779cf9d469e226f8f86fab0d7a2736e",
+      "path": "RST/en/Searching/UnsortedSearch.rst",
+      "size": 8923
+    },
+    {
+      "blob_sha": "e4e371c05c7dd051d99806a13680b863d4a607f7",
+      "path": "RST/en/SeniorAlgAnal/AAIntro.rst",
+      "size": 3182
+    },
+    {
+      "blob_sha": "06e0f4cc4fa1edf85d29d6410163bbc36dda3fbd",
+      "path": "RST/en/SeniorAlgAnal/AAOverview.rst",
+      "size": 11300
+    },
+    {
+      "blob_sha": "90dfbf7724ef99b38a66b8656bc49e88356efe22",
+      "path": "RST/en/SeniorAlgAnal/AdvSumm.rst",
+      "size": 12681
+    },
+    {
+      "blob_sha": "7ae81bbfa47c99a8bf1a611fd416126bf99f6d1c",
+      "path": "RST/en/SeniorAlgAnal/AmortAnal.rst",
+      "size": 9856
+    },
+    {
+      "blob_sha": "e95f7fdf9fec643a2ff8610a2ba30a3f27f0d179",
+      "path": "RST/en/SeniorAlgAnal/BoundsReview.rst",
+      "size": 13160
+    },
+    {
+      "blob_sha": "23eb80a5f2402cde1adfa3d9ad608b046555c030",
+      "path": "RST/en/SeniorAlgAnal/DynamicProgramming.rst",
+      "size": 22130
+    },
+    {
+      "blob_sha": "ead809439a4bfc30155f5f71140d540e65ff66fb",
+      "path": "RST/en/SeniorAlgAnal/FFT.rst",
+      "size": 9978
+    },
+    {
+      "blob_sha": "8030607a29df94742f29a5024f0ecf8729409e4f",
+      "path": "RST/en/SeniorAlgAnal/GrowthRate.rst",
+      "size": 7411
+    },
+    {
+      "blob_sha": "ba49999b5f4445c36b43f2248a9941022c13c82c",
+      "path": "RST/en/SeniorAlgAnal/Impossible.rst",
+      "size": 20206
+    },
+    {
+      "blob_sha": "07882a6e2207d9fd36cd0b79d4cd2decf0003ee5",
+      "path": "RST/en/SeniorAlgAnal/Matrix.rst",
+      "size": 5486
+    },
+    {
+      "blob_sha": "dec7d491fbcec8eccc839aa1a2e87f38a527b3fe",
+      "path": "RST/en/SeniorAlgAnal/Numeric.rst",
+      "size": 6734
+    },
+    {
+      "blob_sha": "cb75dca10c72a12b17b67a7a19207199f36088e8",
+      "path": "RST/en/SeniorAlgAnal/Primes.rst",
+      "size": 4452
+    },
+    {
+      "blob_sha": "db7fe3ab7e2ec5fb03de67fe32ccff843f135aba",
+      "path": "RST/en/SeniorAlgAnal/Probabilistic.rst",
+      "size": 5278
+    },
+    {
+      "blob_sha": "2fa4ce139062cc3b21a9eaab134be7528bf4f4a8",
+      "path": "RST/en/SeniorAlgAnal/ProblemSolving.rst",
+      "size": 12352
+    },
+    {
+      "blob_sha": "9b81743315db3f8bb9659ed6b42f63bcdeda6ac1",
+      "path": "RST/en/SeniorAlgAnal/RandomNums.rst",
+      "size": 4688
+    },
+    {
+      "blob_sha": "0df4f01cde2a09b0e35a8be40d158358da30d55a",
+      "path": "RST/en/SeniorAlgAnal/Recurrence.rst",
+      "size": 19841
+    },
+    {
+      "blob_sha": "977d0630d4737d2a8eeea81145976f22d2222a8d",
+      "path": "RST/en/SeniorAlgAnal/SearchIntro.rst",
+      "size": 3216
+    },
+    {
+      "blob_sha": "136f370e60711e184849316a1bd2fd54db88cef1",
+      "path": "RST/en/SeniorAlgAnal/TOH.rst",
+      "size": 19694
+    },
+    {
+      "blob_sha": "b36d76fa97bc376dd5267ae9cf5da6c9db316c65",
+      "path": "RST/en/SeniorAlgAnal/Transform.rst",
+      "size": 5094
+    },
+    {
+      "blob_sha": "ce0804712bf51907d87c9a321afb9eaeabaef5cf",
+      "path": "RST/en/SeniorAlgAnal/Turing.rst",
+      "size": 15966
+    },
+    {
+      "blob_sha": "c35784c0aaf3cb303379e306af394742164ba9f5",
+      "path": "RST/en/SeniorAlgAnal/TuringMachines.rst",
+      "size": 7201
+    },
+    {
+      "blob_sha": "644ef5a3c43988405e3cf0871efaf380e04318c5",
+      "path": "RST/en/SeniorAlgAnal/TuringMachinesAdv.rst",
+      "size": 8050
+    },
+    {
+      "blob_sha": "03df77214746282618dcc2e8e195343ea543161a",
+      "path": "RST/en/SimpleDemo/Contributing.rst",
+      "size": 4318
+    },
+    {
+      "blob_sha": "4ae51661c169b713c692869711fb3faee12fbf1c",
+      "path": "RST/en/SimpleDemo/DemoIntro.rst",
+      "size": 11470
+    },
+    {
+      "blob_sha": "23b2afa947a521a87dfb47e947690b746cc081a5",
+      "path": "RST/en/SimpleDemo/MoreExamples.rst",
+      "size": 1465
+    },
+    {
+      "blob_sha": "a766dfeba0c98cf2b7b471be764df8387cb9b2f2",
+      "path": "RST/en/SimpleDemo/Tour.rst",
+      "size": 5569
+    },
+    {
+      "blob_sha": "7d1952e80237f4d16536bde06fbd2f5e0dc4cf57",
+      "path": "RST/en/Sorting/BinSort.rst",
+      "size": 5191
+    },
+    {
+      "blob_sha": "a946e4c3ec7f86fde929696589d0eaa9a7557ac5",
+      "path": "RST/en/Sorting/BubbleSort.rst",
+      "size": 4380
+    },
+    {
+      "blob_sha": "325246fc38f6d5e3103e23ace7c28e3fa066b656",
+      "path": "RST/en/Sorting/ExchangeSort.rst",
+      "size": 3493
+    },
+    {
+      "blob_sha": "44797612f2c60080c382956b030813dff8c085e8",
+      "path": "RST/en/Sorting/Heapsort.rst",
+      "size": 5429
+    },
+    {
+      "blob_sha": "ae0c7d156d10d1a5fea373161ca7359a90f6dbf9",
+      "path": "RST/en/Sorting/InSort.rst",
+      "size": 4585
+    },
+    {
+      "blob_sha": "93db1268c6e4df6c0849f338172dc308a82baa04",
+      "path": "RST/en/Sorting/InsertionSort.rst",
+      "size": 7070
+    },
+    {
+      "blob_sha": "252396c34a88e79f9d9e835db399a36d106aecae",
+      "path": "RST/en/Sorting/Mergesort.rst",
+      "size": 3810
+    },
+    {
+      "blob_sha": "7f46df8e1ba9366585caa47de979f2f3a55d37a8",
+      "path": "RST/en/Sorting/MergesortImpl.rst",
+      "size": 4908
+    },
+    {
+      "blob_sha": "c96a902cc8568d0fc7d0926cc24e6e15eebd595a",
+      "path": "RST/en/Sorting/Quicksort.rst",
+      "size": 16085
+    },
+    {
+      "blob_sha": "f026dc32e7494320efa317040983f51bf30a019e",
+      "path": "RST/en/Sorting/QuicksortVid.rst",
+      "size": 19857
+    },
+    {
+      "blob_sha": "2e05c59a7eb8c059f9a90ff7ad23fa7298b39945",
+      "path": "RST/en/Sorting/RadixSort.rst",
+      "size": 8364
+    },
+    {
+      "blob_sha": "48dead0f4ce3d2bbcde72203996c207a7a1b872f",
+      "path": "RST/en/Sorting/SelectionSort.rst",
+      "size": 4356
+    },
+    {
+      "blob_sha": "d47a1c1a51eb753a38600f7143840af1ce531254",
+      "path": "RST/en/Sorting/Shellsort.rst",
+      "size": 10771
+    },
+    {
+      "blob_sha": "cbab0b74ba3cf4ccb0c83df6a73a7064c9cd62b7",
+      "path": "RST/en/Sorting/SortNotation.rst",
+      "size": 4223
+    },
+    {
+      "blob_sha": "a7a2be6124e4f727c8ab35f55ab5da7acff9a361",
+      "path": "RST/en/Sorting/SortOpt.rst",
+      "size": 12384
+    },
+    {
+      "blob_sha": "ae16602d4bd49e3f304ce90a55866a6b38338f4b",
+      "path": "RST/en/Sorting/SortSumm.rst",
+      "size": 932
+    },
+    {
+      "blob_sha": "31b300a8cd190f55fe4e342e388b19417e98bbb8",
+      "path": "RST/en/Sorting/SortingEmpirical.rst",
+      "size": 10485
+    },
+    {
+      "blob_sha": "295985570966fb494ec5d04b099360f2e8ad9eb7",
+      "path": "RST/en/Sorting/SortingLowerBound.rst",
+      "size": 7345
+    },
+    {
+      "blob_sha": "f7dac84eb8c788a5b5b7370230084b9bbcca478c",
+      "path": "RST/en/Spatial/Bintree.rst",
+      "size": 10711
+    },
+    {
+      "blob_sha": "81d6ccba7dbcdbe7d3a3a4fa54913379ce5cc3e2",
+      "path": "RST/en/Spatial/KDtree.rst",
+      "size": 13650
+    },
+    {
+      "blob_sha": "7d32f2d4658cd635692824d0ba36bb7eb6153b11",
+      "path": "RST/en/Spatial/OtherSpatial.rst",
+      "size": 4486
+    },
+    {
+      "blob_sha": "ed0846719177ff05a9e1d0f0c41d83b945fa0483",
+      "path": "RST/en/Spatial/PRquadtree.rst",
+      "size": 10621
+    },
+    {
+      "blob_sha": "b7bbfd9f3036042a37b7b6f54ce566b0406788b4",
+      "path": "RST/en/Spatial/Spatial.rst",
+      "size": 4087
+    },
+    {
+      "blob_sha": "73c0844dad5a1527eb7fa14b08878b7d8713b8b4",
+      "path": "RST/en/Status.rst",
+      "size": 4168
+    },
+    {
+      "blob_sha": "05035c2d5d4fe4eda2797ae6ef97c4220d37433d",
+      "path": "RST/en/Test/BasicPointers1t.rst",
+      "size": 6887
+    },
+    {
+      "blob_sha": "2db37f251d1bfbb9db580cf4031b8e728098fe48",
+      "path": "RST/en/Test/Reduct.rst",
+      "size": 928
+    },
+    {
+      "blob_sha": "268fd9ee6e271e337be2cf99a92982331e5fd243",
+      "path": "RST/en/Testing/BowlingCoverage.rst",
+      "size": 1115
+    },
+    {
+      "blob_sha": "ea427c799dc8efc51bb7b747027c553544c219dc",
+      "path": "RST/en/Testing/BowlingIntro.rst",
+      "size": 1278
+    },
+    {
+      "blob_sha": "2aad8dbc863b9628da8cddb7624599febffd102f",
+      "path": "RST/en/Testing/TriangleCoverage.rst",
+      "size": 3094
+    },
+    {
+      "blob_sha": "098d02eb18fa92f3d6da040929f61ff55753541d",
+      "path": "RST/en/Testing/TriangleIntro.rst",
+      "size": 2170
+    },
+    {
+      "blob_sha": "f9db557ffc6eda61406fde4c79cf4ac639ac902c",
+      "path": "RST/en/Tutorials/2114_eclipse_examples_setup.rst",
+      "size": 7953
+    },
+    {
+      "blob_sha": "f071d74e55e89147537e2947bdc67fa41b1ff703",
+      "path": "RST/en/Tutorials/2114_first_lab_setup.rst",
+      "size": 3589
+    },
+    {
+      "blob_sha": "294856486bbb60581a100f019d4b1a55e172d61a",
+      "path": "RST/en/Tutorials/2114_java_commenting.rst",
+      "size": 11882
+    },
+    {
+      "blob_sha": "7377b4952526508d40932b687a4d70d4b54db35f",
+      "path": "RST/en/Tutorials/2114_java_io_tutorial.rst",
+      "size": 25247
+    },
+    {
+      "blob_sha": "d0047da3ee81b727c73927bf2c753d10eda10eaf",
+      "path": "RST/en/Tutorials/2114_junit_tutorial.rst",
+      "size": 28187
+    },
+    {
+      "blob_sha": "e77da604f2f76a35d665b74ec0b20586c55d9a76",
+      "path": "RST/en/Tutorials/2114_random_numbers.rst",
+      "size": 4201
+    },
+    {
+      "blob_sha": "c62874e94515787b7ef5ec4843245351ab62ec25",
+      "path": "RST/en/Tutorials/MTadvanced.rst",
+      "size": 18707
+    },
+    {
+      "blob_sha": "bff60f7fd6dcad386166f85c7cde178036158e72",
+      "path": "RST/en/Tutorials/MTbasics.rst",
+      "size": 11633
+    },
+    {
+      "blob_sha": "fe909607f6d2c7e894ad14a3d5433f4a4971e612",
+      "path": "RST/en/Tutorials/MTeclipse.rst",
+      "size": 7393
+    },
+    {
+      "blob_sha": "d2f08fecddc1e03e25663af64806bc64a2826fa8",
+      "path": "RST/en/Tutorials/MTfaq.rst",
+      "size": 16623
+    },
+    {
+      "blob_sha": "85a5e52f7b605449ef28c450300f77c0e6965d8d",
+      "path": "RST/en/Tutorials/cmdline.rst",
+      "size": 3425
+    },
+    {
+      "blob_sha": "42fd6abe79589202ab7925f30659fd077b6820a1",
+      "path": "RST/en/Tutorials/debug.rst",
+      "size": 8586
+    },
+    {
+      "blob_sha": "45bc6d72d222226e611ab7a9bc43cef3b3c76707",
+      "path": "RST/en/Tutorials/debugmethods.rst",
+      "size": 3611
+    },
+    {
+      "blob_sha": "f973895f4be1c3ef6c7085694d61a6cb8c93b640",
+      "path": "RST/en/Tutorials/eclipseparameters.rst",
+      "size": 2666
+    },
+    {
+      "blob_sha": "fc031a4a915500e623ccb7d31edb2498513c80bb",
+      "path": "RST/en/Tutorials/junitbasic.rst",
+      "size": 3866
+    },
+    {
+      "blob_sha": "006bac510eea3381de1cd89eb8aaf01d1a74f287",
+      "path": "RST/en/Tutorials/junitcoverage.rst",
+      "size": 3288
+    },
+    {
+      "blob_sha": "a6cf3cf263ee93f36bb1f175d344a9fc112663dd",
+      "path": "RST/en/Tutorials/junitstart.rst",
+      "size": 3553
+    },
+    {
+      "blob_sha": "f102e617d1420cfec248fc7b5d8892ec7c78e8c6",
+      "path": "RST/en/Tutorials/parameters.rst",
+      "size": 3455
+    },
+    {
+      "blob_sha": "4b680980d27245fc6deddc3fccc797cd4c236104",
+      "path": "RST/en/Tutorials/randomaccessfile.rst",
+      "size": 4503
+    },
+    {
+      "blob_sha": "27b8059771eebf6f210b17d769412ec0ce778fec",
+      "path": "RST/en/Tutorials/scanning.rst",
+      "size": 3572
+    },
+    {
+      "blob_sha": "52fe0422fc3ecc158c6a8d9e6c057f27b28b3232",
+      "path": "RST/en/Tutorials/testvalidation.rst",
+      "size": 4671
+    },
+    {
+      "blob_sha": "bdd50e8120b595f78aa1dd566bde0dfe27061b1d",
+      "path": "RST/en/Tutorials/webcattools.rst",
+      "size": 13274
+    },
+    {
+      "blob_sha": "518c362825be067dd4b830d8c3575c6adf9a7c45",
+      "path": "RST/en/Tutorials/webcattoolswfu.rst",
+      "size": 13272
+    },
+    {
+      "blob_sha": "b0342de24b21c58583674cc98f2aa00385a0cb09",
+      "path": "RST/en/VisFormalLang/CFL.rst",
+      "size": 23935
+    },
+    {
+      "blob_sha": "e90d7ec0164412d7ac7bd26274eda5f00e0835b9",
+      "path": "RST/en/VisFormalLang/CFLProp.rst",
+      "size": 21250
+    },
+    {
+      "blob_sha": "473d069a020e72178ef20d803e5e363450855b71",
+      "path": "RST/en/VisFormalLang/CFLSimp.rst",
+      "size": 16412
+    },
+    {
+      "blob_sha": "746a821c72cfd6f955ab7506c913f2e37e57110c",
+      "path": "RST/en/VisFormalLang/CYKParsing.rst",
+      "size": 2845
+    },
+    {
+      "blob_sha": "728028722b65c7a6be40115f490a76ed0a2b211a",
+      "path": "RST/en/VisFormalLang/Compiler.rst",
+      "size": 9969
+    },
+    {
+      "blob_sha": "1fcb614d3d91130c3ffa81fad3c2550cc1060b30",
+      "path": "RST/en/VisFormalLang/DFA.rst",
+      "size": 9089
+    },
+    {
+      "blob_sha": "d7178fdcf9003d715c1aa48543daec3acc620419",
+      "path": "RST/en/VisFormalLang/DFAproperties.rst",
+      "size": 3329
+    },
+    {
+      "blob_sha": "543511e4a665c6f8a491e50f53ec401cdb3db3d3",
+      "path": "RST/en/VisFormalLang/DPDA.rst",
+      "size": 9123
+    },
+    {
+      "blob_sha": "14fbf8d4fd4859c2e64068e4f43f75876e55e867",
+      "path": "RST/en/VisFormalLang/FAEx.rst",
+      "size": 959
+    },
+    {
+      "blob_sha": "46e05eceb00081e04a9ed87d7b0f67fea1984992",
+      "path": "RST/en/VisFormalLang/FAExMore.rst",
+      "size": 1307
+    },
+    {
+      "blob_sha": "71380dc8d8fb3ee2c74021982064f7c000dad348",
+      "path": "RST/en/VisFormalLang/FLConcepts.rst",
+      "size": 9235
+    },
+    {
+      "blob_sha": "975f4d0ac6e9aaafebd592a08f995369a6d62b65",
+      "path": "RST/en/VisFormalLang/FLIntro.rst",
+      "size": 7185
+    },
+    {
+      "blob_sha": "752d8acd823824a74d12f1d237b06d8e0bfaf1fe",
+      "path": "RST/en/VisFormalLang/FLOverview.rst",
+      "size": 6652
+    },
+    {
+      "blob_sha": "3fa3c955ab7b1e2f5e50b63a21d0c7239c99e132",
+      "path": "RST/en/VisFormalLang/IntroEx.rst",
+      "size": 1344
+    },
+    {
+      "blob_sha": "56f71b69d122ef6dc6beb6f77897906efcfddc40",
+      "path": "RST/en/VisFormalLang/IntroExMore.rst",
+      "size": 1360
+    },
+    {
+      "blob_sha": "4c263c2261c8fb04661359e09b17bb66b6958472",
+      "path": "RST/en/VisFormalLang/LLParsing.rst",
+      "size": 17250
+    },
+    {
+      "blob_sha": "53955562c39b167e3e8412579b08856ea6b93892",
+      "path": "RST/en/VisFormalLang/LRParsing.rst",
+      "size": 20239
+    },
+    {
+      "blob_sha": "f2784dbcbade38554582d10761d2db451bffe7a0",
+      "path": "RST/en/VisFormalLang/LSystems.rst",
+      "size": 1021
+    },
+    {
+      "blob_sha": "fea914a6b776e9d88ce761265c3f7382cb537af6",
+      "path": "RST/en/VisFormalLang/Minimization.rst",
+      "size": 4442
+    },
+    {
+      "blob_sha": "07761e188b768e6559d59f6b266da093bf9f1860",
+      "path": "RST/en/VisFormalLang/NFA.rst",
+      "size": 8705
+    },
+    {
+      "blob_sha": "a85796982c1dd3f3c562630e465b87d4302d6bc4",
+      "path": "RST/en/VisFormalLang/NonRegular.rst",
+      "size": 20757
+    },
+    {
+      "blob_sha": "000af5cb58e2553b6808ea2f33d842d3ecfa17cb",
+      "path": "RST/en/VisFormalLang/PDA.rst",
+      "size": 10354
+    },
+    {
+      "blob_sha": "a34da98533062b5bf7c46abe0bfef0299bb2056a",
+      "path": "RST/en/VisFormalLang/PDACFL.rst",
+      "size": 10133
+    },
+    {
+      "blob_sha": "0adabd9e7f9dcbec929543b2f897e86ae032d670",
+      "path": "RST/en/VisFormalLang/ParseIntro.rst",
+      "size": 9235
+    },
+    {
+      "blob_sha": "2003be64d85b13618e75cf4fe2e06f59bd7398bd",
+      "path": "RST/en/VisFormalLang/RecEnum.rst",
+      "size": 19246
+    },
+    {
+      "blob_sha": "568e148b8958e21141de22a74402da1140e01ec8",
+      "path": "RST/en/VisFormalLang/RegClosure.rst",
+      "size": 7815
+    },
+    {
+      "blob_sha": "917a4212f9ae30882e34202aafab7cbca7430053",
+      "path": "RST/en/VisFormalLang/RegEx.rst",
+      "size": 17445
+    },
+    {
+      "blob_sha": "1d7be6950e46230267f5052e9703fb3bca115cc4",
+      "path": "RST/en/VisFormalLang/RegGrammar.rst",
+      "size": 7116
+    },
+    {
+      "blob_sha": "6ba70b3496609e3d596091c5d082cf9426f0512e",
+      "path": "RST/en/VisFormalLang/RegLangEx.rst",
+      "size": 1347
+    },
+    {
+      "blob_sha": "38a7e9e29e32d5d87595ea6ed9060dc6fd408e7c",
+      "path": "RST/en/VisFormalLang/RegLangExMore.rst",
+      "size": 1383
+    },
+    {
+      "blob_sha": "9d9e587e92e141c858c467cb617bed0cff6bf006",
+      "path": "RST/en/VisFormalLang/Sheet5.rst",
+      "size": 638
+    },
+    {
+      "blob_sha": "817c71f848042608188a29868197777ae1f1ae94",
+      "path": "RST/en/VisFormalLang/Sheet5Practice.rst",
+      "size": 652
+    },
+    {
+      "blob_sha": "e1057ede50ced919c9af5bec5cdbaa976ab1da79",
+      "path": "RST/en/VisFormalLang/Sheet6.rst",
+      "size": 962
+    },
+    {
+      "blob_sha": "e200c92899baf572078e3bc5d4f14075e0b1e5f2",
+      "path": "RST/en/VisFormalLang/Sheet7.rst",
+      "size": 990
+    },
+    {
+      "blob_sha": "45a83a7af3cbaefeb98e38c4794ea497d52c1c33",
+      "path": "RST/en/VisFormalLang/Turing.rst",
+      "size": 24829
+    },
+    {
+      "blob_sha": "d523e63caf92a3c7340cea123ca46ba4ac20cb20",
+      "path": "RST/en/VisFormalLang/TuringIntro.rst",
+      "size": 2917
+    }
+  ],
+  "files_digest": "aaf0148a25fdd1b12393194c3476c58387c6090d142b9927aadf1dd30e7612cc"
+}

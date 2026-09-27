@@ -10,6 +10,10 @@ tools/
 ├── run_evaluation.py      # ★ 统一 RAG 评测入口
 ├── start_local.py         # 一键启动工作台并做 /health 检查
 ├── source_inventory.py    # 外部资料只读盘点（不复制、不解析全文、不建索引）
+├── validate_m11_p0_metadata_gate0.py # 离线校验 P0 metadata-only Gate 0 checklist；不执行 Gate 0
+├── validate_m11_p0_evidence_gaps.py # 离线校验 source-qualified evidence-gap projection
+├── validate_m11_p0_evidence_closure.py # 离线校验 26 项八类证据闭环投影；不执行 Gate 0
+├── validate_m11_p0_official_observations.py # 离线校验 26 项官方来源观察层；不改变 closure、不执行 Gate 0
 ├── m8_prepare_p2_draft011.py # 校验并在仓库外生成 draft-0.11 P2 binding 候选；不签发 P2
 ├── m8_generate_minimal_1k_v3_fixtures.py # 生成 v3 validator 微型持久 fixture；不是 1K evidence
 ├── m8_validate_minimal_1k_graph_v3.py # 读取真实 artifact directory，校验跨文件证据图
@@ -45,12 +49,67 @@ tools/
 ├── crawler/               # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   ├── requirements.txt   # crawler 独立依赖
 │   └── fetcher/cleaner/converter/dedup/pipeline
-└── evaluations/           # 课程评测集
+└── evaluations/           # 课程评测集与 M11 冻结 workload
+    ├── m11-3k-independent-v1.json # M11 3K 独立 workload；非正式 Gate 运行证据
     ├── os.json            # 操作系统 38 题（默认）
     ├── ds.json            # 数据结构 28 题（默认）
     ├── co.json            # 计算机组成原理 24 题（默认）
     └── network.json       # 计算机网络 30 题（独立扩展，不自动发现）
 ```
+
+## M11 执行 authority、acquisition 与 Formal Gate 0
+
+`platform/app/m11_execution_authority.py` 是纯校验模块，不是授权签发器。它要求 authority record 明确绑定冻结 P0
+scope digest、operation、有效期和精确 source/asset 子集，并强制 publication 仍为 false；metadata-only 清单、
+M8/M12、排除源及 batch 越界均拒绝。当前可提交的可执行记录有两份，均绑定同一 26 项 digest 身份、不含 OpenDSA，且都不授予 Gate 0 /
+晋升 / publication：
+[`data/manifests/m11-p0-human-review-26-authority-v1.json`](../data/manifests/m11-p0-human-review-26-authority-v1.json)
+（`human_review`）与
+[`data/manifests/m11-p0-acquisition-26-authority-v1.json`](../data/manifests/m11-p0-acquisition-26-authority-v1.json)
+（`acquisition`）。26 项 `ACQUIRED` receipts 见
+[`data/manifests/m11-p0-acquisition-26-receipts-v1.json`](../data/manifests/m11-p0-acquisition-26-receipts-v1.json)。
+RFC+IANA 6 项与 MIT OCW 20 项历史 `DEFER` 记录见
+[`data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`](../data/manifests/m11-p0-human-review-rfc-iana-6-v1.json)
+与
+[`data/manifests/m11-p0-human-review-mit-ocw-20-v1.json`](../data/manifests/m11-p0-human-review-mit-ocw-20-v1.json)；
+获取后再核验切片见
+[`data/manifests/m11-p0-human-review-acq-defer-26-v1.json`](../data/manifests/m11-p0-human-review-acq-defer-26-v1.json)
+（仍全部 `DEFER`）。
+`platform/app/m11_acquisition.py` 提供冻结资产解析、注入式或 bounded HTTPS transport、digest 校验、外部 raw
+目录的原子写入、receipt root 路径约束、receipt loader/目录加载器及幂等、重复/冲突安全的隐私安全 receipt 持久化；默认入口仍不自动执行网络下载，且不调用 candidate normalization、
+promotion 或 publication。`platform/app/m11_gate0.py`
+是只读 Formal Gate 0 runner：它分别检查 receipt、candidate validation、review 和八类资产证据，缺失或 pending
+时保持 `BLOCKED`，显式失败时返回 `FAIL`，且永远不授予 promotion/publication。缺失的 owner-controlled 输入不能
+由测试或元数据校验推断。
+
+## validate_m11_p0_metadata_gate0.py — metadata-only checklist validator
+
+校验器会 fail closed 拒绝 schema/count/status 漂移、批准/发布/正式 Gate 声明、网络或来源扩展、生命周期变更、
+隐私字段以及 review/report 不一致。对应的非权威清单见
+[`docs/plans/references/m11-p0-metadata-only-gate0-checklist-v1.md`](../docs/plans/references/m11-p0-metadata-only-gate0-checklist-v1.md)。
+
+## validate_m11_p0_evidence_gaps.py — M11 P0 source-qualified evidence-gap validator
+
+离线、确定性地校验 source-qualified evidence-gap projection 与冻结 P0 candidate manifest、review manifest 和
+normalization report。该工具只读取本地 metadata，不下载、抓取、解析、embedding、建索引或发布，也不改变
+`CANDIDATE` / `REJECTED` 生命周期状态；校验成功不表示 Gate 0、正式 3K、资产批准或 publication readiness。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_evidence_gaps.py
+```
+
+校验器会 fail closed 拒绝 contract/schema/count/status 漂移、批准或授权标志、来源扩展、生命周期变更、隐私字段
+以及按来源聚合的 gap 与冻结记录不一致。对应的非权威清单见
+[`docs/plans/references/m11-p0-evidence-gap-checklist-v1.md`](../docs/plans/references/m11-p0-evidence-gap-checklist-v1.md)。
+
+## validate_m11_p0_official_observations.py — official-source observation validator
+
+`platform/app/m11_official_observation.py` 与本工具只校验 append-only、metadata-only 的官方来源观察层及其 successor `DEFER` review slice。它们离线读取已提交 JSON，记录 source-level robots/policy/schema metadata facts，但不解析正文、不联网、不写 raw、不改变 closure、不创建 document/chunk、不执行 Gate 0，也不授权 promotion/publication；IANA XML 日期冲突保持 `UNRESOLVED`。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_official_observations.py
+```
+
 
 ## run_evaluation.py — RAG 效果评估
 
@@ -123,6 +182,7 @@ python tools/run_evaluation.py --smoke
 | [ds.json](evaluations/ds.json) | 数据结构 | 28 | ✅ 已建 |
 | [co.json](evaluations/co.json) | 计算机组成原理 | 24 | ✅ 默认套件 |
 | [network.json](evaluations/network.json) | 计算机网络 | 30 | 🧩 独立扩展；仅通过 `--test-set` 显式运行 |
+| [m11-3k-independent-v1.json](evaluations/m11-3k-independent-v1.json) | M11 3K 独立 workload | 90 | 🔒 冻结输入；非正式 Gate 结果或运行授权 |
 
 默认套件合计 **90 题**。2026-08-24 当前 checkout 离线 BM25 Recall@3：OS 0.987、DS 0.929、
 CO 1.000，加权 0.972；2026-08-18 的 1.000/0.929/1.000、加权 0.978 作为历史 M5a 基线保留，

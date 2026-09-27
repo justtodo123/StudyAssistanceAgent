@@ -47,7 +47,7 @@ _LIMIT_SPECS = {
         600,
         1000,
     ),
-    "SA_SOURCE_MAX_CHUNKS_TOTAL": ("max_chunks_total", 1200, 2000),
+    "SA_SOURCE_MAX_CHUNKS_TOTAL": ("max_chunks_total", 1200, 4000),
     "SA_SOURCE_MAX_FILE_BYTES": ("max_file_bytes", 256 * 1024, 512 * 1024),
 }
 

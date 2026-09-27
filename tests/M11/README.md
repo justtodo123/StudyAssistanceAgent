@@ -1,0 +1,17 @@
+# M11 测试
+
+本目录验证 M11 真实数据规模化的离线治理合同。
+
+- 默认使用 `tmp_path`，不访问网络、不使用凭据、不触碰学习状态库。
+- 真实下载用例必须带 `online` marker 并默认跳过，不能进入 blocking CI。
+- 3K Gate 的绝对阈值和人工签署不由本目录自动推断或代签。
+- `test_candidate_pipeline.py` 驱动 `platform/app/m11_candidate_pipeline.py`：只把本地、evidence 匹配、白名单内的输入规范化为 candidate；不写 approved、不切 generation、不触碰学习状态库。重跑同一 candidate 保持 source/document identity；空文档、digest mismatch、非白名单和 parser 失败只进 rejected。公开入口 `normalize_bound_candidate()` 必须命中冻结 evidence：MIT OCW、RFC、IANA 使用 SHA-256 manifest，OpenDSA 使用 pinned path manifest 的 Git blob SHA-1。测试同时覆盖恶意 source/asset identifier 不得逃出 rejected 根目录或泄露原值、unbound helper 不得公开导出、manifest asset/path 唯一性与 source allowlist 一致性。RFC TXT、IANA CSV、OpenDSA RST 走 txt parser；PDF/TXT 在 parser 不可用时稳定码 `SOURCE_PARSER_UNAVAILABLE` fail-closed，可用时产出 candidate。结果路径只返回相对 artifact 名。`parser_status_for_candidates()` 报告 md/txt/pdf 可用性，集合必须非空。
+- `test_candidate_artifact_validator.py` 使用临时目录生成一个 candidate artifact，再对 serialized metadata 做 hermetic mutation。它检查 exact schema/field sets、source/document/chunk identity linkage、digest syntax/linkage、provenance 形状、candidate-only lifecycle 和递归 privacy boundary；chunk plaintext 不在 artifact 中，因此测试不声称重新计算 chunk digest preimage。loader 只读 caller-provided JSON，错误 fail-closed，不创建 tracked fixture，也不产生 approval、promotion、publication、Gate 0、3K、source expansion 或 network-acquisition authorization。
+- `test_execution_authority.py` 验证 M11 执行 authority 必须绑定显式 operation、冻结 scope digest、有效期和精确 asset 子集；metadata-only、publication、排除源、scope/batch 扩展以及隐私字段均 fail-closed。测试不写生命周期状态，不下载，不生成 approved 或 published 数据。
+- `test_human_review_26_authority.py` 验证 26 资产 HUMAN_REVIEW authority 恰好绑定 digest 身份（含两份已 REJECTED 的 MIT OCW PDF，不含 OpenDSA），不能升级为 Gate 0 / promotion / formal_3k / acquisition，且工作单保持 `REVIEW_REQUIRED`。RFC+IANA 6 项与 MIT OCW 20 项 `DEFER` 记录均不通过 Gate 0；完整 26 项决策已写完且全部为 `DEFER`。同时验证独立 acquisition authority、26 条 receipt wrapper 与获取后 superseding `DEFER` 再核验仍使 Gate 0 保持 BLOCKED。测试不下载，不改变 lifecycle。
+- `test_m11_acquisition.py` 另验证 IANA CSV/XML/TXT 三种 registry format 能解析到冻结 asset，且 committed 26 条 receipts 可离线校验；receipt 的 acquisition authority 不得与 HUMAN_REVIEW authority 混用。
+- `test_m11_evidence_closure.py` 验证 26 项 metadata-only evidence closure matrix 的八类证据、digest/receipt/review linkage、superseding `DEFER` slice、隐私边界与输入不可变性；closure 仍为 `REVIEW_REQUIRED`，legacy Gate 0 projection 仍 `BLOCKED`。
+- `test_m11_official_observation.py` 验证 append-only 官方来源观察层的 26 项 scope、source-local finding applicability、政策 limitation、IANA XML `UNRESOLVED` 冲突、successor `DEFER` supersession、隐私边界与输入不可变性；观察不改变 closure 的全 `PENDING` 状态，也不执行 Gate 0。
+- `test_m11_acquisition.py` 验证 external raw 的原子写入、receipt root 路径边界、receipt loader/目录加载器、冻结 asset linkage、批次级 authority/scope 完整性、幂等持久化、重复与冲突拒绝，以及冲突/畸形 receipt 在 raw 写入前 fail-closed；测试不写 tracked raw 数据。
+- `test_m11_review.py` 验证人工 review metadata：exact field set、decision 仅允许 ACCEPT_FOR_PROMOTION_REVIEW / REJECT / DEFER（`APPROVED` 非法）、冲突必须显式 supersede、只读 Gate 0 coverage 在缺 owner 输入时 BLOCKED 且不泄露 asset identifier。测试不写 lifecycle，不下载，不产生 promotion/publication。
+- `test_m11_gate0.py` 验证只读 Formal Gate 0 runner：receipt、candidate validation、人工 review 与八类资产证据必须分别满足；缺失或 pending 返回 `BLOCKED`，显式失败返回 `FAIL`，receipt authority mismatch/duplicate 不会被静默忽略，并始终保持 promotion/publication false。测试只使用 metadata fixtures，不下载、不写 lifecycle。

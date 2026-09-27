@@ -1,0 +1,267 @@
+{
+  "schema": "sa.m11.p0-digest-evidence.v1",
+  "status": "DIGESTS_CAPTURED_CANDIDATE_PIPELINE_AUTHORIZED",
+  "pipeline_approval": {
+    "approved_by": "justtodo123",
+    "approved_at": "2026-09-24",
+    "approval_reference": "User instruction: 批准以下范围进入 candidate pipeline",
+    "scope": "digest-listed candidate assets only; approved view and publication remain unauthorized"
+  },
+  "captured_at": "2026-09-24",
+  "asset_count": 26,
+  "assets": [
+    {
+      "asset_id": "rfc9110",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.txt",
+      "bytes": 502941,
+      "sha256": "21c1cdce6ab0e5509b04d84a28000836c7a087cf786efe6f04877ebfff47232a",
+      "source_id": "rfc-editor-index",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "rfc9293",
+      "url": "https://www.rfc-editor.org/rfc/rfc9293.txt",
+      "bytes": 263696,
+      "sha256": "6d9ac8be4b0286f8c3d337addf442b2eb6a9b14e1366594ea7fbc273f93dc2d9",
+      "source_id": "rfc-editor-index",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "rfc1034",
+      "url": "https://www.rfc-editor.org/rfc/rfc1034.txt",
+      "bytes": 126103,
+      "sha256": "d6b10a71441df879cc2817d23f2dad120c8a5f87e74eba1e4ed4b743a76a891a",
+      "source_id": "rfc-editor-index",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "service-names-port-numbers-csv",
+      "url": "https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.csv",
+      "bytes": 1157052,
+      "sha256": "34328ed0940d889207de6da29bf0e6e1438d604483c8e1ffb03dceab8f7ec26f",
+      "source_id": "iana-registries",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "service-names-port-numbers-xml",
+      "url": "https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xml",
+      "bytes": 3872654,
+      "sha256": "30a69353af6e017ffd9e141d079f90a7b7117f113f122d2d89ee20ffb587da19",
+      "source_id": "iana-registries",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "service-names-port-numbers-txt",
+      "url": "https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt",
+      "bytes": 3644963,
+      "sha256": "6aa4def90086ae3dd71ee8f72e2bddb57857828718d3155b42c107138a3c1d29",
+      "source_id": "iana-registries",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "beta_answers",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a90106bf60ae4647445e2176f1d93dc1_beta_answers.pdf",
+      "bytes": 478201,
+      "sha256": "157252328a5b4a04f77b6a78a59d220a9ce795583987ac4e66236f03316ecea1",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "caches_answers",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b71446c5273c385dfcc4e50f00a26b6a_caches_answers.pdf",
+      "bytes": 766745,
+      "sha256": "d2f4c92620659948613a848d6e9363df014b86973b9c00d2f83c058cfe762ff7",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "cmos_answers",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f2146024a9ac6773c8a6a8d884aef113_cmos_answers.pdf",
+      "bytes": 340832,
+      "sha256": "8e722626e82f7e1f4a3bc79fbbec1a8340e982fd5f6f8b098d13532bdaa9a36f",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "combinational_answers",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fab2a7e9e7c19e93ea73d7c7241ade7f_combinational_answers.pdf",
+      "bytes": 447361,
+      "sha256": "a1c6e63e9d32f4b0b9c0d3fa175856c2f8ae5d7d6323bde3a3543edcb4e21326",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "compilation_answers",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/97fc8d99b83bba6747db963df8585531_compilation_answers.pdf",
+      "bytes": 274120,
+      "sha256": "fbfbaa272b15f7bf3385f7d9184769b110eee0111da78a0539e24a17ea456fad",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "digital_answers",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9476106a935f9b65e095c3972990f946_digital_answers.pdf",
+      "bytes": 483980,
+      "sha256": "4952128b9969642958a217aea10c095cd0646e54acbd14e1957e9ccb7969ee58",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "fsm_answers",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/560b3f7afaf7aab61c31d3763c4b6670_fsm_answers.pdf",
+      "bytes": 491297,
+      "sha256": "796f0e9dfc9c5dfca280a9824381dea21358670d85f63a59f00a5066cd4c8c02",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "information_answers",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2ad8dd9c7ad17f3801fcba36bf2bd57b_information_answers.pdf",
+      "bytes": 473933,
+      "sha256": "8f20a2162d5d1657cbacf63743ab2258e5ae823fdd6331f9c49b05a21f02105a",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "interrupts_answers",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/adbde33502e9159816b1bd73893f95fa_interrupts_answers.pdf",
+      "bytes": 341599,
+      "sha256": "01f084b7bc627f2da040414f270de3848ca21ed6716ac728922cf213d2e646f7",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "isa_answers",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2b2334e54010ecf566b50fe28a1fd24c_isa_answers.pdf",
+      "bytes": 388209,
+      "sha256": "0b5b7632c55badc94c4a7f081b7edb066f0d1323a067f9fcc16d0fdcce4dadf5",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "beta_worksheet",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c69095b89507a8e9042ea8bbf5b30aff_beta_worksheet.pdf",
+      "bytes": 570634,
+      "sha256": "dc4f73a05d9b25ed3db3c2b748602d38f7a69ab762c1782cee7a36536580bb2f",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "caches_worksheet",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e3780374f88b6201126fccda717635f7_caches_worksheet.pdf",
+      "bytes": 524726,
+      "sha256": "ea630f333cab3602d0b6a1d11d30ab8090d34202d88da6d81bc7e2b24d01467f",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "cmos_worksheet",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7f73434b676116a3df813718c685a42d_cmos_worksheet.pdf",
+      "bytes": 555416,
+      "sha256": "217f292c6b3a509072b78fe87f4e0136b9ad7e53ecffb92a56303565ca3ae6a6",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "combinational_worksheet",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a6ebd5243315913900601c535cdb7a52_combinational_worksheet.pdf",
+      "bytes": 594647,
+      "sha256": "3ba8b9188537114d508bd85e2d964578563e240439df11a688ae91e22de5f901",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "compilation_worksheet",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7f51703034dafcfc85cd4300d5792e64_compilation_worksheet.pdf",
+      "bytes": 171893,
+      "sha256": "8838a7f592e645cedfe427dd58eee5578f82b93618581e3fb09b2c73a3d5aa1c",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "digital_worksheet",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/210fd9514f01b2791eba384f2e2ca366_digital_worksheet.pdf",
+      "bytes": 870814,
+      "sha256": "6d1821d8cbb6f2556dfe1aa4537f53a06db8e22c96c186d85087bf3048aaf82f",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "fsm_worksheet",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/927b51449d7edcb1c7c7319bb22d72a9_fsm_worksheet.pdf",
+      "bytes": 566969,
+      "sha256": "03ddb555219642e84e760ba4af5f498cb7a8422009dc99e8845700a3910e566b",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "information_worksheet",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/79ff7fa28d6aec43d3b75fb24f278463_information_worksheet.pdf",
+      "bytes": 301876,
+      "sha256": "3b6f2746c3c4a9573884f9daf542d2d33779b94d9d6259c40f6ae3bb4cc86764",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "interrupts_worksheet",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7dcfdf355caa19e6003d6d7960039d13_interrupts_worksheet.pdf",
+      "bytes": 304255,
+      "sha256": "15155b1882831b8012a812de26a258a9dd831ac10ba6301b2c4313456520d394",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    },
+    {
+      "asset_id": "isa_worksheet",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a79adf9f5f638a7e32c1ec09615659b3_isa_worksheet.pdf",
+      "bytes": 261581,
+      "sha256": "96f4647004011b85d000d9f69fa61297b0defc5db8ebb2008a96bece289cadb5",
+      "source_id": "mit-ocw-6-004-2017",
+      "format_valid": true,
+      "temporary_body_deleted": true
+    }
+  ],
+  "robots": [
+    {
+      "host": "ocw.mit.edu",
+      "sha256": "bc14953e303dd365bbcf48ed7a552baeb0bf6d03f3c426db7310e649d137a9f6",
+      "policy": "allow-all"
+    },
+    {
+      "host": "www.rfc-editor.org",
+      "sha256": "df052cf390448ea2916ce4d3b5f6e42880cd246ea2bf1d5efce5596b1b2e3827",
+      "policy": "candidate-paths-not-disallowed"
+    },
+    {
+      "host": "www.iana.org",
+      "sha256": "e5c4b84484ee4216e9373be99380320c25dd94805f99f0a805846f087636553f",
+      "policy": "allow-all"
+    }
+  ],
+  "approved_assets": [],
+  "publication_authorized": false
+}

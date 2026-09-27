@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
 import subprocess
 from pathlib import Path
 
@@ -18,6 +20,13 @@ pytestmark = pytest.mark.m8_metadata_discovery
 
 
 def _current_commit(repo_root: Path) -> str:
+    configured = os.environ.get("M8_SOURCE_COMMIT")
+    if configured is not None:
+        if re.fullmatch(r"[0-9a-f]{40}", configured) is None:
+            raise ValueError(
+                "M8_SOURCE_COMMIT must be a full lowercase 40-character OID"
+            )
+        return configured
     return subprocess.run(
         ["git", "rev-parse", "HEAD"],
         cwd=repo_root,
@@ -33,6 +42,28 @@ def _candidate(repo_root: Path) -> dict:
 
 def _canonical(candidate: dict) -> bytes:
     return schema.canonical_bytes(candidate)
+
+
+def test_m8_source_commit_override_requires_full_lowercase_oid(
+    repo_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("M8_SOURCE_COMMIT", "HEAD")
+    with pytest.raises(
+        ValueError,
+        match="full lowercase 40-character OID",
+    ):
+        _current_commit(repo_root)
+
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    monkeypatch.setenv("M8_SOURCE_COMMIT", commit)
+    assert _current_commit(repo_root) == commit
 
 
 def test_builder_cli_requires_full_commit_oid(repo_root: Path, tmp_path: Path) -> None:

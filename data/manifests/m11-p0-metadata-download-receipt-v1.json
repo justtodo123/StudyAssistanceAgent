@@ -1,0 +1,35 @@
+{
+  "schema": "sa.m11.download-receipt.v1",
+  "status": "METADATA_ONLY",
+  "captured_at": "2026-09-23",
+  "assets": [
+    {
+      "source_id": "rfc-editor-index",
+      "url": "https://www.rfc-editor.org/rfc-index.xml",
+      "bytes": 13722267,
+      "sha256": "401e94f50c15f60d89b09e95ce3dd02212cb9650165c05ca0fc83436bffd7742",
+      "role": "official-index"
+    },
+    {
+      "source_id": "iana-registries",
+      "url": "https://www.iana.org/protocols",
+      "bytes": 1960743,
+      "sha256": "f55d630627dccda77c03afd519a16c54d38b94d00b4070be89e4618f78e01f09",
+      "role": "official-index"
+    },
+    {
+      "source_id": "mit-ocw-6-004-2017",
+      "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/",
+      "bytes": 179983,
+      "sha256": "c13ae1c8193177bc5953f53d34aaef2f3a6e6b1cc511e277b6c2542716205653",
+      "role": "official-course-index"
+    }
+  ],
+  "large_assets_deferred": [
+    "MIT OCW course ZIP: timed out before creating a file",
+    "OpenDSA pinned repository: network metadata resolution incomplete"
+  ],
+  "approved_document_count": 0,
+  "approved_chunk_count": 0,
+  "publication_authorized": false
+}

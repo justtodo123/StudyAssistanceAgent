@@ -1,0 +1,64 @@
+{
+  "schema": "sa.m11.retrieval-eval.v1",
+  "status": "DRAFT_REVIEW_REQUIRED",
+  "workload_id": "m11-3k-independent-v1",
+  "description": "Independent 3K query/gold workload; not the default 90-question baseline.",
+  "cases": [
+    {
+      "id": "teaching-process",
+      "category": "zh-teaching-fact",
+      "query": "进程和程序的主要区别是什么？",
+      "expected_source_layer": "teaching",
+      "expected_source_ids": ["knowledge-pack", "mit-ocw-6-004-2017", "opendsa-main"],
+      "gold_document_ids": []
+    },
+    {
+      "id": "teaching-tree",
+      "category": "zh-teaching-fact",
+      "query": "二叉搜索树的中序遍历为什么有序？",
+      "expected_source_layer": "teaching",
+      "expected_source_ids": ["knowledge-pack", "opendsa-main"],
+      "gold_document_ids": []
+    },
+    {
+      "id": "rfc-title",
+      "category": "protocol-number-title",
+      "query": "HTTP/1.1 的核心语义由哪个批准 RFC 定义？",
+      "expected_source_layer": "authoritative",
+      "expected_source_ids": ["rfc-editor-index"],
+      "gold_document_ids": []
+    },
+    {
+      "id": "iana-port",
+      "category": "registry-fact",
+      "query": "HTTPS 的注册端口和传输协议是什么？",
+      "expected_source_layer": "authoritative",
+      "expected_source_ids": ["iana-registries"],
+      "gold_document_ids": []
+    },
+    {
+      "id": "cross-language",
+      "category": "cross-language",
+      "query": "组合逻辑电路中的 propagation delay 是什么？",
+      "expected_source_layer": "teaching",
+      "expected_source_ids": ["mit-ocw-6-004-2017"],
+      "gold_document_ids": []
+    },
+    {
+      "id": "hard-negative",
+      "category": "hard-negative",
+      "query": "请解释一个与批准计算机课程语料无关的烹饪配方。",
+      "expected_source_layer": "none",
+      "expected_source_ids": [],
+      "gold_document_ids": []
+    },
+    {
+      "id": "deleted-source",
+      "category": "delete-zero-recall",
+      "query": "删除来源后的专属验证问题",
+      "expected_source_layer": "deleted",
+      "expected_source_ids": [],
+      "gold_document_ids": []
+    }
+  ]
+}

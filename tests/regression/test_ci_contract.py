@@ -30,13 +30,45 @@ class TestOfflineCiContract:
             "TRANSFORMERS_OFFLINE": "1",
             "PIP_DISABLE_PIP_VERSION_CHECK": "1",
         }
+        checkout_step = next(
+            step
+            for step in offline["steps"]
+            if step.get("name") == "Check out repository"
+        )
+        assert checkout_step["with"] == {"fetch-depth": 0}
+        fixture_step = next(
+            step
+            for step in offline["steps"]
+            if step.get("name") == "Select M8 fixture commit"
+        )
+        assert fixture_step["shell"] == "bash"
+        assert fixture_step["env"] == {
+            "EVENT_NAME": "${{ github.event_name }}",
+            "PR_HEAD_SHA": "${{ github.event.pull_request.head.sha }}",
+            "PUSH_SHA": "${{ github.sha }}",
+            "DISPATCH_SHA": "${{ inputs.m8_source_commit }}",
+        }
+        fixture_command = fixture_step["run"]
+        assert '[[ ! "$candidate" =~ ^[0-9a-f]{40}$ ]]' in fixture_command
+        assert '"$push_parent_count" -eq 2' in fixture_command
+        assert '"$push_parent_count" -ne 1' in fixture_command
+        assert '"$((${#fixture_lineage[@]} - 1))" -ne 1' in fixture_command
+        assert 'echo "M8_SOURCE_COMMIT=$candidate" >> "$GITHUB_ENV"' in fixture_command
+        assert "github.event.before" not in fixture_command
+        stage_step = next(
+            step
+            for step in offline["steps"]
+            if step.get("name") == "Run stage tests and regression"
+        )
+        assert "env" not in stage_step
         assert "python -m pytest platform/tests -q --tb=short" in commands
         assert any(
             command.startswith("python -m pytest tests/M0_M2")
             and "tests/M6a" in command
             and "tests/M6b" in command
+            and "tests/M11" in command
             and "tests/regression" in command
-            and '-m "not slow and not m6b_benchmark and not m9_benchmark"' in command
+            and '-m "not slow and not online and not m6b_benchmark and not m9_benchmark"' in command
             for command in commands
         )
         assert (

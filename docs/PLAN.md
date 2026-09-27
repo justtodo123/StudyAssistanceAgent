@@ -14,8 +14,9 @@
 > 该变更**触发 §4 撤销过渡**，与 v1.3/v1.4 相反，理由见 M9 计划 §4.3）；M9 已于 **2026-09-22 在
 > `m9-plan-lifecycle-v1` 范围内获批 `COMPLETE`**（§4 要求的独立 `completion_approval` 见 M9 计划 §4.5；
 > 三条 caveat——冻结范围仅限 M9 外部 AI 路径、真实 provider 仍未验证、10K/100K 属 M8/M11——随收口
-> **一并接受而非解除**）；M8 与 M10–M12 自身仍为
-> `BLOCKED / NOT_STARTED`；M8 active execution protocol `draft-0.10`
+> **一并接受而非解除**）；M8 与 M12 自身仍为
+> `BLOCKED / NOT_STARTED`；M11 于 2026-09-23 获批 `ADMITTED / IN_PROGRESS`
+> （范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1 已纳入 A1/A2/A3）；M8 active execution protocol `draft-0.10`
 > 曾完成 P0/P1/P2 并到达 `BINDING_FROZEN`，但 2026-09-14 独立 P3 文本审计因三项阻断性
 > schema/治理闭合缺陷判定 `REJECTED / stop`（`FAILED / RETURNED`）。不得 `request-p4`，且未授权或执行任何
 > experiment root 创建、依赖获取、输入准备、benchmark、发布、后端选择或 M8 admission。
@@ -143,7 +144,7 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 - **完整退出条件**：✅ 会话可跨重启恢复；工作台可完成学习闭环；离线 CI 与一键启动已落地；阶段测试、回归和平台测试保持通过。
 - **收口结论**：M5 作为 MVP 关闭。默认学习闭环与离线交付不再回退；通用运行时与可插拔数据源改由 M6 起按路线图建设。
 
-### M6–M12：通用学习 Agent Harness 与规模化落地（M6a/M6b/M7/M9 已完成，M8 与 M10–M12 仍阻断）
+### M6–M12：通用学习 Agent Harness 与规模化落地（M6a/M6b/M7/M9/M10 已完成，M11 实施中，M8 与 M12 仍阻断）
 > **最终依据**：本节（M6–M12）。辅助分析见 `docs/plans/references/`，冲突时以本文为准。
 > **统一门禁**：[`stage-admission-gates.md`](standards/stage-admission-gates.md) 定义决策、准入、撤销与禁止事项；
 > [`stage-admission-gates.json`](standards/stage-admission-gates.json) 只用于机器检查，不能单独批准阶段。
@@ -157,9 +158,9 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 | M6b | `ADMITTED` | `COMPLETE` | [`m6b-agent-core-plan.md`](plans/m6b-agent-core-plan.md) | 获批的默认关闭只读 Agent Preview 已实现并完成 closeout：阶段隔离、隐私/零写入、离线 p95、文档、治理与完整回归门禁通过；批准明确不包含 M7 |
 | M7 | `ADMITTED` | `COMPLETE` | [`m7-source-lifecycle-plan.md`](plans/m7-source-lifecycle-plan.md) | 十二项强制决策、保护基线、Source lifecycle/delete/isolation/fallback、冻结 1k/3k BGE 与五格式 100×20 parser/normalized/lifecycle 证据已闭合。原 2026-08-31 准入与开工授权保持不变；justtodo123 于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内独立批准 `M7 COMPLETE`。技术证据本身不产生批准；M6b preview、Quiz、Review Plan 与 study-sessions 仍不含用户源 |
 | M8 | `BLOCKED` | `NOT_STARTED` | [计划](plans/m8-specialized-storage-plan.md) | 八项 Decision 已 `RESOLVED`；`draft-0.10` P3 拒绝链冻结；`draft-0.11` 独立 P3 已 `REJECTED / stop`，失败链冻结；执行、后端选择和 admission 未授权；100K 专业化存储容量验证暂缓，现有 SQLite 线性余弦 + BM25 满足当前个人规模 |
-| M9 | `ADMITTED` | `COMPLETE` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT`、`M9-M8-EXIT`（维持当前 SQLite/BM25 后端）均已 `SATISFIED`；八项强制决策全部 `RESOLVED`；justtodo123 于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内批准开工（生成 + 采纳 + 进度 + 偏差重规划；v1.1 时外部 AI 与 mastery 写入除外）。确定性 Planner、计划生命周期与跳过/逾期偏差信号已实现；`M9-EXECUTION-DEVIATION` 决策值在 v1.2 实质变更，撤销与重新准入过渡已登记在 `admission_history`；步骤 3 的三个只读投影（mastery、授权 Source 摘要、先修关系 topic graph）均已实现并接入确定性 Planner（计划身份含派生输入摘要；先修违反由 `summary.prerequisites.violations` 可测，真语料实测为 0）；2026-09-21 owner 以 v1.3 扩张范围至步骤 4（拆为 4a/4b），4a 受限检索接缝（`PlanGroundingService`，四类预算 + fail-closed 交叉校验）与 4b 计划身份往返保真（principal 进身份键与记录 payload、经单点 `_public_plan` 剥离后不进响应体）均已完成；步骤 4c 修复了步骤 3 记录的复习历史冻结快照残留（`main.py` 改注入只读活投影）；步骤 4d 关闭了 §4 记录的准入留痕覆盖缺口（`_registry_references` 现同时枚举 `admission_history[].reference`，纯治理测试硬化）；2026-09-21 owner 再以 v1.4 窄口径扩张至步骤 6，`m9.external-ai` 移入 `included`（排除项只剩 mastery 写入），实现默认关闭的可选外部 AI 路径与冻结任务集 1K 比较；**`M9-EVALUATION` 原值未动**（延迟/成本仍 `DEFERRED`），10K/100K 容量验证逐字记为 M8（`BLOCKED`）/ M11 依赖、本次不触碰，故步骤 6 仅为**窄口径**推进、评测 workload 整体仍未冻结；该窄口径**已实施完成**（adapter 默认关闭 + 冻结任务集 1K 比较，读数见下方步骤 6 段）；2026-09-21 另交付 M9 **退出条件证据**——`tests/M9/test_mastery_write_authority.py` 以动态源文件枚举钉住「正式 mastery 只有一个写入权威」（写 `study_sessions`/`answer_attempts` 者恰好是 `learning_store.py`，M9 的 8 个模块与写权威导入不可达）；该增量**不新增写路径**（`m9.mastery-write` 仍在 `excluded`）、不改 `plan_revision`、不写 `admission_history`；2026-09-22 owner 再以 plan_revision v1.5 **解冻 `M9-EVALUATION` 的延迟/成本维度**为冻结评测（`ADMITTED→REVOKED→ADMITTED` 过渡已登记在 `admission_history`，`M9-EVALUATION` 为 M9 首个**真正触发** §4 的变更），冻结口径**仅限 M9 外部 AI 路径**：CI 臂在 `tests/M9/test_plan_ai_benchmark.py` 以确定性 stub 驱动真实 `client_factory=` 接缝，冻结**预算被强制执行**（`-m m9_benchmark`）；真实 provider 读数走 `tests/M9/test_plan_ai_provider_smoke.py`（`online` + skip 门控、**非门禁、本次未运行**）。故 M9 七项退出条件**在各自声明的范围内**均已挣得；**2026-09-22 owner 在 `m9-plan-lifecycle-v1` 范围内批准 `M9 COMPLETE`**（§4 要求的独立 `completion_approval`，五项字段齐全，见 M9 计划 §4.5），登记表 `delivery_status` 改为 `COMPLETE`、下游 `M10-M9-EXIT` 随之由 `OPEN` 改为 `SATISFIED`（**只登记事实，不构成 M10 的准入批准**）。**三条 caveat 随收口一并接受、未解除**：① 冻结评测范围仅限 M9 外部 AI 路径（**不是**全项目评测，遵循度仍为定性）；② 真实 provider 的延迟/成本/失败模式**仍未验证**（arm B 未运行，且被刻意排除在门禁判据之外）；③ 10K/100K 属 M8（`BLOCKED`）/ M11（拟议）。收口时另登记一条**已知限制**（不阻塞收口）：外部 AI 路径的 `PlanAIRequest` **不含先修关系**，而 `goal_planner._ai_order` 拿先修违反数作闸门丢弃整个置换——即模型被要求满足一个从不告诉它的约束；2026-09-22 一次**第三方 provider 探针**（**非 arm B、非 M9 证据、不进门禁**，产物在 gitignored 的 `artifacts/`）实测披露先修边可把采纳率由 `5/10` 提到 `8/10`（仅改措辞无效，`4/10`）。修复它需动 `M9-EXTERNAL-AI` 的 `MINIMAL_DISCLOSURE` 披露范围，**本次不动**，留作后续阶段输入 |
+| M9 | `ADMITTED` | `COMPLETE` | [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md) | `M9-M7-EXIT`、`M9-M8-EXIT`（维持当前 SQLite/BM25 后端）均已 `SATISFIED`；八项强制决策全部 `RESOLVED`；justtodo123 于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内批准开工（生成 + 采纳 + 进度 + 偏差重规划；v1.1 时外部 AI 与 mastery 写入除外）。确定性 Planner、计划生命周期与跳过/逾期偏差信号已实现；`M9-EXECUTION-DEVIATION` 决策值在 v1.2 实质变更，撤销与重新准入过渡已登记在 `admission_history`；步骤 3 的三个只读投影（mastery、授权 Source 摘要、先修关系 topic graph）均已实现并接入确定性 Planner（计划身份含派生输入摘要；先修违反由 `summary.prerequisites.violations` 可测，真语料实测为 0）；2026-09-21 owner 以 v1.3 扩张范围至步骤 4（拆为 4a/4b），4a 受限检索接缝（`PlanGroundingService`，四类预算 + fail-closed 交叉校验）与 4b 计划身份往返保真（principal 进身份键与记录 payload、经单点 `_public_plan` 剥离后不进响应体）均已完成；步骤 4c 修复了步骤 3 记录的复习历史冻结快照残留（`main.py` 改注入只读活投影）；步骤 4d 关闭了 §4 记录的准入留痕覆盖缺口（`_registry_references` 现同时枚举 `admission_history[].reference`，纯治理测试硬化）；2026-09-21 owner 再以 v1.4 窄口径扩张至步骤 6，`m9.external-ai` 移入 `included`（排除项只剩 mastery 写入），实现默认关闭的可选外部 AI 路径与冻结任务集 1K 比较；**`M9-EVALUATION` 原值未动**（延迟/成本仍 `DEFERRED`），10K/100K 容量验证逐字记为 M8（`BLOCKED`）/ M11 依赖、本次不触碰，故步骤 6 仅为**窄口径**推进、评测 workload 整体仍未冻结；该窄口径**已实施完成**（adapter 默认关闭 + 冻结任务集 1K 比较，读数见下方步骤 6 段）；2026-09-21 另交付 M9 **退出条件证据**——`tests/M9/test_mastery_write_authority.py` 以动态源文件枚举钉住「正式 mastery 只有一个写入权威」（写 `study_sessions`/`answer_attempts` 者恰好是 `learning_store.py`，M9 的 8 个模块与写权威导入不可达）；该增量**不新增写路径**（`m9.mastery-write` 仍在 `excluded`）、不改 `plan_revision`、不写 `admission_history`；2026-09-22 owner 再以 plan_revision v1.5 **解冻 `M9-EVALUATION` 的延迟/成本维度**为冻结评测（`ADMITTED→REVOKED→ADMITTED` 过渡已登记在 `admission_history`，`M9-EVALUATION` 为 M9 首个**真正触发** §4 的变更），冻结口径**仅限 M9 外部 AI 路径**：CI 臂在 `tests/M9/test_plan_ai_benchmark.py` 以确定性 stub 驱动真实 `client_factory=` 接缝，冻结**预算被强制执行**（`-m m9_benchmark`）；真实 provider 读数走 `tests/M9/test_plan_ai_provider_smoke.py`（`online` + skip 门控、**非门禁、本次未运行**）。故 M9 七项退出条件**在各自声明的范围内**均已挣得；**2026-09-22 owner 在 `m9-plan-lifecycle-v1` 范围内批准 `M9 COMPLETE`**（§4 要求的独立 `completion_approval`，五项字段齐全，见 M9 计划 §4.5），登记表 `delivery_status` 改为 `COMPLETE`、下游 `M10-M9-EXIT` 随之由 `OPEN` 改为 `SATISFIED`（**只登记事实，不构成 M10 的准入批准**）。**三条 caveat 随收口一并接受、未解除**：① 冻结评测范围仅限 M9 外部 AI 路径（**不是**全项目评测，遵循度仍为定性）；② 真实 provider 的延迟/成本/失败模式**仍未验证**（arm B 未运行，且被刻意排除在门禁判据之外）；③ 10K/100K 属 M8（`BLOCKED`）/ M11（ADMITTED / IN_PROGRESS）。收口时另登记一条**已知限制**（不阻塞收口）：外部 AI 路径的 `PlanAIRequest` **不含先修关系**，而 `goal_planner._ai_order` 拿先修违反数作闸门丢弃整个置换——即模型被要求满足一个从不告诉它的约束；2026-09-22 一次**第三方 provider 探针**（**非 arm B、非 M9 证据、不进门禁**，产物在 gitignored 的 `artifacts/`）实测披露先修边可把采纳率由 `5/10` 提到 `8/10`（仅改措辞无效，`4/10`）。修复它需动 `M9-EXTERNAL-AI` 的 `MINIMAL_DISCLOSURE` 披露范围，**本次不动**，留作后续阶段输入 |
 | M10 | `ADMITTED` | `COMPLETE` | [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md) | **2026-09-22 获批准入并授权开工；2026-09-23 步骤 1–7 已完成技术实施**（范围 `m10-autonomous-runner-v1`，plan_revision v1.0）；M7/M8/M9 三项前置均 `SATISFIED`，十一项 Decision 全部 `RESOLVED`，实施证据包括 Runner authority/ledger、crash recovery、async job、generation publication、reconcile、默认关闭 Runner、Arm A、knowledge-pack manifest 与只读 stdio MCP。当前 `tests/M10/` 148 项、M10 + regression 231 项全绿；justtodo123 于 2026-09-23 在原范围内批准 `M10 COMPLETE`，独立 `completion_approval` 已登记，已知限制随收口接受而未解除。范围继续排除 M11/M12、多 worker、M8 backend 与真实 10K/100K 数据。 |
-| M11 | `BLOCKED` | `NOT_STARTED` | [`m11-data-scaling-plan.md`](plans/m11-data-scaling-plan.md) | 拟议真实数据规模化阶段；正式退出目标为 10K approved chunks，3K 为先行 Gate，全部 Decision 与批准 `OPEN` |
+| M11 | `ADMITTED` | `IN_PROGRESS` | [`m11-data-scaling-plan.md`](plans/m11-data-scaling-plan.md) | 真实数据规模化阶段；正式退出目标为 10K approved chunks，3K 为先行 Gate。三项前置 `SATISFIED`，十项 Decision `RESOLVED`。justtodo123 于 2026-09-23 在 `m11-data-scaling-v1` 范围内批准准入并授权开工；同日 v1.1 纳入 A1/A2/A3（`tests/M11/`、chunk 硬顶 4000、P0 白名单下载入库）。2026-09-26 授权 26 资产 HUMAN_REVIEW 批次（MIT OCW 20 + RFC 3 + IANA 3）；RFC+IANA 6 项与 MIT OCW 20 项均已 `DEFER`（含两份已 REJECTED 的 MIT OCW PDF）；同日另签发同范围 `acquisition` authority，26 项 `ACQUIRED` receipts 已提交，再核验切片仍为 `DEFER`；仍排除 Formal Gate 0 执行、candidate 晋升、publication、Network 晋升、SE dump、Linux docs 进 3K、10K 以上提额、M8 后端与 M12 |
 | M12 | `BLOCKED` | `NOT_STARTED` | [`m12-cloud-deployment-plan.md`](plans/m12-cloud-deployment-plan.md) | 拟议可选云端单用户部署；本地离线仍为默认，服务器 baseline、十三项 Decision 与批准全部 `OPEN` |
 
 阶段只有在所有强制 Decision 为 `RESOLVED`、前置/保护证据有效、兼容不变量确认且用户或项目负责人填写批准
@@ -173,10 +174,10 @@ source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline fail-closed
 M8 的八项政策 Decision 已闭合，但仍须完成新实证协议、后端选择和人工 admission；M9 的 M8 退出前置已通过
 「维持当前 SQLite/BM25 后端」分支满足（100K 专业化存储容量验证暂缓），但 M9 不因此获得 M8 的 100K 数据面
 或执行授权；M10 的 `M10-M8-EXIT` 于 2026-09-22 由 owner 以**同一条维持现状结论**分支兑现（见 M10 计划 §2.1），
-`M10-M7-EXIT` 与 `M10-M9-EXIT` 此前已 `SATISFIED`，故 M10 三项前置**均已满足**——这**不构成 M10 的准入批准**，
-M10 仍为 `BLOCKED / NOT_STARTED`，等待自身十一项强制决策与独立批准；M11 拟依赖 M8–M10 的真实退出并交付
-10K approved chunks（**注意**：M8 走维持现状分支后不会产生「真实退出证据」，M11 的 `M8/M9/M10 真实退出证据`
-一条需在 M11 准入前重新澄清）；M12 拟依赖
+`M10-M7-EXIT` 与 `M10-M9-EXIT` 此前已 `SATISFIED`，故 M10 三项前置**均已满足**；M10 已于 2026-09-22 获批准入并于
+2026-09-23 在原范围内 `COMPLETE`。M11 三项前置已于 2026-09-23 全部 `SATISFIED`（`M11-M8-EXIT` 走维持现状结论，与 M9/M10 同一分支；
+`M11-M9-EXIT` / `M11-M10-EXIT` 只登记 COMPLETE 事实），十项 Decision 同日全部 `RESOLVED`；justtodo123 于同日在
+`m11-data-scaling-v1` 范围内批准准入，随后以「允许执行」授权开工，并以「A1 A2 A3 全部批准」形成 plan_revision v1.1。M12 拟依赖
 M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为写路径或 Source 生命周期前置。
 
 - ✅ **M6a-P0 crawler 前置收口**：`tests/M6_crawler` 使用独立 marker `m6_crawler`；离线测试 mock HTTP；
@@ -274,7 +275,7 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
   完成 P0 技术文字接受，并由 owner `justtodo123` 完成 P1/P2；全新 identity、parent-binding 与 repository-binding 已
   冻结；独立 reviewer `external-reviewer-01` 已判定 draft-0.11 P3 `REJECTED / stop`，记录 14 项阻断 finding；
   未授权建根、依赖、输入、执行、发布、后端选择或 M8 admission。
-- 🔄 **M9 目标驱动计划**：执行计划见
+- ✅ **M9 目标驱动计划**：执行计划见
   [`m9-goal-driven-planning-plan.md`](plans/m9-goal-driven-planning-plan.md)；八项强制决策已 `RESOLVED` 并在
   `m9-plan-lifecycle-v1` 范围内获批开工，确定性生成、采纳/进度/重规划与跳过+逾期偏差信号已实现。
   外部 AI 隐私/fallback 已由 v1.4 的窄口径兑现（默认关闭、最小披露、硬超时+成本预算、确定性 fallback）；
@@ -335,7 +336,7 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
   比较的读数是：两种语料规模（实测 10 vs 1000 chunks）下送往 AI 的 prompt 字节数与条目数**逐字相同**
   （输入有界），两条路径先修违反均为 0，确定性可重放。**必须按窄口径读**：这只证明**输入不随语料规模增长**，
   M9 既不存储也不索引 1K chunks，故**不是容量声明**；AI 路径在 CI 由确定性 stub 驱动，真实 provider 的
-  延迟/成本/失败模式**未验证**；10K/100K 仍是 M8（`BLOCKED`）/ M11（拟议）依赖。
+  延迟/成本/失败模式**未验证**；10K/100K 仍是 M8（`BLOCKED`）/ M11（ADMITTED / IN_PROGRESS）依赖。
   **评测口径已由 owner 以 plan_revision v1.5 解冻**（2026-09-22）：`M9-EVALUATION` 的延迟/成本维度由
   `..._LATENCY_COST_DEFERRED` 改为冻结评测，**这是 M9 第一个真正触发 §4 撤销的变更**（v1.3/v1.4 都在论证
   「为何不触发」；§4.2 末段早已逐字预言本次），过渡已登记在 `admission_history`，v1.5 当时 live 字段仍为
@@ -351,11 +352,11 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
   **放弃线程而非取消它**。**真实 provider 臂
   （非门禁）**见 `tests/M9/test_plan_ai_provider_smoke.py`（`online` + skip 门控、花费上限默认 $1.00、
   只记脱敏字段），**本次未运行**，故真实 provider 的延迟 / 成本 / 失败模式**仍未验证**。10K/100K 仍不触碰。
-- ⬜ **M10 完整自主 Runner 与 Harness 对外**：准备计划见
+- ✅ **M10 完整自主 Runner 与 Harness 对外**：准备计划见
   [`m10-autonomous-runner-plan.md`](plans/m10-autonomous-runner-plan.md)；在 M7–M9 退出后仍须先闭合写授权、
   checkpoint、幂等、EffectLedger、恢复、Agent 评测、manifest、MCP 和 rollout。状态机继续作为正式默认和
   无 LLM 降级路径；10K/100K ingestion、embedding 和 reindex 长任务必须异步、可取消、可恢复且不产生半发布 generation。
-- ⬜ **M11 真实数据规模化**：准备计划见
+- 🔄 **M11 真实数据规模化**：准备计划见
   [`m11-data-scaling-plan.md`](plans/m11-data-scaling-plan.md)；正式退出目标为 10K 个许可清晰、来源可追溯、质量可验证的
   approved chunks。3K 为先行 Gate；30K/100K 为后续扩展 Gate，不阻塞 M11 完成。100K synthetic capacity 不能冒充
   真实数据质量证据。
@@ -389,7 +390,20 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 
 ---
 
-*创建：2026-08-10 · PLAN 文档修订：v2.47（不是产品发布版本）· 更新：2026-09-22（**M10 arm A 门禁落地**——
+*创建：2026-08-10 · PLAN 文档修订：v2.54（不是产品发布版本）· 更新：2026-09-26（**26 资产 ACQUIRED receipts 已提交，再核验仍为 `DEFER`**：独立 `acquisition` authority 绑定同一冻结 digest；无 committed candidate 文档/chunks。admission/delivery 仍为 `ADMITTED / IN_PROGRESS`，plan_revision 仍 v1.1。不执行 Formal Gate 0、不晋升、不发布、不扩张来源）· 上一修订 v2.53（2026-09-26：**MIT OCW 20 项 HUMAN_REVIEW 已 `DEFER`**：无 committed candidate 文档/chunks、无 ACQUIRED receipt；两份已 REJECTED 的 PDF 仍在批次内。至此 26 项决策全部为 `DEFER`。admission/delivery 仍为 `ADMITTED / IN_PROGRESS`，plan_revision 仍 v1.1。不执行 Formal Gate 0、不晋升、不发布、不扩张来源、不发起新的网络获取）· 上一修订 v2.52（2026-09-26：**RFC+IANA 6 项 HUMAN_REVIEW 已 `DEFER`**：无 candidate 文档/chunks、无 ACQUIRED receipt；MIT OCW 20 仍未核验。admission/delivery 仍为 `ADMITTED / IN_PROGRESS`，plan_revision 仍 v1.1。不执行 Formal Gate 0、不晋升、不发布、不扩张来源、不发起新的网络获取）· 上一修订 v2.51（2026-09-26：**授权 26 资产 HUMAN_REVIEW 批次**：MIT OCW 20 PDF + RFC 3 + IANA 3，含两份已 `REJECTED` 的 MIT OCW PDF，不含 OpenDSA。admission/delivery 仍为 `ADMITTED / IN_PROGRESS`，plan_revision 仍 v1.1。不执行 Formal Gate 0、不晋升、不发布、不扩张来源、不发起新的网络获取）· 上一修订 v2.50（2026-09-24：**同步 M11 当前授权状态**：顶部摘要与导航统一为 `ADMITTED / IN_PROGRESS`、`implementation_start=AUTHORIZED`、plan_revision v1.1；A1/A2/A3 实施中。此次仅修正已登记事实的过时摘要，不新增授权、不改 Gate 阈值、不授权正式 3K 运行或发布）· 上一修订 v2.49（2026-09-23：**M11 获批准入、开工当时未授权**：
+owner 指令「允许进入下一个阶段」，读作批准 `m11-data-scaling-v1` 准入、**不**批准生产开工。登记表
+`admission_status` → `ADMITTED`，随后 `delivery_status` 由 `NOT_STARTED` 改为 `IN_PROGRESS`，`implementation_start=AUTHORIZED`；
+五项批准字段与 `approval_scope`（`included` 10 / `excluded` 7）已填写。**不**下载语料、**不**提额、
+当时不创建 `tests/M11/`。不写 `admission_history`（准入过渡由批准字段承担；
+无决策值变更））· 上一修订 v2.48（2026-09-23：**M11 十项 Decision 闭合并写下准入准备物**：
+owner 已批准批次 ①②③，登记表十项由 `OPEN` 改为 `RESOLVED`；三项前置此前已 `SATISFIED`。新增
+[`m11-decision-closure-v1.md`](plans/references/m11-decision-closure-v1.md)、
+[`m11-baseline-3k-freeze-v1.md`](plans/references/m11-baseline-3k-freeze-v1.md) 与
+[`m11-test-plan-v1.md`](plans/references/m11-test-plan-v1.md)，并落地仓库根 `data/README.md` 作为
+raw/normalized 不入库边界。**决策闭合与准备物不等于准入**：当时 `admission_status` 仍 `BLOCKED`、
+`approval` 五字段仍为空，不授权下载、抓取、导入、解析、embedding、索引或发布，不提高
+`max_chunks_total`，不创建 `tests/M11/`。不触发 §4 撤销、不写 `admission_history`（当时为
+`BLOCKED → BLOCKED`））· 上一修订 v2.47（2026-09-22：**M10 arm A 门禁落地**——
 步骤 7 的前置）：任务集物化为 `tests/M10/frozen_tasks.py`（7 场景，`workload_digest()` 覆盖每个字段），
 摘要 `196df3dd…` **钉死**在 `tests/M10/test_runner_evaluation.py`——改任务集必须显式更新摘要否则判红；
 指标做 `ENFORCED_LOCALLY` / `NOT_ENFORCED_LOCALLY` 三分类（与 job 预算同一纪律），报告带该分类。
@@ -551,7 +565,7 @@ SQLite registry + linear cosine + 默认 BM25，100K 专业化存储容量验证
 改为 `SATISFIED`，**只登记事实、不构成 M10 的准入批准**（M10 仍需 `M10-M8-EXIT` 与自身 11 项 `OPEN` 决策）。
 **三条 caveat 随收口一并接受、未解除**：① 冻结评测范围**仅限 M9 外部 AI 路径**（非全项目评测，遵循度仍为
 定性）；② 真实 provider 的延迟/成本/失败模式**仍未验证**（arm B 未运行，且被刻意排除在门禁判据外）；
-③ 10K/100K 属 M8（`BLOCKED`）/ M11（拟议）。另登记一条**已知限制**（不阻塞收口）：外部 AI 路径的
+③ 10K/100K 属 M8（`BLOCKED`）/ M11（ADMITTED / IN_PROGRESS）。另登记一条**已知限制**（不阻塞收口）：外部 AI 路径的
 `PlanAIRequest` **不含先修关系**，而 `goal_planner._ai_order` 拿先修违反数作闸门丢弃整个置换——即模型被
 要求满足一个从不告诉它的约束；2026-09-22 一次**第三方 provider 探针**（**非 arm B、非 M9 证据、不进门禁**，
 产物在 gitignored 的 `artifacts/`）实测披露先修边可把采纳率由 `5/10` 提到 `8/10`，而仅改措辞无效（`4/10`）。
