@@ -22,4 +22,7 @@
 python -m pytest tests/M8_metadata_discovery -v
 ```
 
-测试使用显式当前 Git commit 的 committed objects；不会把 worktree 中的 untracked 文件作为证据。
+测试使用显式 ordinary Git commit 的 committed objects；本地默认使用当前 commit，CI 通过 `M8_SOURCE_COMMIT` 绑定
+PR head、ordinary push commit、two-parent merge push 的 topic parent，或 workflow_dispatch 手工输入的完整小写
+OID；最终都必须是 ordinary single-parent commit。这样其余测试仍可检查 merge result，而 M8 evidence 不会把
+GitHub synthetic merge commit 当成合法来源；worktree 中的 untracked 文件不会成为证据。
