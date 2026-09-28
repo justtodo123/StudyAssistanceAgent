@@ -20,6 +20,7 @@ tools/
 ├── validate_m11_p0_rfc_content_quality_review.py # 校验 owner RFC content_quality VERIFIED；12 VERIFIED / 3 N/A / 9 PENDING
 ├── validate_m11_p0_rfc_legal_policy_census.py # 校验 RFC offline notice/robots census
 ├── validate_m11_p0_rfc_legal_policy_review.py # 校验 owner legal closure；21 VERIFIED / 3 N/A / 0 PENDING
+├── validate_m11_p0_rfc_exact_three_successor.py # 校验 RFC exact-three ACCEPT successor；IANA/MIT DEFER，Gate 0 未执行
 ├── validate_m11_rfc_evidence_closure_packet.py # 离线校验 RFC exact-three 非执行 review packet；24 cells 保持 PENDING
 ├── validate_m11_p0_rfc_schema_review.py # 离线校验 RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
 ├── validate_m11_p0_rfc_technical_evidence_review.py # 校验 RFC technical decision；9 VERIFIED / 3 N/A / 12 PENDING
@@ -162,6 +163,16 @@ PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_sc
 
 ```bash
 PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_rfc_evidence_closure_packet.py
+```
+
+## validate_m11_p0_rfc_exact_three_successor.py — RFC exact-three ACCEPT successor
+
+该工具校验独立 owner-authorized RFC exact-three successor：三条 RFC current heads 均为
+`ACCEPT_FOR_PROMOTION_REVIEW`，绑定 current document/chunk/candidate/receipt identities；IANA/MIT current heads 仍为
+`DEFER`，Gate 0 不执行，promotion/publication 仍为 false。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_exact_three_successor.py
 ```
 
 ## validate_m11_p0_rfc_legal_policy_review.py — RFC owner legal-policy closure

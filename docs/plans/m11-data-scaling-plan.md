@@ -464,7 +464,18 @@ RFC 累积 evidence 达到 21 `VERIFIED` + 3 `NOT_APPLICABLE` + 0 `PENDING`，`c
 `EVIDENCE_COMPLETE_REVIEW_PENDING`，因为 successor / `ACCEPT_FOR_PROMOTION_REVIEW` 是独立 owner decision。
 本决定不写 successor，不创建 `operation=gate0` authority，不执行 Gate 0、不修改 acquisition receipts、不晋升或发布。
 
-### 8.18 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
+### 8.18 RFC exact-three ACCEPT successor（2026-09-28）
+
+Evidence complete 后，owner 以独立 exact-three `human_review` authority
+`m11-rfc-exact-three-accept-3-20260928` 明确授权三个 RFC current heads 均为
+`ACCEPT_FOR_PROMOTION_REVIEW`。新增 successor 仅 supersede exact-six 当前 RFC 三条 `DEFER` heads，绑定已验证
+`document_id`、`chunk_id`、candidate/receipt/revision identity；IANA 三条与 MIT 二十条 current heads 保持 `DEFER`。
+
+combined append-only history 为 55 条记录，current heads 仍恰为 26 条。该 decision 只表示 eligible for promotion review，
+不表示 approved；不创建 `operation=gate0` authority，不执行 Gate 0，不改写 receipts，不晋升、不发布、不计入 3K。
+Gate 0 仍需独立 authority 和 receipt authority-id linkage 解决。
+
+### 8.19 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
 
 在 §8.4 已批准的 candidate pipeline 范围内，使用项目冻结 parser 环境对本地 gitignored raw 层的 MIT OCW exact-20
 重放规范化，并以当前 candidate artifact validator 校验结果：18 项生成有效 candidate artifacts，共 93 个 candidate chunks；

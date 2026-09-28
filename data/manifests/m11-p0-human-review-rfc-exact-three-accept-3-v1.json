@@ -1,0 +1,133 @@
+{
+  "schema": "sa.m11.p0.human-review-slice.v1",
+  "slice_id": "rfc-exact-three-accept-3-20260928",
+  "authority_id": "m11-rfc-exact-three-accept-3-20260928",
+  "authority_record": "data/manifests/m11-p0-rfc-exact-three-accept-authority-v1.json",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "source_ids": [
+    "rfc-editor-index"
+  ],
+  "asset_count": 3,
+  "remaining_in_batch": 0,
+  "decision": "ACCEPT_FOR_PROMOTION_REVIEW",
+  "reviewer_id": "justtodo123",
+  "signed_at": "2026-09-28T16:00:00Z",
+  "formal_gate0_executed": false,
+  "candidate_approval_granted": false,
+  "publication_authorized": false,
+  "network_used": false,
+  "source_expansion": false,
+  "lifecycle_mutation": false,
+  "host_paths_included": false,
+  "bodies_included": false,
+  "records": [
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260928-accept-rfc1034",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "rfc-editor-index",
+      "asset_id": "rfc1034",
+      "document_id": "2186f345e64dbac70a29a5c56026947e",
+      "chunk_ids": [
+        "b4b9e68fe2343e503bbb280a7ffb626f"
+      ],
+      "candidate_digest": "d6b10a71441df879cc2817d23f2dad120c8a5f87e74eba1e4ed4b743a76a891a",
+      "receipt_digest": "6a7a22c4d5e4ac738715e5d004664d3c5c0ab3afeecf007973297b9243df9fe5",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 3,
+        "stratification": "rfc-editor-index-exact-three",
+        "batch": "rfc-exact-three-accept-3-20260928",
+        "slice": "rfc-exact-three-accept-3"
+      },
+      "signed_at": "2026-09-28T16:00:00Z",
+      "attestation_digest": "3e9f7fe3d729107817089163c85f01b78f96b2c46173b2ae2b4c3c993d6cf372",
+      "decision": "ACCEPT_FOR_PROMOTION_REVIEW",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-p0-acquisition-26-receipts-v1",
+        "m11-p0-rfc-candidate-materialization-20260928",
+        "m11-p0-rfc-schema-review-result-20260928",
+        "m11-p0-rfc-technical-evidence-review-result-20260928",
+        "m11-p0-rfc-content-quality-review-result-20260928",
+        "m11-p0-rfc-legal-policy-census-20260928",
+        "m11-p0-rfc-legal-policy-review-result-20260928"
+      ],
+      "supersedes": "m11-hr-20260927-evidence-review-rfc1034",
+      "comment": "Evidence complete; accepted for promotion review only. Gate 0, promotion, and publication remain unexecuted and unauthorized."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260928-accept-rfc9110",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "rfc-editor-index",
+      "asset_id": "rfc9110",
+      "document_id": "c4a82e00b607cd3ce2b44888f0f1583d",
+      "chunk_ids": [
+        "d07e193fcb66290468aea31c9df37cd3"
+      ],
+      "candidate_digest": "21c1cdce6ab0e5509b04d84a28000836c7a087cf786efe6f04877ebfff47232a",
+      "receipt_digest": "6d0e2f64f1c9622eef27d497a2d042d28964a642c5aa28b5ed7541d4d97e7e2d",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 3,
+        "stratification": "rfc-editor-index-exact-three",
+        "batch": "rfc-exact-three-accept-3-20260928",
+        "slice": "rfc-exact-three-accept-3"
+      },
+      "signed_at": "2026-09-28T16:00:00Z",
+      "attestation_digest": "84c2d4c86ac7081283d0a713f62df79dec3e3562198dcad286676bbe7a83cb8c",
+      "decision": "ACCEPT_FOR_PROMOTION_REVIEW",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-p0-acquisition-26-receipts-v1",
+        "m11-p0-rfc-candidate-materialization-20260928",
+        "m11-p0-rfc-schema-review-result-20260928",
+        "m11-p0-rfc-technical-evidence-review-result-20260928",
+        "m11-p0-rfc-content-quality-review-result-20260928",
+        "m11-p0-rfc-legal-policy-census-20260928",
+        "m11-p0-rfc-legal-policy-review-result-20260928"
+      ],
+      "supersedes": "m11-hr-20260927-evidence-review-rfc9110",
+      "comment": "Evidence complete; accepted for promotion review only. Gate 0, promotion, and publication remain unexecuted and unauthorized."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260928-accept-rfc9293",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "rfc-editor-index",
+      "asset_id": "rfc9293",
+      "document_id": "e8131883983093c7b086358b4cfa5fb6",
+      "chunk_ids": [
+        "71f8faad1d3562092b15435a75ab3db7"
+      ],
+      "candidate_digest": "6d9ac8be4b0286f8c3d337addf442b2eb6a9b14e1366594ea7fbc273f93dc2d9",
+      "receipt_digest": "355b80fc571e74fab0757a408a5edb989aa86fd3cde87cfeb7391a8a72c4f819",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 3,
+        "stratification": "rfc-editor-index-exact-three",
+        "batch": "rfc-exact-three-accept-3-20260928",
+        "slice": "rfc-exact-three-accept-3"
+      },
+      "signed_at": "2026-09-28T16:00:00Z",
+      "attestation_digest": "f208c737cf563e784848b2776bae48336b25994b416be18d24d11c958021d7b3",
+      "decision": "ACCEPT_FOR_PROMOTION_REVIEW",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-p0-acquisition-26-receipts-v1",
+        "m11-p0-rfc-candidate-materialization-20260928",
+        "m11-p0-rfc-schema-review-result-20260928",
+        "m11-p0-rfc-technical-evidence-review-result-20260928",
+        "m11-p0-rfc-content-quality-review-result-20260928",
+        "m11-p0-rfc-legal-policy-census-20260928",
+        "m11-p0-rfc-legal-policy-review-result-20260928"
+      ],
+      "supersedes": "m11-hr-20260927-evidence-review-rfc9293",
+      "comment": "Evidence complete; accepted for promotion review only. Gate 0, promotion, and publication remain unexecuted and unauthorized."
+    }
+  ]
+}

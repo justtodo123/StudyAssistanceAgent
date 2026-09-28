@@ -18,6 +18,7 @@
 - `test_m11_rfc_content_quality_review.py` 验证 owner-authorized 三个 `content_quality=VERIFIED`；累积为 12 `VERIFIED` + 3 `NOT_APPLICABLE` + 9 legal-policy `PENDING`，不写 successor、不执行 Gate 0。
 - `test_m11_rfc_legal_policy_census.py` 验证 exact-three offline notice-family、copyright/BCP78 marker、pre-Trust distribution、robots digest/policy 和 identity facts；census 本身不联网、不签发 authority。
 - `test_m11_rfc_legal_policy_review.py` 验证 owner-authorized 9 个 legal-policy cells 全部 `VERIFIED`；RFC 累积 21 `VERIFIED` + 3 `NOT_APPLICABLE` + 0 `PENDING`，evidence complete 但不写 successor、不执行 Gate 0。
+- `test_m11_rfc_exact_three_successor.py` 验证独立 exact-three ACCEPT successor：三条 RFC current heads 为 `ACCEPT_FOR_PROMOTION_REVIEW`，IANA/MIT 仍 `DEFER`，combined current heads 仍为 26，Gate 0/promotion/publication 均未执行或授权。
 - `test_m11_rfc_evidence_closure_packet.py` 验证 RFC exact-three non-executing review packet 的 exact scope、candidate identity、batch digest、24 个 `PENDING` cells、`authority_issued=false` 与 escalation fail-closed；packet 不产生 owner authority、Gate 0、promotion 或 publication。
 - `test_m11_rfc_schema_review.py` 验证 owner-authorized exact-three schema-only decision：3 个 `schema` cells 恰为 `NOT_APPLICABLE`、其余 21 cells 当时保持 `PENDING`、`closure_effect=PARTIAL`、不写 successor；宽范围/错误 operation/晋升/publication 变异均 fail-closed。
 - `test_m11_rfc_technical_evidence_review.py` 验证 owner-authorized RFC `revision` / `provenance` / `parser` 决定：累积 9 `VERIFIED` + 3 `NOT_APPLICABLE` + 12 `PENDING`，不写 successor、不执行 Gate 0；operation、scope、状态、计数和 escalation 变异均 fail-closed。
