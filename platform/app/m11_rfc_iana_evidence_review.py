@@ -15,7 +15,7 @@ from app.m11_evidence_closure import EvidenceClosureError, validate_closure_bund
 from app.m11_execution_authority import ExecutionAuthorityError, validate_execution_authority
 from app.m11_gate0 import EVIDENCE_CATEGORIES
 from app.m11_official_observation import OfficialObservationError, validate_official_observation_bundle
-from app.m11_review import ReviewError, gate0_status, validate_review_history
+from app.m11_review import ReviewError, gate0_status, review_digest, validate_review_history
 
 APPLICATION_SCHEMA = "sa.m11.p0.rfc-iana-evidence-review-application.v1"
 RESULT_SCHEMA = "sa.m11.p0.rfc-iana-evidence-review-result.v1"
@@ -595,8 +595,18 @@ def _validate_rfc_iana_evidence_review_bundle(
             or successor.candidate_digest != identity["candidate_digest"]
             or successor.receipt_digest != identity["receipt_digest"]
             or validated_result["result_id"] not in successor.evidence_refs
+            or successor.sampling_plan != {
+                "sample_size": 6,
+                "stratification": "rfc-iana-evidence-review-6",
+                "batch": "rfc-iana-evidence-review-6-20260927",
+                "slice": "rfc-iana-evidence-review-6",
+            }
         ):
             _fail("RFC_IANA_SUCCESSOR_IDENTITY_INVALID")
+        successor_payload = successor.as_dict()
+        successor_payload.pop("attestation_digest")
+        if successor.attestation_digest != review_digest(successor_payload):
+            _fail("RFC_IANA_SUCCESSOR_ATTESTATION_INVALID")
     validate_review_history(list(official_reviews) + list(successor_reviews))
 
     txt = successor_by_key[("iana-registries", "service-names-port-numbers-txt")]

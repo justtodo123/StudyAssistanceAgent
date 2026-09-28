@@ -189,6 +189,21 @@ def test_human_review_26_checklist_stays_review_required(repo_root):
     assert contract["mit_ocw_slice_asset_count"] == 20
     assert contract["mit_ocw_slice_decision"] == "DEFER"
     assert contract["mit_ocw_slice_record"] == str(OCW_SLICE_PATH).replace("\\", "/")
+    assert contract["rfc_iana_evidence_review_asset_count"] == 6
+    assert contract["rfc_iana_evidence_review_pending_cell_count"] == 48
+    assert contract["rfc_iana_evidence_review_decision"] == "DEFER"
+    assert contract["rfc_iana_evidence_review_closure_effect"] == "NONE"
+    assert contract["rfc_iana_evidence_review_xml_conflict_status"] == "UNRESOLVED"
+    assert contract["rfc_iana_evidence_review_txt_parser_state"] == "FAIL_CLOSED"
+    assert contract["mit_ocw_evidence_review_asset_count"] == 20
+    assert contract["mit_ocw_evidence_review_pending_cell_count"] == 160
+    assert contract["mit_ocw_evidence_review_decision"] == "DEFER"
+    assert contract["mit_ocw_evidence_review_closure_effect"] == "NONE"
+    assert contract["mit_ocw_evidence_review_third_party_rights"] == "UNRESOLVED"
+    assert contract["mit_ocw_candidate_asset_count"] == 18
+    assert contract["mit_ocw_candidate_chunk_count"] == 93
+    assert contract["mit_ocw_candidate_rejected_count"] == 2
+    assert contract["mit_ocw_candidate_counts_toward_3k"] is False
     for field in (
         "formal_gate0_executed",
         "formal_3k_executed",
@@ -214,6 +229,7 @@ def test_human_review_26_checklist_stays_review_required(repo_root):
     assert statuses["content-quality-review"] == "pending"
     assert statuses["rfc-iana-slice"] == "verified"
     assert statuses["mit-ocw-slice"] == "verified"
+    assert statuses["mit-ocw-candidate-materialization"] == "verified"
     assert statuses["review-records"] == "verified"
     assert statuses["formal-gate0"] == "blocked"
     assert statuses["candidate-promotion"] == "blocked"

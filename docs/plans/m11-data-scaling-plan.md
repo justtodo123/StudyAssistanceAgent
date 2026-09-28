@@ -347,6 +347,44 @@ RFC 9293、RFC 1034 与 IANA CSV/XML/TXT；MIT OCW 20 项、OpenDSA 和其他来
 该批次记录了“已核验但证据仍不足”的事实，不改变 M11 的 `ADMITTED / IN_PROGRESS`、plan_revision v1.1、3K/10K
 退出条件或任何后续授权边界。
 
+### 8.9 MIT OCW exact-20 资产级证据核验（2026-09-27）
+
+MIT OCW 6.004（2017）批次只覆盖冻结的 20 个 PDF；RFC/IANA、OpenDSA 和其他来源均不进入本批次。
+
+- 非执行 application、exact-20 `human_review` authority、result 与 successor slice 分别记录在
+  `data/manifests/m11-p0-mit-ocw-evidence-review-application-v1.json`、
+  `data/manifests/m11-p0-mit-ocw-evidence-review-authority-v1.json`、
+  `data/manifests/m11-p0-mit-ocw-evidence-review-result-v1.json` 和
+  `data/manifests/m11-p0-human-review-mit-ocw-evidence-defer-20-v1.json`。
+- authority 继续使用冻结父 `scope_digest`，但 source/asset 集合精确等于 MIT 20 项；版本化 batch digest
+  `c739ceaa4bd20f348f735bcc0e6281c963f6c28d110fc38e0d5e9750bbd75956` 绑定父 scope 与排序后的 20 项
+  candidate/receipt/revision identity，宽范围 authority 不能替代该精确批准。
+- 20 项 × 八类共 160 个 evidence cell 全部保持 `PENDING`；result 为 `REVIEW_REQUIRED`，closure effect 为
+  `NONE`，third-party rights 均为 `UNRESOLVED`。MIT policy、robots 与 third-party limitation observations
+  都保持非闭合。
+- `digital_answers` 与 `information_worksheet` 的 normalization rejection 原样保留为历史 pipeline disposition，
+  不自动生成 HUMAN_REVIEW `REJECT`、evidence `FAILED` 或资产删除。
+- 20 条 successor review 全部为 `DEFER`，逐条 supersede 对应的 MIT official-observation current head；RFC/IANA
+  六个 current head 保持不变，合并历史仍恰有 26 个 current head。
+- `formal_gate0_executed=false`，Gate 0 投影继续 `BLOCKED` 且 `reviewed_asset_count=0`；没有 document/chunk、
+  promotion、publication、source expansion、新 acquisition、normalization、embedding、indexing 或 lifecycle mutation。
+
+该 exact-20 链只记录资产级证据仍不足的事实，不改变 M11 的 `ADMITTED / IN_PROGRESS`、plan_revision v1.1、
+3K/10K 退出条件或任何后续授权边界。
+
+### 8.10 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
+
+在 §8.4 已批准的 candidate pipeline 范围内，使用项目冻结 parser 环境对本地 gitignored raw 层的 MIT OCW exact-20
+重放规范化，并以当前 candidate artifact validator 校验结果：18 项生成有效 candidate artifacts，共 93 个 candidate chunks；
+`digital_answers` 因 `SOURCE_PARSE_FAILED`、`information_worksheet` 因 `INVALID_CANDIDATE_INPUT` 保持 rejected。
+metadata-only 记录见 `data/manifests/m11-p0-mit-ocw-candidate-materialization-v1.json`。
+
+该 checkpoint 只证明 acquired bytes → normalized → candidate → validator 的技术路径可重放。candidate artifacts 和正文仍在
+gitignored 数据层；tracked manifest 只含相对 artifact 名、digest、document identity、chunk count 与 reason，不含正文或宿主路径。
+它不关闭 160 个 `PENDING` evidence cells，不把 20 条 `DEFER` 改成 ACCEPT，不执行 Formal Gate 0，也不产生
+candidate promotion 或 publication authority。approved documents/chunks 仍均为 0，93 个 candidate chunks 明确
+`counts_toward_3k=false`，不得用于 3K/10K 或 M11 COMPLETE 声明。
+
 ## 9. 撤销与后续边界
 
 来源许可、parser/chunk/embedding profile、质量/检索 workload、控制面权威或删除语义实质变化时，阶段 admission 必须

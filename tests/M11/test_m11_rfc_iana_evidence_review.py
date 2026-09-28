@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.m11
+
 from app.m11_rfc_iana_evidence_review import (
     PARENT_SCOPE_DIGEST,
     RfcIanaEvidenceReviewError,
@@ -207,3 +209,22 @@ def test_exact_six_chain_excludes_mit_and_opendsa_and_keeps_gate0_blocked():
     validated = validate_rfc_iana_evidence_review_bundle(**args)
     validated["records"][0]["evidence"]["license"]["status"] = "VERIFIED"
     assert args["result"]["records"][0]["evidence"]["license"]["status"] == "PENDING"
+
+
+def test_exact_six_successor_sampling_and_attestations_are_bound():
+    args = bundle_args()
+    expected_plan = {
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6",
+    }
+    assert all(
+        record["sampling_plan"] == expected_plan
+        for record in args["successor_wrapper"]["records"]
+    )
+    validate_rfc_iana_evidence_review_bundle(**args)
+
+    args["successor_wrapper"]["records"][0]["sampling_plan"]["sample_size"] = 26
+    with pytest.raises(RfcIanaEvidenceReviewError):
+        validate_rfc_iana_evidence_review_bundle(**args)

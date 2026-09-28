@@ -35,13 +35,13 @@
       "reviewer_id": "justtodo123",
       "reviewer_role": "owner",
       "sampling_plan": {
-        "sample_size": 26,
-        "stratification": "official-observation-26",
-        "batch": "human-review-26-20260926",
-        "slice": "official-observation-26"
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
       },
       "signed_at": "2026-09-27T00:00:00Z",
-      "attestation_digest": "12883c2e4bb1a32d0ffb172bb5b11162703a3e1626245e78194a6107f6504d0b",
+      "attestation_digest": "055c351925bb9ee103d691e40cf1a4f26d3afdaee5dca8a53b8fe0751e408a95",
       "decision": "DEFER",
       "evidence_refs": [
         "m11-p0-digest-evidence-v1",
@@ -67,13 +67,13 @@
       "reviewer_id": "justtodo123",
       "reviewer_role": "owner",
       "sampling_plan": {
-        "sample_size": 26,
-        "stratification": "official-observation-26",
-        "batch": "human-review-26-20260926",
-        "slice": "official-observation-26"
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
       },
       "signed_at": "2026-09-27T00:00:00Z",
-      "attestation_digest": "05b807b8c7a812c066035328220357651d6e0f57ca3406a9d1215a3546a7908e",
+      "attestation_digest": "1c4d9957d3ae08806f1fd175332ba3a548858baa6471c54c0923d6be7c4a6acf",
       "decision": "DEFER",
       "evidence_refs": [
         "m11-p0-digest-evidence-v1",
@@ -99,13 +99,13 @@
       "reviewer_id": "justtodo123",
       "reviewer_role": "owner",
       "sampling_plan": {
-        "sample_size": 26,
-        "stratification": "official-observation-26",
-        "batch": "human-review-26-20260926",
-        "slice": "official-observation-26"
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
       },
       "signed_at": "2026-09-27T00:00:00Z",
-      "attestation_digest": "c88f2cc2e4340bf1341acc05a0dd6a54bf294c52ea4c88a152aa3db762f86bfc",
+      "attestation_digest": "732d6414e5a0fef07b7043f80e2a142dbeaa894bb76eb285245660e93ebc5240",
       "decision": "DEFER",
       "evidence_refs": [
         "m11-p0-digest-evidence-v1",
@@ -131,13 +131,13 @@
       "reviewer_id": "justtodo123",
       "reviewer_role": "owner",
       "sampling_plan": {
-        "sample_size": 26,
-        "stratification": "official-observation-26",
-        "batch": "human-review-26-20260926",
-        "slice": "official-observation-26"
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
       },
       "signed_at": "2026-09-27T00:00:00Z",
-      "attestation_digest": "ae5e37a4c8784f6b68d356777b2232bbb7d99429a6b3bbe081fcb85ca011e659",
+      "attestation_digest": "3f1094abf94875902d629f8b4a845326508de39bb26936916c0b2364ab6419df",
       "decision": "DEFER",
       "evidence_refs": [
         "m11-p0-digest-evidence-v1",
@@ -163,13 +163,13 @@
       "reviewer_id": "justtodo123",
       "reviewer_role": "owner",
       "sampling_plan": {
-        "sample_size": 26,
-        "stratification": "official-observation-26",
-        "batch": "human-review-26-20260926",
-        "slice": "official-observation-26"
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
       },
       "signed_at": "2026-09-27T00:00:00Z",
-      "attestation_digest": "99ae86389fbc9dad7efe79c3b48fecbd322c7663249c1926b49f74d3ba6cdd08",
+      "attestation_digest": "f55b5e2da278ad478e178b4872e8eb0993df7429b173cebd3c1c1a24bd8d6392",
       "decision": "DEFER",
       "evidence_refs": [
         "m11-p0-digest-evidence-v1",
@@ -195,13 +195,13 @@
       "reviewer_id": "justtodo123",
       "reviewer_role": "owner",
       "sampling_plan": {
-        "sample_size": 26,
-        "stratification": "official-observation-26",
-        "batch": "human-review-26-20260926",
-        "slice": "official-observation-26"
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
       },
       "signed_at": "2026-09-27T00:00:00Z",
-      "attestation_digest": "2e01793007bc100d8b224afc409c7fce45a752ecd6fda41f922483739eaa01b2",
+      "attestation_digest": "2d72854421d06a6db0f04ea949bfc5290c27fe1e443a2468ef7048583fe949ee",
       "decision": "DEFER",
       "evidence_refs": [
         "m11-p0-digest-evidence-v1",

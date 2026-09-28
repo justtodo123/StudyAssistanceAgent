@@ -15,6 +15,8 @@ tools/
 ├── validate_m11_p0_evidence_closure.py # 离线校验 26 项八类证据闭环投影；不执行 Gate 0
 ├── validate_m11_p0_official_observations.py # 离线校验 26 项官方来源观察层；不改变 closure、不执行 Gate 0
 ├── validate_m11_p0_rfc_iana_evidence_review.py # 离线校验 RFC/IANA exact-six evidence review；48 cells 保持 PENDING
+├── validate_m11_p0_mit_ocw_evidence_review.py # 离线校验 MIT OCW exact-20 evidence review；160 cells 保持 PENDING
+├── validate_m11_p0_mit_ocw_candidate_materialization.py # 离线校验 MIT 18 candidate / 93 chunks checkpoint；approved 为 0
 ├── m8_prepare_p2_draft011.py # 校验并在仓库外生成 draft-0.11 P2 binding 候选；不签发 P2
 ├── m8_generate_minimal_1k_v3_fixtures.py # 生成 v3 validator 微型持久 fixture；不是 1K evidence
 ├── m8_validate_minimal_1k_graph_v3.py # 读取真实 artifact directory，校验跨文件证据图
@@ -62,12 +64,16 @@ tools/
 
 `platform/app/m11_execution_authority.py` 是纯校验模块，不是授权签发器。它要求 authority record 明确绑定冻结 P0
 scope digest、operation、有效期和精确 source/asset 子集，并强制 publication 仍为 false；metadata-only 清单、
-M8/M12、排除源及 batch 越界均拒绝。当前可提交的可执行记录有两份，均绑定同一 26 项 digest 身份、不含 OpenDSA，且都不授予 Gate 0 /
+M8/M12、排除源及 batch 越界均拒绝。当前可提交的可执行记录有四份，均绑定同一冻结父 scope digest、不含 OpenDSA，且都不授予 Gate 0 /
 晋升 / publication：
 [`data/manifests/m11-p0-human-review-26-authority-v1.json`](../data/manifests/m11-p0-human-review-26-authority-v1.json)
 （`human_review`）与
 [`data/manifests/m11-p0-acquisition-26-authority-v1.json`](../data/manifests/m11-p0-acquisition-26-authority-v1.json)
-（`acquisition`）。26 项 `ACQUIRED` receipts 见
+（`acquisition`）、
+[`data/manifests/m11-p0-rfc-iana-evidence-review-authority-v1.json`](../data/manifests/m11-p0-rfc-iana-evidence-review-authority-v1.json)
+（RFC/IANA exact-six `human_review`）与
+[`data/manifests/m11-p0-mit-ocw-evidence-review-authority-v1.json`](../data/manifests/m11-p0-mit-ocw-evidence-review-authority-v1.json)
+（MIT OCW exact-20 `human_review`）。后两份 authority 的 source/asset 集合必须分别精确等于六项和 20 项，不能替代或扩张为 Gate 0、晋升或 publication authority。26 项 `ACQUIRED` receipts 见
 [`data/manifests/m11-p0-acquisition-26-receipts-v1.json`](../data/manifests/m11-p0-acquisition-26-receipts-v1.json)。
 RFC+IANA 6 项与 MIT OCW 20 项历史 `DEFER` 记录见
 [`data/manifests/m11-p0-human-review-rfc-iana-6-v1.json`](../data/manifests/m11-p0-human-review-rfc-iana-6-v1.json)
@@ -123,7 +129,34 @@ Formal Gate 0 未执行且仍 `BLOCKED`。
 PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_iana_evidence_review.py
 ```
 
+## validate_m11_p0_mit_ocw_candidate_materialization.py — MIT OCW candidate checkpoint validator
+
+该工具只读校验 tracked metadata checkpoint：18 个 MIT candidate artifacts 已通过当前 validator，共 93 个 candidate
+chunks，两项保持 rejected；approved document/chunk 均为 0，`counts_toward_3k=false`。它不读取正文、不执行 Gate 0、
+不晋升、不发布，也不把 candidate 数量当作 3K 进度。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_mit_ocw_candidate_materialization.py
+```
+
+## validate_m11_p0_mit_ocw_evidence_review.py — MIT OCW exact-20 validator
+
+该工具离线、只读地校验 MIT OCW 6.004（2017）exact-20 的 application → 专用 authority → result → successor
+`DEFER` 链。范围只含冻结的 20 个 MIT PDF，保留 `digital_answers` 与 `information_worksheet` 两项
+normalization rejection；RFC/IANA、OpenDSA 和其他来源不进入本批次。20 项共 160 个 evidence cell 全部保持
+`PENDING`，20 条 successor 全部为 `DEFER`，`closure_effect=NONE`，third-party rights 为 `UNRESOLVED`。
+校验不读取 source body、不联网、不写文件；Formal Gate 0 未执行且仍为 `BLOCKED`，`reviewed_asset_count=0`，
+不创建 document/chunk、不授权 candidate 晋升、publication、source expansion、new acquisition 或 lifecycle mutation。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_mit_ocw_evidence_review.py
+```
+
+成功输出应包含 `20 exact-20 assets`、`160 evidence statuses remain PENDING`、`20 DEFER successors` 和
+`Gate 0 remains BLOCKED`。
+
 ## run_evaluation.py — RAG 效果评估
+
 
 一条命令跑完三课 90 题，输出控制台表格和可选 JSON 报告。默认使用离线 BM25（`SA_USE_VECTOR=false`），不依赖网络、模型缓存或 LLM key。
 
