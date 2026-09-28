@@ -394,7 +394,19 @@ owner 选择「仅批准 schema N/A（推荐）」，并授权 exact-three `huma
 Formal Gate 0，不创建 `operation=gate0` authority，不晋升、不发布、不扩张来源。后续任何其他 category closure
 仍需 owner 逐 asset、逐 category 明确授权；Gate 0 仍需独立 authority。
 
-### 8.12 RFC exact-three non-executing closure packet（2026-09-28）
+### 8.12 RFC exact-three technical evidence owner decision（2026-09-28）
+
+owner 进一步选择「批准 9 个 VERIFIED（推荐）」，并授权 exact-three `human_review` authority
+`m11-rfc-technical-evidence-review-3-20260928`。基于冻结 SHA-256 / revision、ACQUIRED receipts、canonical RFC Editor
+URL、current-schema candidate identity 和 CPython 3.11.9 parser 重放结果，RFC 1034/9110/9293 的 `revision`、
+`provenance`、`parser` 共 9 个 cells 改为 `VERIFIED`。
+
+与 §8.11 schema-only result 合并后的累积状态为：9 `VERIFIED` + 3 `NOT_APPLICABLE` + 12 `PENDING`；剩余
+`license`、`robots_terms`、`notice_ipr`、`content_quality` 仍逐 asset 保持 `PENDING`。结果继续为
+`REVIEW_REQUIRED / PARTIAL`，不写 successor，不产生 `ACCEPT_FOR_PROMOTION_REVIEW`，不执行 Gate 0，不创建
+`operation=gate0` authority，不晋升或发布。
+
+### 8.13 RFC exact-three non-executing closure packet（2026-09-28）
 
 基于 §8.10 的三个 current-schema candidate artifacts，生成了 metadata-only、non-executing 的 RFC exact-three review packet：
 `data/manifests/m11-p0-rfc-evidence-closure-packet-draft-v1.json`。packet 绑定新的 exact-three batch digest、三个 RFC
@@ -405,7 +417,7 @@ candidate/receipt/revision/document identity，但 `authority_issued=false`，24
 `FAILED` 或 successor decision，不执行 Gate 0，不创建 promotion/publication authority。后续若要闭合任何 category，必须由
 owner 逐 asset、逐 category 明确授权；Formal Gate 0 仍需独立的 `operation=gate0` authority。
 
-### 8.13 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
+### 8.14 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
 
 在 §8.4 已批准的 candidate pipeline 范围内，使用项目冻结 parser 环境对本地 gitignored raw 层的 MIT OCW exact-20
 重放规范化，并以当前 candidate artifact validator 校验结果：18 项生成有效 candidate artifacts，共 93 个 candidate chunks；

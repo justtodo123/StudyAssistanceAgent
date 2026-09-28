@@ -127,6 +127,7 @@ platform/
 │   ├── m11_rfc_candidate_materialization.py # RFC exact-three 3 candidates / 3 chunks checkpoint；approved 为 0
 │   ├── m11_rfc_evidence_closure_packet.py # RFC exact-three non-executing owner-review packet；24 cells 保持 PENDING
 │   ├── m11_rfc_schema_review.py # RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
+│   ├── m11_rfc_technical_evidence_review.py # RFC revision/provenance/parser decision；9 VERIFIED / 3 N/A / 12 PENDING
 │   ├── m11_mit_ocw_evidence_review.py # MIT OCW exact-20 evidence review 组合校验；160 cells 保持 PENDING
 │   ├── m11_mit_ocw_candidate_materialization.py # MIT 18 candidate / 93 chunks metadata checkpoint；approved 仍为 0
 │   ├── source_registry.py # M7-1 Source Registry 生命周期控制面（独立 SQLite）

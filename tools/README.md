@@ -18,6 +18,7 @@ tools/
 ├── validate_m11_p0_rfc_candidate_materialization.py # 离线校验 RFC exact-three 3 candidates / 3 chunks checkpoint；approved 为 0
 ├── validate_m11_rfc_evidence_closure_packet.py # 离线校验 RFC exact-three 非执行 review packet；24 cells 保持 PENDING
 ├── validate_m11_p0_rfc_schema_review.py # 离线校验 RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
+├── validate_m11_p0_rfc_technical_evidence_review.py # 校验 RFC technical decision；9 VERIFIED / 3 N/A / 12 PENDING
 ├── validate_m11_p0_mit_ocw_evidence_review.py # 离线校验 MIT OCW exact-20 evidence review；160 cells 保持 PENDING
 ├── validate_m11_p0_mit_ocw_candidate_materialization.py # 离线校验 MIT 18 candidate / 93 chunks checkpoint；approved 为 0
 ├── m8_prepare_p2_draft011.py # 校验并在仓库外生成 draft-0.11 P2 binding 候选；不签发 P2
@@ -130,6 +131,15 @@ Formal Gate 0 未执行且仍 `BLOCKED`。
 
 ```bash
 PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_iana_evidence_review.py
+```
+
+## validate_m11_p0_rfc_technical_evidence_review.py — RFC technical evidence decision
+
+该工具校验 owner-authorized RFC exact-three `revision` / `provenance` / `parser` 决定。与 schema-only result 合并后的
+累积状态为 9 `VERIFIED` + 3 `NOT_APPLICABLE` + 12 `PENDING`；不写 successor、不执行 Gate 0、不晋升或发布。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_technical_evidence_review.py
 ```
 
 ## validate_m11_p0_rfc_schema_review.py — RFC exact-three schema-only decision
