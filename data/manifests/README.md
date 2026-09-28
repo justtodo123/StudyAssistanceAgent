@@ -10,7 +10,7 @@
 - `m11-p0-human-review-26-authority-v1.json` 是 2026-09-26 的 26 资产 `human_review` 执行 authority：MIT OCW 20 PDF + RFC 3 + IANA 3，含两份已 `REJECTED` 的 MIT OCW PDF，不含 OpenDSA。它授权人工核验准备，不授权 Formal Gate 0、晋升或 publication。
 - `m11-p0-human-review-rfc-iana-6-v1.json` 是 2026-09-26 的 RFC 3 + IANA 3 `DEFER` 切片：无 candidate 文档/chunks，无 ACQUIRED receipt。
 - `m11-p0-human-review-mit-ocw-20-v1.json` 是 2026-09-26 的 MIT OCW 20 `DEFER` 切片：无 committed candidate 文档/chunks，无 ACQUIRED receipt；含两份已 REJECTED 的 PDF。至此 26 项决策均已写入且全部为 `DEFER`。`DEFER` 不关闭 887 条 review 字段，不执行 Formal Gate 0。
-- `m11-p0-acquisition-26-authority-v1.json` 是独立的 26 资产 `acquisition` authority；它与 HUMAN_REVIEW authority 共享冻结 scope digest，但不能互相复用或替代。IANA CSV/XML/TXT 通过 resolver 的 registry name + format 规则绑定到三项冻结 asset。
+- `m11-p0-acquisition-26-authority-v1.json` 是独立的 26 资产 `acquisition` authority；它与 HUMAN_REVIEW authority 共享冻结 scope digest，但不能互相复用或替代。未来 Formal Gate 0 必须另持 `operation=gate0` authority，并显式提供本 acquisition authority 来验证 receipts；共享 scope digest 不使三种 authority 可互换。IANA CSV/XML/TXT 通过 resolver 的 registry name + format 规则绑定到三项冻结 asset。
 - `m11-p0-acquisition-26-receipts-v1.json` 是 26 条 `ACQUIRED` receipt 的无正文 wrapper；raw bodies 与逐 asset reports 保留在 gitignored 层，不进入 Git，也不构成 publication。
 - `m11-p0-human-review-acq-defer-26-v1.json` 是获取后的 26 项再核验切片：全部 `DEFER`，逐条 `supersedes` 历史 review；ACQUIRED receipts 与 DEFER reviews 仍不足以执行 Formal Gate 0。
 - `m11-p0-evidence-closure-26-v1.json` 是严格 metadata-only 的 26 项八类证据闭环投影：所有 substantive evidence 保持 `PENDING`，结果为 `REVIEW_REQUIRED`，不执行 Formal Gate 0，也不产生晋升或 publication 授权。

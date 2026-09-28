@@ -37,6 +37,13 @@ def _authority():
     }
 
 
+def _acquisition_authority():
+    authority = _authority()
+    authority["operation"] = "acquisition"
+    authority["authority_id"] = "acquisition-authority-1"
+    return authority
+
+
 def _receipt():
     return {
         "schema": "sa.m11.acquisition-receipt.v1", "status": "ACQUIRED",
@@ -71,6 +78,81 @@ def test_formal_gate0_passes_only_with_independent_categories():
     assert result["candidate_promotion_authorized"] is False
     assert result["publication_authorized"] is False
     assert result["missing_asset_count"] == 0
+
+
+def test_gate0_accepts_explicit_acquisition_authority_and_binds_provenance():
+    receipt = _receipt()
+    receipt["authority_id"] = "acquisition-authority-1"
+    result = _run(
+        acquisition_receipts=[receipt],
+        acquisition_authority=_acquisition_authority(),
+    )
+    assert result["status"] == "PASS"
+    assert result["authority_id"] == "gate0-authority-1"
+    assert result["acquisition_authority_id"] == "acquisition-authority-1"
+
+
+def test_gate0_rejects_explicit_acquisition_authority_with_wrong_operation():
+    receipt = _receipt()
+    receipt["authority_id"] = "acquisition-authority-1"
+    authority = _acquisition_authority()
+    authority["operation"] = "gate0"
+    with pytest.raises(Gate0Error, match="GATE0_ACQUISITION_AUTHORITY_INVALID"):
+        _run(acquisition_receipts=[receipt], acquisition_authority=authority)
+
+
+def test_gate0_rejects_gate0_authority_before_acquisition_authority():
+    receipt = _receipt()
+    receipt["authority_id"] = "acquisition-authority-1"
+    authority = _authority()
+    authority["operation"] = "acquisition"
+    with pytest.raises(Gate0Error, match="GATE0_AUTHORITY_INVALID"):
+        _run(
+            authority=authority,
+            acquisition_receipts=[receipt],
+            acquisition_authority=_acquisition_authority(),
+        )
+
+
+def test_gate0_rejects_receipt_outside_explicit_acquisition_authority_window():
+    receipt = _receipt()
+    receipt["authority_id"] = "acquisition-authority-1"
+    receipt["captured_at"] = "2026-09-24T23:59:59Z"
+    with pytest.raises(Gate0Error, match="GATE0_RECEIPT_AUTHORITY_WINDOW_INVALID"):
+        _run(
+            acquisition_receipts=[receipt],
+            acquisition_authority=_acquisition_authority(),
+        )
+
+
+@pytest.mark.parametrize(
+    ("captured_at", "error_code"),
+    (
+        ("not-a-timestamp", "GATE0_RECEIPT_CAPTURED_AT_INVALID"),
+        ("2026-09-25T12:00:00", "GATE0_RECEIPT_CAPTURED_AT_INVALID"),
+        ("2026-09-26T00:00:00Z", "GATE0_RECEIPT_AUTHORITY_WINDOW_INVALID"),
+    ),
+)
+def test_gate0_rejects_malformed_or_expired_capture_timestamp(captured_at, error_code):
+    receipt = _receipt()
+    receipt["authority_id"] = "acquisition-authority-1"
+    receipt["captured_at"] = captured_at
+    with pytest.raises(Gate0Error, match=error_code):
+        _run(
+            acquisition_receipts=[receipt],
+            acquisition_authority=_acquisition_authority(),
+        )
+
+
+def test_gate0_input_digest_binds_explicit_acquisition_authority():
+    receipt = _receipt()
+    receipt["authority_id"] = "acquisition-authority-1"
+    authority = _acquisition_authority()
+    first = _run(acquisition_receipts=[receipt], acquisition_authority=authority)
+    changed = copy.deepcopy(authority)
+    changed["issued_by"] = "other-owner"
+    second = _run(acquisition_receipts=[receipt], acquisition_authority=changed)
+    assert first["input_digest"] != second["input_digest"]
 
 
 @pytest.mark.parametrize("field", ["reviews", "acquisition_receipts", "candidate_validated"])

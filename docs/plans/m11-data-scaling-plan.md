@@ -312,6 +312,19 @@ SSL 握手超时，改由 curl 取得字节后经注入 transport 在 `acquire_a
 `DEFER` 不计入 Gate 0 `reviewed` 集合；即使传入 26 份 ACQUIRED receipts，`reviewed_asset_count`
 仍为 0，Formal Gate 0 仍未执行。
 
+### 8.6.1 Formal Gate 0 authority/receipt linkage repair（2026-09-28）
+
+Formal Gate 0 runner 已改为显式区分两种 capability：调用方仍须提供独立、有效的
+`operation=gate0` authority 用于 Gate 0 evaluation；若 receipt 来自历史获取，则还须显式提供
+`operation=acquisition` authority。runner 分别校验 operation、同一冻结 scope、精确 batch allowlist、
+receipt authority ID 与 `issued_at <= captured_at < expires_at`；完整 acquisition authority record 进入
+Gate 0 input digest，结果单独投影 `acquisition_authority_id`。共享 scope digest 不使 authority 互换，Gate 0
+authority 不能追溯授权 acquisition，也不改写或重签既有 receipts。
+
+该修复仅校验 runner contract：不创建 `operation=gate0` authority、Gate 0 result 或 evidence package；不执行
+Gate 0、promotion、publication、formal 3K 或 lifecycle transition。现有 26 项 acquisition receipts 保持原样，
+M11 状态仍为 `ADMITTED / IN_PROGRESS`，approved documents/chunks 与 3K 计数仍为 0。
+
 ### 8.7 官方来源只读观察层（2026-09-26）
 
 在上述获取后再核验和全 `PENDING` evidence-closure projection 之后，追加了一个 append-only、metadata-only 的官方来源观察层：

@@ -430,6 +430,14 @@ def test_committed_26_receipts_validate_without_network(repo_root):
         .read_text(encoding="utf-8")
     )
     receipts = [validate_receipt(payload) for payload in wrapper["receipts"]]
+    issued_at = datetime.fromisoformat(authority.issued_at.replace("Z", "+00:00"))
+    expires_at = datetime.fromisoformat(authority.expires_at.replace("Z", "+00:00"))
+    captured_at = tuple(
+        datetime.fromisoformat(receipt.captured_at.replace("Z", "+00:00"))
+        for receipt in receipts
+    )
+    assert all(timestamp.tzinfo is not None for timestamp in captured_at)
+    assert all(issued_at <= timestamp < expires_at for timestamp in captured_at)
     assert wrapper["asset_count"] == 26
     assert wrapper["network_used"] is True
     assert wrapper["bodies_included"] is False

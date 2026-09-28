@@ -120,7 +120,7 @@ platform/
 │   ├── m11_execution_authority.py # M11 执行 authority 纯校验；不签发、不升级 metadata-only
 │   ├── m11_acquisition.py # 冻结 asset 解析、receipt 与外部 raw 原子写入；默认不联网
 │   ├── m11_review.py # 人工 review metadata 与只读 Gate 0 coverage projection
-│   ├── m11_gate0.py # 只读 Formal Gate 0 runner；缺失 BLOCKED，永不授予 promotion/publication
+│   ├── m11_gate0.py # 只读 Formal Gate 0 runner；Gate 0 与 acquisition authority 分离，缺失 BLOCKED，永不授予 promotion/publication
 │   ├── m11_evidence_closure.py # 26 项 metadata-only 八类证据闭环投影校验；不执行 Formal Gate 0
 │   ├── m11_official_observation.py # append-only 官方来源观察层校验；不改变 closure、不执行 Gate 0
 │   ├── m11_rfc_iana_evidence_review.py # RFC/IANA exact-six evidence review 组合校验；48 cells 保持 PENDING
