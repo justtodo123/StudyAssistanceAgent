@@ -15,6 +15,9 @@ tools/
 ├── validate_m11_p0_evidence_closure.py # 离线校验 26 项八类证据闭环投影；不执行 Gate 0
 ├── validate_m11_p0_official_observations.py # 离线校验 26 项官方来源观察层；不改变 closure、不执行 Gate 0
 ├── validate_m11_p0_rfc_iana_evidence_review.py # 离线校验 RFC/IANA exact-six evidence review；48 cells 保持 PENDING
+├── validate_m11_p0_rfc_candidate_materialization.py # 离线校验 RFC exact-three 3 candidates / 3 chunks checkpoint；approved 为 0
+├── validate_m11_rfc_evidence_closure_packet.py # 离线校验 RFC exact-three 非执行 review packet；24 cells 保持 PENDING
+├── validate_m11_p0_rfc_schema_review.py # 离线校验 RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
 ├── validate_m11_p0_mit_ocw_evidence_review.py # 离线校验 MIT OCW exact-20 evidence review；160 cells 保持 PENDING
 ├── validate_m11_p0_mit_ocw_candidate_materialization.py # 离线校验 MIT 18 candidate / 93 chunks checkpoint；approved 为 0
 ├── m8_prepare_p2_draft011.py # 校验并在仓库外生成 draft-0.11 P2 binding 候选；不签发 P2
@@ -127,6 +130,34 @@ Formal Gate 0 未执行且仍 `BLOCKED`。
 
 ```bash
 PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_iana_evidence_review.py
+```
+
+## validate_m11_p0_rfc_schema_review.py — RFC exact-three schema-only decision
+
+该工具校验 owner-authorized exact-three `human_review` authority/result：RFC 1034/9110/9293 的 `schema` cells 为
+`NOT_APPLICABLE`，其余 21 cells 仍 `PENDING`，`closure_effect=PARTIAL`，不写 successor、不执行 Gate 0、不晋升或发布。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_schema_review.py
+```
+
+## validate_m11_rfc_evidence_closure_packet.py — RFC exact-three non-executing review packet
+
+该工具校验 RFC exact-three 的 owner decision 前置 packet。packet 绑定三项 refreshed candidate identity，但
+`authority_issued=false`，24 个 evidence cells 全部保持 `PENDING`；它不签发 authority、不执行 Gate 0、不晋升或发布。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_rfc_evidence_closure_packet.py
+```
+
+## validate_m11_p0_rfc_candidate_materialization.py — RFC exact-three candidate checkpoint validator
+
+该工具只读校验 tracked metadata checkpoint：RFC 1034/9110/9293 在冻结 CPython 3.11.9 parser 环境下形成 3 个
+current-schema candidate artifacts，共 3 个 candidate chunks，0 rejected；approved document/chunk 均为 0，
+`counts_toward_3k=false`。它不读取正文、不联网、不执行 Gate 0、不晋升或发布。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_candidate_materialization.py
 ```
 
 ## validate_m11_p0_mit_ocw_candidate_materialization.py — MIT OCW candidate checkpoint validator

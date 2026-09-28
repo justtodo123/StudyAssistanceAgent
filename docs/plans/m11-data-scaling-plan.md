@@ -372,7 +372,40 @@ MIT OCW 6.004（2017）批次只覆盖冻结的 20 个 PDF；RFC/IANA、OpenDSA 
 该 exact-20 链只记录资产级证据仍不足的事实，不改变 M11 的 `ADMITTED / IN_PROGRESS`、plan_revision v1.1、
 3K/10K 退出条件或任何后续授权边界。
 
-### 8.10 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
+### 8.10 RFC exact-three candidate materialization checkpoint（2026-09-28）
+
+在 §8.4 已批准的 candidate pipeline 范围内，使用冻结 CPython 3.11.9 parser 环境对本地 gitignored raw 层的 RFC
+1034/9110/9293 重放规范化。三个 asset 均生成 current-schema candidate artifact 并通过当前 validator，共 3 个
+candidate chunks、0 rejected；metadata-only 记录见 `data/manifests/m11-p0-rfc-candidate-materialization-v1.json`。
+
+该 checkpoint 只证明 acquired bytes → normalized → candidate → validator 的技术路径可重放。candidate/normalized
+artifact 与正文仍在 gitignored 数据层；tracked manifest 只含相对 artifact 名、digest、document identity、chunk count，
+不含正文或宿主路径。它不改变 exact-six 的 24 个 RFC `PENDING` evidence cells 或三条 `DEFER` current heads，
+approved documents/chunks 仍为 0，`counts_toward_3k=false`，不执行 Formal Gate 0，也不授权 promotion 或 publication。
+
+### 8.11 RFC exact-three schema-only owner decision（2026-09-28）
+
+owner 选择「仅批准 schema N/A（推荐）」，并授权 exact-three `human_review` authority
+`m11-rfc-schema-review-3-20260928`，只覆盖 RFC 1034/9110/9293。结果见
+`data/manifests/m11-p0-rfc-schema-review-result-v1.json`：三项 RFC `schema` cells 由 `PENDING` 改为
+`NOT_APPLICABLE`，其余 21 个 evidence cells 仍为 `PENDING`，`closure_effect=PARTIAL`，`result=REVIEW_REQUIRED`。
+
+该决定不写 successor slice，不改变 exact-six 历史 result/head，不产生 `ACCEPT_FOR_PROMOTION_REVIEW`，不执行
+Formal Gate 0，不创建 `operation=gate0` authority，不晋升、不发布、不扩张来源。后续任何其他 category closure
+仍需 owner 逐 asset、逐 category 明确授权；Gate 0 仍需独立 authority。
+
+### 8.12 RFC exact-three non-executing closure packet（2026-09-28）
+
+基于 §8.10 的三个 current-schema candidate artifacts，生成了 metadata-only、non-executing 的 RFC exact-three review packet：
+`data/manifests/m11-p0-rfc-evidence-closure-packet-draft-v1.json`。packet 绑定新的 exact-three batch digest、三个 RFC
+candidate/receipt/revision/document identity，但 `authority_issued=false`，24 个 evidence cells 全部保持 `PENDING`，
+`current_status=REVIEW_REQUIRED`。
+
+该 packet 不是 owner authorization，不改变 exact-six 的历史 result/successor，不产生任何 `VERIFIED`、`NOT_APPLICABLE`、
+`FAILED` 或 successor decision，不执行 Gate 0，不创建 promotion/publication authority。后续若要闭合任何 category，必须由
+owner 逐 asset、逐 category 明确授权；Formal Gate 0 仍需独立的 `operation=gate0` authority。
+
+### 8.13 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
 
 在 §8.4 已批准的 candidate pipeline 范围内，使用项目冻结 parser 环境对本地 gitignored raw 层的 MIT OCW exact-20
 重放规范化，并以当前 candidate artifact validator 校验结果：18 项生成有效 candidate artifacts，共 93 个 candidate chunks；
