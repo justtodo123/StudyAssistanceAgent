@@ -443,7 +443,28 @@ RFC 当前累积 evidence 仍为 9 `VERIFIED` + 3 `NOT_APPLICABLE` + 12 `PENDING
 `PENDING`，`license` / `robots_terms` / `notice_ipr` 九项仍为 `PENDING`。该 sampling checkpoint 不创建 authority、
 不写 successor、不执行 Gate 0、不产生 promotion/publication，也不计入 3K。
 
-### 8.16 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
+### 8.16 RFC exact-three legal-policy census（2026-09-28）
+
+自动 offline census 读取已获取的本地 RFC 1034/9110/9293 raw TXT，仅保存 notice-family、版权/BCP78 markers、年份、robots
+digest/policy 和 identity facts，不保存正文或 excerpt、不联网。结果见
+`data/manifests/m11-p0-rfc-legal-policy-census-v1.json`：RFC 9110/9293 为 modern IETF Trust/BCP78 family，RFC
+1034 为 pre-Trust unlimited-distribution family；三项 `license`、`robots_terms`、`notice_ipr` 仍全部 `PENDING`。
+
+source-level TLP/rfc-use 和 robots digest observation 仍保持 `closure_effect=NONE`，不能由 census 自动变成 legal
+closure。后续若 owner 接受具体 per-asset legal interpretation，需新 exact-three `human_review` authority/result；本
+census 不写 successor、不执行 Gate 0、不修改 receipts、不联网。
+
+### 8.17 RFC exact-three legal-policy owner decision（2026-09-28）
+
+owner 选择「全部 9 项 VERIFIED（推荐）」，并授权 exact-three `human_review` authority
+`m11-rfc-legal-policy-review-3-20260928`。基于 §8.16 census、既有 rfc-use/TLP 与 robots observations、receipts 和
+frozen candidate identities，三个 RFC 的 `license`、`robots_terms`、`notice_ipr` 共 9 个 cells 改为 `VERIFIED`。
+
+RFC 累积 evidence 达到 21 `VERIFIED` + 3 `NOT_APPLICABLE` + 0 `PENDING`，`closure_effect=COMPLETE`；但结果仍为
+`EVIDENCE_COMPLETE_REVIEW_PENDING`，因为 successor / `ACCEPT_FOR_PROMOTION_REVIEW` 是独立 owner decision。
+本决定不写 successor，不创建 `operation=gate0` authority，不执行 Gate 0、不修改 acquisition receipts、不晋升或发布。
+
+### 8.18 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
 
 在 §8.4 已批准的 candidate pipeline 范围内，使用项目冻结 parser 环境对本地 gitignored raw 层的 MIT OCW exact-20
 重放规范化，并以当前 candidate artifact validator 校验结果：18 项生成有效 candidate artifacts，共 93 个 candidate chunks；

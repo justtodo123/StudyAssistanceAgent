@@ -127,6 +127,8 @@ platform/
 │   ├── m11_rfc_candidate_materialization.py # RFC exact-three 3 candidates / 3 chunks checkpoint；approved 为 0
 │   ├── m11_rfc_content_quality_sampling.py # RFC exact-three body census；technical VERIFIED
 │   ├── m11_rfc_content_quality_review.py # RFC exact-three owner quality decision；12 VERIFIED / 3 N/A / 9 PENDING
+│   ├── m11_rfc_legal_policy_census.py # RFC exact-three offline notice/robots facts
+│   ├── m11_rfc_legal_policy_review.py # RFC exact-three owner legal decision；21 VERIFIED / 3 N/A / 0 PENDING
 │   ├── m11_rfc_evidence_closure_packet.py # RFC exact-three non-executing owner-review packet；24 cells 保持 PENDING
 │   ├── m11_rfc_schema_review.py # RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
 │   ├── m11_rfc_technical_evidence_review.py # RFC revision/provenance/parser decision；9 VERIFIED / 3 N/A / 12 PENDING

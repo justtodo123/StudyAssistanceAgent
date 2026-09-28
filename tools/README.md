@@ -18,6 +18,8 @@ tools/
 ├── validate_m11_p0_rfc_candidate_materialization.py # 离线校验 RFC exact-three 3 candidates / 3 chunks checkpoint；approved 为 0
 ├── validate_m11_p0_rfc_content_quality_sampling.py # 校验 RFC metadata-only body census；technical sampling VERIFIED
 ├── validate_m11_p0_rfc_content_quality_review.py # 校验 owner RFC content_quality VERIFIED；12 VERIFIED / 3 N/A / 9 PENDING
+├── validate_m11_p0_rfc_legal_policy_census.py # 校验 RFC offline notice/robots census
+├── validate_m11_p0_rfc_legal_policy_review.py # 校验 owner legal closure；21 VERIFIED / 3 N/A / 0 PENDING
 ├── validate_m11_rfc_evidence_closure_packet.py # 离线校验 RFC exact-three 非执行 review packet；24 cells 保持 PENDING
 ├── validate_m11_p0_rfc_schema_review.py # 离线校验 RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
 ├── validate_m11_p0_rfc_technical_evidence_review.py # 校验 RFC technical decision；9 VERIFIED / 3 N/A / 12 PENDING
@@ -160,6 +162,25 @@ PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_sc
 
 ```bash
 PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_rfc_evidence_closure_packet.py
+```
+
+## validate_m11_p0_rfc_legal_policy_review.py — RFC owner legal-policy closure
+
+该工具校验 owner-authorized RFC exact-three license/robots_terms/notice_ipr closure。累积状态为 21 `VERIFIED` +
+3 `NOT_APPLICABLE` + 0 `PENDING`，evidence complete；仍不写 successor、不执行 Gate 0、不晋升或发布。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_legal_policy_review.py
+```
+
+## validate_m11_p0_rfc_legal_policy_census.py — RFC offline legal-policy census
+
+该工具校验 RFC1034/9110/9293 的 metadata-only notice/robots census：区分 pre-Trust 与 modern IETF Trust/BCP78
+notice family，绑定既有 robots digest/policy 和 RFC identity；不保存正文、不联网、不自动关闭 license、robots_terms 或
+notice_ipr，9 个 legal-policy cells 继续 PENDING。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_legal_policy_census.py
 ```
 
 ## validate_m11_p0_rfc_content_quality_review.py — RFC owner content-quality decision
