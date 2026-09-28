@@ -16,6 +16,7 @@ tools/
 ├── validate_m11_p0_official_observations.py # 离线校验 26 项官方来源观察层；不改变 closure、不执行 Gate 0
 ├── validate_m11_p0_rfc_iana_evidence_review.py # 离线校验 RFC/IANA exact-six evidence review；48 cells 保持 PENDING
 ├── validate_m11_p0_rfc_candidate_materialization.py # 离线校验 RFC exact-three 3 candidates / 3 chunks checkpoint；approved 为 0
+├── validate_m11_p0_rfc_content_quality_sampling.py # 校验 RFC metadata-only quality sampling；content_quality 仍 PENDING
 ├── validate_m11_rfc_evidence_closure_packet.py # 离线校验 RFC exact-three 非执行 review packet；24 cells 保持 PENDING
 ├── validate_m11_p0_rfc_schema_review.py # 离线校验 RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
 ├── validate_m11_p0_rfc_technical_evidence_review.py # 校验 RFC technical decision；9 VERIFIED / 3 N/A / 12 PENDING
@@ -158,6 +159,16 @@ PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_sc
 
 ```bash
 PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_rfc_evidence_closure_packet.py
+```
+
+## validate_m11_p0_rfc_content_quality_sampling.py — RFC metadata-only content-quality sampling
+
+该工具校验 RFC exact-three 的 privacy-safe metadata census：3 个 candidate chunks、3 个 distinct digests、当前
+candidate schema/validator 与 CPython 3.11.9 parser environment；content_quality 仍为 3 个 `PENDING`，不读取正文、
+不生成 owner decision、Gate 0、promotion 或 publication authority。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_content_quality_sampling.py
 ```
 
 ## validate_m11_p0_rfc_candidate_materialization.py — RFC exact-three candidate checkpoint validator
