@@ -125,7 +125,8 @@ platform/
 │   ├── m11_official_observation.py # append-only 官方来源观察层校验；不改变 closure、不执行 Gate 0
 │   ├── m11_rfc_iana_evidence_review.py # RFC/IANA exact-six evidence review 组合校验；48 cells 保持 PENDING
 │   ├── m11_rfc_candidate_materialization.py # RFC exact-three 3 candidates / 3 chunks checkpoint；approved 为 0
-│   ├── m11_rfc_content_quality_sampling.py # RFC exact-three metadata-only quality sampling；content_quality 仍 PENDING
+│   ├── m11_rfc_content_quality_sampling.py # RFC exact-three body census；technical VERIFIED
+│   ├── m11_rfc_content_quality_review.py # RFC exact-three owner quality decision；12 VERIFIED / 3 N/A / 9 PENDING
 │   ├── m11_rfc_evidence_closure_packet.py # RFC exact-three non-executing owner-review packet；24 cells 保持 PENDING
 │   ├── m11_rfc_schema_review.py # RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
 │   ├── m11_rfc_technical_evidence_review.py # RFC revision/provenance/parser decision；9 VERIFIED / 3 N/A / 12 PENDING

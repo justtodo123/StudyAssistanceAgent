@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 import re
+from pathlib import Path
 from collections.abc import Mapping, Sequence
 from typing import Any, NoReturn
 
@@ -26,11 +29,24 @@ _FIELDS = frozenset({
     "publication_authorized", "network_used", "source_expansion", "lifecycle_mutation",
     "host_paths_included", "bodies_included",
 })
-_ASSET_FIELDS = frozenset({
+_RESULT_FIELDS = frozenset({
+    "schema", "sampling_result_id", "sampling_checkpoint_id", "generated_at", "source_id", "asset_ids", "scope_digest",
+    "technical_sampling_status", "sample_size", "mode", "assets", "content_quality_status",
+    "approved_document_count", "approved_chunk_count", "counts_toward_3k", "formal_gate0_executed",
+    "candidate_approval_granted", "publication_authorized", "network_used", "source_expansion",
+    "lifecycle_mutation", "host_paths_included", "bodies_included",
+})
+_CHECKPOINT_ASSET_FIELDS = frozenset({
     "asset_id", "document_id", "candidate_artifact", "candidate_artifact_sha256",
     "normalized_artifact", "normalized_artifact_sha256", "candidate_digest",
     "revision", "format", "chunk_schema", "unit_kind", "ordinal", "chunk_count",
     "validator_status", "content_quality_status",
+})
+_RESULT_ASSET_FIELDS = frozenset({
+    "asset_id", "document_id", "candidate_artifact_sha256",
+    "normalized_artifact_sha256", "candidate_digest", "revision",
+    "technical_status", "text_non_empty", "line_count", "character_count",
+    "non_empty_unit_count", "chunk_count", "content_quality_status",
 })
 
 
@@ -52,6 +68,69 @@ def _artifact_name(value: Any) -> str:
     if not isinstance(value, str) or not value.endswith(".json") or "/" in value or "\\" in value:
         _fail("RFC_QUALITY_ARTIFACT_INVALID")
     return value
+
+
+def sample_rfc_content_quality_bodies(
+    *,
+    candidate_root: Path,
+    normalized_root: Path,
+) -> dict[str, Any]:
+    """Inspect local normalized bodies and return metadata-only technical facts."""
+    from app.m11_candidate_artifact_validator import load_and_validate_candidate_artifact
+
+    sampled: list[dict[str, Any]] = []
+    for asset_id in ASSETS:
+        candidate_path = candidate_root / f"rfc-editor-index-{asset_id}.json"
+        normalized_path = normalized_root / candidate_path.name
+        candidate = load_and_validate_candidate_artifact(candidate_path)
+        if not normalized_path.is_file():
+            _fail("RFC_QUALITY_NORMALIZED_ARTIFACT_MISSING")
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        required_normalized = {
+            "schema_name", "schema_version", "source_id", "document_id", "logical_uri",
+            "format", "parser_id", "parser_version", "content_fingerprint",
+            "normalized_text_digest", "units",
+        }
+        if not isinstance(normalized, Mapping) or set(normalized) != required_normalized:
+            _fail("RFC_QUALITY_NORMALIZED_FIELDS_INVALID")
+        text_units = normalized["units"]
+        if not isinstance(text_units, list) or len(text_units) != 1:
+            _fail("RFC_QUALITY_UNIT_COUNT_INVALID")
+        unit = text_units[0]
+        text = unit.get("text") if isinstance(unit, Mapping) else None
+        if not isinstance(text, str) or not text.strip():
+            _fail("RFC_QUALITY_TEXT_EMPTY")
+        document = candidate["document"]
+        if (
+            normalized["document_id"] != document["document_id"]
+            or normalized["content_fingerprint"] != candidate["content_digest"]
+            or candidate["content_digest"] != candidate["revision"]
+            or normalized["format"] != "txt"
+            or unit.get("unit_kind") != "document"
+            or unit.get("ordinal") != 0
+        ):
+            _fail("RFC_QUALITY_IDENTITY_MISMATCH")
+        sampled.append({
+            "asset_id": asset_id,
+            "document_id": document["document_id"],
+            "candidate_artifact_sha256": hashlib.sha256(candidate_path.read_bytes()).hexdigest(),
+            "normalized_artifact_sha256": hashlib.sha256(normalized_path.read_bytes()).hexdigest(),
+            "candidate_digest": candidate["content_digest"],
+            "revision": candidate["revision"],
+            "technical_status": "VERIFIED",
+            "text_non_empty": True,
+            "line_count": len(text.splitlines()),
+            "character_count": len(text),
+            "non_empty_unit_count": sum(1 for line in text.splitlines() if line.strip()),
+            "chunk_count": document["chunk_count"],
+            "content_quality_status": "PENDING",
+        })
+    return {
+        "technical_sampling_status": "VERIFIED",
+        "sample_size": len(sampled),
+        "mode": "census",
+        "assets": sampled,
+    }
 
 
 def validate_rfc_content_quality_sampling(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -81,7 +160,7 @@ def validate_rfc_content_quality_sampling(payload: Mapping[str, Any]) -> dict[st
     digests: set[str] = set()
     chunks = 0
     for item in assets:
-        if not isinstance(item, Mapping) or set(item) != _ASSET_FIELDS:
+        if not isinstance(item, Mapping) or set(item) != _CHECKPOINT_ASSET_FIELDS:
             _fail("RFC_QUALITY_ASSET_FIELDS_INVALID")
         asset = item["asset_id"]
         if asset not in ASSETS or asset in seen:
@@ -101,4 +180,41 @@ def validate_rfc_content_quality_sampling(payload: Mapping[str, Any]) -> dict[st
         _fail("RFC_QUALITY_COUNTS_INVALID")
     if payload["input_asset_count"] != 3 or payload["candidate_asset_count"] != 3 or payload["validated_candidate_artifact_count"] != 3:
         _fail("RFC_QUALITY_COUNTS_INVALID")
+    return copy.deepcopy(dict(payload))
+
+
+def validate_rfc_content_quality_sampling_result(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate the local technical result without making a quality decision."""
+    if not isinstance(payload, Mapping) or set(payload) != _RESULT_FIELDS:
+        _fail("RFC_QUALITY_RESULT_FIELDS_INVALID")
+    if payload["schema"] != "sa.m11.p0.rfc-content-quality-sampling-result.v1":
+        _fail("RFC_QUALITY_RESULT_SCHEMA_INVALID")
+    if payload["source_id"] != SOURCE_ID or payload["asset_ids"] != list(ASSETS) or payload["scope_digest"] != SCOPE_DIGEST:
+        _fail("RFC_QUALITY_RESULT_SCOPE_INVALID")
+    if payload["sampling_result_id"] != "m11-p0-rfc-content-quality-sampling-result-20260928" or payload["sampling_checkpoint_id"] != "m11-p0-rfc-content-quality-sampling-20260928":
+        _fail("RFC_QUALITY_RESULT_LINK_INVALID")
+    if payload["technical_sampling_status"] != "VERIFIED" or payload["sample_size"] != 3 or payload["mode"] != "census" or payload["content_quality_status"] != "PENDING":
+        _fail("RFC_QUALITY_RESULT_STATUS_INVALID")
+    if payload["approved_document_count"] != 0 or payload["approved_chunk_count"] != 0:
+        _fail("RFC_QUALITY_RESULT_APPROVAL_FORBIDDEN")
+    if any(payload[field] is not False for field in ("counts_toward_3k", "formal_gate0_executed", "candidate_approval_granted", "publication_authorized", "network_used", "source_expansion", "lifecycle_mutation", "host_paths_included", "bodies_included")):
+        _fail("RFC_QUALITY_RESULT_ESCALATION_FORBIDDEN")
+    assets = payload["assets"]
+    if not isinstance(assets, Sequence) or isinstance(assets, (str, bytes)) or len(assets) != 3:
+        _fail("RFC_QUALITY_RESULT_ASSETS_INVALID")
+    seen: set[str] = set()
+    digests: set[str] = set()
+    for item in assets:
+        if not isinstance(item, Mapping) or set(item) != _RESULT_ASSET_FIELDS:
+            _fail("RFC_QUALITY_RESULT_ASSET_FIELDS_INVALID")
+        if item["asset_id"] not in ASSETS or item["asset_id"] in seen or item["technical_status"] != "VERIFIED" or item["content_quality_status"] != "PENDING" or item["text_non_empty"] is not True or item["chunk_count"] != 1:
+            _fail("RFC_QUALITY_RESULT_ASSET_STATUS_INVALID")
+        seen.add(item["asset_id"])
+        for field in ("candidate_artifact_sha256", "normalized_artifact_sha256", "candidate_digest", "revision"):
+            _digest(item[field])
+        if any(isinstance(item[field], bool) or not isinstance(item[field], int) or item[field] < 1 for field in ("line_count", "character_count", "non_empty_unit_count")):
+            _fail("RFC_QUALITY_RESULT_METRICS_INVALID")
+        digests.add(item["candidate_digest"])
+    if seen != set(ASSETS) or len(digests) != 3:
+        _fail("RFC_QUALITY_RESULT_SCOPE_INVALID")
     return copy.deepcopy(dict(payload))

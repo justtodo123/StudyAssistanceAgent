@@ -417,19 +417,33 @@ candidate/receipt/revision/document identity，但 `authority_issued=false`，24
 `FAILED` 或 successor decision，不执行 Gate 0，不创建 promotion/publication authority。后续若要闭合任何 category，必须由
 owner 逐 asset、逐 category 明确授权；Formal Gate 0 仍需独立的 `operation=gate0` authority。
 
-### 8.14 RFC exact-three content-quality sampling checkpoint（2026-09-28）
+### 8.14 RFC exact-three content-quality owner decision（2026-09-28）
+
+用户允许抽样后，自动 local census 对 RFC 1034/9110/9293 的 gitignored normalized bodies 完成：三个 body 均非空，
+identity/digest/schema/structure/candidate-validator checks 全部通过；tracked technical result 只保存 bounded
+counts/digests，`technical_sampling_status=VERIFIED`，不含正文或宿主路径。
+
+随后 owner 选择「全部 VERIFIED」，由 exact-three `human_review` authority
+`m11-rfc-content-quality-review-3-20260928` 记录三个 `content_quality=VERIFIED`。与前序 schema/technical results
+合并后，RFC 累积状态为 12 `VERIFIED` + 3 `NOT_APPLICABLE` + 9 `PENDING`；剩余为 license、robots_terms、notice_ipr
+各三项。结果仍 `REVIEW_REQUIRED / PARTIAL`，不写 successor，不创建 `operation=gate0` authority，不执行 Gate 0、
+promotion 或 publication。
+
+### 8.15 RFC exact-three content-quality sampling checkpoint（2026-09-28）
 
 根据 owner 选择「只生成采样 checkpoint」，新增
 `data/manifests/m11-p0-rfc-content-quality-sampling-v1.json`。该记录以三个 current-schema RFC candidate chunks
 为 census（3 assets / 3 chunks / 3 distinct digests），只保存 document/artifact identity、format/structure metadata、
 validator/parser environment 和 privacy/escalation flags；不保存正文、不进行人工事实准确率判断、不改变任何
-`content_quality` evidence cell。
+`content_quality` evidence cell。随后在用户允许抽样后，local sampler 读取 gitignored normalized bodies，三个 asset 的
+non-empty / identity / digest / schema / structure checks 全部通过，tracked technical result 记
+`technical_sampling_status=VERIFIED`，但仍不把技术抽样提升为 owner quality verdict。
 
 RFC 当前累积 evidence 仍为 9 `VERIFIED` + 3 `NOT_APPLICABLE` + 12 `PENDING`；其中 `content_quality` 三项仍为
 `PENDING`，`license` / `robots_terms` / `notice_ipr` 九项仍为 `PENDING`。该 sampling checkpoint 不创建 authority、
 不写 successor、不执行 Gate 0、不产生 promotion/publication，也不计入 3K。
 
-### 8.15 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
+### 8.16 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
 
 在 §8.4 已批准的 candidate pipeline 范围内，使用项目冻结 parser 环境对本地 gitignored raw 层的 MIT OCW exact-20
 重放规范化，并以当前 candidate artifact validator 校验结果：18 项生成有效 candidate artifacts，共 93 个 candidate chunks；

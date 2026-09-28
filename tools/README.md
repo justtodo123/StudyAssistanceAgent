@@ -16,7 +16,8 @@ tools/
 ├── validate_m11_p0_official_observations.py # 离线校验 26 项官方来源观察层；不改变 closure、不执行 Gate 0
 ├── validate_m11_p0_rfc_iana_evidence_review.py # 离线校验 RFC/IANA exact-six evidence review；48 cells 保持 PENDING
 ├── validate_m11_p0_rfc_candidate_materialization.py # 离线校验 RFC exact-three 3 candidates / 3 chunks checkpoint；approved 为 0
-├── validate_m11_p0_rfc_content_quality_sampling.py # 校验 RFC metadata-only quality sampling；content_quality 仍 PENDING
+├── validate_m11_p0_rfc_content_quality_sampling.py # 校验 RFC metadata-only body census；technical sampling VERIFIED
+├── validate_m11_p0_rfc_content_quality_review.py # 校验 owner RFC content_quality VERIFIED；12 VERIFIED / 3 N/A / 9 PENDING
 ├── validate_m11_rfc_evidence_closure_packet.py # 离线校验 RFC exact-three 非执行 review packet；24 cells 保持 PENDING
 ├── validate_m11_p0_rfc_schema_review.py # 离线校验 RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
 ├── validate_m11_p0_rfc_technical_evidence_review.py # 校验 RFC technical decision；9 VERIFIED / 3 N/A / 12 PENDING
@@ -159,6 +160,16 @@ PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_sc
 
 ```bash
 PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_rfc_evidence_closure_packet.py
+```
+
+## validate_m11_p0_rfc_content_quality_review.py — RFC owner content-quality decision
+
+该工具校验 owner-authorized 三个 RFC `content_quality=VERIFIED`。与 schema/technical 结果合并后的累积状态为
+12 `VERIFIED` + 3 `NOT_APPLICABLE` + 9 `PENDING`；剩余仅 license/robots_terms/notice_ipr，不写 successor、不执行
+Gate 0、不晋升或发布。
+
+```bash
+PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_content_quality_review.py
 ```
 
 ## validate_m11_p0_rfc_content_quality_sampling.py — RFC metadata-only content-quality sampling

@@ -56,3 +56,21 @@ def test_validation_returns_detached_copy():
     validated = validate_rfc_content_quality_sampling(payload)
     validated["assets"][0]["content_quality_status"] = "changed"
     assert payload["assets"][0]["content_quality_status"] == "PENDING"
+
+
+def test_technical_sampling_result_is_verified_but_quality_stays_pending():
+    result = json.loads(
+        (ROOT / "data/manifests/m11-p0-rfc-content-quality-sampling-result-v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    from app.m11_rfc_content_quality_sampling import validate_rfc_content_quality_sampling_result
+
+    validated = validate_rfc_content_quality_sampling_result(result)
+    assert validated["technical_sampling_status"] == "VERIFIED"
+    assert validated["content_quality_status"] == "PENDING"
+    assert all(item["technical_status"] == "VERIFIED" for item in validated["assets"])
+    assert all(item["content_quality_status"] == "PENDING" for item in validated["assets"])
+    serialized = json.dumps(validated, sort_keys=True)
+    assert '"text"' not in serialized
+    assert "sample_content" not in serialized
