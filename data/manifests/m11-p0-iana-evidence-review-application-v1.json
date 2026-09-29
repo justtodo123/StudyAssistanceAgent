@@ -1,0 +1,29 @@
+{
+  "schema": "sa.m11.p0.iana-evidence-review.v1",
+  "application_id": "m11-p0-iana-evidence-review-application-20260929",
+  "authority_id": "m11-iana-evidence-review-3-20260929",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "packet_id": "m11-p0-iana-evidence-closure-packet-20260929",
+  "packet_manifest": "data/manifests/m11-p0-iana-evidence-closure-packet-v1.json",
+  "census_id": "m11-p0-iana-evidence-census-20260929",
+  "census_manifest": "data/manifests/m11-p0-iana-evidence-census-v1.json",
+  "disposition_id": "m11-p0-iana-owner-disposition-20260929",
+  "disposition_manifest": "data/manifests/m11-p0-iana-owner-disposition-v1.json",
+  "source_id": "iana-registries",
+  "asset_ids": [
+    "service-names-port-numbers-csv",
+    "service-names-port-numbers-xml",
+    "service-names-port-numbers-txt"
+  ],
+  "asset_count": 3,
+  "batch_digest": "8b1c1a01730d4cf2fe6a372ea1373b59b18871377c4234668e82149162e42370",
+  "submitted_by": "justtodo123",
+  "submitted_at": "2026-09-29T01:00:00Z",
+  "operation": "human_review",
+  "metadata_only": false,
+  "network_used": false,
+  "source_expansion": false,
+  "lifecycle_mutation": false,
+  "host_paths_included": false,
+  "bodies_included": false
+}

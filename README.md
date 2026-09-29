@@ -6,7 +6,7 @@
 
 **当前状态**：M6a-P0 crawler 已收口；M6a、M6b、M7 均为 `ADMITTED / COMPLETE`；M7 生产开工门禁保持
 `AUTHORIZED`，并于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准；M8–M10 的事实型
-M7 退出前置已满足，但 **M8 与 M12 仍为 `BLOCKED / NOT_STARTED`**；M11 于 2026-09-23 获批 `ADMITTED / IN_PROGRESS`（范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1）；2026-09-28 已在冻结 26 资产范围执行 Formal Gate 0，结果为 `BLOCKED`，不产生 promotion、publication、Formal 3K、approved document/chunk 或 lifecycle 变更；M9 八项 Decision 已 `RESOLVED`，于
+M7 退出前置已满足，但 **M8 与 M12 仍为 `BLOCKED / NOT_STARTED`**；M11 于 2026-09-23 获批 `ADMITTED / IN_PROGRESS`（范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1）；2026-09-28 已在冻结 26 资产范围执行 Formal Gate 0，结果为 `BLOCKED`（persisted result 签署时间受 authority issued-at 含 / expires-at 不含窗口约束），不产生 promotion、publication、Formal 3K、approved document/chunk 或 lifecycle 变更；M9 八项 Decision 已 `RESOLVED`，于
 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内获批准入（当时交付状态为 `IN_PROGRESS`），并于 **2026-09-22 在同一
 范围内取得独立 `completion_approval`、交付状态转为 `COMPLETE`**（三条 caveat 随收口一并接受：冻结评测范围仅限
 M9 外部 AI 路径、真实 provider 延迟/成本/失败模式仍未验证、10K/100K 属 M8/M11）。**M10 十一项 Decision 已全部 `RESOLVED`**，
@@ -162,13 +162,13 @@ StudyAssistanceAgent/
 
 ## 当前状态
 
-M11 仍为 `ADMITTED / IN_PROGRESS`。2026-09-29 已加入 IANA exact-three 非执行 evidence decision-input
-packet 与 CC0/robots/schema/XML-conflict census；二者严格绑定 tracked digest/receipt dependencies 的 validated
-raw/receipt/revision identity，且不声明 committed IANA candidate document/chunk materialization。24 个 evidence cells
-仍全为 `PENDING`。当前 heads 保持
-3 RFC `ACCEPT_FOR_PROMOTION_REVIEW` + 3 IANA `DEFER` + 20 MIT `DEFER`，2026-09-28 Formal Gate 0
-历史结果仍为 `BLOCKED`。本切片不签发 authority、owner verdict 或 successor，也不执行 acquisition、晋升、发布、
-新 Gate 0 或 lifecycle mutation。
+M11 仍为 `ADMITTED / IN_PROGRESS`。2026-09-29 已加入 IANA exact-three authority/result 与 MIT OCW exact-18 三类 category authority/result 的保守
+review wave。IANA 24 个 evidence cells 仍全为 `PENDING`，current heads 仍为 `3 RFC ACCEPT_FOR_PROMOTION_REVIEW +
+3 IANA DEFER + 20 MIT DEFER`；IANA XML 保持 `UNRESOLVED`，TXT 保持 `FAIL_CLOSED`。MIT exact-18 的三类 category
+authority/result 保守关闭数为 0，144 个 exact-18 cells 全部保持 `PENDING`；两项被排除的 pipeline rejection 与
+diagnosis 仍为 `UNRESOLVED`，不升级为 HUMAN_REVIEW `REJECT` 或 evidence `FAILED`。2026-09-28 Formal Gate 0
+历史结果仍为 `BLOCKED`。本 wave 不产生 legal closure、successor、Gate 0、promotion、publication、network 或
+lifecycle mutation。
 
 ## 快速开始
 
@@ -266,5 +266,7 @@ cd ..
 
 [MIT](LICENSE)
 
-2026-09-29 追加 MIT OCW exact-20 非执行 owner decision-input packet：绑定 tracked candidate materialization、digest evidence 与 acquisition receipts，明确 18 candidate-validated / 2 pipeline-rejected，160 evidence cells 保持 `PENDING`；不签发 authority、owner verdict、successor，不重跑 Gate 0，也不产生 promotion、publication、network 或 lifecycle mutation。
+2026-09-29 追加 MIT OCW exact-20 非执行 owner decision-input packet：绑定 tracked candidate materialization、digest evidence 与 acquisition receipts，明确 18 candidate-validated / 2 pipeline-rejected，144 exact-18 evidence cells 保持 `PENDING`；不签发 authority、owner verdict、successor，不重跑 Gate 0，也不产生 promotion、publication、network 或 lifecycle mutation。
 2026-09-29 追加 MIT OCW 两项 pipeline rejection 的 bounded offline diagnosis：`digital_answers` 与 `information_worksheet` 精确根因均保持 `UNRESOLVED`；CPython 3.11.9 的 `FORMAT_UNSUPPORTED` / `FORMAT_MISMATCH` 仅为 probe observations。依赖密封到 tracked materialization/digest/receipts；不改 parser contract、不修 production artifacts、不映射 HUMAN_REVIEW REJECT/evidence FAILED、不创建 authority/successor/Gate0/lifecycle 变化。
+
+2026-09-29 追加 M11 ordered review wave：IANA exact-three authority/result 仍保留 24/24 `PENDING`，current heads 为 `DEFER`，XML `UNRESOLVED`、TXT `FAIL_CLOSED`；MIT exact-18 三类 category authority/result 保守关闭 0，144/144 cells `PENDING`，两项 rejected excluded diagnosis `UNRESOLVED`。未产生 legal closure、successor、Gate 0、promotion、publication、network 或 lifecycle mutation。

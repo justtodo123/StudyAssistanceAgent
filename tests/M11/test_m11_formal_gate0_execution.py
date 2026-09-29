@@ -21,7 +21,7 @@ def _result() -> dict:
 
 def test_repository_formal_gate0_is_reproducibly_blocked():
     runner_result = formal_gate0.evaluate()
-    result = validate_formal_gate0_result(_result(), expected_runner_result=runner_result)
+    result = validate_formal_gate0_result(_result(), expected_runner_result=runner_result, authority=formal_gate0._load("m11-p0-formal-gate0-26-authority-v1.json"))
 
     assert result["status"] == "BLOCKED"
     assert result["required_asset_count"] == 26
@@ -59,12 +59,29 @@ def test_result_rejects_status_or_escalation_mutation():
     mutated = _result()
     mutated["status"] = "PASS"
     with pytest.raises(FormalGate0ResultError, match="FORMAL_GATE0_RESULT_BINDING_INVALID"):
-        validate_formal_gate0_result(mutated, expected_runner_result=runner_result)
+        validate_formal_gate0_result(mutated, expected_runner_result=runner_result, authority=formal_gate0._load("m11-p0-formal-gate0-26-authority-v1.json"))
 
     mutated = _result()
     mutated["publication_authorized"] = True
     with pytest.raises(FormalGate0ResultError, match="FORMAL_GATE0_RESULT_BINDING_INVALID"):
-        validate_formal_gate0_result(mutated, expected_runner_result=runner_result)
+        validate_formal_gate0_result(mutated, expected_runner_result=runner_result, authority=formal_gate0._load("m11-p0-formal-gate0-26-authority-v1.json"))
+
+
+@pytest.mark.parametrize("signed_at", ("2026-09-28T16:59:59Z", "2026-09-29T17:00:00Z"))
+def test_result_rejects_gate0_authority_window_boundaries(signed_at):
+    runner_result = formal_gate0.evaluate()
+    mutated = _result()
+    mutated["signed_at"] = signed_at
+    with pytest.raises(FormalGate0ResultError, match="FORMAL_GATE0_RESULT_AUTHORITY_WINDOW_INVALID"):
+        validate_formal_gate0_result(mutated, expected_runner_result=runner_result, authority=formal_gate0._load("m11-p0-formal-gate0-26-authority-v1.json"))
+
+
+def test_result_accepts_gate0_issued_at_boundary():
+    runner_result = formal_gate0.evaluate()
+    mutated = _result()
+    authority = formal_gate0._load("m11-p0-formal-gate0-26-authority-v1.json")
+    mutated["signed_at"] = authority["issued_at"]
+    assert validate_formal_gate0_result(mutated, expected_runner_result=runner_result, authority=authority)["signed_at"] == authority["issued_at"]
 
 
 def test_result_rejects_body_or_host_path_leakage():
@@ -72,12 +89,12 @@ def test_result_rejects_body_or_host_path_leakage():
     mutated = _result()
     mutated["bodies_included"] = True
     with pytest.raises(FormalGate0ResultError, match="FORMAL_GATE0_RESULT_ESCALATION_FORBIDDEN"):
-        validate_formal_gate0_result(mutated, expected_runner_result=runner_result)
+        validate_formal_gate0_result(mutated, expected_runner_result=runner_result, authority=formal_gate0._load("m11-p0-formal-gate0-26-authority-v1.json"))
 
     mutated = _result()
     mutated["host_path"] = "C:/secret"
     with pytest.raises(FormalGate0ResultError, match="FORMAL_GATE0_RESULT_FIELDS_INVALID"):
-        validate_formal_gate0_result(mutated, expected_runner_result=runner_result)
+        validate_formal_gate0_result(mutated, expected_runner_result=runner_result, authority=formal_gate0._load("m11-p0-formal-gate0-26-authority-v1.json"))
 
 
 def test_gate0_authority_rejects_wrong_operation_or_scope():

@@ -372,7 +372,7 @@ MIT OCW 6.004（2017）批次只覆盖冻结的 20 个 PDF；RFC/IANA、OpenDSA 
 - authority 继续使用冻结父 `scope_digest`，但 source/asset 集合精确等于 MIT 20 项；版本化 batch digest
   `c739ceaa4bd20f348f735bcc0e6281c963f6c28d110fc38e0d5e9750bbd75956` 绑定父 scope 与排序后的 20 项
   candidate/receipt/revision identity，宽范围 authority 不能替代该精确批准。
-- 20 项 × 八类共 160 个 evidence cell 全部保持 `PENDING`；result 为 `REVIEW_REQUIRED`，closure effect 为
+- 20 项 × 八类共 144 个 exact-18 evidence cell 全部保持 `PENDING`；result 为 `REVIEW_REQUIRED`，closure effect 为
   `NONE`，third-party rights 均为 `UNRESOLVED`。MIT policy、robots 与 third-party limitation observations
   都保持非闭合。
 - `digital_answers` 与 `information_worksheet` 的 normalization rejection 原样保留为历史 pipeline disposition，
@@ -547,3 +547,11 @@ current heads：3 RFC `ACCEPT_FOR_PROMOTION_REVIEW` + 3 IANA `DEFER` + 20 MIT `D
 使用既有 gitignored raw/rejected artifacts 与冻结 CPython 3.11.9 对 `digital_answers`、`information_worksheet` 做有界离线诊断。tracked diagnosis 严格绑定 candidate materialization、digest evidence 与 acquisition receipts，并记录 raw bytes/digest/PDF magic 与 rejected artifact metadata。两项原始 pipeline reason 分别保持 `SOURCE_PARSE_FAILED`、`INVALID_CANDIDATE_INPUT`；因 rejected metadata 不含原始异常或 candidate validation detail，exact root causes 均保持 `UNRESOLVED`。
 
 对 extensionless raw path 的 frozen parser probes 分别观察到 `FORMAT_UNSUPPORTED`（未声明格式）与 `FORMAT_MISMATCH`（声明 PDF 但文件名无扩展名）；两者只记录为 `BOUNDED_OBSERVATION_NOT_ROOT_CAUSE`，不得后读为原 pipeline 根因。此 diagnosis 不改 parser contract、不修 production artifacts、不自动映射 HUMAN_REVIEW `REJECT` 或 evidence `FAILED`，不签发 authority、不创建 successor、不执行或重开 Gate 0，也不产生 network/source expansion/lifecycle mutation。
+
+### 8.24 IANA exact-three authority/result review wave（2026-09-29）
+
+IANA exact-three authority/result 继续严格绑定 tracked digest/receipt/revision identity。application 的 `submitted_at` 与 result 的 `signed_at` 均必须在 authority issued-at（含）至 expires-at（不含）窗口，且 submitted/signed identity 必须等于 authority `issued_by`。application/result 对所有递归字段（包括 evidence refs/comments）拒绝宿主路径和 forbidden privacy keys。result 进一步精确绑定三条 IANA predecessor review ID，并以 canonical SHA-256 密封 exact-six `DEFER` history 与 immutable Formal Gate 0 `BLOCKED` result；24 个 evidence cells 全部保持 `PENDING`，current head 继续为 `DEFER`；XML 日期冲突保持 `UNRESOLVED`，TXT parser 保持 `FAIL_CLOSED`。该 authority/result 不产生 legal closure、successor、Gate 0、promotion、publication、network 或 lifecycle mutation。
+
+### 8.25 MIT OCW exact-18 category authority/result review wave（2026-09-29）
+
+MIT OCW exact-18 的三类 category authority/result 采用保守口径，关闭数为 0；schema、technical、content-quality 的 category-local pending 分别为 18、54、18，packet-wide derived pending 为 144，所有 cells 均保持 `PENDING`。successor 以 canonical SHA-256 content seals 固定 owner packet 与每份 predecessor result，除递归 payload validation 外也拒绝 same-ID content substitution；签署顺序严格为 `schema.signed_at < technical.signed_at < content.signed_at`。两项 rejected excluded 的 pipeline diagnosis 均保持 `UNRESOLVED`，不映射为 HUMAN_REVIEW `REJECT` 或 evidence `FAILED`。本 wave 不产生 legal closure、successor、Gate 0、promotion、publication、network 或 lifecycle mutation。

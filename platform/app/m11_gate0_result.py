@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import re
+from datetime import datetime, timezone
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -61,7 +62,8 @@ def _nonnegative_int(value: Any) -> bool:
 
 
 def validate_formal_gate0_result(
-    payload: Mapping[str, Any], *, expected_runner_result: Mapping[str, Any]
+    payload: Mapping[str, Any], *, expected_runner_result: Mapping[str, Any],
+    authority: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Validate one committed BLOCKED result against its read-only runner output."""
     if not isinstance(payload, Mapping) or set(payload) != _FIELDS:
@@ -74,11 +76,21 @@ def validate_formal_gate0_result(
         _fail("FORMAL_GATE0_RESULT_EXPECTED_INVALID")
     if any(
         payload[field] != expected_runner_result[field]
-        for field in _RUNNER_FIELDS - {"schema"}
+        for field in _RUNNER_FIELDS - {"schema", "signed_at"}
     ):
         _fail("FORMAL_GATE0_RESULT_BINDING_INVALID")
     if payload["status"] != "BLOCKED":
         _fail("FORMAL_GATE0_RESULT_STATUS_INVALID")
+    try:
+        signed_at = datetime.fromisoformat(str(payload["signed_at"]).replace("Z", "+00:00"))
+        issued_at = datetime.fromisoformat(str(authority["issued_at"]).replace("Z", "+00:00"))
+        expires_at = datetime.fromisoformat(str(authority["expires_at"]).replace("Z", "+00:00"))
+    except ValueError:
+        _fail("FORMAL_GATE0_RESULT_TIMESTAMP_INVALID")
+    if any(value.tzinfo is None or value.utcoffset() is None for value in (signed_at, issued_at, expires_at)):
+        _fail("FORMAL_GATE0_RESULT_TIMESTAMP_INVALID")
+    if signed_at.astimezone(timezone.utc) < issued_at.astimezone(timezone.utc) or signed_at.astimezone(timezone.utc) >= expires_at.astimezone(timezone.utc):
+        _fail("FORMAL_GATE0_RESULT_AUTHORITY_WINDOW_INVALID")
     if not _HEX.fullmatch(payload["scope_digest"]) or not _HEX.fullmatch(payload["input_digest"]):
         _fail("FORMAL_GATE0_RESULT_DIGEST_INVALID")
     if payload["evidence_categories"] != list(EVIDENCE_CATEGORIES):

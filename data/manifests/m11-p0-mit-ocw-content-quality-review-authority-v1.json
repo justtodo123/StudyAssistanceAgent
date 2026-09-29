@@ -1,0 +1,37 @@
+{
+  "schema": "sa.m11.execution-authority.v1",
+  "operation": "human_review",
+  "issued_by": "justtodo123",
+  "issued_at": "2026-09-29T06:00:00Z",
+  "expires_at": "2026-10-13T06:00:00Z",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "source_ids": [
+    "mit-ocw-6-004-2017"
+  ],
+  "asset_ids": {
+    "mit-ocw-6-004-2017": [
+      "beta_answers",
+      "beta_worksheet",
+      "caches_answers",
+      "caches_worksheet",
+      "cmos_answers",
+      "cmos_worksheet",
+      "combinational_answers",
+      "combinational_worksheet",
+      "compilation_answers",
+      "compilation_worksheet",
+      "digital_worksheet",
+      "fsm_answers",
+      "fsm_worksheet",
+      "information_answers",
+      "interrupts_answers",
+      "interrupts_worksheet",
+      "isa_answers",
+      "isa_worksheet"
+    ]
+  },
+  "metadata_only": false,
+  "publication_authorized": false,
+  "status": "AUTHORIZED",
+  "authority_id": "m11-mit-ocw-content-quality-review-18-20260929"
+}

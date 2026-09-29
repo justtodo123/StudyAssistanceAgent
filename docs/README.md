@@ -111,7 +111,7 @@ docs/
 
 核心文件。定义项目定位（通用学习 Agent harness）、技术选型与里程碑；M0–M7、M9、M10 已收口，
 M8 与 M12 仍阻断；M11 已准入并获开工授权（plan_revision v1.1，A1/A2/A3 实施中）；冻结 26 资产的
-Formal Gate 0 已执行并为 `BLOCKED`，未产生 promotion、publication、Formal 3K 或 approved 数据变更。
+Formal Gate 0 已执行并为 `BLOCKED`，其 persisted result 的签署时间受 authority issued-at（含）/ expires-at（不含）窗口约束，未产生 promotion、publication、Formal 3K 或 approved 数据变更。
 **每次会话开工前先看本文档**，明确当前里程碑与退出条件。
 
 ### prds/ — 需求澄清 PRD

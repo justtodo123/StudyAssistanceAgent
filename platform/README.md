@@ -40,7 +40,10 @@ IANA 3 的 exact-six application、专用 HUMAN_REVIEW authority、结果与 suc
 `app/m11_iana_owner_disposition.py` 严格校验 append-only owner disposition 对 packet/census 与 owner identity/reference
 的绑定：XML 保持 `UNRESOLVED`、TXT 保持 `FAIL_CLOSED`，三项 schema 均 applicable + `PENDING`；全部 escalation
 必须为 false，不能签发执行 authority、关闭 evidence cell、创建 successor 或执行 Gate 0。
-`app/m11_mit_ocw_evidence_review.py` 独立校验 MIT OCW exact-20 application、专用 HUMAN_REVIEW authority、result 与 successor 链；20 项共 160 个 evidence cell 仍全为 `PENDING`，20 条 review 全为 `DEFER`，MIT 三类 source observations 均保持非闭合，third-party rights 保持 `UNRESOLVED`。`digital_answers` 与 `information_worksheet` 的 normalization rejection 仅作为历史 pipeline disposition 保留，不自动产生 HUMAN_REVIEW `REJECT`。观察层 manifest 为
+`app/m11_mit_ocw_evidence_review.py` 独立校验 MIT OCW exact-20 历史链；当前 exact-18 三类 category authority/result
+采用保守零关闭口径：18 项共 144 个 evidence cell 全为 `PENDING`，两项 rejected excluded，diagnosis 保持
+`UNRESOLVED`，不自动产生 HUMAN_REVIEW `REJECT` 或 evidence `FAILED`，也不产生 successor。MIT 三类 source
+observations 与 third-party rights 仍未闭合。观察层 manifest 为
 `data/manifests/m11-p0-official-source-observations-26-v1.json`，对应 review 为
 `data/manifests/m11-p0-human-review-official-observation-defer-26-v1.json`；exact-six application、authority、result 与
 successor slice 分别见 `data/manifests/m11-p0-rfc-iana-evidence-review-application-v1.json`、
@@ -845,5 +848,7 @@ Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知�
 
 *创建：2026-08-11 · 更新：2026-09-29（M11 IANA exact-three owner disposition 已追加；XML/TXT/schema 状态保持未闭合且全部 escalation false，不签发 authority、不运行 Gate 0）· 维护：随 API/配置变更同步更新*
 
-`app/m11_mit_ocw_owner_decision_packet.py` 严格校验 MIT OCW exact-20 非执行 owner decision-input packet，交叉绑定 tracked materialization、digest evidence、acquisition receipts 与既有 `BLOCKED` Gate0 result；冻结 18 validated / 2 pipeline-rejected 分区和 160 个 `PENDING` cells，不签发 authority/verdict/successor。
+`app/m11_mit_ocw_owner_decision_packet.py` 严格校验 MIT OCW exact-20 非执行 owner decision-input packet，交叉绑定 tracked materialization、digest evidence、acquisition receipts 与既有 `BLOCKED` Gate0 result；冻结 18 validated / 2 pipeline-rejected 分区和 144 个 exact-18 `PENDING` cells，不签发 authority/verdict/successor。
 `app/m11_mit_ocw_pipeline_diagnosis.py` 与 `data/manifests/m11-p0-mit-ocw-pipeline-diagnosis-v1.json` 提供两项 MIT OCW pipeline rejection 的 sealed metadata-only diagnosis。两个 exact root cause 均保持 `UNRESOLVED`；冻结 CPython 3.11.9 探针观察 `FORMAT_UNSUPPORTED` / `FORMAT_MISMATCH` 不被提升为根因。validator 只校验 tracked materialization/digest/receipt dependencies，不读取正文、不修改 parser contract、不改变 HUMAN_REVIEW/evidence 状态、不签发 authority/successor、不执行 Gate 0 或 lifecycle mutation。
+
+2026-09-29 ordered review wave：IANA exact-three authority/result 保持 24/24 `PENDING`、head `DEFER`、XML `UNRESOLVED`、TXT `FAIL_CLOSED`；MIT exact-18 三类 category authority/result 保守关闭 0，144 cells 全 `PENDING`，两项 rejected excluded diagnosis `UNRESOLVED`。不执行 legal closure、successor、Gate 0、promotion、publication、network 或 lifecycle mutation。

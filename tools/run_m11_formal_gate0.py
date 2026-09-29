@@ -315,7 +315,10 @@ def evaluate() -> dict[str, Any]:
 
 def _committed_result(runner_result: Mapping[str, Any]) -> dict[str, Any]:
     result = _load(RESULT_NAME)
-    return validate_formal_gate0_result(result, expected_runner_result=runner_result)
+    return validate_formal_gate0_result(
+        result, expected_runner_result=runner_result,
+        authority=_load("m11-p0-formal-gate0-26-authority-v1.json"),
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
