@@ -56,6 +56,17 @@ def test_census_is_valid_non_closing_and_schema_applicable():
 
 
 def test_local_census_matches_tracked_metadata_without_mutating_raw_inputs():
+    required_raw = tuple(
+        RAW_ROOT / f"{asset}.raw"
+        for asset in (
+            "service-names-port-numbers-csv",
+            "service-names-port-numbers-xml",
+            "service-names-port-numbers-txt",
+        )
+    )
+    if all(not path.is_file() for path in required_raw):
+        pytest.skip("local-only gitignored IANA raw replay inputs are absent")
+
     before = {path: path.read_bytes() for path in RAW_ROOT.glob("service-names-port-numbers-*.raw")}
     digest_evidence, receipt_batch = dependencies()
     observed = census_iana_evidence(
@@ -66,6 +77,22 @@ def test_local_census_matches_tracked_metadata_without_mutating_raw_inputs():
     tracked = load()
     assert observed["records"] == tracked["records"]
     assert {path: path.read_bytes() for path in before} == before
+
+
+def test_partial_local_census_inputs_still_fail_closed(tmp_path):
+    raw_root = tmp_path / "iana-registries"
+    raw_root.mkdir()
+    (raw_root / "service-names-port-numbers-xml.raw").write_bytes(b"partial")
+    digest_evidence, receipt_batch = dependencies()
+
+    with pytest.raises(IanaEvidenceCensusError) as error:
+        census_iana_evidence(
+            raw_root=raw_root,
+            digest_evidence=digest_evidence,
+            receipt_batch=receipt_batch,
+        )
+
+    assert str(error.value) == "IANA_CENSUS_RAW_MISSING"
 
 
 @pytest.mark.parametrize(

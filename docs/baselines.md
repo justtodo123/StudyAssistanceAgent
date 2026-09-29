@@ -786,3 +786,17 @@ M9 计划 §4.3。
 
 发布声明只覆盖本地优先 MVP 与已完成增强。M11 Formal Gate 0 仍 `BLOCKED`、approved documents/chunks 为 0，
 M12 仍 `BLOCKED / NOT_STARTED`；不声明 3K/10K、专业存储或云端部署。
+
+
+## M11 IANA census clean-checkout CI 修正 — 2026-09-29
+
+- GitHub offline-ci run `36568529032` 的唯一失败来自 local raw replay：clean checkout 按设计不含
+  `data/raw/iana-registries` 下的三份 gitignored body，测试却无条件调用严格 census。
+- 修正只作用于测试前置：三份 raw 全部缺失时显式 skip；出现任意部分集合时仍调用 production census 并以
+  `IANA_CENSUS_RAW_MISSING` fail closed；三份齐全时继续执行 digest、tracked records 与输入不可变性复验。
+- `census_iana_evidence()`、tracked metadata validators、dependency mutation gates、evidence JSON 和 offline workflow
+  均未修改；没有提交 raw body、联网下载或 synthetic evidence。
+- 定向测试：`tests/M11/test_m11_iana_evidence_census.py` 为 **15 passed**。
+- CI 等价离线选择（含冻结 `M8_SOURCE_COMMIT`）：**1542 passed、1 skipped、13 deselected**。
+- 本修正不改变项目 `MVP_COMPLETE / ACTIVE_ROADMAP_DEFERRED`，也不改变 M11 `PAUSED_DEFERRED`、IANA 24 cells
+  `PENDING`、current head `DEFER` 或 Formal Gate 0 `BLOCKED`。
