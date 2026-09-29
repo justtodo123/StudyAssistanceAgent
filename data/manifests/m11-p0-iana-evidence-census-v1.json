@@ -1,0 +1,78 @@
+{
+  "schema": "sa.m11.p0.iana-evidence-census.v1",
+  "census_id": "m11-p0-iana-evidence-census-20260929",
+  "generated_at": "2026-09-29",
+  "source_id": "iana-registries",
+  "asset_ids": [
+    "service-names-port-numbers-csv",
+    "service-names-port-numbers-xml",
+    "service-names-port-numbers-txt"
+  ],
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "technical_census_status": "VERIFIED",
+  "sample_size": 3,
+  "mode": "census",
+  "records": [
+    {
+      "asset_id": "service-names-port-numbers-csv",
+      "raw_sha256": "34328ed0940d889207de6da29bf0e6e1438d604483c8e1ffb03dceab8f7ec26f",
+      "receipt_digest": "a58c5b98173c240771c1ad4aaf8b8f9b4987841900f439d3daa2992fd19332bc",
+      "cc0_observation": "CC0-1.0-direct-protocol-registry-data",
+      "cc0_scope_excludes_linked_rfc_and_page_content": true,
+      "robots_digest": "e5c4b84484ee4216e9373be99380320c25dd94805f99f0a805846f087636553f",
+      "robots_policy": "allow-all",
+      "schema_applicable": true,
+      "schema_observation": "csv-header-12-columns-record-count-14535",
+      "license_status": "PENDING", "revision_status": "PENDING",
+      "robots_terms_status": "PENDING", "notice_ipr_status": "PENDING",
+      "schema_status": "PENDING", "provenance_status": "PENDING",
+      "parser_status": "PENDING", "content_quality_status": "PENDING"
+    },
+    {
+      "asset_id": "service-names-port-numbers-xml",
+      "raw_sha256": "30a69353af6e017ffd9e141d079f90a7b7117f113f122d2d89ee20ffb587da19",
+      "receipt_digest": "0795572f8bbd320e7be35d7d24420aeed9ff60a3a8c57a2d8747c17153eb1e52",
+      "cc0_observation": "CC0-1.0-direct-protocol-registry-data",
+      "cc0_scope_excludes_linked_rfc_and_page_content": true,
+      "robots_digest": "e5c4b84484ee4216e9373be99380320c25dd94805f99f0a805846f087636553f",
+      "robots_policy": "allow-all",
+      "schema_applicable": true,
+      "schema_observation": "xml-registry-root-record-count-14535",
+      "license_status": "PENDING", "revision_status": "PENDING",
+      "robots_terms_status": "PENDING", "notice_ipr_status": "PENDING",
+      "schema_status": "PENDING", "provenance_status": "PENDING",
+      "parser_status": "PENDING", "content_quality_status": "PENDING"
+    },
+    {
+      "asset_id": "service-names-port-numbers-txt",
+      "raw_sha256": "6aa4def90086ae3dd71ee8f72e2bddb57857828718d3155b42c107138a3c1d29",
+      "receipt_digest": "93fdf797a7e35207ba1dab256b90d60621b24e76fa4128e78e1fd11328852265",
+      "cc0_observation": "CC0-1.0-direct-protocol-registry-data",
+      "cc0_scope_excludes_linked_rfc_and_page_content": true,
+      "robots_digest": "e5c4b84484ee4216e9373be99380320c25dd94805f99f0a805846f087636553f",
+      "robots_policy": "allow-all",
+      "schema_applicable": true,
+      "schema_observation": "historical-txt-fail-closed",
+      "license_status": "PENDING", "revision_status": "PENDING",
+      "robots_terms_status": "PENDING", "notice_ipr_status": "PENDING",
+      "schema_status": "PENDING", "provenance_status": "PENDING",
+      "parser_status": "PENDING", "content_quality_status": "PENDING"
+    }
+  ],
+  "xml_conflict": {
+    "asset_id": "service-names-port-numbers-xml",
+    "status": "UNRESOLVED",
+    "live_updated_date": "2024-12-20",
+    "frozen_manifest_updated_date": "2026-09-11",
+    "closure_effect": "NONE"
+  },
+  "authority_issued": false,
+  "network_used": false,
+  "formal_gate0_executed": false,
+  "candidate_approval_granted": false,
+  "publication_authorized": false,
+  "source_expansion": false,
+  "lifecycle_mutation": false,
+  "host_paths_included": false,
+  "bodies_included": false
+}

@@ -160,6 +160,16 @@ StudyAssistanceAgent/
 └── .gitignore
 ```
 
+## 当前状态
+
+M11 仍为 `ADMITTED / IN_PROGRESS`。2026-09-29 已加入 IANA exact-three 非执行 evidence decision-input
+packet 与 CC0/robots/schema/XML-conflict census；二者严格绑定 tracked digest/receipt dependencies 的 validated
+raw/receipt/revision identity，且不声明 committed IANA candidate document/chunk materialization。24 个 evidence cells
+仍全为 `PENDING`。当前 heads 保持
+3 RFC `ACCEPT_FOR_PROMOTION_REVIEW` + 3 IANA `DEFER` + 20 MIT `DEFER`，2026-09-28 Formal Gate 0
+历史结果仍为 `BLOCKED`。本切片不签发 authority、owner verdict 或 successor，也不执行 acquisition、晋升、发布、
+新 Gate 0 或 lifecycle mutation。
+
 ## 快速开始
 
 ```bash
@@ -255,3 +265,6 @@ cd ..
 ## License
 
 [MIT](LICENSE)
+
+2026-09-29 追加 MIT OCW exact-20 非执行 owner decision-input packet：绑定 tracked candidate materialization、digest evidence 与 acquisition receipts，明确 18 candidate-validated / 2 pipeline-rejected，160 evidence cells 保持 `PENDING`；不签发 authority、owner verdict、successor，不重跑 Gate 0，也不产生 promotion、publication、network 或 lifecycle mutation。
+2026-09-29 追加 MIT OCW 两项 pipeline rejection 的 bounded offline diagnosis：`digital_answers` 与 `information_worksheet` 精确根因均保持 `UNRESOLVED`；CPython 3.11.9 的 `FORMAT_UNSUPPORTED` / `FORMAT_MISMATCH` 仅为 probe observations。依赖密封到 tracked materialization/digest/receipts；不改 parser contract、不修 production artifacts、不映射 HUMAN_REVIEW REJECT/evidence FAILED、不创建 authority/successor/Gate0/lifecycle 变化。

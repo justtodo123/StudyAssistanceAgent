@@ -73,7 +73,7 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | `m8-metadata-discovery-governance.md` | M8 Metadata Discovery 治理规范 | 通用 intent 仍为 `METADATA_DISCOVERY_INTENT_OWNER_SELECTION_REQUIRED`；pypdf==6.0.0 selected-scope 尚处 implementation hardening，验证完成后最多 `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW`；无独立通过、Owner Gate readiness 或 M8 执行授权 |
 | `m9-goal-driven-planning-plan.md` | 阶段执行计划 | M9 目标驱动计划、mastery 与偏差；`ADMITTED / COMPLETE`（2026-09-22 收口，范围 `m9-plan-lifecycle-v1`，plan_revision v1.5，完成批准见 §4.5）；生成/采纳/进度/偏差重规划已实现，mastery 写入仍 `excluded`；步骤 3 的三个只读投影（mastery、授权 Source 摘要、先修关系 topic graph）均已实现并接入 Planner；v1.5 解冻 `M9-EVALUATION` 的延迟/成本维度（**范围仅限 M9 外部 AI 路径**，CI 臂冻结预算执行、真实 provider 读数 opt-in 非门禁且本次未运行），并因此触发 §4 撤销过渡（见 §4.3）；已于 2026-09-22 完成收口（完成批准见 §4.5） |
 | `m10-autonomous-runner-plan.md` | 阶段执行计划 | M10 自主 Runner、写副作用、长任务恢复、manifest 与只读 stdio MCP；**`ADMITTED / COMPLETE`**（2026-09-22 获批开工，2026-09-23 在原 `m10-autonomous-runner-v1` 范围内取得独立完成批准）；十一项 Decision 全部 `RESOLVED`，三项前置均 `SATISFIED`，已知限制随收口接受而未解除 |
-| `m11-data-scaling-plan.md` | 阶段执行计划 | 10K 高质量真实 approved chunks；`ADMITTED / IN_PROGRESS`（2026-09-23 准入并授权开工，范围 `m11-data-scaling-v1`，plan_revision v1.1）；十项 Decision 已 `RESOLVED`，A1/A2/A3 已纳入实施范围；2026-09-26 授权 26 资产 HUMAN_REVIEW 批次并完成获取与官方来源观察；2026-09-27 完成 RFC/IANA exact-six 与 MIT OCW exact-20 资产级证据核验；2026-09-28 RFC exact-three 累积达到 21 VERIFIED + 3 N/A + 0 PENDING，三个 RFC current heads 改为 `ACCEPT_FOR_PROMOTION_REVIEW`，IANA/MIT heads 仍为 `DEFER`；RFC 与 MIT 共形成 21 个 validated candidates / 96 candidate chunks。随后以独立 `operation=gate0` authority 执行 Formal Gate 0，结果为 `BLOCKED`：26 条 receipt、3 个 reviewed heads、21 个 validated candidates、23 个 missing assets，approved documents/chunks 仍为 0；不授权晋升、publication 或 Formal 3K。 |
+| `m11-data-scaling-plan.md` | 阶段执行计划 | 10K 高质量真实 approved chunks；`ADMITTED / IN_PROGRESS`。2026-09-28 Formal Gate 0 历史结果为 `BLOCKED`；2026-09-29 新增 IANA exact-three 非执行 decision-input packet 与 CC0/robots/schema/XML-conflict census，24 cells 仍 `PENDING`。当前 heads 仍为 3 RFC ACCEPT + 3 IANA DEFER + 20 MIT DEFER；不签发 authority、verdict、successor，不晋升、发布或重开 Gate 0。 |
 | `m12-cloud-deployment-plan.md` | 阶段准入准备计划 | 可选云端单用户部署，本地离线仍默认；`BLOCKED / NOT_STARTED` |
 
 ## 辅助与历史治理记录
@@ -147,3 +147,4 @@ V8–V11 记录均不得授权其对应身份或后继。V12 独立静态审计�
 如需修订，必须形成新的协议版本并重新完成 P0/P1/P2；不得就地修改冻结的 `draft-0.10` 或 binding。
 
 > 后续由 `review-plan` Skill 生成的个人复习计划，继续使用 `{plan_name}-plan.md` 命名，避免与项目执行计划、调查材料混淆。
+- 2026-09-29：M11 对 `digital_answers` / `information_worksheet` 完成 bounded offline diagnosis；两项 exact root cause 均为 `UNRESOLVED`，不改变 current heads、evidence cells 或 Gate 0 历史结果。

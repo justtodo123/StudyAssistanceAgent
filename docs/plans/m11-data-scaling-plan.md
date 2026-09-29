@@ -519,7 +519,31 @@ candidate chunk、0 个 approved document 与 0 个 approved chunk。
 `network_used=false`、`source_expansion=false` 与 `lifecycle_mutation=false`。本次不改写 receipt，不新增来源，
 不晋升、不发布、不计入 Formal 3K，M11 继续为 `ADMITTED / IN_PROGRESS`。
 
+### 8.21 IANA exact-three first evidence-closure inputs（2026-09-29）
+
+在不新增 acquisition、不重开 Gate 0 的边界内，新增 exact-three IANA owner decision-input packet 与
+legal/robots/schema/XML-conflict census。输入严格绑定 tracked digest-evidence 与 acquisition-receipt dependencies 中已校验的
+CSV/XML/TXT raw SHA-256、receipt digest/revision，再结合 CC0 scope observation、robots digest/policy，以及 CSV/XML 的
+结构事实；不声明 committed IANA candidate document/chunk materialization，tracked artifacts 不保存正文或宿主路径。
+
+三项 schema 均保持 applicable，不沿用 RFC text 的 N/A 决定；XML 的
+`live_updated_date=2024-12-20` 与 `frozen_manifest_updated_date=2026-09-11` 冲突继续为
+`UNRESOLVED`，TXT parser 继续保留历史 fail-closed 事实。共 24 个 evidence cells 仍为 `PENDING`。
+
+本切片只向 owner 提供后续决策输入，不签发 execution/human-review authority，不写 owner verdict、successor、
+candidate promotion 或 publication，不执行新的 Gate 0、不改写 2026-09-28 Formal Gate 0 `BLOCKED` 结果，也不改变
+current heads：3 RFC `ACCEPT_FOR_PROMOTION_REVIEW` + 3 IANA `DEFER` + 20 MIT `DEFER`。
+
 ## 9. 撤销与后续边界
 
 来源许可、parser/chunk/embedding profile、质量/检索 workload、控制面权威或删除语义实质变化时，阶段 admission 必须
 `REVOKED` 并重新批准。M12 只能消费经过批准的 M11 published snapshot，不能用云端容量掩盖本地数据质量问题。
+
+### 8.22 MIT OCW exact-20 owner decision-input packet（2026-09-29）
+
+新增 metadata-only、non-executing packet，严格绑定 tracked MIT candidate materialization、digest evidence 与 acquisition receipts，并只读引用既有 `BLOCKED` Gate0 result。packet 明确 18 个 `CANDIDATE_VALIDATED` 与 2 个 pipeline `REJECTED`：`digital_answers=SOURCE_PARSE_FAILED`、`information_worksheet=INVALID_CANDIDATE_INPUT`；二者不是 HUMAN_REVIEW `REJECT`，也不把任一 evidence cell 改为 `FAILED`。exact-20 的 160 cells 全部保持 `PENDING`，current heads 保持 RFC 3 ACCEPT / IANA 3 DEFER / MIT 20 DEFER。未创建 authority、owner verdict、successor、Gate0、promotion、publication、network 或 lifecycle mutation。
+### 8.23 MIT OCW two-rejection bounded offline diagnosis（2026-09-29）
+
+使用既有 gitignored raw/rejected artifacts 与冻结 CPython 3.11.9 对 `digital_answers`、`information_worksheet` 做有界离线诊断。tracked diagnosis 严格绑定 candidate materialization、digest evidence 与 acquisition receipts，并记录 raw bytes/digest/PDF magic 与 rejected artifact metadata。两项原始 pipeline reason 分别保持 `SOURCE_PARSE_FAILED`、`INVALID_CANDIDATE_INPUT`；因 rejected metadata 不含原始异常或 candidate validation detail，exact root causes 均保持 `UNRESOLVED`。
+
+对 extensionless raw path 的 frozen parser probes 分别观察到 `FORMAT_UNSUPPORTED`（未声明格式）与 `FORMAT_MISMATCH`（声明 PDF 但文件名无扩展名）；两者只记录为 `BOUNDED_OBSERVATION_NOT_ROOT_CAUSE`，不得后读为原 pipeline 根因。此 diagnosis 不改 parser contract、不修 production artifacts、不自动映射 HUMAN_REVIEW `REJECT` 或 evidence `FAILED`，不签发 authority、不创建 successor、不执行或重开 Gate 0，也不产生 network/source expansion/lifecycle mutation。

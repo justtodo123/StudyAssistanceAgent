@@ -1,0 +1,68 @@
+{
+  "schema": "sa.m11.p0.iana-owner-disposition.v1",
+  "disposition_id": "m11-p0-iana-owner-disposition-20260929",
+  "source_id": "iana-registries",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "packet_manifest": "data/manifests/m11-p0-iana-evidence-closure-packet-v1.json",
+  "packet_id": "m11-p0-iana-evidence-closure-packet-20260929",
+  "census_manifest": "data/manifests/m11-p0-iana-evidence-census-v1.json",
+  "census_id": "m11-p0-iana-evidence-census-20260929",
+  "operation": "owner_disposition",
+  "metadata_only": true,
+  "owner_decision": {
+    "identity": "justtodo123",
+    "decision_date": "2026-09-29",
+    "decision_reference": "User choice: XML remains UNRESOLVED; TXT remains FAIL_CLOSED; all three schema cells remain applicable and PENDING",
+    "references": [
+      "data/manifests/m11-p0-iana-evidence-closure-packet-v1.json",
+      "data/manifests/m11-p0-iana-evidence-census-v1.json"
+    ]
+  },
+  "records": [
+    {
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-csv",
+      "schema_applicable": true,
+      "schema_status": "PENDING",
+      "parser_status": "PENDING",
+      "xml_conflict_status": null
+    },
+    {
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-xml",
+      "schema_applicable": true,
+      "schema_status": "PENDING",
+      "parser_status": "PENDING",
+      "xml_conflict_status": "UNRESOLVED"
+    },
+    {
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-txt",
+      "schema_applicable": true,
+      "schema_status": "PENDING",
+      "parser_status": "FAIL_CLOSED",
+      "xml_conflict_status": null
+    }
+  ],
+  "current_heads": {
+    "rfc": "3 ACCEPT",
+    "iana": "3 DEFER",
+    "mit_ocw": "20 DEFER"
+  },
+  "current_status": "REVIEW_REQUIRED",
+  "closure_effect": "NONE",
+  "escalation": {
+    "authority_issued": false,
+    "execution_authorized": false,
+    "evidence_closed": false,
+    "successor_created": false,
+    "candidate_approval_granted": false,
+    "publication_authorized": false,
+    "formal_gate0_executed": false,
+    "network_used": false,
+    "source_expansion": false,
+    "lifecycle_mutation": false,
+    "host_paths_included": false,
+    "bodies_included": false
+  }
+}

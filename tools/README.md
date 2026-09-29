@@ -25,6 +25,9 @@ tools/
 ├── validate_m11_rfc_evidence_closure_packet.py # 离线校验 RFC exact-three 非执行 review packet；24 cells 保持 PENDING
 ├── validate_m11_p0_rfc_schema_review.py # 离线校验 RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
 ├── validate_m11_p0_rfc_technical_evidence_review.py # 校验 RFC technical decision；9 VERIFIED / 3 N/A / 12 PENDING
+├── validate_m11_p0_iana_evidence_closure_packet.py # 校验 IANA exact-three decision inputs；24 PENDING
+├── validate_m11_p0_iana_evidence_census.py # 校验 IANA CC0/robots/schema/XML-conflict census
+├── validate_m11_p0_iana_owner_disposition.py # 校验 owner 保持 XML/TXT/schema 未闭合 disposition
 ├── validate_m11_p0_mit_ocw_evidence_review.py # 离线校验 MIT OCW exact-20 evidence review；160 cells 保持 PENDING
 ├── validate_m11_p0_mit_ocw_candidate_materialization.py # 离线校验 MIT 18 candidate / 93 chunks checkpoint；approved 为 0
 ├── m8_prepare_p2_draft011.py # 校验并在仓库外生成 draft-0.11 P2 binding 候选；不签发 P2
@@ -178,6 +181,19 @@ PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_sc
 ```bash
 PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_rfc_evidence_closure_packet.py
 ```
+
+## validate_m11_p0_iana_evidence_closure_packet.py / validate_m11_p0_iana_evidence_census.py
+
+两项工具离线校验 IANA exact-three owner decision inputs 与 legal/robots/schema/XML-conflict census。它们加载并校验 tracked digest-evidence 与 acquisition-receipt dependencies，再严格绑定 raw/receipt/revision identity；packet 不声明 candidate document/chunk materialization。census 的事实生成测试只读本地 gitignored raw；24 个 evidence cells 保持 `PENDING`，不签发 human-review authority、不写 owner verdict 或 successor，也不执行或重开 Formal Gate 0。
+
+```bash
+./platform/.venv311/Scripts/python tools/validate_m11_p0_iana_evidence_closure_packet.py
+./platform/.venv311/Scripts/python tools/validate_m11_p0_iana_evidence_census.py
+./platform/.venv311/Scripts/python tools/validate_m11_p0_iana_owner_disposition.py
+```
+
+owner disposition 是追加式 metadata 记录：它明确 XML 继续 `UNRESOLVED`、TXT 继续 `FAIL_CLOSED`，三项 schema
+均 applicable 且仍为 `PENDING`。校验成功不签发执行 authority、不关闭 evidence cell、不创建 successor，也不运行 Gate 0。
 
 ## validate_m11_p0_rfc_exact_three_successor.py — RFC exact-three ACCEPT successor
 
@@ -689,3 +705,18 @@ proposed policy 保持 `PROPOSED_NOT_EFFECTIVE`。
 package manager，不解析/安装依赖，不创建环境，也不运行 collector 或其他 M8 execution。治理边界与角色
 分离见
 [`docs/plans/m8-metadata-discovery-governance.md`](../docs/plans/m8-metadata-discovery-governance.md)。
+
+## validate_m11_p0_mit_ocw_owner_decision_packet.py
+
+离线校验 MIT OCW exact-20 owner decision-input packet。该工具验证 tracked materialization/digest/receipt/Gate0 依赖、18 validated / 2 pipeline-rejected 分区及 160 个 `PENDING` cells；不执行网络、owner verdict、Gate 0、promotion、publication 或 lifecycle mutation。
+
+```bash
+./platform/.venv/Scripts/python tools/validate_m11_p0_mit_ocw_owner_decision_packet.py
+```
+## validate_m11_p0_mit_ocw_pipeline_diagnosis.py
+
+离线校验两项 MIT OCW pipeline rejection 的 metadata-only diagnosis。两项精确根因均保持 `UNRESOLVED`；CPython 3.11.9 的 `FORMAT_UNSUPPORTED` / `FORMAT_MISMATCH` 仅保存为 bounded probe observations。校验器密封 candidate materialization、digest evidence 与 acquisition receipt batch，依赖变异或任何 authority、successor、Gate 0、lifecycle、HUMAN_REVIEW REJECT/evidence FAILED 映射均 fail closed。
+
+```bash
+./platform/.venv311/Scripts/python tools/validate_m11_p0_mit_ocw_pipeline_diagnosis.py
+```

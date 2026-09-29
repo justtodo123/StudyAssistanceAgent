@@ -37,6 +37,9 @@ candidate 层，失败只写入 privacy-safe rejected metadata。该流程不写
 与 IANA XML 日期冲突，不把观察转换为 evidence closure。`app/m11_rfc_iana_evidence_review.py` 进一步校验 RFC 3 +
 IANA 3 的 exact-six application、专用 HUMAN_REVIEW authority、结果与 successor 链；六项 48 个 evidence cell 仍全
 `PENDING`，XML 冲突仍为 `UNRESOLVED`，TXT parser 仍 fail-closed，六条 review 仍为 `DEFER`。
+`app/m11_iana_owner_disposition.py` 严格校验 append-only owner disposition 对 packet/census 与 owner identity/reference
+的绑定：XML 保持 `UNRESOLVED`、TXT 保持 `FAIL_CLOSED`，三项 schema 均 applicable + `PENDING`；全部 escalation
+必须为 false，不能签发执行 authority、关闭 evidence cell、创建 successor 或执行 Gate 0。
 `app/m11_mit_ocw_evidence_review.py` 独立校验 MIT OCW exact-20 application、专用 HUMAN_REVIEW authority、result 与 successor 链；20 项共 160 个 evidence cell 仍全为 `PENDING`，20 条 review 全为 `DEFER`，MIT 三类 source observations 均保持非闭合，third-party rights 保持 `UNRESOLVED`。`digital_answers` 与 `information_worksheet` 的 normalization rejection 仅作为历史 pipeline disposition 保留，不自动产生 HUMAN_REVIEW `REJECT`。观察层 manifest 为
 `data/manifests/m11-p0-official-source-observations-26-v1.json`，对应 review 为
 `data/manifests/m11-p0-human-review-official-observation-defer-26-v1.json`；exact-six application、authority、result 与
@@ -142,6 +145,9 @@ platform/
 │   ├── m11_rfc_legal_policy_review.py # RFC exact-three owner legal decision；21 VERIFIED / 3 N/A / 0 PENDING
 │   ├── m11_rfc_exact_three_successor.py # RFC exact-three ACCEPT successor；IANA/MIT heads 不变，Gate 0 不执行
 │   ├── m11_rfc_evidence_closure_packet.py # RFC exact-three non-executing owner-review packet；24 cells 保持 PENDING
+│   ├── m11_iana_evidence_closure_packet.py # IANA exact-three owner decision-input packet；无 authority/verdict
+│   ├── m11_iana_evidence_census.py # IANA CC0/robots/schema/XML-conflict census；24 cells 保持 PENDING
+│   ├── m11_iana_owner_disposition.py # IANA owner 保持 XML/TXT/schema 未闭合的 metadata disposition；无 authority/escalation
 │   ├── m11_rfc_schema_review.py # RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
 │   ├── m11_rfc_technical_evidence_review.py # RFC revision/provenance/parser decision；9 VERIFIED / 3 N/A / 12 PENDING
 │   ├── m11_mit_ocw_evidence_review.py # MIT OCW exact-20 evidence review 组合校验；160 cells 保持 PENDING
@@ -837,4 +843,7 @@ Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知�
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-28（M11 冻结 26 资产 Formal Gate 0 已执行，结果为 metadata-only `BLOCKED`；独立 Gate 0/acquisition authority linkage、persisted result validator 与 repository-chain tests 已加入；无 promotion、publication、Formal 3K 或 approved 数据变更）· 维护：随 API/配置变更同步更新*
+*创建：2026-08-11 · 更新：2026-09-29（M11 IANA exact-three owner disposition 已追加；XML/TXT/schema 状态保持未闭合且全部 escalation false，不签发 authority、不运行 Gate 0）· 维护：随 API/配置变更同步更新*
+
+`app/m11_mit_ocw_owner_decision_packet.py` 严格校验 MIT OCW exact-20 非执行 owner decision-input packet，交叉绑定 tracked materialization、digest evidence、acquisition receipts 与既有 `BLOCKED` Gate0 result；冻结 18 validated / 2 pipeline-rejected 分区和 160 个 `PENDING` cells，不签发 authority/verdict/successor。
+`app/m11_mit_ocw_pipeline_diagnosis.py` 与 `data/manifests/m11-p0-mit-ocw-pipeline-diagnosis-v1.json` 提供两项 MIT OCW pipeline rejection 的 sealed metadata-only diagnosis。两个 exact root cause 均保持 `UNRESOLVED`；冻结 CPython 3.11.9 探针观察 `FORMAT_UNSUPPORTED` / `FORMAT_MISMATCH` 不被提升为根因。validator 只校验 tracked materialization/digest/receipt dependencies，不读取正文、不修改 parser contract、不改变 HUMAN_REVIEW/evidence 状态、不签发 authority/successor、不执行 Gate 0 或 lifecycle mutation。

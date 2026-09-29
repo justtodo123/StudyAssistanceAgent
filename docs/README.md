@@ -233,4 +233,7 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-28（M11 冻结 26 资产 Formal Gate 0 已执行，结果为 `BLOCKED`；不产生 promotion、publication、Formal 3K 或 approved 数据变更；M11 仍为 `ADMITTED / IN_PROGRESS`）· 维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-09-29（M11 新增 IANA exact-three 非执行 evidence decision inputs；24 cells 仍 `PENDING`，current heads 与 2026-09-28 Formal Gate 0 `BLOCKED` 历史结果均不变；不产生 authority、verdict、successor、promotion、publication、Formal 3K 或 approved 数据变更）· 维护：随项目演进同步更新*
+
+- 2026-09-29：M11 新增 MIT OCW exact-20 非执行 owner decision-input packet；18 validated / 2 pipeline-rejected，160 evidence cells 保持 `PENDING`，历史 Gate0 `BLOCKED` 结果不变。
+- 2026-09-29：M11 新增 MIT OCW 两项 pipeline rejection 的 bounded offline metadata diagnosis；exact root causes 均保持 `UNRESOLVED`，probe codes 不作为根因，且无 authority/Gate0/lifecycle effect。
