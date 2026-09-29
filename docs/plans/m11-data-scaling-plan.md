@@ -552,6 +552,18 @@ current heads：3 RFC `ACCEPT_FOR_PROMOTION_REVIEW` + 3 IANA `DEFER` + 20 MIT `D
 
 IANA exact-three authority/result 继续严格绑定 tracked digest/receipt/revision identity。application 的 `submitted_at` 与 result 的 `signed_at` 均必须在 authority issued-at（含）至 expires-at（不含）窗口，且 submitted/signed identity 必须等于 authority `issued_by`。application/result 对所有递归字段（包括 evidence refs/comments）拒绝宿主路径和 forbidden privacy keys。result 进一步精确绑定三条 IANA predecessor review ID，并以 canonical SHA-256 密封 exact-six `DEFER` history 与 immutable Formal Gate 0 `BLOCKED` result；24 个 evidence cells 全部保持 `PENDING`，current head 继续为 `DEFER`；XML 日期冲突保持 `UNRESOLVED`，TXT parser 保持 `FAIL_CLOSED`。该 authority/result 不产生 legal closure、successor、Gate 0、promotion、publication、network 或 lifecycle mutation。
 
+### 8.26 IANA exact-three candidate replay/materialization checkpoint（2026-09-29）
+
+使用冻结 CPython 3.11.9 与既有 manifest-bound candidate pipeline，对本地 gitignored IANA CSV/XML/TXT raw bytes 重放，
+生成并校验 3 个 candidate artifacts、3 个 normalized artifacts、3 个 chunks，0 rejected。tracked manifest
+`data/manifests/m11-p0-iana-candidate-materialization-v1.json` 绑定 digest evidence、acquisition receipts、packet/census/
+disposition/current review、exact-six predecessor 与历史 Formal Gate 0 `BLOCKED`，并保存 artifact digest、document/chunk identity。
+
+该 checkpoint 不保存正文或宿主路径。XML 日期冲突仍 `UNRESOLVED`，TXT owner 状态仍 `FAIL_CLOSED`，24 个 evidence cells
+仍全 `PENDING`，IANA current heads 仍为 3 `DEFER`，approved documents/chunks 仍为 0；不创建 authority/successor，
+不执行或重开 Gate 0，不授权 promotion/publication，不联网、不扩源、不做 lifecycle mutation。ambient 非 CPython 3.11.9
+环境必须在写任何 replay 输出前 fail closed，不能用当前环境重新 blessing tracked identities。
+
 ### 8.25 MIT OCW exact-18 category authority/result review wave（2026-09-29）
 
 MIT OCW exact-18 的三类 category authority/result 采用保守口径，关闭数为 0；schema、technical、content-quality 的 category-local pending 分别为 18、54、18，packet-wide derived pending 为 144，所有 cells 均保持 `PENDING`。successor 以 canonical SHA-256 content seals 固定 owner packet 与每份 predecessor result，除递归 payload validation 外也拒绝 same-ID content substitution；签署顺序严格为 `schema.signed_at < technical.signed_at < content.signed_at`。两项 rejected excluded 的 pipeline diagnosis 均保持 `UNRESOLVED`，不映射为 HUMAN_REVIEW `REJECT` 或 evidence `FAILED`。本 wave 不产生 legal closure、successor、Gate 0、promotion、publication、network 或 lifecycle mutation。

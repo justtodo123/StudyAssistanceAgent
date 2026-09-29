@@ -27,6 +27,7 @@ tools/
 ├── validate_m11_p0_rfc_technical_evidence_review.py # 校验 RFC technical decision；9 VERIFIED / 3 N/A / 12 PENDING
 ├── validate_m11_p0_iana_evidence_closure_packet.py # 校验 IANA exact-three decision inputs；24 PENDING
 ├── validate_m11_p0_iana_evidence_census.py # 校验 IANA CC0/robots/schema/XML-conflict census
+├── validate_m11_p0_iana_candidate_materialization.py # 校验 IANA exact-three 冻结 3.11.9 replay checkpoint
 ├── validate_m11_p0_iana_owner_disposition.py # 校验 owner 保持 XML/TXT/schema 未闭合 disposition
 ├── validate_m11_p0_mit_ocw_evidence_review.py # 离线校验 MIT OCW exact-20 evidence review；160 cells 保持 PENDING
 ├── validate_m11_p0_mit_ocw_candidate_materialization.py # 离线校验 MIT 18 candidate / 93 chunks checkpoint；approved 为 0
@@ -725,3 +726,11 @@ package manager，不解析/安装依赖，不创建环境，也不运行 collec
 ## M11 ordered review wave
 
 IANA exact-three authority/result 校验结果保持 24/24 `PENDING`、head `DEFER`、XML `UNRESOLVED`、TXT `FAIL_CLOSED`；MIT exact-18 三类 category authority/result 保守关闭 0，144 cells 全 `PENDING`，两项 rejected excluded diagnosis `UNRESOLVED`。这些工具不产生 legal closure、successor、Gate 0、promotion、publication、network 或 lifecycle mutation。
+
+## M11 IANA exact-three replay checkpoint
+
+`validate_m11_p0_iana_candidate_materialization.py` 只读校验冻结 CPython 3.11.9 replay checkpoint：3 candidates、3 chunks、0 rejects、0 approved，并固定 digest/receipt/review/history/Gate0 与 artifact/document/chunk identities。它不重放数据、不写 gitignored artifacts，也不产生 authority、successor、promotion 或 publication。
+
+```bash
+./platform/.venv311/Scripts/python tools/validate_m11_p0_iana_candidate_materialization.py
+```

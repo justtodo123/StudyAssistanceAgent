@@ -162,7 +162,7 @@ StudyAssistanceAgent/
 
 ## 当前状态
 
-M11 仍为 `ADMITTED / IN_PROGRESS`。2026-09-29 已加入 IANA exact-three authority/result 与 MIT OCW exact-18 三类 category authority/result 的保守
+M11 仍为 `ADMITTED / IN_PROGRESS`。2026-09-29 已加入 IANA exact-three authority/result、冻结 CPython 3.11.9 replay/materialization checkpoint 与 MIT OCW exact-18 三类 category authority/result 的保守
 review wave。IANA 24 个 evidence cells 仍全为 `PENDING`，current heads 仍为 `3 RFC ACCEPT_FOR_PROMOTION_REVIEW +
 3 IANA DEFER + 20 MIT DEFER`；IANA XML 保持 `UNRESOLVED`，TXT 保持 `FAIL_CLOSED`。MIT exact-18 的三类 category
 authority/result 保守关闭数为 0，144 个 exact-18 cells 全部保持 `PENDING`；两项被排除的 pipeline rejection 与
@@ -269,4 +269,4 @@ cd ..
 2026-09-29 追加 MIT OCW exact-20 非执行 owner decision-input packet：绑定 tracked candidate materialization、digest evidence 与 acquisition receipts，明确 18 candidate-validated / 2 pipeline-rejected，144 exact-18 evidence cells 保持 `PENDING`；不签发 authority、owner verdict、successor，不重跑 Gate 0，也不产生 promotion、publication、network 或 lifecycle mutation。
 2026-09-29 追加 MIT OCW 两项 pipeline rejection 的 bounded offline diagnosis：`digital_answers` 与 `information_worksheet` 精确根因均保持 `UNRESOLVED`；CPython 3.11.9 的 `FORMAT_UNSUPPORTED` / `FORMAT_MISMATCH` 仅为 probe observations。依赖密封到 tracked materialization/digest/receipts；不改 parser contract、不修 production artifacts、不映射 HUMAN_REVIEW REJECT/evidence FAILED、不创建 authority/successor/Gate0/lifecycle 变化。
 
-2026-09-29 追加 M11 ordered review wave：IANA exact-three authority/result 仍保留 24/24 `PENDING`，current heads 为 `DEFER`，XML `UNRESOLVED`、TXT `FAIL_CLOSED`；MIT exact-18 三类 category authority/result 保守关闭 0，144/144 cells `PENDING`，两项 rejected excluded diagnosis `UNRESOLVED`。未产生 legal closure、successor、Gate 0、promotion、publication、network 或 lifecycle mutation。
+2026-09-29 追加 M11 ordered review wave 与 IANA replay checkpoint：IANA exact-three authority/result 仍保留 24/24 `PENDING`，current heads 为 `DEFER`，XML `UNRESOLVED`、TXT `FAIL_CLOSED`；冻结 CPython 3.11.9 本地 replay 仅生成 3 candidates / 3 chunks / 0 rejects / 0 approved。MIT exact-18 三类 category authority/result 保守关闭 0，144/144 cells `PENDING`，两项 rejected excluded diagnosis `UNRESOLVED`。未产生 authority/successor、Gate 0、promotion、publication、network 或 lifecycle mutation。

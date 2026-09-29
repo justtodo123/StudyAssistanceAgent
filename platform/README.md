@@ -151,6 +151,7 @@ platform/
 │   ├── m11_iana_evidence_closure_packet.py # IANA exact-three owner decision-input packet；无 authority/verdict
 │   ├── m11_iana_evidence_census.py # IANA CC0/robots/schema/XML-conflict census；24 cells 保持 PENDING
 │   ├── m11_iana_owner_disposition.py # IANA owner 保持 XML/TXT/schema 未闭合的 metadata disposition；无 authority/escalation
+│   ├── m11_iana_candidate_materialization.py # IANA exact-three CPython 3.11.9 replay checkpoint；3 candidates / 3 chunks
 │   ├── m11_rfc_schema_review.py # RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
 │   ├── m11_rfc_technical_evidence_review.py # RFC revision/provenance/parser decision；9 VERIFIED / 3 N/A / 12 PENDING
 │   ├── m11_mit_ocw_evidence_review.py # MIT OCW exact-20 evidence review 组合校验；160 cells 保持 PENDING
@@ -852,3 +853,5 @@ Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知�
 `app/m11_mit_ocw_pipeline_diagnosis.py` 与 `data/manifests/m11-p0-mit-ocw-pipeline-diagnosis-v1.json` 提供两项 MIT OCW pipeline rejection 的 sealed metadata-only diagnosis。两个 exact root cause 均保持 `UNRESOLVED`；冻结 CPython 3.11.9 探针观察 `FORMAT_UNSUPPORTED` / `FORMAT_MISMATCH` 不被提升为根因。validator 只校验 tracked materialization/digest/receipt dependencies，不读取正文、不修改 parser contract、不改变 HUMAN_REVIEW/evidence 状态、不签发 authority/successor、不执行 Gate 0 或 lifecycle mutation。
 
 2026-09-29 ordered review wave：IANA exact-three authority/result 保持 24/24 `PENDING`、head `DEFER`、XML `UNRESOLVED`、TXT `FAIL_CLOSED`；MIT exact-18 三类 category authority/result 保守关闭 0，144 cells 全 `PENDING`，两项 rejected excluded diagnosis `UNRESOLVED`。不执行 legal closure、successor、Gate 0、promotion、publication、network 或 lifecycle mutation。
+
+IANA exact-three materialization checkpoint 在冻结 CPython 3.11.9 下复用 manifest-bound candidate pipeline，生成 3 candidates / 3 chunks / 0 rejects。strict validator 固定 digest/receipt/review/history/Gate0 与 artifact/document/chunk identities；ambient 非 3.11.9 必须在写输出前 fail closed。该 checkpoint 不改变 XML/TXT、24 PENDING、3 DEFER、0 approved 或任何 authority/promotion/publication 边界。
