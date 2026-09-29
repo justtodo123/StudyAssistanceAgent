@@ -32,6 +32,12 @@ M6a–M12 涉及 Source 身份、索引生命周期、外部模型、专业存�
 但没有生产能力正在交付。阶段若登记 `implementation_start`，只有状态为 `AUTHORIZED` 且授权记录完整时，
 才能把交付改为 `IN_PROGRESS`；`NOT_AUTHORIZED` 必须继续保持 `NOT_STARTED`。
 
+项目发布状态与上述阶段状态同样正交。`MVP_COMPLETE` 只表示登记的发布范围已经满足产品验收；
+`ACTIVE_ROADMAP_DEFERRED` 只表示未完成路线暂缓，不会把任何阶段提升为 `COMPLETE`、生成
+`completion_approval`、满足下游 prerequisite 或撤销仍有效的 admission。已实施但暂缓继续推进的阶段可登记
+`execution_disposition.status=PAUSED_DEFERRED`；其 `IN_PROGRESS` 保留已发生的交付事实，不表示当下仍在持续执行。
+`REVOKED` 仅用于已批准条件失效，不得用来表达资源或排期暂停。
+
 M6a 的强制决策、前置证据与负责人批准已闭合，当前为 `ADMITTED / COMPLETE`：已获准实施，
 M6a-1 协议契约与 M6a-2 默认 `knowledge-pack` 兼容适配的自动化门禁已通过，M6a-3 与 M6a-4 已完成。
 M6b 的前置证据、八项决策、保护基线与独立批准也已闭合；获批的默认关闭只读 preview 已完成全部 closeout 门禁，
@@ -139,10 +145,16 @@ M7 的一次性准入前实验使用 `sa.source.admission-baseline.v1`：只对�
 
 ## 7. 登记和维护
 
-JSON 登记表保存状态、Decision ID、值/证据引用、前置证据、准入批准记录，以及可选的批准范围、生产开工门禁、
-独立完成批准记录和准入过渡留痕；详细理由留在对应阶段计划。任何状态变更必须在同一变更中同步阶段计划、登记表和
-`docs/PLAN.md`，并通过文档一致性回归。准入批准记录为空时，阶段必须保持 `BLOCKED`；存在未完成的开工授权时，
-交付必须保持 `NOT_STARTED`；交付为 `COMPLETE` 时必须存在完整 `completion_approval`。
+JSON 登记表保存项目发布/路线图状态、阶段状态、Decision ID、值/证据引用、前置证据、准入批准记录，以及可选的
+批准范围、生产开工门禁、执行处置、独立完成批准记录和准入过渡留痕；详细理由留在对应阶段计划。任何状态变更必须在
+同一变更中同步阶段计划、登记表和 `docs/PLAN.md`，并通过文档一致性回归。准入批准记录为空时，阶段必须保持
+`BLOCKED`；存在未完成的开工授权时，交付必须保持 `NOT_STARTED`；交付为 `COMPLETE` 时必须存在完整
+`completion_approval`。
+
+`execution_disposition` 是可选排期记录，不是准入状态。`PAUSED_DEFERRED` 必须记录生效日期、原因、仓库内计划引用和
+非空恢复条件；恢复至少需要负责人明确批准、可行资源/时间框、时效性 authority 复核、当前阻断输入重核、下一执行 wave
+重新冻结，以及 PLAN/登记表/测试证据同步。该字段不得回写或抹去历史 `implementation_start=AUTHORIZED`，也不得授权
+任何新的执行、publication 或下游阶段。
 
 阶段可以登记可选的 `admission_history`：一个**追加式**数组，每条记录 `from` / `to` / `at` / `reason` /
 `reference`，用于留痕本节要求的准入过渡（例如强制决策实质变更导致的撤销与重新准入）。它只追加、不改写既有条目，

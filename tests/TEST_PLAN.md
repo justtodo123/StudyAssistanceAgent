@@ -867,3 +867,20 @@ keyword-mode 完整根级结果为 CPython 3.13.3 的 822 passed、1 skipped、3
 126 passed、3 deselected，专用 benchmark 3 passed（共收集 129 项）；blocking fake-provider benchmark 已通过；2026-08-31
 默认评测仍固定为 OS/DS/CO 90 题，Network candidate 显式评测 Recall@1/3/5 均为 0.000；crawler P0 使用独立 marker
 `m6_crawler` 和 job `crawler-offline`；只读盘点使用 `source_inventory`；默认 OS/DS/CO 90 题质量门禁独立运行 slow 回归。*
+
+
+## 2026-09-29 阶段性项目收口验证矩阵
+
+| 验证范围 | 结果 | 收口含义 |
+| --- | --- | --- |
+| 聚焦文档/治理回归 | 34 passed | 项目发布状态与 M8/M11/M12 阶段事实一致 |
+| M3d 文档完整性 | 6 passed | 导航与文档结构可用 |
+| M11 + regression | 554 passed, 2 skipped | 候选/治理证据保持一致；不构成 M11 exit |
+| M0–M5 + platform 基线 | 207 passed | 当前 MVP 产品闭环保持可交付 |
+| 默认 90 题评测 | Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 | 三课均超过 0.8 门槛 |
+| 根级完整测试 | 1906 collected；1899 passed、4 skipped、3 failed | 三项失败仍是 CPython 3.13.3 下的 M7 TXT 精确 3.11.9 contract fail-closed |
+| 本地启动/健康 smoke | `health: UP` | 本地离线工作台可启动 |
+
+本矩阵验收 `MVP_COMPLETE / ACTIVE_ROADMAP_DEFERRED`，不是 M11/M12 阶段完成验收。M11 仍为
+`ADMITTED / IN_PROGRESS` 且 `PAUSED_DEFERRED`，Formal Gate 0 为 `BLOCKED`、approved documents/chunks 为 0；
+M12 仍为 `BLOCKED / NOT_STARTED`。历史测试读数保留，不用本节覆盖。

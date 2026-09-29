@@ -177,6 +177,11 @@ def _registry_references(registry: dict):
         if completion is not None:
             yield from completion.get("evidence", [])
             yield completion["approval_reference"]
+        disposition = stage.get("execution_disposition")
+        if disposition is not None:
+            reference = disposition.get("reference")
+            if reference is not None:
+                yield reference
         # §7 requires every admission-history reference to be a portable repo path, but this
         # field was previously unenumerated, so that requirement rested on human discipline
         # alone. Fold it into the same allowlist rather than validating it separately.
@@ -184,6 +189,7 @@ def _registry_references(registry: dict):
             reference = record.get("reference")
             if reference is not None:
                 yield reference
+    yield from registry.get("project_status", {}).get("evidence", [])
 
 
 def test_registry_references_use_closed_portable_allowlist(repo_root):
@@ -287,6 +293,35 @@ def test_production_start_requires_explicit_authorization_for_active_delivery():
             "delivery_status": "COMPLETE",
         }
     )
+
+
+def test_project_release_status_preserves_deferred_stage_truth(repo_root):
+    registry = _load_registry(repo_root)
+    project = registry["project_status"]
+    stages = {stage["stage"]: stage for stage in registry["stages"]}
+
+    assert project["release_scope"] == "M0-M5"
+    assert set(project["completed_extensions"]) == {"M6a", "M6b", "M7", "M9", "M10"}
+    assert set(project["deferred_stages"]) == {"M8", "M11", "M12"}
+    assert set(project["completed_extensions"]).isdisjoint(project["deferred_stages"])
+
+    assert stages["M8"]["admission_status"] == "BLOCKED"
+    assert stages["M8"]["delivery_status"] == "NOT_STARTED"
+    assert stages["M11"]["admission_status"] == "ADMITTED"
+    assert stages["M11"]["delivery_status"] == "IN_PROGRESS"
+    assert stages["M11"].get("completion_approval") is None
+    assert stages["M11"]["implementation_start"]["status"] == "AUTHORIZED"
+    disposition = stages["M11"]["execution_disposition"]
+    assert set(disposition) == {
+        "status", "effective_at", "reason", "reference", "resume_criteria"
+    }
+    assert disposition["status"] == "PAUSED_DEFERRED"
+    assert disposition["resume_criteria"]
+    assert len(disposition["resume_criteria"]) == len(set(disposition["resume_criteria"]))
+    assert "EXPLICIT_OWNER_RESUME_APPROVAL" in disposition["resume_criteria"]
+    assert "SYNC_PLAN_REGISTRY_AND_TEST_EVIDENCE" in disposition["resume_criteria"]
+    assert stages["M12"]["admission_status"] == "BLOCKED"
+    assert stages["M12"]["delivery_status"] == "NOT_STARTED"
 
 
 def test_complete_active_stage_requires_scoped_completion_approval(repo_root):

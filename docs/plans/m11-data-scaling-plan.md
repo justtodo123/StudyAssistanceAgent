@@ -2,6 +2,7 @@
 
 > 当前状态：`ADMITTED / IN_PROGRESS`（2026-09-23 获准入并授权开工，范围 `m11-data-scaling-v1`，
 > plan_revision v1.1 纳入 A1/A2/A3：`tests/M11/`、chunk 硬顶 4000、P0 白名单下载入库）
+> 执行处置：`PAUSED_DEFERRED`（2026-09-29）；保留既有准入、开工授权与 `IN_PROGRESS` 事实，不产生完成批准
 > 拟议前置：M8、M9、M10 退出证据；M7 source lifecycle 权威保持有效
 > 范围决策：[`references/m8-m12-scope-decision-v1.md`](references/m8-m12-scope-decision-v1.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
@@ -18,6 +19,24 @@ M11 的唯一正式退出目标是：
 
 本阶段不部署云服务器、不引入多租户、不批准 Qdrant server、不追求百万级数据，也不得通过重复切块、低质量抓取、
 未授权题库或未审 Stack Exchange 全量 dump 补量。
+
+## 1.1 2026-09-29 执行暂停快照
+
+本阶段因短期资源与时间不可行而暂停后续 execution wave，状态保持 `ADMITTED / IN_PROGRESS`，执行处置为
+`PAUSED_DEFERRED`。暂停不是 `COMPLETE`、`REVOKED` 或新的 admission transition，既有追加式证据保持不变。
+
+暂停时的冻结事实：Formal Gate 0 为 `BLOCKED`；approved documents/chunks 为 `0 / 0`；Formal 3K 未执行且未挣得；
+10K exit 未挣得；没有 promotion、publication 或独立 `completion_approval`。candidate/normalized materialization 与测试通过
+均不能替代上述退出条件。
+
+恢复 M11 必须同时满足：
+
+1. owner 明确批准恢复；
+2. 给出可行资源与时间框；
+3. 复核或刷新时效性 authority；
+4. 重核 Gate 0 输入及 23 个 blocking assets；
+5. 重新冻结有界的下一 execution wave；
+6. 在执行前同步 `docs/PLAN.md`、机器登记表和测试证据。
 
 ## 2. 不可削弱的不变量
 

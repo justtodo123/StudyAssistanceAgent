@@ -94,25 +94,16 @@ class TestProjectStatusConsistency:
         root = _read(repo_root, "README.md")
         plan = _read(repo_root, "docs/PLAN.md")
 
-        assert "M6a-P0 crawler 已收口" in root
-        assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in plan
-        assert "M6a、M6b、M7 均为 `ADMITTED / COMPLETE`" in root
-        assert "M8 与 M12" in root
-        assert "M6–M12" in plan
         for text in (root, plan):
-            assert "BLOCKED / NOT_STARTED" in text
-        assert "ADMITTED / COMPLETE" in root
+            assert "MVP_COMPLETE" in text
+            assert "ACTIVE_ROADMAP_DEFERRED" in text
+            assert "M6a/M6b/M7/M9/M10" in text
+            assert "M11" in text and "ADMITTED / IN_PROGRESS" in text
+            assert "PAUSED_DEFERRED" in text
+            assert "M12" in text and "BLOCKED / NOT_STARTED" in text
+        assert "M6–M12" in plan
         assert "M6a 契约与兼容骨架" in root
-        assert "M7 生产开工门禁保持" in root
-        assert "独立人工完成批准" in root
-        assert "M8–M10 的事实型" in root
-        assert "M7 退出前置已满足" in root
-        assert "M8 与 M12 仍为 `BLOCKED / NOT_STARTED`" in root
-        assert "M9 八项 Decision 已 `RESOLVED`" in root
-        # 2026-09-23：M10 在原范围内取得独立完成批准。本断言随事实移动。
-        assert "M10 十一项 Decision 已全部 `RESOLVED`" in root
-        assert "M0–M5 MVP 可用。" in root
-        assert "M10" in root and "自主 Runner" in root
+        assert "自主 Runner" in root
         assert "课程笔记创建" not in root
         assert "错题集管理" not in root
         assert "crawler 候选默认不检索" in root
@@ -180,6 +171,28 @@ class TestStorageAndBaselineConsistency:
         assert "Network 30 题仍为显式扩展集" in plan
 
 
+def test_project_status_is_consistent_across_primary_navigation(repo_root):
+    documents = (
+        "README.md",
+        "docs/PLAN.md",
+        "docs/README.md",
+        "docs/plans/README.md",
+        "docs/prds/README.md",
+        "docs/demo.md",
+    )
+    for relative_path in documents:
+        text = _read(repo_root, relative_path)
+        assert "MVP_COMPLETE" in text
+        assert "ACTIVE_ROADMAP_DEFERRED" in text
+
+    plan = _read(repo_root, "docs/PLAN.md")
+    root = _read(repo_root, "README.md")
+    for text in (plan, root):
+        assert "PAUSED_DEFERRED" in text
+        assert "approved documents/chunks" in text
+        assert "M12" in text and "BLOCKED / NOT_STARTED" in text
+
+
 class TestVersionSemantics:
     def test_package_version_is_tooling_metadata(self, repo_root):
         package = json.loads(_read(repo_root, "package.json"))
@@ -230,7 +243,16 @@ class TestStageAdmissionConsistency:
     def test_registry_schema_status_and_plan_files(self, repo_root):
         registry = _load_admission_registry(repo_root)
 
-        assert registry["schema_version"] == 2
+        assert registry["schema_version"] == 3
+        assert registry["project_status"] == {
+            "release_status": "MVP_COMPLETE",
+            "roadmap_status": "ACTIVE_ROADMAP_DEFERRED",
+            "effective_at": "2026-09-29",
+            "release_scope": "M0-M5",
+            "completed_extensions": ["M6a", "M6b", "M7", "M9", "M10"],
+            "deferred_stages": ["M8", "M11", "M12"],
+            "evidence": ["docs/PLAN.md", "docs/baselines.md", "docs/demo.md", "tests/TEST_PLAN.md"],
+        }
         implementation_start_statuses = set(
             registry["implementation_start_statuses"]
         )
@@ -682,6 +704,20 @@ class TestStageAdmissionConsistency:
         assert m11["approval"]["approval_reference"].startswith("User instruction:")
         assert m11["approval"]["plan_revision"] == "v1.1"
         assert m11["implementation_start"]["status"] == "AUTHORIZED"
+        assert m11["execution_disposition"] == {
+            "status": "PAUSED_DEFERRED",
+            "effective_at": "2026-09-29",
+            "reason": "SHORT_TERM_FEASIBILITY",
+            "reference": "docs/plans/m11-data-scaling-plan.md",
+            "resume_criteria": [
+                "EXPLICIT_OWNER_RESUME_APPROVAL",
+                "FEASIBLE_RESOURCING_AND_TIMEBOX",
+                "REFRESH_TIME_BOUNDED_AUTHORITIES",
+                "REVALIDATE_GATE0_INPUTS_AND_BLOCKERS",
+                "FREEZE_NEXT_EXECUTION_WAVE",
+                "SYNC_PLAN_REGISTRY_AND_TEST_EVIDENCE",
+            ],
+        }
         assert m11["approval_scope"]["scope_id"] == "m11-data-scaling-v1"
         assert m11["approval_scope"]["included"]
         assert m11["approval_scope"]["excluded"]

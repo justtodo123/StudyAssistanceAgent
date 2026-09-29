@@ -3,6 +3,7 @@
 > 本目录只存放 `requirements-clarity` 产出的产品需求文档。
 > **最终计划依据**仍是 [`docs/PLAN.md`](../PLAN.md)。
 > PRD、阶段计划和 JSON 登记表都不能单独批准阶段；M6a/M6b 当前授权分别来自完整门禁与独立负责人批准记录。
+> 当前发布：`MVP_COMPLETE`；活跃路线图：`ACTIVE_ROADMAP_DEFERRED`。该项目级状态不把 M11/M12 提升为完成。
 
 ## 目录结构
 
@@ -44,7 +45,7 @@ PRD 将复选框分成三类，必须结合所在小节或行首标签解读：
   `m10-autonomous-runner-v1` 范围内获批开工，并于 2026-09-23 在原范围内取得独立完成批准，现为
   `ADMITTED / COMPLETE`；`implementation_start` 保持 `AUTHORIZED`**。
   M8 与 M12 仍因其他前置、强制决策和独立批准未闭合而保持 `BLOCKED / NOT_STARTED`。M11 于 2026-09-23
-  获批 `ADMITTED / IN_PROGRESS`（开工已授权，plan_revision v1.1 纳入 A1/A2/A3）。Milvus 未选定或获批。
+  获批 `ADMITTED / IN_PROGRESS`，但 2026-09-29 起执行处置为 `PAUSED_DEFERRED`；无完成批准。Milvus 未选定或获批。
 
 ## 当前文件
 
@@ -54,5 +55,5 @@ PRD 将复选框分成三类，必须结合所在小节或行首标签解读：
 
 ---
 
-*创建：2026-08-24 · 更新：2026-09-23（同步 M11 `ADMITTED / IN_PROGRESS`、开工已授权；M8 与 M12 仍阻断）·
+*创建：2026-08-24 · 更新：2026-09-29（当前发布 `MVP_COMPLETE`；M8/M11/M12 活跃路线延期且阶段事实不变）·
 维护：新增/修订 PRD 时同步本表*

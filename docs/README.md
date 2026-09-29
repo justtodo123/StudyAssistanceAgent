@@ -1,6 +1,8 @@
 # 项目文档（docs/）
 
 > StudyAssistanceAgent 项目文档目录。包含项目计划、外部资料索引、开发规范、面试叙事、需求澄清 PRD。
+> 当前发布：`MVP_COMPLETE`；活跃路线图：`ACTIVE_ROADMAP_DEFERRED`。M11 保持 `ADMITTED / IN_PROGRESS`
+> 且执行暂停，M8/M12 保持 `BLOCKED / NOT_STARTED`。
 
 ## 文档结构
 

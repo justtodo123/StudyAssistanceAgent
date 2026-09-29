@@ -2,6 +2,8 @@
 
 > 本目录同时存放个人复习计划、项目工程执行计划，以及辅助分析和限定范围的历史治理记录。
 > 三者定位不同，文件名和内容必须明确区分。
+> 当前发布：`MVP_COMPLETE`；活跃路线图：`ACTIVE_ROADMAP_DEFERRED`。M11 保持 `ADMITTED / IN_PROGRESS`
+> 且 `PAUSED_DEFERRED`，M8/M12 保持 `BLOCKED / NOT_STARTED`。
 
 ## 目录用途
 
@@ -27,7 +29,7 @@
   M7 退出前置已满足；M9 已于 2026-09-22 在 `m9-plan-lifecycle-v1` 范围内取得独立完成批准，现为
   `ADMITTED / COMPLETE`；**M10 十一项 Decision 已全部 `RESOLVED`，并于 2026-09-22 获批为
   `ADMITTED / COMPLETE`、`implementation_start` 同步 `AUTHORIZED`**，并于 2026-09-23 在原范围内取得独立完成批准；M8 八项 Decision 已 `RESOLVED`，
-  但 M8 与 M12 仍须分别闭合剩余前置、阶段 Decision 或独立批准，当前均保持阻断；M11 已准入并获开工授权（plan_revision v1.1，A1/A2/A3 实施中）；`draft-0.10` 曾完成
+  但 M8 与 M12 仍须分别闭合剩余前置、阶段 Decision 或独立批准，当前均保持阻断；M11 已准入并获开工授权（plan_revision v1.1），但自 2026-09-29 起执行处置为 `PAUSED_DEFERRED`；`draft-0.10` 曾完成
   P0/P1/P2 并到达 `BINDING_FROZEN`，但 2026-09-14 独立 P3 文本审计
   因三项阻断缺陷判定 `REJECTED / stop`，不得 `request-p4`。
 - 不把 `references/` 中的分析或历史治理记录当作执行计划、阶段批准或验收真源
@@ -56,7 +58,8 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 取得独立完成批准，现为 `ADMITTED / COMPLETE`；`implementation_start` 保持 `AUTHORIZED`；M8 八项 Decision
 已 `RESOLVED`，但 `draft-0.10` 独立 P3 已 `REJECTED / stop`，不得 `request-p4`；M8 与 M12 均因剩余前置、
 阶段 Decision 或独立批准未闭合而保持 `BLOCKED / NOT_STARTED`。M11 于 2026-09-23 获批 `ADMITTED / IN_PROGRESS`
-（范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1）。最终状态以
+（范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1），并于 2026-09-29 将后续执行处置为
+`PAUSED_DEFERRED`。最终状态以
 [`docs/PLAN.md`](../PLAN.md) 为准。
 
 | 文件 | 类型 | 状态 |
@@ -73,8 +76,8 @@ M6a 与 M6b 均为 `ADMITTED / COMPLETE`。M7 基础设施范围的实现、冻�
 | `m8-metadata-discovery-governance.md` | M8 Metadata Discovery 治理规范 | 通用 intent 仍为 `METADATA_DISCOVERY_INTENT_OWNER_SELECTION_REQUIRED`；pypdf==6.0.0 selected-scope 尚处 implementation hardening，验证完成后最多 `READY_FOR_EXTERNAL_INDEPENDENT_REVIEW`；无独立通过、Owner Gate readiness 或 M8 执行授权 |
 | `m9-goal-driven-planning-plan.md` | 阶段执行计划 | M9 目标驱动计划、mastery 与偏差；`ADMITTED / COMPLETE`（2026-09-22 收口，范围 `m9-plan-lifecycle-v1`，plan_revision v1.5，完成批准见 §4.5）；生成/采纳/进度/偏差重规划已实现，mastery 写入仍 `excluded`；步骤 3 的三个只读投影（mastery、授权 Source 摘要、先修关系 topic graph）均已实现并接入 Planner；v1.5 解冻 `M9-EVALUATION` 的延迟/成本维度（**范围仅限 M9 外部 AI 路径**，CI 臂冻结预算执行、真实 provider 读数 opt-in 非门禁且本次未运行），并因此触发 §4 撤销过渡（见 §4.3）；已于 2026-09-22 完成收口（完成批准见 §4.5） |
 | `m10-autonomous-runner-plan.md` | 阶段执行计划 | M10 自主 Runner、写副作用、长任务恢复、manifest 与只读 stdio MCP；**`ADMITTED / COMPLETE`**（2026-09-22 获批开工，2026-09-23 在原 `m10-autonomous-runner-v1` 范围内取得独立完成批准）；十一项 Decision 全部 `RESOLVED`，三项前置均 `SATISFIED`，已知限制随收口接受而未解除 |
-| `m11-data-scaling-plan.md` | 阶段执行计划 | 10K 高质量真实 approved chunks；`ADMITTED / IN_PROGRESS`。2026-09-28 Formal Gate 0 历史结果为 `BLOCKED`；2026-09-29 新增 IANA exact-three 非执行 decision-input packet 与 CC0/robots/schema/XML-conflict census，24 cells 仍 `PENDING`。当前 heads 仍为 3 RFC ACCEPT + 3 IANA DEFER + 20 MIT DEFER；不签发 authority、verdict、successor，不晋升、发布或重开 Gate 0。 |
-| `m12-cloud-deployment-plan.md` | 阶段准入准备计划 | 可选云端单用户部署，本地离线仍默认；`BLOCKED / NOT_STARTED` |
+| `m11-data-scaling-plan.md` | 阶段执行计划 | 10K 高质量真实 approved chunks；`ADMITTED / IN_PROGRESS`，2026-09-29 起 `PAUSED_DEFERRED`。Formal Gate 0 为 `BLOCKED`，approved documents/chunks 为 0，3K/10K 未挣得且无完成批准。 |
+| `m12-cloud-deployment-plan.md` | 阶段准入准备计划 | 可选云端单用户部署，本地离线仍默认；`BLOCKED / NOT_STARTED`，`DEFERRED_NOT_STARTED`；不声明云端就绪 |
 
 ## 辅助与历史治理记录
 
