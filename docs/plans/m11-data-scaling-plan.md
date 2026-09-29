@@ -2,6 +2,7 @@
 
 > 当前状态：`ADMITTED / IN_PROGRESS`（2026-09-23 获准入并授权开工，范围 `m11-data-scaling-v1`，
 > plan_revision v1.1 纳入 A1/A2/A3：`tests/M11/`、chunk 硬顶 4000、P0 白名单下载入库）
+> 执行处置：`PAUSED_DEFERRED`（2026-09-29）；保留既有准入、开工授权与 `IN_PROGRESS` 事实，不产生完成批准
 > 拟议前置：M8、M9、M10 退出证据；M7 source lifecycle 权威保持有效
 > 范围决策：[`references/m8-m12-scope-decision-v1.md`](references/m8-m12-scope-decision-v1.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
@@ -18,6 +19,24 @@ M11 的唯一正式退出目标是：
 
 本阶段不部署云服务器、不引入多租户、不批准 Qdrant server、不追求百万级数据，也不得通过重复切块、低质量抓取、
 未授权题库或未审 Stack Exchange 全量 dump 补量。
+
+## 1.1 2026-09-29 执行暂停快照
+
+本阶段因短期资源与时间不可行而暂停后续 execution wave，状态保持 `ADMITTED / IN_PROGRESS`，执行处置为
+`PAUSED_DEFERRED`。暂停不是 `COMPLETE`、`REVOKED` 或新的 admission transition，既有追加式证据保持不变。
+
+暂停时的冻结事实：Formal Gate 0 为 `BLOCKED`；approved documents/chunks 为 `0 / 0`；Formal 3K 未执行且未挣得；
+10K exit 未挣得；没有 promotion、publication 或独立 `completion_approval`。candidate/normalized materialization 与测试通过
+均不能替代上述退出条件。
+
+恢复 M11 必须同时满足：
+
+1. owner 明确批准恢复；
+2. 给出可行资源与时间框；
+3. 复核或刷新时效性 authority；
+4. 重核 Gate 0 输入及 23 个 blocking assets；
+5. 重新冻结有界的下一 execution wave；
+6. 在执行前同步 `docs/PLAN.md`、机器登记表和测试证据。
 
 ## 2. 不可削弱的不变量
 
@@ -312,6 +331,19 @@ SSL 握手超时，改由 curl 取得字节后经注入 transport 在 `acquire_a
 `DEFER` 不计入 Gate 0 `reviewed` 集合；即使传入 26 份 ACQUIRED receipts，`reviewed_asset_count`
 仍为 0，Formal Gate 0 仍未执行。
 
+### 8.6.1 Formal Gate 0 authority/receipt linkage repair（2026-09-28）
+
+Formal Gate 0 runner 已改为显式区分两种 capability：调用方仍须提供独立、有效的
+`operation=gate0` authority 用于 Gate 0 evaluation；若 receipt 来自历史获取，则还须显式提供
+`operation=acquisition` authority。runner 分别校验 operation、同一冻结 scope、精确 batch allowlist、
+receipt authority ID 与 `issued_at <= captured_at < expires_at`；完整 acquisition authority record 进入
+Gate 0 input digest，结果单独投影 `acquisition_authority_id`。共享 scope digest 不使 authority 互换，Gate 0
+authority 不能追溯授权 acquisition，也不改写或重签既有 receipts。
+
+该修复仅校验 runner contract：不创建 `operation=gate0` authority、Gate 0 result 或 evidence package；不执行
+Gate 0、promotion、publication、formal 3K 或 lifecycle transition。现有 26 项 acquisition receipts 保持原样，
+M11 状态仍为 `ADMITTED / IN_PROGRESS`，approved documents/chunks 与 3K 计数仍为 0。
+
 ### 8.7 官方来源只读观察层（2026-09-26）
 
 在上述获取后再核验和全 `PENDING` evidence-closure projection 之后，追加了一个 append-only、metadata-only 的官方来源观察层：
@@ -323,7 +355,234 @@ SSL 握手超时，改由 curl 取得字节后经注入 transport 在 `acquire_a
 
 该观察层只提高事实可追溯性，不改变本计划的 Gate 0、3K、10K 或 M11 完成条件；任何 evidence closure 或生命周期变化仍需后续独立授权和 owner-controlled review。
 
+### 8.8 RFC/IANA exact-six 资产级证据核验（2026-09-27）
+
+owner 指令「先完成本地合并收尾，然后申请并执行‘RFC/IANA 6 项资产级证据核验批次’」只覆盖 RFC 9110、
+RFC 9293、RFC 1034 与 IANA CSV/XML/TXT；MIT OCW 20 项、OpenDSA 和其他来源均不进入本批次。
+
+- 非执行 application、exact-six `human_review` authority、result 与 successor slice 分别记录在
+  `data/manifests/m11-p0-rfc-iana-evidence-review-application-v1.json`、
+  `data/manifests/m11-p0-rfc-iana-evidence-review-authority-v1.json`、
+  `data/manifests/m11-p0-rfc-iana-evidence-review-result-v1.json` 和
+  `data/manifests/m11-p0-human-review-rfc-iana-evidence-defer-6-v1.json`。
+- authority 继续使用冻结 26 项父 `scope_digest`，但 source/asset 集合精确等于六项；独立的版本化 batch digest
+  `5608977cfec79b7d911f64f278bf3e8ee4e502d9ec6b64f894bb4228f78d37bd` 绑定父 scope 与排序后的六项
+  candidate/receipt/revision identity，宽范围 authority 不能替代该精确批准。
+- 六项 × 八类共 48 个 evidence cell 全部保持 `PENDING`；结果为 `REVIEW_REQUIRED`，closure effect 为 `NONE`。
+  IANA XML 日期冲突继续 `UNRESOLVED`，IANA TXT parser 继续 `FAIL_CLOSED`，source-level observation 不被提升为
+  asset-level evidence closure。
+- 六条 successor review 全部为 `DEFER`，逐条 supersede 六个 official-observation current head；不创建
+  candidate document/chunk，也不改变 MIT 的 20 个 current head。
+- `formal_gate0_executed=false`，Gate 0 投影继续 `BLOCKED` 且 `reviewed_asset_count=0`；没有 promotion、publication、
+  normalization、embedding、indexing、source expansion、新 acquisition 或 lifecycle mutation。
+
+该批次记录了“已核验但证据仍不足”的事实，不改变 M11 的 `ADMITTED / IN_PROGRESS`、plan_revision v1.1、3K/10K
+退出条件或任何后续授权边界。
+
+### 8.9 MIT OCW exact-20 资产级证据核验（2026-09-27）
+
+MIT OCW 6.004（2017）批次只覆盖冻结的 20 个 PDF；RFC/IANA、OpenDSA 和其他来源均不进入本批次。
+
+- 非执行 application、exact-20 `human_review` authority、result 与 successor slice 分别记录在
+  `data/manifests/m11-p0-mit-ocw-evidence-review-application-v1.json`、
+  `data/manifests/m11-p0-mit-ocw-evidence-review-authority-v1.json`、
+  `data/manifests/m11-p0-mit-ocw-evidence-review-result-v1.json` 和
+  `data/manifests/m11-p0-human-review-mit-ocw-evidence-defer-20-v1.json`。
+- authority 继续使用冻结父 `scope_digest`，但 source/asset 集合精确等于 MIT 20 项；版本化 batch digest
+  `c739ceaa4bd20f348f735bcc0e6281c963f6c28d110fc38e0d5e9750bbd75956` 绑定父 scope 与排序后的 20 项
+  candidate/receipt/revision identity，宽范围 authority 不能替代该精确批准。
+- 20 项 × 八类共 144 个 exact-18 evidence cell 全部保持 `PENDING`；result 为 `REVIEW_REQUIRED`，closure effect 为
+  `NONE`，third-party rights 均为 `UNRESOLVED`。MIT policy、robots 与 third-party limitation observations
+  都保持非闭合。
+- `digital_answers` 与 `information_worksheet` 的 normalization rejection 原样保留为历史 pipeline disposition，
+  不自动生成 HUMAN_REVIEW `REJECT`、evidence `FAILED` 或资产删除。
+- 20 条 successor review 全部为 `DEFER`，逐条 supersede 对应的 MIT official-observation current head；RFC/IANA
+  六个 current head 保持不变，合并历史仍恰有 26 个 current head。
+- `formal_gate0_executed=false`，Gate 0 投影继续 `BLOCKED` 且 `reviewed_asset_count=0`；没有 document/chunk、
+  promotion、publication、source expansion、新 acquisition、normalization、embedding、indexing 或 lifecycle mutation。
+
+该 exact-20 链只记录资产级证据仍不足的事实，不改变 M11 的 `ADMITTED / IN_PROGRESS`、plan_revision v1.1、
+3K/10K 退出条件或任何后续授权边界。
+
+### 8.10 RFC exact-three candidate materialization checkpoint（2026-09-28）
+
+在 §8.4 已批准的 candidate pipeline 范围内，使用冻结 CPython 3.11.9 parser 环境对本地 gitignored raw 层的 RFC
+1034/9110/9293 重放规范化。三个 asset 均生成 current-schema candidate artifact 并通过当前 validator，共 3 个
+candidate chunks、0 rejected；metadata-only 记录见 `data/manifests/m11-p0-rfc-candidate-materialization-v1.json`。
+
+该 checkpoint 只证明 acquired bytes → normalized → candidate → validator 的技术路径可重放。candidate/normalized
+artifact 与正文仍在 gitignored 数据层；tracked manifest 只含相对 artifact 名、digest、document identity、chunk count，
+不含正文或宿主路径。它不改变 exact-six 的 24 个 RFC `PENDING` evidence cells 或三条 `DEFER` current heads，
+approved documents/chunks 仍为 0，`counts_toward_3k=false`，不执行 Formal Gate 0，也不授权 promotion 或 publication。
+
+### 8.11 RFC exact-three schema-only owner decision（2026-09-28）
+
+owner 选择「仅批准 schema N/A（推荐）」，并授权 exact-three `human_review` authority
+`m11-rfc-schema-review-3-20260928`，只覆盖 RFC 1034/9110/9293。结果见
+`data/manifests/m11-p0-rfc-schema-review-result-v1.json`：三项 RFC `schema` cells 由 `PENDING` 改为
+`NOT_APPLICABLE`，其余 21 个 evidence cells 仍为 `PENDING`，`closure_effect=PARTIAL`，`result=REVIEW_REQUIRED`。
+
+该决定不写 successor slice，不改变 exact-six 历史 result/head，不产生 `ACCEPT_FOR_PROMOTION_REVIEW`，不执行
+Formal Gate 0，不创建 `operation=gate0` authority，不晋升、不发布、不扩张来源。后续任何其他 category closure
+仍需 owner 逐 asset、逐 category 明确授权；Gate 0 仍需独立 authority。
+
+### 8.12 RFC exact-three technical evidence owner decision（2026-09-28）
+
+owner 进一步选择「批准 9 个 VERIFIED（推荐）」，并授权 exact-three `human_review` authority
+`m11-rfc-technical-evidence-review-3-20260928`。基于冻结 SHA-256 / revision、ACQUIRED receipts、canonical RFC Editor
+URL、current-schema candidate identity 和 CPython 3.11.9 parser 重放结果，RFC 1034/9110/9293 的 `revision`、
+`provenance`、`parser` 共 9 个 cells 改为 `VERIFIED`。
+
+与 §8.11 schema-only result 合并后的累积状态为：9 `VERIFIED` + 3 `NOT_APPLICABLE` + 12 `PENDING`；剩余
+`license`、`robots_terms`、`notice_ipr`、`content_quality` 仍逐 asset 保持 `PENDING`。结果继续为
+`REVIEW_REQUIRED / PARTIAL`，不写 successor，不产生 `ACCEPT_FOR_PROMOTION_REVIEW`，不执行 Gate 0，不创建
+`operation=gate0` authority，不晋升或发布。
+
+### 8.13 RFC exact-three non-executing closure packet（2026-09-28）
+
+基于 §8.10 的三个 current-schema candidate artifacts，生成了 metadata-only、non-executing 的 RFC exact-three review packet：
+`data/manifests/m11-p0-rfc-evidence-closure-packet-draft-v1.json`。packet 绑定新的 exact-three batch digest、三个 RFC
+candidate/receipt/revision/document identity，但 `authority_issued=false`，24 个 evidence cells 全部保持 `PENDING`，
+`current_status=REVIEW_REQUIRED`。
+
+该 packet 不是 owner authorization，不改变 exact-six 的历史 result/successor，不产生任何 `VERIFIED`、`NOT_APPLICABLE`、
+`FAILED` 或 successor decision，不执行 Gate 0，不创建 promotion/publication authority。后续若要闭合任何 category，必须由
+owner 逐 asset、逐 category 明确授权；Formal Gate 0 仍需独立的 `operation=gate0` authority。
+
+### 8.14 RFC exact-three content-quality owner decision（2026-09-28）
+
+用户允许抽样后，自动 local census 对 RFC 1034/9110/9293 的 gitignored normalized bodies 完成：三个 body 均非空，
+identity/digest/schema/structure/candidate-validator checks 全部通过；tracked technical result 只保存 bounded
+counts/digests，`technical_sampling_status=VERIFIED`，不含正文或宿主路径。
+
+随后 owner 选择「全部 VERIFIED」，由 exact-three `human_review` authority
+`m11-rfc-content-quality-review-3-20260928` 记录三个 `content_quality=VERIFIED`。与前序 schema/technical results
+合并后，RFC 累积状态为 12 `VERIFIED` + 3 `NOT_APPLICABLE` + 9 `PENDING`；剩余为 license、robots_terms、notice_ipr
+各三项。结果仍 `REVIEW_REQUIRED / PARTIAL`，不写 successor，不创建 `operation=gate0` authority，不执行 Gate 0、
+promotion 或 publication。
+
+### 8.15 RFC exact-three content-quality sampling checkpoint（2026-09-28）
+
+根据 owner 选择「只生成采样 checkpoint」，新增
+`data/manifests/m11-p0-rfc-content-quality-sampling-v1.json`。该记录以三个 current-schema RFC candidate chunks
+为 census（3 assets / 3 chunks / 3 distinct digests），只保存 document/artifact identity、format/structure metadata、
+validator/parser environment 和 privacy/escalation flags；不保存正文、不进行人工事实准确率判断、不改变任何
+`content_quality` evidence cell。随后在用户允许抽样后，local sampler 读取 gitignored normalized bodies，三个 asset 的
+non-empty / identity / digest / schema / structure checks 全部通过，tracked technical result 记
+`technical_sampling_status=VERIFIED`，但仍不把技术抽样提升为 owner quality verdict。
+
+RFC 当前累积 evidence 仍为 9 `VERIFIED` + 3 `NOT_APPLICABLE` + 12 `PENDING`；其中 `content_quality` 三项仍为
+`PENDING`，`license` / `robots_terms` / `notice_ipr` 九项仍为 `PENDING`。该 sampling checkpoint 不创建 authority、
+不写 successor、不执行 Gate 0、不产生 promotion/publication，也不计入 3K。
+
+### 8.16 RFC exact-three legal-policy census（2026-09-28）
+
+自动 offline census 读取已获取的本地 RFC 1034/9110/9293 raw TXT，仅保存 notice-family、版权/BCP78 markers、年份、robots
+digest/policy 和 identity facts，不保存正文或 excerpt、不联网。结果见
+`data/manifests/m11-p0-rfc-legal-policy-census-v1.json`：RFC 9110/9293 为 modern IETF Trust/BCP78 family，RFC
+1034 为 pre-Trust unlimited-distribution family；三项 `license`、`robots_terms`、`notice_ipr` 仍全部 `PENDING`。
+
+source-level TLP/rfc-use 和 robots digest observation 仍保持 `closure_effect=NONE`，不能由 census 自动变成 legal
+closure。后续若 owner 接受具体 per-asset legal interpretation，需新 exact-three `human_review` authority/result；本
+census 不写 successor、不执行 Gate 0、不修改 receipts、不联网。
+
+### 8.17 RFC exact-three legal-policy owner decision（2026-09-28）
+
+owner 选择「全部 9 项 VERIFIED（推荐）」，并授权 exact-three `human_review` authority
+`m11-rfc-legal-policy-review-3-20260928`。基于 §8.16 census、既有 rfc-use/TLP 与 robots observations、receipts 和
+frozen candidate identities，三个 RFC 的 `license`、`robots_terms`、`notice_ipr` 共 9 个 cells 改为 `VERIFIED`。
+
+RFC 累积 evidence 达到 21 `VERIFIED` + 3 `NOT_APPLICABLE` + 0 `PENDING`，`closure_effect=COMPLETE`；但结果仍为
+`EVIDENCE_COMPLETE_REVIEW_PENDING`，因为 successor / `ACCEPT_FOR_PROMOTION_REVIEW` 是独立 owner decision。
+本决定不写 successor，不创建 `operation=gate0` authority，不执行 Gate 0、不修改 acquisition receipts、不晋升或发布。
+
+### 8.18 RFC exact-three ACCEPT successor（2026-09-28）
+
+Evidence complete 后，owner 以独立 exact-three `human_review` authority
+`m11-rfc-exact-three-accept-3-20260928` 明确授权三个 RFC current heads 均为
+`ACCEPT_FOR_PROMOTION_REVIEW`。新增 successor 仅 supersede exact-six 当前 RFC 三条 `DEFER` heads，绑定已验证
+`document_id`、`chunk_id`、candidate/receipt/revision identity；IANA 三条与 MIT 二十条 current heads 保持 `DEFER`。
+
+combined append-only history 为 55 条记录，current heads 仍恰为 26 条。该 decision 只表示 eligible for promotion review，
+不表示 approved；不创建 `operation=gate0` authority，不执行 Gate 0，不改写 receipts，不晋升、不发布、不计入 3K。
+Gate 0 仍需独立 authority 和 receipt authority-id linkage 解决。
+
+### 8.19 MIT OCW exact-20 candidate materialization checkpoint（2026-09-28）
+
+在 §8.4 已批准的 candidate pipeline 范围内，使用项目冻结 parser 环境对本地 gitignored raw 层的 MIT OCW exact-20
+重放规范化，并以当前 candidate artifact validator 校验结果：18 项生成有效 candidate artifacts，共 93 个 candidate chunks；
+`digital_answers` 因 `SOURCE_PARSE_FAILED`、`information_worksheet` 因 `INVALID_CANDIDATE_INPUT` 保持 rejected。
+metadata-only 记录见 `data/manifests/m11-p0-mit-ocw-candidate-materialization-v1.json`。
+
+该 checkpoint 只证明 acquired bytes → normalized → candidate → validator 的技术路径可重放。candidate artifacts 和正文仍在
+gitignored 数据层；tracked manifest 只含相对 artifact 名、digest、document identity、chunk count 与 reason，不含正文或宿主路径。
+它不关闭 160 个 `PENDING` evidence cells，不把 20 条 `DEFER` 改成 ACCEPT，不执行 Formal Gate 0，也不产生
+candidate promotion 或 publication authority。approved documents/chunks 仍均为 0，93 个 candidate chunks 明确
+`counts_toward_3k=false`，不得用于 3K/10K 或 M11 COMPLETE 声明。
+
+### 8.20 Formal Gate 0 execution（2026-09-28）
+
+owner 以独立 `operation=gate0` authority `m11-formal-gate0-26-20260928` 授权对冻结 26 资产执行一次
+本地、确定性、只读、metadata-only 的 Formal Gate 0 evaluation。执行显式使用独立
+`m11-acquisition-26-20260926` authority 验证历史 receipt，因此共享 scope digest 不使 Gate 0、acquisition
+或 human review authority 可互换。
+
+实际结果为 `BLOCKED`：26 条 `ACQUIRED` receipt、3 个 current
+`ACCEPT_FOR_PROMOTION_REVIEW` head、23 个 `DEFER` head、21 个 validated candidate、23 个匿名
+missing/blocking asset key，以及 0 个 failed evidence key。生命周期快照保持 21 个 candidate document、96 个
+candidate chunk、0 个 approved document 与 0 个 approved chunk。
+
+本记录只证明 evaluation 已执行，`BLOCKED` 不等于 evaluator failure；
+`ACCEPT_FOR_PROMOTION_REVIEW` 也不等于 approval。结果明确固定
+`candidate_promotion_authorized=false`、`publication_authorized=false`、`formal_3k_executed=false`、
+`network_used=false`、`source_expansion=false` 与 `lifecycle_mutation=false`。本次不改写 receipt，不新增来源，
+不晋升、不发布、不计入 Formal 3K，M11 继续为 `ADMITTED / IN_PROGRESS`。
+
+### 8.21 IANA exact-three first evidence-closure inputs（2026-09-29）
+
+在不新增 acquisition、不重开 Gate 0 的边界内，新增 exact-three IANA owner decision-input packet 与
+legal/robots/schema/XML-conflict census。输入严格绑定 tracked digest-evidence 与 acquisition-receipt dependencies 中已校验的
+CSV/XML/TXT raw SHA-256、receipt digest/revision，再结合 CC0 scope observation、robots digest/policy，以及 CSV/XML 的
+结构事实；不声明 committed IANA candidate document/chunk materialization，tracked artifacts 不保存正文或宿主路径。
+
+三项 schema 均保持 applicable，不沿用 RFC text 的 N/A 决定；XML 的
+`live_updated_date=2024-12-20` 与 `frozen_manifest_updated_date=2026-09-11` 冲突继续为
+`UNRESOLVED`，TXT parser 继续保留历史 fail-closed 事实。共 24 个 evidence cells 仍为 `PENDING`。
+
+本切片只向 owner 提供后续决策输入，不签发 execution/human-review authority，不写 owner verdict、successor、
+candidate promotion 或 publication，不执行新的 Gate 0、不改写 2026-09-28 Formal Gate 0 `BLOCKED` 结果，也不改变
+current heads：3 RFC `ACCEPT_FOR_PROMOTION_REVIEW` + 3 IANA `DEFER` + 20 MIT `DEFER`。
+
 ## 9. 撤销与后续边界
 
 来源许可、parser/chunk/embedding profile、质量/检索 workload、控制面权威或删除语义实质变化时，阶段 admission 必须
 `REVOKED` 并重新批准。M12 只能消费经过批准的 M11 published snapshot，不能用云端容量掩盖本地数据质量问题。
+
+### 8.22 MIT OCW exact-20 owner decision-input packet（2026-09-29）
+
+新增 metadata-only、non-executing packet，严格绑定 tracked MIT candidate materialization、digest evidence 与 acquisition receipts，并只读引用既有 `BLOCKED` Gate0 result。packet 明确 18 个 `CANDIDATE_VALIDATED` 与 2 个 pipeline `REJECTED`：`digital_answers=SOURCE_PARSE_FAILED`、`information_worksheet=INVALID_CANDIDATE_INPUT`；二者不是 HUMAN_REVIEW `REJECT`，也不把任一 evidence cell 改为 `FAILED`。exact-20 的 160 cells 全部保持 `PENDING`，current heads 保持 RFC 3 ACCEPT / IANA 3 DEFER / MIT 20 DEFER。未创建 authority、owner verdict、successor、Gate0、promotion、publication、network 或 lifecycle mutation。
+### 8.23 MIT OCW two-rejection bounded offline diagnosis（2026-09-29）
+
+使用既有 gitignored raw/rejected artifacts 与冻结 CPython 3.11.9 对 `digital_answers`、`information_worksheet` 做有界离线诊断。tracked diagnosis 严格绑定 candidate materialization、digest evidence 与 acquisition receipts，并记录 raw bytes/digest/PDF magic 与 rejected artifact metadata。两项原始 pipeline reason 分别保持 `SOURCE_PARSE_FAILED`、`INVALID_CANDIDATE_INPUT`；因 rejected metadata 不含原始异常或 candidate validation detail，exact root causes 均保持 `UNRESOLVED`。
+
+对 extensionless raw path 的 frozen parser probes 分别观察到 `FORMAT_UNSUPPORTED`（未声明格式）与 `FORMAT_MISMATCH`（声明 PDF 但文件名无扩展名）；两者只记录为 `BOUNDED_OBSERVATION_NOT_ROOT_CAUSE`，不得后读为原 pipeline 根因。此 diagnosis 不改 parser contract、不修 production artifacts、不自动映射 HUMAN_REVIEW `REJECT` 或 evidence `FAILED`，不签发 authority、不创建 successor、不执行或重开 Gate 0，也不产生 network/source expansion/lifecycle mutation。
+
+### 8.24 IANA exact-three authority/result review wave（2026-09-29）
+
+IANA exact-three authority/result 继续严格绑定 tracked digest/receipt/revision identity。application 的 `submitted_at` 与 result 的 `signed_at` 均必须在 authority issued-at（含）至 expires-at（不含）窗口，且 submitted/signed identity 必须等于 authority `issued_by`。application/result 对所有递归字段（包括 evidence refs/comments）拒绝宿主路径和 forbidden privacy keys。result 进一步精确绑定三条 IANA predecessor review ID，并以 canonical SHA-256 密封 exact-six `DEFER` history 与 immutable Formal Gate 0 `BLOCKED` result；24 个 evidence cells 全部保持 `PENDING`，current head 继续为 `DEFER`；XML 日期冲突保持 `UNRESOLVED`，TXT parser 保持 `FAIL_CLOSED`。该 authority/result 不产生 legal closure、successor、Gate 0、promotion、publication、network 或 lifecycle mutation。
+
+### 8.26 IANA exact-three candidate replay/materialization checkpoint（2026-09-29）
+
+使用冻结 CPython 3.11.9 与既有 manifest-bound candidate pipeline，对本地 gitignored IANA CSV/XML/TXT raw bytes 重放，
+生成并校验 3 个 candidate artifacts、3 个 normalized artifacts、3 个 chunks，0 rejected。tracked manifest
+`data/manifests/m11-p0-iana-candidate-materialization-v1.json` 绑定 digest evidence、acquisition receipts、packet/census/
+disposition/current review、exact-six predecessor 与历史 Formal Gate 0 `BLOCKED`，并保存 artifact digest、document/chunk identity。
+
+该 checkpoint 不保存正文或宿主路径。XML 日期冲突仍 `UNRESOLVED`，TXT owner 状态仍 `FAIL_CLOSED`，24 个 evidence cells
+仍全 `PENDING`，IANA current heads 仍为 3 `DEFER`，approved documents/chunks 仍为 0；不创建 authority/successor，
+不执行或重开 Gate 0，不授权 promotion/publication，不联网、不扩源、不做 lifecycle mutation。ambient 非 CPython 3.11.9
+环境必须在写任何 replay 输出前 fail closed，不能用当前环境重新 blessing tracked identities。
+
+### 8.25 MIT OCW exact-18 category authority/result review wave（2026-09-29）
+
+MIT OCW exact-18 的三类 category authority/result 采用保守口径，关闭数为 0；schema、technical、content-quality 的 category-local pending 分别为 18、54、18，packet-wide derived pending 为 144，所有 cells 均保持 `PENDING`。successor 以 canonical SHA-256 content seals 固定 owner packet 与每份 predecessor result，除递归 payload validation 外也拒绝 same-ID content substitution；签署顺序严格为 `schema.signed_at < technical.signed_at < content.signed_at`。两项 rejected excluded 的 pipeline diagnosis 均保持 `UNRESOLVED`，不映射为 HUMAN_REVIEW `REJECT` 或 evidence `FAILED`。本 wave 不产生 legal closure、successor、Gate 0、promotion、publication、network 或 lifecycle mutation。

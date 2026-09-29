@@ -1,0 +1,96 @@
+{
+  "schema": "sa.m11.p0.mit-ocw-pipeline-diagnosis.v1",
+  "diagnosis_id": "m11-p0-mit-ocw-pipeline-diagnosis-20260929",
+  "generated_at": "2026-09-29",
+  "operation": "bounded_offline_diagnosis",
+  "metadata_only": true,
+  "source_id": "mit-ocw-6-004-2017",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "runtime": {
+    "implementation": "CPython",
+    "python_version": "3.11.9",
+    "parser_contract": "sa.source.parser-matrix.v1",
+    "contract_changed": false
+  },
+  "dependencies": {
+    "candidate_materialization": "data/manifests/m11-p0-mit-ocw-candidate-materialization-v1.json",
+    "candidate_materialization_digest": "bb4bae3e49d17fc91b1abcee7ba2f173bc5e6d251fe8be89011ac54c0ea87f0e",
+    "digest_evidence": "data/manifests/m11-p0-digest-evidence-v1.json",
+    "digest_evidence_digest": "a6503d2629414759ea6bce97190a991a5a4797e2ab9fcb2325849be7c1d23425",
+    "receipt_batch": "data/manifests/m11-p0-acquisition-26-receipts-v1.json",
+    "receipt_batch_digest": "0a7d9184d30546b9bc5713bc564f43b2b9712515abfc8547de2911a3fa6c7431"
+  },
+  "asset_count": 2,
+  "diagnoses": [
+    {
+      "asset_id": "digital_answers",
+      "pipeline_reason": "SOURCE_PARSE_FAILED",
+      "diagnosis_status": "UNRESOLVED",
+      "exact_root_cause_proved": false,
+      "source_digest": "4952128b9969642958a217aea10c095cd0646e54acbd14e1957e9ccb7969ee58",
+      "revision": "4952128b9969642958a217aea10c095cd0646e54acbd14e1957e9ccb7969ee58",
+      "bytes": 483980,
+      "receipt_digest": "0ffc6824d5c5dd1df08c5d5f70b3f2888f08bc4d52252b26455b88424b6bc45c",
+      "rejected_artifact": "mit-ocw-6-004-2017-digital_answers.json",
+      "rejected_artifact_sha256": "72a41203261ce72bd37f055b63aca1166f6fd02a1b0935dc79ecf4cabaa5c3d7",
+      "pdf_magic_observed": true,
+      "raw_identity_matches_tracked": true,
+      "probe_observations": [
+        {
+          "probe": "parse_file_extensionless_without_declared_format",
+          "result_code": "FORMAT_UNSUPPORTED",
+          "classification": "BOUNDED_OBSERVATION_NOT_ROOT_CAUSE"
+        },
+        {
+          "probe": "parse_file_extensionless_with_declared_pdf",
+          "result_code": "FORMAT_MISMATCH",
+          "classification": "BOUNDED_OBSERVATION_NOT_ROOT_CAUSE"
+        }
+      ],
+      "factual_conclusion": "EXACT_ROOT_CAUSE_NOT_PROVED_FROM_AVAILABLE_ARTIFACTS"
+    },
+    {
+      "asset_id": "information_worksheet",
+      "pipeline_reason": "INVALID_CANDIDATE_INPUT",
+      "diagnosis_status": "UNRESOLVED",
+      "exact_root_cause_proved": false,
+      "source_digest": "3b6f2746c3c4a9573884f9daf542d2d33779b94d9d6259c40f6ae3bb4cc86764",
+      "revision": "3b6f2746c3c4a9573884f9daf542d2d33779b94d9d6259c40f6ae3bb4cc86764",
+      "bytes": 301876,
+      "receipt_digest": "ac634dcff2df569b4169fcf5787d4b8584b545e4f647ed98b88ff9d61c8f8196",
+      "rejected_artifact": "mit-ocw-6-004-2017-information_worksheet.json",
+      "rejected_artifact_sha256": "aea400a725d59489803040745d0c26cbcc99c88c2439acc2e641064d8299202c",
+      "pdf_magic_observed": true,
+      "raw_identity_matches_tracked": true,
+      "probe_observations": [
+        {
+          "probe": "parse_file_extensionless_without_declared_format",
+          "result_code": "FORMAT_UNSUPPORTED",
+          "classification": "BOUNDED_OBSERVATION_NOT_ROOT_CAUSE"
+        },
+        {
+          "probe": "parse_file_extensionless_with_declared_pdf",
+          "result_code": "FORMAT_MISMATCH",
+          "classification": "BOUNDED_OBSERVATION_NOT_ROOT_CAUSE"
+        }
+      ],
+      "factual_conclusion": "EXACT_ROOT_CAUSE_NOT_PROVED_FROM_AVAILABLE_ARTIFACTS"
+    }
+  ],
+  "limitations": [
+    "PROBES_DO_NOT_REPRODUCE_OR_EXPLAIN_THE_ORIGINAL_PIPELINE_FAILURE",
+    "NO_ORIGINAL_EXCEPTION_DETAIL_IS_PRESENT_IN_REJECTED_METADATA",
+    "DIAGNOSIS_DOES_NOT_CHANGE_PIPELINE_OR_HUMAN_REVIEW_STATUS"
+  ],
+  "authority_issued": false,
+  "human_review_reject_mapped": false,
+  "evidence_failed_mapped": false,
+  "successor_created": false,
+  "formal_gate0_executed": false,
+  "production_artifact_repaired": false,
+  "parser_contract_changed": false,
+  "network_used": false,
+  "lifecycle_mutation": false,
+  "host_paths_included": false,
+  "bodies_included": false
+}

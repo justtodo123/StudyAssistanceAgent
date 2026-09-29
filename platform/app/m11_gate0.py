@@ -95,6 +95,19 @@ def _timestamp(value: Any) -> str:
     return value
 
 
+def _assert_receipt_captured_under_authority(receipt: Any, authority: Any) -> None:
+    try:
+        captured_at = datetime.fromisoformat(receipt.captured_at.replace("Z", "+00:00"))
+        issued_at = datetime.fromisoformat(authority.issued_at.replace("Z", "+00:00"))
+        expires_at = datetime.fromisoformat(authority.expires_at.replace("Z", "+00:00"))
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise Gate0Error("GATE0_RECEIPT_CAPTURED_AT_INVALID") from exc
+    if captured_at.tzinfo is None:
+        _fail("GATE0_RECEIPT_CAPTURED_AT_INVALID")
+    if captured_at < issued_at or captured_at >= expires_at:
+        _fail("GATE0_RECEIPT_AUTHORITY_WINDOW_INVALID")
+
+
 def _normalize_assets(required_assets: Sequence[tuple[str, str]]) -> tuple[tuple[str, str], ...]:
     normalized = []
     for item in required_assets:
@@ -140,6 +153,7 @@ def _gate0_input_digest(
     receipts: Sequence[Any],
     candidate_validated: Mapping[tuple[str, str], bool],
     authority: Mapping[str, Any],
+    acquisition_authority: Mapping[str, Any] | None,
     lifecycle_counts: Mapping[str, int],
     scope_digest: str,
 ) -> str:
@@ -160,6 +174,11 @@ def _gate0_input_digest(
         "acquisition_receipts": [item.as_dict() for item in receipts],
         "candidate_validated": candidate_items,
         "authority": dict(sorted(authority.items())),
+        "acquisition_authority": (
+            dict(sorted(acquisition_authority.items()))
+            if acquisition_authority is not None
+            else None
+        ),
         "lifecycle_counts": dict(sorted(lifecycle_counts.items())),
     })
 
@@ -184,6 +203,7 @@ def run_gate0(
     candidate_validated: Mapping[tuple[str, str], bool],
     frozen_assets: Mapping[tuple[str, str], FrozenAsset] | None = None,
     authority: Mapping[str, Any],
+    acquisition_authority: Mapping[str, Any] | None = None,
     scope_digest: str,
     lifecycle_counts: Mapping[str, int],
     owner_id: str,
@@ -195,7 +215,12 @@ def run_gate0(
     if not _valid_id(owner_id):
         _fail("GATE0_OWNER_INVALID")
     _timestamp(signed_at)
-    if _privacy_scan(evidence) or _privacy_scan(lifecycle_counts) or _privacy_scan(authority):
+    if (
+        _privacy_scan(evidence)
+        or _privacy_scan(lifecycle_counts)
+        or _privacy_scan(authority)
+        or _privacy_scan(acquisition_authority)
+    ):
         _fail("GATE0_PRIVACY_FIELD")
     assets = _normalize_assets(required_assets)
     if not isinstance(evidence, Mapping) or not isinstance(candidate_validated, Mapping):
@@ -222,6 +247,21 @@ def run_gate0(
         )
     except ExecutionAuthorityError as exc:
         raise Gate0Error("GATE0_AUTHORITY_INVALID") from exc
+    try:
+        receipt_authority = validated_authority
+        if acquisition_authority is not None:
+            receipt_authority = validate_execution_authority(
+                acquisition_authority,
+                operation="acquisition",
+                expected_scope_digest=scope_digest,
+            )
+            assert_batch_authorized(
+                receipt_authority,
+                {source_id: [asset_id for source, asset_id in assets if source == source_id]
+                 for source_id in receipt_authority.source_ids},
+            )
+    except ExecutionAuthorityError as exc:
+        raise Gate0Error("GATE0_ACQUISITION_AUTHORITY_INVALID") from exc
 
     try:
         validated_reviews = validate_review_history(reviews)
@@ -235,6 +275,9 @@ def run_gate0(
 
     try:
         parsed_receipts = tuple(validate_receipt(payload) for payload in acquisition_receipts)
+        if acquisition_authority is not None:
+            for receipt in parsed_receipts:
+                _assert_receipt_captured_under_authority(receipt, receipt_authority)
         receipt_assets = None
         if frozen_assets is not None:
             if set(frozen_assets) != set(assets):
@@ -245,7 +288,7 @@ def run_gate0(
                 validate_receipt_batch(
                     parsed_receipts,
                     receipt_assets,
-                    authority=validated_authority,
+                    authority=receipt_authority,
                 )
             )
         else:
@@ -260,11 +303,11 @@ def run_gate0(
                     _fail("GATE0_RECEIPT_DUPLICATE")
                 if receipt.scope_digest != scope_digest:
                     _fail("GATE0_RECEIPT_SCOPE_MISMATCH")
-                if receipt.authority_id != validated_authority.authority_id:
+                if receipt.authority_id != receipt_authority.authority_id:
                     _fail("GATE0_RECEIPT_AUTHORITY_MISMATCH")
                 try:
                     assert_batch_authorized(
-                        validated_authority,
+                        receipt_authority,
                         {receipt.source_id: [receipt.asset_id]},
                     )
                 except ExecutionAuthorityError as exc:
@@ -321,6 +364,7 @@ def run_gate0(
             receipts=validated_receipts,
             candidate_validated=candidate_validated,
             authority=authority,
+            acquisition_authority=acquisition_authority,
             lifecycle_counts=lifecycle_counts,
             scope_digest=scope_digest,
         ),
@@ -336,6 +380,7 @@ def run_gate0(
         "owner_id": owner_id,
         "signed_at": signed_at,
         "authority_id": validated_authority.authority_id,
+        "acquisition_authority_id": receipt_authority.authority_id,
         "authority_present": True,
         "candidate_promotion_authorized": False,
         "publication_authorized": False,

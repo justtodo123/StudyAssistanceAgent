@@ -1,0 +1,28 @@
+{
+  "schema": "sa.m11.execution-authority.v1",
+  "operation": "human_review",
+  "authority_id": "m11-rfc-iana-evidence-review-6-20260927",
+  "issued_by": "justtodo123",
+  "issued_at": "2026-09-27T00:00:00Z",
+  "expires_at": "2026-10-11T00:00:00Z",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "source_ids": [
+    "iana-registries",
+    "rfc-editor-index"
+  ],
+  "asset_ids": {
+    "iana-registries": [
+      "service-names-port-numbers-csv",
+      "service-names-port-numbers-txt",
+      "service-names-port-numbers-xml"
+    ],
+    "rfc-editor-index": [
+      "rfc1034",
+      "rfc9110",
+      "rfc9293"
+    ]
+  },
+  "metadata_only": false,
+  "publication_authorized": false,
+  "status": "AUTHORIZED"
+}

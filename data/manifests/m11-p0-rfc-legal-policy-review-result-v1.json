@@ -1,0 +1,32 @@
+{
+  "schema": "sa.m11.p0.rfc-legal-policy-review-result.v1",
+  "result_id": "m11-p0-rfc-legal-policy-review-result-20260928",
+  "authority_id": "m11-rfc-legal-policy-review-3-20260928",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "census_reference": "m11-p0-rfc-legal-policy-census-20260928",
+  "content_quality_reference": "m11-p0-rfc-content-quality-review-result-20260928",
+  "signed_by": "justtodo123",
+  "signed_at": "2026-09-28T15:00:00Z",
+  "decision_reference": "User selection: 全部 9 项 VERIFIED（推荐）",
+  "asset_count": 3,
+  "verified_cell_count": 21,
+  "not_applicable_cell_count": 3,
+  "pending_cell_count": 0,
+  "failed_cell_count": 0,
+  "closure_effect": "COMPLETE",
+  "result": "EVIDENCE_COMPLETE_REVIEW_PENDING",
+  "records": [
+    {"asset_id":"rfc1034","license":{"status":"VERIFIED","refs":["m11-p0-rfc-legal-policy-census-20260928","rfc-use-policy"],"rationale":"Owner accepts the pre-Trust unlimited-distribution notice with the current RFC use/TLP policy for non-modifying indexing, retrieval, and citation."},"robots_terms":{"status":"VERIFIED","refs":["m11-p0-rfc-legal-policy-census-20260928","rfc-robots-digest-match"],"rationale":"Owner accepts the bound robots digest, candidate-paths-not-disallowed policy, and canonical acquired RFC locator as asset-level terms evidence."},"notice_ipr":{"status":"VERIFIED","refs":["m11-p0-rfc-legal-policy-census-20260928"],"rationale":"Owner accepts the RFC 1034 pre-Trust notice family and unlimited-distribution statement for this frozen non-modified candidate."}},
+    {"asset_id":"rfc9110","license":{"status":"VERIFIED","refs":["m11-p0-rfc-legal-policy-census-20260928","rfc-use-policy"],"rationale":"Owner accepts the modern IETF Trust/BCP78/TLP notice for non-modifying indexing, retrieval, and citation."},"robots_terms":{"status":"VERIFIED","refs":["m11-p0-rfc-legal-policy-census-20260928","rfc-robots-digest-match"],"rationale":"Owner accepts the bound robots digest, candidate-paths-not-disallowed policy, and canonical acquired RFC locator as asset-level terms evidence."},"notice_ipr":{"status":"VERIFIED","refs":["m11-p0-rfc-legal-policy-census-20260928"],"rationale":"Owner accepts the document copyright, BCP78, Trust legal-provisions and code-component notice facts for this frozen candidate."}},
+    {"asset_id":"rfc9293","license":{"status":"VERIFIED","refs":["m11-p0-rfc-legal-policy-census-20260928","rfc-use-policy"],"rationale":"Owner accepts the modern IETF Trust/BCP78/TLP notice for non-modifying indexing, retrieval, and citation."},"robots_terms":{"status":"VERIFIED","refs":["m11-p0-rfc-legal-policy-census-20260928","rfc-robots-digest-match"],"rationale":"Owner accepts the bound robots digest, candidate-paths-not-disallowed policy, and canonical acquired RFC locator as asset-level terms evidence."},"notice_ipr":{"status":"VERIFIED","refs":["m11-p0-rfc-legal-policy-census-20260928"],"rationale":"Owner accepts the document copyright, BCP78, Trust legal-provisions and code-component notice facts for this frozen candidate."}}
+  ],
+  "successor_slice_written": false,
+  "formal_gate0_executed": false,
+  "candidate_approval_granted": false,
+  "publication_authorized": false,
+  "network_used": false,
+  "source_expansion": false,
+  "lifecycle_mutation": false,
+  "host_paths_included": false,
+  "bodies_included": false
+}

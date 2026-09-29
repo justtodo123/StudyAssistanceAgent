@@ -1,0 +1,271 @@
+{
+  "schema": "sa.m11.p0.iana-evidence-review.v1",
+  "result_id": "m11-p0-iana-evidence-review-result-20260929",
+  "application_id": "m11-p0-iana-evidence-review-application-20260929",
+  "authority_id": "m11-iana-evidence-review-3-20260929",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "packet_id": "m11-p0-iana-evidence-closure-packet-20260929",
+  "census_id": "m11-p0-iana-evidence-census-20260929",
+  "disposition_id": "m11-p0-iana-owner-disposition-20260929",
+  "signed_by": "justtodo123",
+  "signed_at": "2026-09-29T01:00:00Z",
+  "decision_reference": "User choice: all 24 IANA evidence cells remain PENDING; XML remains UNRESOLVED; TXT remains FAIL_CLOSED",
+  "source_id": "iana-registries",
+  "asset_ids": [
+    "service-names-port-numbers-csv",
+    "service-names-port-numbers-xml",
+    "service-names-port-numbers-txt"
+  ],
+  "asset_count": 3,
+  "evidence_cell_count": 24,
+  "pending_cell_count": 24,
+  "failed_cell_count": 0,
+  "result": "REVIEW_REQUIRED",
+  "closure_effect": "NONE",
+  "successor_slice_written": false,
+  "current_heads": {
+    "rfc": "3 ACCEPT",
+    "iana": "3 DEFER",
+    "mit_ocw": "20 DEFER"
+  },
+  "records": [
+    {
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-csv",
+      "candidate_digest": "34328ed0940d889207de6da29bf0e6e1438d604483c8e1ffb03dceab8f7ec26f",
+      "receipt_digest": "a58c5b98173c240771c1ad4aaf8b8f9b4987841900f439d3daa2992fd19332bc",
+      "revision": "34328ed0940d889207de6da29bf0e6e1438d604483c8e1ffb03dceab8f7ec26f",
+      "evidence": {
+        "license": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "revision": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "robots_terms": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "notice_ipr": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "schema": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "provenance": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "parser": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "content_quality": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        }
+      }
+    },
+    {
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-xml",
+      "candidate_digest": "30a69353af6e017ffd9e141d079f90a7b7117f113f122d2d89ee20ffb587da19",
+      "receipt_digest": "0795572f8bbd320e7be35d7d24420aeed9ff60a3a8c57a2d8747c17153eb1e52",
+      "revision": "30a69353af6e017ffd9e141d079f90a7b7117f113f122d2d89ee20ffb587da19",
+      "evidence": {
+        "license": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "revision": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "robots_terms": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "notice_ipr": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "schema": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "provenance": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "parser": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "content_quality": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        }
+      }
+    },
+    {
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-txt",
+      "candidate_digest": "6aa4def90086ae3dd71ee8f72e2bddb57857828718d3155b42c107138a3c1d29",
+      "receipt_digest": "93fdf797a7e35207ba1dab256b90d60621b24e76fa4128e78e1fd11328852265",
+      "revision": "6aa4def90086ae3dd71ee8f72e2bddb57857828718d3155b42c107138a3c1d29",
+      "evidence": {
+        "license": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "revision": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "robots_terms": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "notice_ipr": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "schema": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "provenance": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "parser": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        },
+        "content_quality": {
+          "status": "PENDING",
+          "refs": [
+            "m11-p0-iana-evidence-closure-packet-20260929",
+            "m11-p0-iana-owner-disposition-20260929"
+          ],
+          "comment": "Owner result leaves this evidence cell PENDING; no closure effect."
+        }
+      }
+    }
+  ],
+  "formal_gate0_executed": false,
+  "candidate_approval_granted": false,
+  "publication_authorized": false,
+  "network_used": false,
+  "source_expansion": false,
+  "lifecycle_mutation": false,
+  "host_paths_included": false,
+  "bodies_included": false,
+  "predecessor_slice_id": "rfc-iana-evidence-review-defer-6-20260927",
+  "predecessor_slice_manifest": "data/manifests/m11-p0-human-review-rfc-iana-evidence-defer-6-v1.json",
+  "predecessor_slice_sha256": "57b7f286cadb62613f7f0ec8ee32b32e67e4c96e264b2725f6ec13ff2b3774b1",
+  "formal_gate0_result_id": "m11-p0-formal-gate0-26-result-20260928",
+  "formal_gate0_result_manifest": "data/manifests/m11-p0-formal-gate0-26-result-v1.json",
+  "formal_gate0_result_sha256": "fb08c974171f9935823c8819141de873f9c29565058b7a7583839b3130c4ac41",
+  "predecessor_review_ids": {
+    "service-names-port-numbers-csv": "m11-hr-20260927-evidence-review-service-names-port-numbers-csv",
+    "service-names-port-numbers-txt": "m11-hr-20260927-evidence-review-service-names-port-numbers-txt",
+    "service-names-port-numbers-xml": "m11-hr-20260927-evidence-review-service-names-port-numbers-xml"
+  }
+}

@@ -4,29 +4,13 @@
 > M0–M5 提供最小实现：默认计算机知识包、多路召回 RAG、学习会话与工作台。
 > M6 起按计划扩展：可插拔数据源、专业化存储、目标驱动学习计划与执行监控。
 
-**当前状态**：M6a-P0 crawler 已收口；M6a、M6b、M7 均为 `ADMITTED / COMPLETE`；M7 生产开工门禁保持
-`AUTHORIZED`，并于 2026-09-06 在 `m7-infrastructure-only-v1` 范围内取得独立人工完成批准；M8–M10 的事实型
-M7 退出前置已满足，但 **M8 与 M12 仍为 `BLOCKED / NOT_STARTED`**；M11 于 2026-09-23 获批 `ADMITTED / IN_PROGRESS`（范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1）；M9 八项 Decision 已 `RESOLVED`，于
-2026-09-20 在 `m9-plan-lifecycle-v1` 范围内获批准入（当时交付状态为 `IN_PROGRESS`），并于 **2026-09-22 在同一
-范围内取得独立 `completion_approval`、交付状态转为 `COMPLETE`**（三条 caveat 随收口一并接受：冻结评测范围仅限
-M9 外部 AI 路径、真实 provider 延迟/成本/失败模式仍未验证、10K/100K 属 M8/M11）。**M10 十一项 Decision 已全部 `RESOLVED`**，
-于 **2026-09-22 在 `m10-autonomous-runner-v1` 范围内获批为 `ADMITTED / IN_PROGRESS`**，`implementation_start`
-同步 `AUTHORIZED`；并于 **2026-09-23 在原范围内取得独立 `completion_approval`、交付状态转为 `COMPLETE`**。
-步骤 1–7 已完成技术实施（Runner、恢复、Arm A、knowledge-pack manifest 与只读 stdio MCP）；已知限制见
-`docs/plans/references/m10-completion-evidence-v1.md`。`approval_scope` 明确排除 M11 数据扩展、M12 云部署、
-多 worker 拓扑、M8 后端选择与 10K/100K 真实数据。M8 八项 Decision 已于 2026-09-10 逐项批准并
-`RESOLVED`。active execution protocol `draft-0.10` 曾完成 P0/P1/P2 并到达 `BINDING_FROZEN`，但 2026-09-14
-独立 P3 文本审计发现三项阻断性 schema/治理闭合缺陷，结论为 `REJECTED / stop`（`FAILED / RETURNED`），该链保持
-冻结。Successor `draft-0.11` 已完成 P0/P1/P2，但独立 P3 已 `REJECTED / stop`，失败链冻结；未授权创建
-experiment root、获取依赖、准备输入、执行、发布、选择后端或准入 M8，且从未执行。
-M8 的 V8–V12 已按不同失败处置永久封口且不可复用；V13 已
-处置为 `SUPERSEDED_UNBOUND_DRAFT / NOT_AUTHORIZED / NEVER_EXECUTED`。新路线为 M8 单机 100K capacity、M11 10K 真实 approved
-chunks、M12 可选云端单用户部署；M0–M5 MVP 可用。
-2026-08-31 P0 语料治理复测已冻结：默认 OS/DS/CO 仍为可信 90 题包，Network candidate 不进入默认索引；
-M7 完成不批准 Network，也不改变其 `review / candidate / unresolved` 状态。CPython 3.11.9 精确冻结环境的五格式
-100×20 parser/normalization/identity 协议全 PASS；该技术证据与后续人工批准相互独立，不能自行完成阶段。
-`python tools/start_local.py` 可启动最小工作台。阶段、准入与定位以 [docs/PLAN.md](docs/PLAN.md) 为最终依据；
-统一硬门禁见 [stage-admission-gates.md](docs/standards/stage-admission-gates.md)。
+**当前发布**：`MVP_COMPLETE`；**活跃路线图**：`ACTIVE_ROADMAP_DEFERRED`（2026-09-29）。M0–M5 产品基线与
+M6a/M6b/M7/M9/M10 已完成增强构成当前可发布的本地优先学习 Agent。M8 保持 `BLOCKED / NOT_STARTED`；
+M11 保持 `ADMITTED / IN_PROGRESS`，但执行处置为 `PAUSED_DEFERRED`，Formal Gate 0 仍为 `BLOCKED`、
+approved documents/chunks 为 0、3K/10K 均未挣得且无完成批准；M12 保持 `BLOCKED / NOT_STARTED`。
+本次阶段性收口不声称专业后端已选定、10K 数据已交付或云端已就绪。阶段、准入与定位以
+[docs/PLAN.md](docs/PLAN.md) 为最终依据；统一硬门禁见
+[stage-admission-gates.md](docs/standards/stage-admission-gates.md)。
 
 ---
 
@@ -53,7 +37,7 @@ M7 完成不批准 Network，也不改变其 `review / candidate / unresolved` �
 | 用户数据源 | 自定义知识目录，真实数据当前→3K→10K，30K/100K 分级扩展 | ✅ M7 Source Registry、FTS5/vector/offline、delete/isolation 与 Search/QA 的受信任内部 principal overlay 已完成；preview/quiz/sessions 仍不含用户源。冻结技术证据通过，随后于 2026-09-06 取得独立人工完成批准，当前为 `ADMITTED / COMPLETE` |
 | 专业化存储 | SQLite/M7 控制面；M8 验证 100K capacity，LanceDB 为单机第一候选，Qdrant 为云端条件候选 | ⬜ M8（八项 Decision 已 `RESOLVED`；`draft-0.10` 与 `draft-0.11` 的 P3 拒绝链均冻结；执行、后端选择与 admission 未授权） |
 | 计划执行监控 | 按计划选题并跟踪偏差 | ✅ M9 `ADMITTED / COMPLETE`（2026-09-22 收口，范围 `m9-plan-lifecycle-v1`）：确定性生成 + 显式采纳 + 进度事件 + 跳过/逾期偏差触发重规划已实现（API 层）；三个只读投影（mastery / 授权 Source 摘要 / 先修关系）已接入 Planner，先修违反由 `summary.prerequisites.violations` 可测。**工作台接入仍未完成**，且默认关闭的外部 AI 路径有一条已登记的采纳率上限（`PlanAIRequest` 不含先修关系，见 M9 计划 §4.5） |
-| Harness 框架 | M6a/M6b/M7/M9/M10 已收口；真实数据规模化与云部署未实现 | ✅ M6a/M6b/M7/M9/M10 `ADMITTED / COMPLETE`；M10 已于 2026-09-23 在原范围内取得独立完成批准；M8 与 M12 `BLOCKED / NOT_STARTED`；M11 `ADMITTED / IN_PROGRESS`（开工已授权，A1/A2/A3 实施中） |
+| Harness 框架 | M6a/M6b/M7/M9/M10 已收口；真实数据规模化与云部署延期 | ✅ 当前发布 `MVP_COMPLETE`；M6a/M6b/M7/M9/M10 `ADMITTED / COMPLETE`；M8/M12 `BLOCKED / NOT_STARTED`；M11 `ADMITTED / IN_PROGRESS` 且 `PAUSED_DEFERRED` |
 | 测验生成 | 从知识条目例题、评测集、概念标签自动出题 | ✅ 已实现（API `/api/v1/quiz` + Skill `quiz-generator`） |
 | 复习提醒 | 结合遗忘曲线的复习排程 | ✅ 已实现（API `/api/v1/review-log` + `/api/v1/review-due` + Skill `review-due`） |
 | 面经整理 | 按知识点聚合面试真题 | ✅ 已实现（51 条，覆盖 OS/DS/CO/RAG/Agent/项目） |
@@ -120,6 +104,8 @@ StudyAssistanceAgent/
 │   │   ├── source_offline.py # M7 离线 fail-closed 校验与显式 FULL repair
 │   │   ├── user_source_search.py # M7 用户源 Search/cache/RRF/provenance overlay
 │   │   ├── m11_candidate_pipeline.py # M11 manifest-bound candidate-only 规范化编排
+│   │   ├── m11_gate0.py      # M11 只读 Formal Gate 0 runner（不授予下游权限）
+│   │   ├── m11_gate0_result.py # M11 Formal Gate 0 persisted-result privacy/integrity validator
 │   │   └── static/           # 最小学习工作台静态页
 │   ├── tests/             # 冒烟测试
 │   ├── requirements.txt   # Python 依赖
@@ -157,6 +143,17 @@ StudyAssistanceAgent/
 ├── .claude/               # Agent 配置（agents、skills、hooks）
 └── .gitignore
 ```
+
+## 当前状态
+
+项目发布状态为 `MVP_COMPLETE`，活跃规模化/部署路线为 `ACTIVE_ROADMAP_DEFERRED`。M0–M5 的产品闭环和
+M6a/M6b/M7/M9/M10 的已批准增强是当前交付范围。M8 保持 `BLOCKED / NOT_STARTED`；M11 保持
+`ADMITTED / IN_PROGRESS`，并自 2026-09-29 起 `PAUSED_DEFERRED`；M12 保持 `BLOCKED / NOT_STARTED`。
+
+M11 的 2026-09-28 Formal Gate 0 历史结果仍为 `BLOCKED`：approved documents/chunks 为 0，Formal 3K 未执行，
+10K exit 未挣得，也没有独立 completion approval。IANA 24 个 evidence cells 与 MIT exact-18 的 144 个 cells 仍为
+`PENDING`；current heads 为 `3 RFC ACCEPT_FOR_PROMOTION_REVIEW + 3 IANA DEFER + 20 MIT DEFER`。暂停不产生
+promotion、publication、network 或 lifecycle mutation，也不抹去既有实现和证据。
 
 ## 快速开始
 
@@ -240,7 +237,7 @@ cd ..
 | [docs/plans/m8-specialized-storage-plan.md](docs/plans/m8-specialized-storage-plan.md) | M8 专业化检索存储准入准备（被阻断） |
 | [docs/plans/m9-goal-driven-planning-plan.md](docs/plans/m9-goal-driven-planning-plan.md) | M9 目标驱动学习计划执行计划（`ADMITTED / COMPLETE`，2026-09-22 收口，范围 `m9-plan-lifecycle-v1`） |
 | [docs/plans/m10-autonomous-runner-plan.md](docs/plans/m10-autonomous-runner-plan.md) | M10 自主 Runner 与 Harness 对外实施（`ADMITTED / COMPLETE`，步骤 1–7 已交付，2026-09-23 收口） |
-| [docs/plans/m11-data-scaling-plan.md](docs/plans/m11-data-scaling-plan.md) | M11 真实数据规模化；10K approved chunks 退出目标（`ADMITTED / IN_PROGRESS`，范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1；2026-09-26 授权 26 资产 HUMAN_REVIEW 批次，RFC+IANA 6 项与 MIT OCW 20 项均已 `DEFER`，Formal Gate 0 / 晋升 / publication 仍未授权） |
+| [docs/plans/m11-data-scaling-plan.md](docs/plans/m11-data-scaling-plan.md) | M11 真实数据规模化；10K approved chunks 退出目标（`ADMITTED / IN_PROGRESS`，范围 `m11-data-scaling-v1`，开工已授权，plan_revision v1.1；Formal Gate 0 已在冻结 26 资产 scope 上执行并为 `BLOCKED`，无 promotion、publication、Formal 3K 或 approved document/chunk 变更） |
 | [docs/plans/m12-cloud-deployment-plan.md](docs/plans/m12-cloud-deployment-plan.md) | M12 可选云端单用户部署准入准备 |
 | [knowledge/README.md](knowledge/README.md) | 知识库导航与写作规范（含 51 条面经） |
 | [CLAUDE.md](CLAUDE.md) | Agent 项目级开发指导 |
@@ -253,3 +250,8 @@ cd ..
 ## License
 
 [MIT](LICENSE)
+
+2026-09-29 追加 MIT OCW exact-20 非执行 owner decision-input packet：绑定 tracked candidate materialization、digest evidence 与 acquisition receipts，明确 18 candidate-validated / 2 pipeline-rejected，144 exact-18 evidence cells 保持 `PENDING`；不签发 authority、owner verdict、successor，不重跑 Gate 0，也不产生 promotion、publication、network 或 lifecycle mutation。
+2026-09-29 追加 MIT OCW 两项 pipeline rejection 的 bounded offline diagnosis：`digital_answers` 与 `information_worksheet` 精确根因均保持 `UNRESOLVED`；CPython 3.11.9 的 `FORMAT_UNSUPPORTED` / `FORMAT_MISMATCH` 仅为 probe observations。依赖密封到 tracked materialization/digest/receipts；不改 parser contract、不修 production artifacts、不映射 HUMAN_REVIEW REJECT/evidence FAILED、不创建 authority/successor/Gate0/lifecycle 变化。
+
+2026-09-29 追加 M11 ordered review wave 与 IANA replay checkpoint：IANA exact-three authority/result 仍保留 24/24 `PENDING`，current heads 为 `DEFER`，XML `UNRESOLVED`、TXT `FAIL_CLOSED`；冻结 CPython 3.11.9 本地 replay 仅生成 3 candidates / 3 chunks / 0 rejects / 0 approved。MIT exact-18 三类 category authority/result 保守关闭 0，144/144 cells `PENDING`，两项 rejected excluded diagnosis `UNRESOLVED`。未产生 authority/successor、Gate 0、promotion、publication、network 或 lifecycle mutation。

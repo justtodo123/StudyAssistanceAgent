@@ -1,0 +1,118 @@
+{
+  "schema": "sa.m11.p0.iana-candidate-materialization.v1",
+  "materialization_id": "m11-p0-iana-candidate-materialization-20260929",
+  "generated_at": "2026-09-29",
+  "source_id": "iana-registries",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "asset_ids": [
+    "service-names-port-numbers-csv",
+    "service-names-port-numbers-xml",
+    "service-names-port-numbers-txt"
+  ],
+  "input_asset_count": 3,
+  "candidate_asset_count": 3,
+  "validated_candidate_artifact_count": 3,
+  "candidate_chunk_count": 3,
+  "rejections": [],
+  "assets": [
+    {
+      "asset_id": "service-names-port-numbers-csv",
+      "candidate_artifact": "iana-registries-service-names-port-numbers-csv.json",
+      "candidate_artifact_sha256": "49ba3aa10f2c4419cb21d0ad15417aef99df0e7c905595caea5c7d1ca6f72638",
+      "normalized_artifact": "iana-registries-service-names-port-numbers-csv.json",
+      "normalized_artifact_sha256": "f6916ff3b0435c8137a463f8bfc5ae20de22daf4eb06a0dd0049ea83846520d1",
+      "raw_sha256": "34328ed0940d889207de6da29bf0e6e1438d604483c8e1ffb03dceab8f7ec26f",
+      "receipt_sha256": "a58c5b98173c240771c1ad4aaf8b8f9b4987841900f439d3daa2992fd19332bc",
+      "revision": "34328ed0940d889207de6da29bf0e6e1438d604483c8e1ffb03dceab8f7ec26f",
+      "document_id": "0d257654ec0788a56d220f71cd12907d",
+      "chunk_id": "8b6eaae1ffaf1e7a64f96fba8bc7c104",
+      "chunk_count": 1,
+      "content_fingerprint": "34328ed0940d889207de6da29bf0e6e1438d604483c8e1ffb03dceab8f7ec26f",
+      "status": "CANDIDATE_VALIDATED"
+    },
+    {
+      "asset_id": "service-names-port-numbers-xml",
+      "candidate_artifact": "iana-registries-service-names-port-numbers-xml.json",
+      "candidate_artifact_sha256": "5f605ff49e0bb024780a3310c3ee205d72e0728649b016ae01db326ba432fdd6",
+      "normalized_artifact": "iana-registries-service-names-port-numbers-xml.json",
+      "normalized_artifact_sha256": "90372ee92c9f35d6c89e776e23c499c0f60ec14709d64501b6437a7953e6a684",
+      "raw_sha256": "30a69353af6e017ffd9e141d079f90a7b7117f113f122d2d89ee20ffb587da19",
+      "receipt_sha256": "0795572f8bbd320e7be35d7d24420aeed9ff60a3a8c57a2d8747c17153eb1e52",
+      "revision": "30a69353af6e017ffd9e141d079f90a7b7117f113f122d2d89ee20ffb587da19",
+      "document_id": "50e564768edc1cc7d7d0d7c989fee49d",
+      "chunk_id": "a59ae838bd18817062abecbd3d37fcb1",
+      "chunk_count": 1,
+      "content_fingerprint": "30a69353af6e017ffd9e141d079f90a7b7117f113f122d2d89ee20ffb587da19",
+      "status": "CANDIDATE_VALIDATED"
+    },
+    {
+      "asset_id": "service-names-port-numbers-txt",
+      "candidate_artifact": "iana-registries-service-names-port-numbers-txt.json",
+      "candidate_artifact_sha256": "d362b94ba14a9623914643222d4fd086a77d22b6a9ef0e7128bf5856a515c140",
+      "normalized_artifact": "iana-registries-service-names-port-numbers-txt.json",
+      "normalized_artifact_sha256": "dfb4d9ec35d93a23e0292d1dc0b3092e45960cc2bf95a8326f5e5aca16ec9794",
+      "raw_sha256": "6aa4def90086ae3dd71ee8f72e2bddb57857828718d3155b42c107138a3c1d29",
+      "receipt_sha256": "93fdf797a7e35207ba1dab256b90d60621b24e76fa4128e78e1fd11328852265",
+      "revision": "6aa4def90086ae3dd71ee8f72e2bddb57857828718d3155b42c107138a3c1d29",
+      "document_id": "b7e9d4df1e7e752bd190243d46efd760",
+      "chunk_id": "fa39d45703d9598805947b084f5c0546",
+      "chunk_count": 1,
+      "content_fingerprint": "6aa4def90086ae3dd71ee8f72e2bddb57857828718d3155b42c107138a3c1d29",
+      "status": "CANDIDATE_VALIDATED"
+    }
+  ],
+  "parser_environment": {
+    "implementation": "cpython",
+    "python": "3.11.9",
+    "parser_contract": "cpython-textio==3.11.9"
+  },
+  "parser_observations": {
+    "csv": "REPLAYED",
+    "xml": "REPLAYED",
+    "txt": "FAIL_CLOSED_AMBIENT_ONLY"
+  },
+  "evidence_bindings": {
+    "digest_manifest": "data/manifests/m11-p0-digest-evidence-v1.json",
+    "digest_manifest_sha256": "d5314cdb02152032d188662ee5fd8b25a39f377893b6dc9c88a6ea1581c604f5",
+    "receipt_manifest": "data/manifests/m11-p0-acquisition-26-receipts-v1.json",
+    "receipt_manifest_sha256": "0a7d9184d30546b9bc5713bc564f43b2b9712515abfc8547de2911a3fa6c7431",
+    "review_result": "data/manifests/m11-p0-iana-evidence-review-result-v1.json",
+    "review_result_sha256": "8f6da4267619dd16415d6c484902855df161192f99ef1b87abacce4f70145f4f",
+    "packet": "data/manifests/m11-p0-iana-evidence-closure-packet-v1.json",
+    "packet_sha256": "12d2a52564ccc22fc6345b0b53c811e7aac6f810ff39ebe0077d35c64d696d20",
+    "census": "data/manifests/m11-p0-iana-evidence-census-v1.json",
+    "census_sha256": "51580e8a5dad89f777c747ab169d71866ea47cf8a4420eca494444800c278c68",
+    "disposition": "data/manifests/m11-p0-iana-owner-disposition-v1.json",
+    "disposition_sha256": "df3b09eee78d977dc8b699b317236909aff1ffe97e7ae36e7e04b188fe0509a1"
+  },
+  "predecessor": {
+    "slice_id": "rfc-iana-evidence-review-defer-6-20260927",
+    "manifest": "data/manifests/m11-p0-human-review-rfc-iana-evidence-defer-6-v1.json",
+    "sha256": "57b7f286cadb62613f7f0ec8ee32b32e67e4c96e264b2725f6ec13ff2b3774b1",
+    "status": "DEFER",
+    "asset_count": 3
+  },
+  "historical_gate0": {
+    "result_id": "m11-p0-formal-gate0-26-result-20260928",
+    "manifest": "data/manifests/m11-p0-formal-gate0-26-result-v1.json",
+    "sha256": "fb08c974171f9935823c8819141de873f9c29565058b7a7583839b3130c4ac41",
+    "result": "BLOCKED",
+    "immutable": true
+  },
+  "current_heads": {
+    "rfc": "3 ACCEPT",
+    "iana": "3 DEFER",
+    "mit_ocw": "20 DEFER"
+  },
+  "approved_document_count": 0,
+  "approved_chunk_count": 0,
+  "counts_toward_3k": false,
+  "formal_gate0_executed": false,
+  "candidate_approval_granted": false,
+  "publication_authorized": false,
+  "network_used": false,
+  "source_expansion": false,
+  "lifecycle_mutation": false,
+  "host_paths_included": false,
+  "bodies_included": false
+}

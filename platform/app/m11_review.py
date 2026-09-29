@@ -171,6 +171,30 @@ def validate_review_history(records: Sequence[Mapping[str, Any]]) -> tuple[Revie
     return validated
 
 
+def project_current_review_heads(
+    records: Sequence[Mapping[str, Any]],
+) -> tuple[ReviewRecord, ...]:
+    """Project one current append-only review head per source asset."""
+    validated = validate_review_history(records)
+    by_id = {record.review_id: record for record in validated}
+    superseded_ids: set[str] = set()
+    for record in validated:
+        if record.supersedes is None:
+            continue
+        predecessor = by_id.get(record.supersedes)
+        if predecessor is not None and (
+            predecessor.source_id,
+            predecessor.asset_id,
+        ) != (record.source_id, record.asset_id):
+            _fail("REVIEW_SUPERSESSION_TARGET_INVALID")
+        superseded_ids.add(record.supersedes)
+    current = tuple(record for record in validated if record.review_id not in superseded_ids)
+    current_targets = {(record.source_id, record.asset_id) for record in current}
+    if len(current_targets) != len(current):
+        _fail("REVIEW_CURRENT_HEAD_CONFLICT")
+    return current
+
+
 def gate0_status(*, required_assets: Sequence[tuple[str, str]], reviews: Sequence[Mapping[str, Any]],
                  acquisition_receipts: Sequence[Mapping[str, Any]], authority_present: bool,
                  scope_digest: str) -> dict[str, Any]:

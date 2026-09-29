@@ -23,6 +23,23 @@ MIT OCW 20 项见
 
 官方来源只读观察层见 [`data/manifests/m11-p0-official-source-observations-26-v1.json`](../../../data/manifests/m11-p0-official-source-observations-26-v1.json)，观察后的 successor review slice 见 [`data/manifests/m11-p0-human-review-official-observation-defer-26-v1.json`](../../../data/manifests/m11-p0-human-review-official-observation-defer-26-v1.json)。该层只记录 source-level metadata facts；MIT third-party-rights limitation 与 IANA XML 日期冲突保持未解决，不能关闭八类 evidence，也不改变 closure matrix 的全 `PENDING` 状态。
 
+2026-09-27 exact-six 资产级核验链见 application、专用 authority、result 与 successor slice：
+[`m11-p0-rfc-iana-evidence-review-application-v1.json`](../../../data/manifests/m11-p0-rfc-iana-evidence-review-application-v1.json)、
+[`m11-p0-rfc-iana-evidence-review-authority-v1.json`](../../../data/manifests/m11-p0-rfc-iana-evidence-review-authority-v1.json)、
+[`m11-p0-rfc-iana-evidence-review-result-v1.json`](../../../data/manifests/m11-p0-rfc-iana-evidence-review-result-v1.json) 与
+[`m11-p0-human-review-rfc-iana-evidence-defer-6-v1.json`](../../../data/manifests/m11-p0-human-review-rfc-iana-evidence-defer-6-v1.json)。
+该链精确覆盖 RFC 3 + IANA 3；48 个 evidence cell 仍全为 `PENDING`，六条 successor 仍为 `DEFER`，XML 冲突保持
+`UNRESOLVED`，TXT parser 保持 `FAIL_CLOSED`，不执行 Gate 0 或改变 MIT 20 项 current head。
+
+同日 MIT OCW exact-20 资产级核验链见 application、专用 authority、result 与 successor slice：
+[`m11-p0-mit-ocw-evidence-review-application-v1.json`](../../../data/manifests/m11-p0-mit-ocw-evidence-review-application-v1.json)、
+[`m11-p0-mit-ocw-evidence-review-authority-v1.json`](../../../data/manifests/m11-p0-mit-ocw-evidence-review-authority-v1.json)、
+[`m11-p0-mit-ocw-evidence-review-result-v1.json`](../../../data/manifests/m11-p0-mit-ocw-evidence-review-result-v1.json) 与
+[`m11-p0-human-review-mit-ocw-evidence-defer-20-v1.json`](../../../data/manifests/m11-p0-human-review-mit-ocw-evidence-defer-20-v1.json)。
+该链精确覆盖 MIT OCW 20 项；160 个 evidence cell 仍全为 `PENDING`，20 条 successor 全为 `DEFER`，closure effect 为
+`NONE`，third-party rights 为 `UNRESOLVED`。`digital_answers` 与 `information_worksheet` 的 normalization rejection
+只保留为 pipeline disposition，不自动变成 HUMAN_REVIEW `REJECT`；不执行 Gate 0，不创建 document/chunk，不晋升或发布。
+
 - `verified` 只表示该批次的 HUMAN_REVIEW authority 已按冻结 digest 身份绑定，不表示许可、robots 或内容已通过。
 - `pending` 表示对应核验字段尚未由 owner 填写。
 - `blocked` 表示该动作超出本批次授权。
@@ -43,6 +60,7 @@ MIT OCW 20 项见
 | 资产数 | 26 |
 | 含已 REJECTED 的 MIT OCW 资产 | `digital_answers`、`information_worksheet` |
 | OpenDSA | 不在本批次 |
+| candidate materialization | MIT exact-20 中 18 项通过当前 validator，共 93 个 candidate chunks；2 项保持 rejected；不计入 3K |
 | approved assets/documents/chunks | 0 / 0 / 0 |
 | Formal Gate 0 | 未授权、未执行 |
 | publication | 未授权 |
@@ -50,6 +68,8 @@ MIT OCW 20 项见
 | MIT OCW 切片 | 20 项已 `DEFER`（含两份已 REJECTED 的 PDF） |
 | 获取后再核验切片 | 26 项仍 `DEFER`，supersedes 历史切片 |
 | 官方观察 successor 切片 | 26 项仍 `DEFER`，逐条 supersedes closure 切片；观察不闭合 evidence |
+| RFC/IANA exact-six evidence review | 6 项已核验；48 cells 仍 `PENDING`，6 条 successor 仍 `DEFER` |
+| MIT OCW exact-20 evidence review | 20 项已核验；160 cells 仍 `PENDING`，20 条 successor 仍 `DEFER`；closure effect `NONE`，third-party rights `UNRESOLVED` |
 | 26 项决策 | 已写完，全部 `DEFER`；不通过 Formal Gate 0 |
 
 ## 核验工作单
@@ -70,6 +90,9 @@ MIT OCW 20 项见
 | `mit-ocw-slice` | `verified` | MIT OCW 20 已写入 `DEFER` 记录；无 committed candidate 文档/chunks，无 ACQUIRED receipt；两份已 REJECTED 的 PDF 仍在切片内。 |
 | `acq-defer-slice` | `verified` | 26 项获取后再核验仍为 `DEFER` 并 supersedes 历史记录；不关闭 pending 核验，不通过 Formal Gate 0。 |
 | `official-observation-slice` | `verified` | 26 项官方观察 successor 仍为 `DEFER` 并 supersedes closure 记录；source-level observation 不关闭 evidence。 |
+| `rfc-iana-evidence-review` | `verified` | RFC/IANA exact-six application、专用 authority、result 与 successor 链有效；48 cells 全 `PENDING`，六条 review 全 `DEFER`。 |
+| `mit-ocw-evidence-review` | `verified` | MIT OCW exact-20 application、专用 authority、result 与 successor 链有效；160 cells 全 `PENDING`，20 条 review 全 `DEFER`，closure effect 为 `NONE`，third-party rights 为 `UNRESOLVED`。 |
+| `mit-ocw-candidate-materialization` | `verified` | 18 个 candidate artifacts 通过当前 validator，共 93 个 candidate chunks；两项 rejected；approved 为 0 且不计入 3K。 |
 | `review-records` | `verified` | 完整 26 项决策记录已写完且全部为 `DEFER`；不关闭 pending 核验字段，不通过 Formal Gate 0。 |
 | `formal-gate0` | `blocked` | 本批次不授权 Formal Gate 0 执行。 |
 | `candidate-promotion` | `blocked` | 本批次不授权 candidate→approved 晋升。 |
@@ -121,6 +144,31 @@ MIT OCW 20 项见
   "official_observation_slice_record": "data/manifests/m11-p0-human-review-official-observation-defer-26-v1.json",
   "official_observation_record": "data/manifests/m11-p0-official-source-observations-26-v1.json",
   "official_observation_closes_evidence": false,
+  "rfc_iana_evidence_review_application": "data/manifests/m11-p0-rfc-iana-evidence-review-application-v1.json",
+  "rfc_iana_evidence_review_authority_id": "m11-rfc-iana-evidence-review-6-20260927",
+  "rfc_iana_evidence_review_result": "data/manifests/m11-p0-rfc-iana-evidence-review-result-v1.json",
+  "rfc_iana_evidence_review_successor_slice": "data/manifests/m11-p0-human-review-rfc-iana-evidence-defer-6-v1.json",
+  "rfc_iana_evidence_review_asset_count": 6,
+  "rfc_iana_evidence_review_pending_cell_count": 48,
+  "rfc_iana_evidence_review_decision": "DEFER",
+  "rfc_iana_evidence_review_closure_effect": "NONE",
+  "rfc_iana_evidence_review_xml_conflict_status": "UNRESOLVED",
+  "rfc_iana_evidence_review_txt_parser_state": "FAIL_CLOSED",
+  "mit_ocw_evidence_review_application": "data/manifests/m11-p0-mit-ocw-evidence-review-application-v1.json",
+  "mit_ocw_evidence_review_authority_id": "m11-mit-ocw-evidence-review-20-20260927",
+  "mit_ocw_evidence_review_authority": "data/manifests/m11-p0-mit-ocw-evidence-review-authority-v1.json",
+  "mit_ocw_evidence_review_result": "data/manifests/m11-p0-mit-ocw-evidence-review-result-v1.json",
+  "mit_ocw_evidence_review_successor_slice": "data/manifests/m11-p0-human-review-mit-ocw-evidence-defer-20-v1.json",
+  "mit_ocw_evidence_review_asset_count": 20,
+  "mit_ocw_evidence_review_pending_cell_count": 160,
+  "mit_ocw_evidence_review_decision": "DEFER",
+  "mit_ocw_evidence_review_closure_effect": "NONE",
+  "mit_ocw_evidence_review_third_party_rights": "UNRESOLVED",
+  "mit_ocw_candidate_materialization_record": "data/manifests/m11-p0-mit-ocw-candidate-materialization-v1.json",
+  "mit_ocw_candidate_asset_count": 18,
+  "mit_ocw_candidate_chunk_count": 93,
+  "mit_ocw_candidate_rejected_count": 2,
+  "mit_ocw_candidate_counts_toward_3k": false,
   "official_observation_unresolved_findings": [
     "SOURCE_POLICY_LIMITATION",
     "SCHEMA_METADATA_CONFLICT"
@@ -149,6 +197,9 @@ MIT OCW 20 项见
     {"id": "mit-ocw-slice", "status": "verified"},
     {"id": "acq-defer-slice", "status": "verified"},
     {"id": "official-observation-slice", "status": "verified"},
+    {"id": "rfc-iana-evidence-review", "status": "verified"},
+    {"id": "mit-ocw-evidence-review", "status": "verified"},
+    {"id": "mit-ocw-candidate-materialization", "status": "verified"},
     {"id": "review-records", "status": "verified"},
     {"id": "formal-gate0", "status": "blocked"},
     {"id": "candidate-promotion", "status": "blocked"},

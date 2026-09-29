@@ -768,3 +768,21 @@ M9 计划 §4.3。
 *创建：2026-08-12 · 更新：2026-09-22（追加 M9 v1.5 外部 AI 评测读数；同日 owner 另行批准 M9 `COMPLETE`，
 `completion_approval` 见 M9 计划 §4.5——本文件上列的读数与 caveat 不因收口而改变）·
 维护：知识库、评测集或检索策略变化后复测并追加记录*
+
+
+## 阶段性 MVP 发布收口验证 — 2026-09-29
+
+- 环境：Windows 11 Home，CPython 3.13.3，pytest 9.1.1；checkout `2eb1808` 后的文档/治理增量。
+- 项目状态：`MVP_COMPLETE / ACTIVE_ROADMAP_DEFERRED`。该状态不改变 M8/M11/M12 的阶段事实。
+- 聚焦治理：`test_docs_consistency.py + test_governance_contract.py` 为 **34 passed**。
+- 文档完整性：`tests/M3d` 为 **6 passed**。
+- M11 + regression：**554 passed, 2 skipped**。这证明现有 M11 证据和跨阶段治理仍一致，**不证明 M11 exit**。
+- MVP + 受保护平台基线：**207 passed**。
+- 默认 90 题 keyword-only 评测：OS/DS/CO Recall@3 分别为 **1.000 / 0.929 / 1.000**，加权 **0.978**；
+  三课均满足 `Recall@3 >= 0.8`。
+- 根级完整测试：**1906 collected；1899 passed、4 skipped、3 failed**。三项失败均为已登记的 CPython 3.13.3
+  TXT parser 精确 3.11.9 contract fail-closed，不是本次收口回归，也未被放宽。
+- 本地启动 smoke：`tools/start_local.py --port 8765` 后 `--check` 返回 `health: UP`。
+
+发布声明只覆盖本地优先 MVP 与已完成增强。M11 Formal Gate 0 仍 `BLOCKED`、approved documents/chunks 为 0，
+M12 仍 `BLOCKED / NOT_STARTED`；不声明 3K/10K、专业存储或云端部署。

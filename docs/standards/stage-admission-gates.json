@@ -1,6 +1,15 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "authority": "docs/PLAN.md",
+  "project_status": {
+    "release_status": "MVP_COMPLETE",
+    "roadmap_status": "ACTIVE_ROADMAP_DEFERRED",
+    "effective_at": "2026-09-29",
+    "release_scope": "M0-M5",
+    "completed_extensions": ["M6a", "M6b", "M7", "M9", "M10"],
+    "deferred_stages": ["M8", "M11", "M12"],
+    "evidence": ["docs/PLAN.md", "docs/baselines.md", "docs/demo.md", "tests/TEST_PLAN.md"]
+  },
   "policy": "docs/standards/stage-admission-gates.md",
   "decision_statuses": ["OPEN", "RESOLVED"],
   "admission_statuses": ["BLOCKED", "ADMITTED", "REVOKED"],
@@ -445,6 +454,20 @@
         "authorized_by": "justtodo123",
         "authorized_at": "2026-09-23",
         "authorization_reference": "User instruction: 「允许执行」与「A1 A2 A3 全部批准」——批准 `m11-data-scaling-v1` 范围内的生产开工，并将创建 tests/M11、total chunk hard max 4000、冻结 P0 白名单下载/入库纳入 plan_revision v1.1；不扩大 excluded"
+      },
+      "execution_disposition": {
+        "status": "PAUSED_DEFERRED",
+        "effective_at": "2026-09-29",
+        "reason": "SHORT_TERM_FEASIBILITY",
+        "reference": "docs/plans/m11-data-scaling-plan.md",
+        "resume_criteria": [
+          "EXPLICIT_OWNER_RESUME_APPROVAL",
+          "FEASIBLE_RESOURCING_AND_TIMEBOX",
+          "REFRESH_TIME_BOUNDED_AUTHORITIES",
+          "REVALIDATE_GATE0_INPUTS_AND_BLOCKERS",
+          "FREEZE_NEXT_EXECUTION_WAVE",
+          "SYNC_PLAN_REGISTRY_AND_TEST_EVIDENCE"
+        ]
       }
     },
     {

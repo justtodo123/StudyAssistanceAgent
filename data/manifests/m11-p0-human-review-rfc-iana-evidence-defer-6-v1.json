@@ -1,0 +1,218 @@
+{
+  "schema": "sa.m11.p0.human-review-slice.v1",
+  "slice_id": "rfc-iana-evidence-review-defer-6-20260927",
+  "authority_id": "m11-rfc-iana-evidence-review-6-20260927",
+  "authority_record": "data/manifests/m11-p0-rfc-iana-evidence-review-authority-v1.json",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "source_ids": [
+    "iana-registries",
+    "rfc-editor-index"
+  ],
+  "asset_count": 6,
+  "remaining_in_batch": 0,
+  "decision": "DEFER",
+  "reviewer_id": "justtodo123",
+  "signed_at": "2026-09-27T00:00:00Z",
+  "formal_gate0_executed": false,
+  "candidate_approval_granted": false,
+  "publication_authorized": false,
+  "network_used": false,
+  "source_expansion": false,
+  "lifecycle_mutation": false,
+  "host_paths_included": false,
+  "bodies_included": false,
+  "records": [
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260927-evidence-review-service-names-port-numbers-csv",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-csv",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "34328ed0940d889207de6da29bf0e6e1438d604483c8e1ffb03dceab8f7ec26f",
+      "receipt_digest": "a58c5b98173c240771c1ad4aaf8b8f9b4987841900f439d3daa2992fd19332bc",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
+      },
+      "signed_at": "2026-09-27T00:00:00Z",
+      "attestation_digest": "055c351925bb9ee103d691e40cf1a4f26d3afdaee5dca8a53b8fe0751e408a95",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-p0-acquisition-26-receipts-v1",
+        "m11-p0-evidence-closure-26-v1",
+        "m11-p0-official-source-observations-26-v1",
+        "m11-p0-rfc-iana-evidence-review-application-v1",
+        "m11-p0-rfc-iana-evidence-review-result-v1"
+      ],
+      "supersedes": "m11-hr-20260926-official-observation-service-names-port-numbers-csv",
+      "comment": "DEFER: exact-six evidence review leaves all eight categories PENDING; closure effect is NONE and Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260927-evidence-review-service-names-port-numbers-txt",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-txt",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "6aa4def90086ae3dd71ee8f72e2bddb57857828718d3155b42c107138a3c1d29",
+      "receipt_digest": "93fdf797a7e35207ba1dab256b90d60621b24e76fa4128e78e1fd11328852265",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
+      },
+      "signed_at": "2026-09-27T00:00:00Z",
+      "attestation_digest": "1c4d9957d3ae08806f1fd175332ba3a548858baa6471c54c0923d6be7c4a6acf",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-p0-acquisition-26-receipts-v1",
+        "m11-p0-evidence-closure-26-v1",
+        "m11-p0-official-source-observations-26-v1",
+        "m11-p0-rfc-iana-evidence-review-application-v1",
+        "m11-p0-rfc-iana-evidence-review-result-v1"
+      ],
+      "supersedes": "m11-hr-20260926-official-observation-service-names-port-numbers-txt",
+      "comment": "DEFER: exact-six evidence review leaves all eight categories PENDING; TXT parsing remains fail-closed; closure effect is NONE and Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260927-evidence-review-service-names-port-numbers-xml",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "iana-registries",
+      "asset_id": "service-names-port-numbers-xml",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "30a69353af6e017ffd9e141d079f90a7b7117f113f122d2d89ee20ffb587da19",
+      "receipt_digest": "0795572f8bbd320e7be35d7d24420aeed9ff60a3a8c57a2d8747c17153eb1e52",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
+      },
+      "signed_at": "2026-09-27T00:00:00Z",
+      "attestation_digest": "732d6414e5a0fef07b7043f80e2a142dbeaa894bb76eb285245660e93ebc5240",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-p0-acquisition-26-receipts-v1",
+        "m11-p0-evidence-closure-26-v1",
+        "m11-p0-official-source-observations-26-v1",
+        "m11-p0-rfc-iana-evidence-review-application-v1",
+        "m11-p0-rfc-iana-evidence-review-result-v1"
+      ],
+      "supersedes": "m11-hr-20260926-official-observation-service-names-port-numbers-xml",
+      "comment": "DEFER: exact-six evidence review leaves all eight categories PENDING; XML metadata conflict remains UNRESOLVED; closure effect is NONE and Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260927-evidence-review-rfc1034",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "rfc-editor-index",
+      "asset_id": "rfc1034",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "d6b10a71441df879cc2817d23f2dad120c8a5f87e74eba1e4ed4b743a76a891a",
+      "receipt_digest": "6a7a22c4d5e4ac738715e5d004664d3c5c0ab3afeecf007973297b9243df9fe5",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
+      },
+      "signed_at": "2026-09-27T00:00:00Z",
+      "attestation_digest": "3f1094abf94875902d629f8b4a845326508de39bb26936916c0b2364ab6419df",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-p0-acquisition-26-receipts-v1",
+        "m11-p0-evidence-closure-26-v1",
+        "m11-p0-official-source-observations-26-v1",
+        "m11-p0-rfc-iana-evidence-review-application-v1",
+        "m11-p0-rfc-iana-evidence-review-result-v1"
+      ],
+      "supersedes": "m11-hr-20260926-official-observation-rfc1034",
+      "comment": "DEFER: exact-six evidence review leaves all eight categories PENDING; closure effect is NONE and Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260927-evidence-review-rfc9110",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "rfc-editor-index",
+      "asset_id": "rfc9110",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "21c1cdce6ab0e5509b04d84a28000836c7a087cf786efe6f04877ebfff47232a",
+      "receipt_digest": "6d0e2f64f1c9622eef27d497a2d042d28964a642c5aa28b5ed7541d4d97e7e2d",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
+      },
+      "signed_at": "2026-09-27T00:00:00Z",
+      "attestation_digest": "f55b5e2da278ad478e178b4872e8eb0993df7429b173cebd3c1c1a24bd8d6392",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-p0-acquisition-26-receipts-v1",
+        "m11-p0-evidence-closure-26-v1",
+        "m11-p0-official-source-observations-26-v1",
+        "m11-p0-rfc-iana-evidence-review-application-v1",
+        "m11-p0-rfc-iana-evidence-review-result-v1"
+      ],
+      "supersedes": "m11-hr-20260926-official-observation-rfc9110",
+      "comment": "DEFER: exact-six evidence review leaves all eight categories PENDING; closure effect is NONE and Gate 0 remains blocked."
+    },
+    {
+      "schema": "sa.m11.human-review.v1",
+      "review_id": "m11-hr-20260927-evidence-review-rfc9293",
+      "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+      "source_id": "rfc-editor-index",
+      "asset_id": "rfc9293",
+      "document_id": null,
+      "chunk_ids": [],
+      "candidate_digest": "6d9ac8be4b0286f8c3d337addf442b2eb6a9b14e1366594ea7fbc273f93dc2d9",
+      "receipt_digest": "355b80fc571e74fab0757a408a5edb989aa86fd3cde87cfeb7391a8a72c4f819",
+      "reviewer_id": "justtodo123",
+      "reviewer_role": "owner",
+      "sampling_plan": {
+        "sample_size": 6,
+        "stratification": "rfc-iana-evidence-review-6",
+        "batch": "rfc-iana-evidence-review-6-20260927",
+        "slice": "rfc-iana-evidence-review-6"
+      },
+      "signed_at": "2026-09-27T00:00:00Z",
+      "attestation_digest": "2d72854421d06a6db0f04ea949bfc5290c27fe1e443a2468ef7048583fe949ee",
+      "decision": "DEFER",
+      "evidence_refs": [
+        "m11-p0-digest-evidence-v1",
+        "m11-p0-acquisition-26-receipts-v1",
+        "m11-p0-evidence-closure-26-v1",
+        "m11-p0-official-source-observations-26-v1",
+        "m11-p0-rfc-iana-evidence-review-application-v1",
+        "m11-p0-rfc-iana-evidence-review-result-v1"
+      ],
+      "supersedes": "m11-hr-20260926-official-observation-rfc9293",
+      "comment": "DEFER: exact-six evidence review leaves all eight categories PENDING; closure effect is NONE and Gate 0 remains blocked."
+    }
+  ]
+}

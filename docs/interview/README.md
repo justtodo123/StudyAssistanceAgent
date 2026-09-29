@@ -93,10 +93,10 @@ create -> qa -> explain -> quiz -> evaluate -> review-log -> completed
 
 | 当前已实现 | 后续（不要讲成已有） |
 | --- | --- |
-| 正式 Runner = 学习状态机；M6b = 默认关闭的独立只读 native tool-use preview | M10：可选自主 Runner、写工具、checkpoint 与 Agent 任务评测 |
-| crawler 只产候选，默认不入库 | M7：用户源注册、生命周期与千级检索 |
-| SQLite 向量 + 线性余弦 | M8：按 benchmark 选择专业存储 |
-| QA `generation_layer` + Recall@3；preview 离线 fake-provider p95 5.179 ms | 真实 provider smoke 仅显式手工运行，不作为 SLA |
+| M0–M5 本地学习闭环；M7 Source lifecycle；M9 目标计划；M10 可选自主 Runner；M6b 默认关闭只读 native tool-use preview | M8：按 benchmark 选择专业存储 |
+| crawler 只产候选，默认不入库；M11 当前仅有候选/治理证据 | M11：3K/10K approved corpus 与正式发布 |
+| SQLite 向量 + 线性余弦；本地离线 profile 是当前发布默认 | M12：可选云端单用户部署 |
+| QA `generation_layer` + Recall@3；preview 离线 fake-provider p95 5.179 ms | 真实 provider smoke 仅显式手工运行，不作为 SLA；规模化与云部署路线延期 |
 
 | 文件 | 用途 |
 | --- | --- |
@@ -111,4 +111,4 @@ Anthropic。当前只运行了 fake-provider 离线门禁，没有发起真实 A
 
 ---
 
-*维护：2026-08-28 与 PLAN / runtime-contracts / M6b closeout 口径对齐；面试前复习一句话、两条隔离执行路径、量化数字和能力边界。*
+*维护：2026-09-29 与 PLAN / runtime-contracts / 阶段性发布收口口径对齐；MVP 已发布，规模化与云部署路线延期。*

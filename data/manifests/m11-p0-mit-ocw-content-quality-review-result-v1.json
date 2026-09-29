@@ -1,0 +1,234 @@
+{
+  "schema": "sa.m11.p0.mit-ocw-content-quality-review-result.v1",
+  "result_id": "m11-p0-mit-ocw-content-quality-review-result-20260929",
+  "packet_id": "m11-p0-mit-ocw-owner-decision-input-packet-20260929",
+  "authority_id": "m11-mit-ocw-content-quality-review-18-20260929",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "signed_by": "justtodo123",
+  "signed_at": "2026-09-29T06:22:00Z",
+  "decision_reference": "Owner exact-18 conservative review: no category closure without definitive support.",
+  "asset_count": 18,
+  "closed_cell_count": 0,
+  "pending_cell_count": 18,
+  "failed_cell_count": 0,
+  "closure_effect": "NONE",
+  "result": "REVIEW_REQUIRED",
+  "records": [
+    {
+      "asset_id": "beta_answers",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "beta_worksheet",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "caches_answers",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "caches_worksheet",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "cmos_answers",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "cmos_worksheet",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "combinational_answers",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "combinational_worksheet",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "compilation_answers",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "compilation_worksheet",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "digital_worksheet",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "fsm_answers",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "fsm_worksheet",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "information_answers",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "interrupts_answers",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "interrupts_worksheet",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "isa_answers",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    },
+    {
+      "asset_id": "isa_worksheet",
+      "content_quality": {
+        "status": "PENDING",
+        "refs": [
+          "m11-p0-mit-ocw-owner-decision-input-packet-20260929"
+        ],
+        "rationale": "Tracked evidence is insufficient for a definitive category decision."
+      }
+    }
+  ],
+  "predecessor_references": {
+    "owner_decision_packet": "m11-p0-mit-ocw-owner-decision-input-packet-20260929",
+    "schema_result": "m11-p0-mit-ocw-schema-review-result-20260929",
+    "technical_result": "m11-p0-mit-ocw-technical-evidence-review-result-20260929"
+  },
+  "successor_slice_written": false,
+  "current_heads": {
+    "rfc": "3 ACCEPT",
+    "iana": "3 DEFER",
+    "mit_ocw": "20 DEFER"
+  },
+  "current_status": "REVIEW_REQUIRED",
+  "formal_gate0_executed": false,
+  "candidate_approval_granted": false,
+  "publication_authorized": false,
+  "network_used": false,
+  "source_expansion": false,
+  "lifecycle_mutation": false,
+  "host_paths_included": false,
+  "bodies_included": false,
+  "remaining_pending_categories": [
+    "license",
+    "revision",
+    "robots_terms",
+    "notice_ipr",
+    "schema",
+    "provenance",
+    "parser",
+    "content_quality"
+  ],
+  "packet_pending_cell_count": 144,
+  "predecessor_content_seals": {
+    "owner_decision_packet": "d02850799a9227198f6f38fb5da2b3f09e7cb0b6228c5a7ce6cd731fc60abd9e",
+    "schema_result": "49d0ab2fe5d53ee50aaf316343942b243a623a21de2c7e80e127d9c47c97d976",
+    "technical_result": "50586a540594361f0a4df256d6aee42ab38078620c452335422d7ad793be44a0"
+  }
+}

@@ -1,6 +1,7 @@
 # M12 可选云端单用户部署准入准备计划
 
 > 当前状态：设计准备；`BLOCKED / NOT_STARTED`，未获准开工
+> 路线处置：`DEFERRED_NOT_STARTED`（2026-09-29）；项目 MVP 收口不构成 M12 准入或云端就绪
 > 拟议前置：M8–M11 退出证据；本地离线 profile 保持有效
 > 范围决策：[`references/m8-m12-scope-decision-v1.md`](references/m8-m12-scope-decision-v1.md)
 > 最终状态权威：[`docs/PLAN.md`](../PLAN.md)
@@ -14,6 +15,15 @@ M12 的唯一正式退出目标是：
 
 云端是 opt-in deployment profile，不替代本地应用。M12 不包含多租户、团队共享、开放注册、计费、百万级规模、
 Kubernetes/集群编排或跨区域高可用；这些能力如未来需要，必须进入新的阶段和 Decision 集。
+
+## 1.1 2026-09-29 延期处置
+
+M12 作为可选云端路线标记为 `DEFERRED_NOT_STARTED`，权威阶段状态仍为 `BLOCKED / NOT_STARTED`。项目级
+`MVP_COMPLETE` 不满足 `M12-M11-EXIT`，不关闭任何 prerequisite 或 Decision，也不授权登录服务器、开放端口、安装软件、
+创建账号、上传数据、启动服务、运行 benchmark 或声称安全/部署就绪。
+
+只有 M8–M11 的适用前置真实闭合、十三项 Decision 全部 `RESOLVED`、负责人完成独立 admission 与开工授权后，才可
+恢复本路线；届时仍须重新核对服务器 baseline、威胁模型、成本和数据驻留边界。
 
 ## 2. 不可削弱的不变量
 

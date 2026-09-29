@@ -1,0 +1,51 @@
+{
+  "schema": "sa.m11.execution-authority.v1",
+  "operation": "gate0",
+  "authority_id": "m11-formal-gate0-26-20260928",
+  "issued_by": "justtodo123",
+  "issued_at": "2026-09-28T17:00:00Z",
+  "expires_at": "2026-09-29T17:00:00Z",
+  "scope_digest": "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419",
+  "source_ids": [
+    "rfc-editor-index",
+    "iana-registries",
+    "mit-ocw-6-004-2017"
+  ],
+  "asset_ids": {
+    "rfc-editor-index": [
+      "rfc9110",
+      "rfc9293",
+      "rfc1034"
+    ],
+    "iana-registries": [
+      "service-names-port-numbers-csv",
+      "service-names-port-numbers-xml",
+      "service-names-port-numbers-txt"
+    ],
+    "mit-ocw-6-004-2017": [
+      "beta_answers",
+      "caches_answers",
+      "cmos_answers",
+      "combinational_answers",
+      "compilation_answers",
+      "digital_answers",
+      "fsm_answers",
+      "information_answers",
+      "interrupts_answers",
+      "isa_answers",
+      "beta_worksheet",
+      "caches_worksheet",
+      "cmos_worksheet",
+      "combinational_worksheet",
+      "compilation_worksheet",
+      "digital_worksheet",
+      "fsm_worksheet",
+      "information_worksheet",
+      "interrupts_worksheet",
+      "isa_worksheet"
+    ]
+  },
+  "metadata_only": false,
+  "publication_authorized": false,
+  "status": "AUTHORIZED"
+}
