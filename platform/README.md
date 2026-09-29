@@ -61,9 +61,19 @@ source label 与 logical asset path 在任何 artifact 写入前校验；绝对�
 `app/m11_execution_authority.py` 提供 M11 执行 authority 的纯校验契约：authority 必须绑定调用方提供的冻结 P0
 scope digest、明确 operation、有效期、精确 source/asset 子集，并固定 `publication_authorized=false`。metadata-only
 清单不能升级为执行授权，M8/M12、排除源、scope 扩展和 batch 越界均 fail-closed；该模块不下载、不修改
-lifecycle，也不发布。当前可提交的可执行 authority 有四份，均绑定同一冻结父 scope digest、不含 OpenDSA，且都不授予
-Gate 0 / 晋升 / publication：`data/manifests/m11-p0-human-review-26-authority-v1.json`（26 项 `human_review`）、
-`data/manifests/m11-p0-acquisition-26-authority-v1.json`（26 项 `acquisition`）与
+lifecycle，也不发布。当前存在八份既有 `human_review` authority 与一份 `acquisition` authority，以及一份独立的冻结 26 资产
+`operation=gate0` authority；后者仅授权一次本地、确定性、只读、metadata-only evaluation，不能替代 acquisition
+authority 验证历史 receipts，也不产生 Gate 0 之外的权限。Formal Gate 0 authority 与 persisted result 分别见
+`data/manifests/m11-p0-formal-gate0-26-authority-v1.json` 和
+`data/manifests/m11-p0-formal-gate0-26-result-v1.json`。
+
+`app/m11_gate0_result.py` 严格校验已持久化的 metadata-only result 与 fresh runner result 的身份、digest、计数、隐私
+边界和 escalation flags。2026-09-28 的实际 Formal Gate 0 outcome 为 `BLOCKED`：不产生 promotion、publication、
+Formal 3K 或 lifecycle effect；approved documents/chunks 仍为 0。`data/manifests/m11-p0-human-review-26-authority-v1.json`（26 项 `human_review`）、
+`data/manifests/m11-p0-acquisition-26-authority-v1.json`（26 项 `acquisition`）、
+`data/manifests/m11-p0-rfc-schema-review-authority-v1.json`、`m11-p0-rfc-technical-evidence-review-authority-v1.json`、
+`m11-p0-rfc-content-quality-review-authority-v1.json`、`m11-p0-rfc-legal-policy-review-authority-v1.json`、
+`m11-p0-rfc-exact-three-accept-authority-v1.json` 与
 `data/manifests/m11-p0-rfc-iana-evidence-review-authority-v1.json`（仅 RFC/IANA exact-six `human_review`）与
 `data/manifests/m11-p0-mit-ocw-evidence-review-authority-v1.json`（仅 MIT OCW exact-20 `human_review`）。后两份的
 source/asset 集合必须分别精确等于六项和 20 项，不能替代或扩张为 Gate 0、promotion、publication authority。26 项 `ACQUIRED` receipts 见
@@ -121,6 +131,7 @@ platform/
 │   ├── m11_acquisition.py # 冻结 asset 解析、receipt 与外部 raw 原子写入；默认不联网
 │   ├── m11_review.py # 人工 review metadata 与只读 Gate 0 coverage projection
 │   ├── m11_gate0.py # 只读 Formal Gate 0 runner；Gate 0 与 acquisition authority 分离，缺失 BLOCKED，永不授予 promotion/publication
+│   ├── m11_gate0_result.py # persisted Formal Gate 0 result 的 privacy/integrity validator
 │   ├── m11_evidence_closure.py # 26 项 metadata-only 八类证据闭环投影校验；不执行 Formal Gate 0
 │   ├── m11_official_observation.py # append-only 官方来源观察层校验；不改变 closure、不执行 Gate 0
 │   ├── m11_rfc_iana_evidence_review.py # RFC/IANA exact-six evidence review 组合校验；48 cells 保持 PENDING
@@ -826,4 +837,4 @@ Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知�
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-06（M7 correctness 收口与独立完成批准；`tests/M7/` 当前收集 270 项；M8 仍阻断）· 维护：随 API/配置变更同步更新*
+*创建：2026-08-11 · 更新：2026-09-28（M11 冻结 26 资产 Formal Gate 0 已执行，结果为 metadata-only `BLOCKED`；独立 Gate 0/acquisition authority linkage、persisted result validator 与 repository-chain tests 已加入；无 promotion、publication、Formal 3K 或 approved 数据变更）· 维护：随 API/配置变更同步更新*

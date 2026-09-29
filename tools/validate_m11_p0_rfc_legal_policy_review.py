@@ -37,7 +37,7 @@ def main() -> int:
     print(
         f"valid: {validated['verified_cell_count']} VERIFIED + "
         f"{validated['not_applicable_cell_count']} NOT_APPLICABLE; 0 PENDING; "
-        "evidence complete; no successor; Gate 0 unexecuted"
+        "evidence complete; no successor; this validator does not execute repository-wide Gate 0"
     )
     return 0
 

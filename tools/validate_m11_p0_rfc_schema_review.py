@@ -29,7 +29,7 @@ def main() -> int:
         return 1
     print(
         f"valid: {validated['closed_cell_count']} RFC schema cells NOT_APPLICABLE; "
-        f"{validated['pending_cell_count']} cells remain PENDING; no successor; Gate 0 unexecuted"
+        f"{validated['pending_cell_count']} cells remain PENDING; no successor; this validator does not execute repository-wide Gate 0"
     )
     return 0
 

@@ -35,7 +35,7 @@ def main() -> int:
         f"valid: {validated['validated_candidate_artifact_count']} RFC candidates / "
         f"{validated['candidate_chunk_count']} chunks sampled as metadata; "
         f"technical_sampling={result['technical_sampling_status']}; "
-        "content_quality remains PENDING; Gate 0 unexecuted"
+        "content_quality remains PENDING; this validator does not execute repository-wide Gate 0"
     )
     return 0
 

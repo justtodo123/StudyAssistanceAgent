@@ -11,6 +11,7 @@ tools/
 ├── start_local.py         # 一键启动工作台并做 /health 检查
 ├── source_inventory.py    # 外部资料只读盘点（不复制、不解析全文、不建索引）
 ├── validate_m11_p0_metadata_gate0.py # 离线校验 P0 metadata-only Gate 0 checklist；不执行 Gate 0
+├── run_m11_formal_gate0.py # 离线复验已执行的 Formal Gate 0 metadata-only BLOCKED 记录
 ├── validate_m11_p0_evidence_gaps.py # 离线校验 source-qualified evidence-gap projection
 ├── validate_m11_p0_evidence_closure.py # 离线校验 26 项八类证据闭环投影；不执行 Gate 0
 ├── validate_m11_p0_official_observations.py # 离线校验 26 项官方来源观察层；不改变 closure、不执行 Gate 0
@@ -20,7 +21,7 @@ tools/
 ├── validate_m11_p0_rfc_content_quality_review.py # 校验 owner RFC content_quality VERIFIED；12 VERIFIED / 3 N/A / 9 PENDING
 ├── validate_m11_p0_rfc_legal_policy_census.py # 校验 RFC offline notice/robots census
 ├── validate_m11_p0_rfc_legal_policy_review.py # 校验 owner legal closure；21 VERIFIED / 3 N/A / 0 PENDING
-├── validate_m11_p0_rfc_exact_three_successor.py # 校验 RFC exact-three ACCEPT successor；IANA/MIT DEFER，Gate 0 未执行
+├── validate_m11_p0_rfc_exact_three_successor.py # 校验 RFC exact-three ACCEPT successor；IANA/MIT DEFER；工具自身不执行 Gate 0
 ├── validate_m11_rfc_evidence_closure_packet.py # 离线校验 RFC exact-three 非执行 review packet；24 cells 保持 PENDING
 ├── validate_m11_p0_rfc_schema_review.py # 离线校验 RFC exact-three schema-only owner decision；3 N/A / 21 PENDING
 ├── validate_m11_p0_rfc_technical_evidence_review.py # 校验 RFC technical decision；9 VERIFIED / 3 N/A / 12 PENDING
@@ -73,8 +74,21 @@ tools/
 
 `platform/app/m11_execution_authority.py` 是纯校验模块，不是授权签发器。它要求 authority record 明确绑定冻结 P0
 scope digest、operation、有效期和精确 source/asset 子集，并强制 publication 仍为 false；metadata-only 清单、
-M8/M12、排除源及 batch 越界均拒绝。当前可提交的可执行记录有四份，均绑定同一冻结父 scope digest、不含 OpenDSA，且都不授予 Gate 0 /
-晋升 / publication：
+M8/M12、排除源及 batch 越界均拒绝。当前可提交的可执行记录包含八份既有 `human_review` authority、一份 `acquisition` authority
+和一份独立的 `operation=gate0` authority；它们均绑定同一冻结父 scope digest、不含 OpenDSA，且均不授予晋升或
+publication。Gate 0 authority 只允许一次本地、确定性、只读、metadata-only evaluation，不能替代 acquisition
+authority 验证历史 receipts，也不产生下游授权。相关 authority 与 receipts 见
+[`data/manifests/m11-p0-formal-gate0-26-authority-v1.json`](../data/manifests/m11-p0-formal-gate0-26-authority-v1.json)、
+[`data/manifests/m11-p0-acquisition-26-authority-v1.json`](../data/manifests/m11-p0-acquisition-26-authority-v1.json)
+和
+[`data/manifests/m11-p0-acquisition-26-receipts-v1.json`](../data/manifests/m11-p0-acquisition-26-receipts-v1.json)。
+
+`run_m11_formal_gate0.py` 是该专用 authority 对当前 repository metadata chain 的 deterministic offline 复验工具。
+它只读取 tracked JSON metadata，不访问网络、不读取正文或 candidate plaintext、不修改输入或 lifecycle，也不重写
+committed result。它验证双 authority linkage、26 条 receipt、current review heads、candidate checkpoint、evidence
+status projection 与严格的 persisted result；当前 committed outcome 为 `BLOCKED`，不是 evaluator failure。该结果不
+产生 promotion、publication、Formal 3K、source expansion、network 或 lifecycle effect。
+
 [`data/manifests/m11-p0-human-review-26-authority-v1.json`](../data/manifests/m11-p0-human-review-26-authority-v1.json)
 （`human_review`）与
 [`data/manifests/m11-p0-acquisition-26-authority-v1.json`](../data/manifests/m11-p0-acquisition-26-authority-v1.json)
@@ -132,7 +146,7 @@ PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_offici
 successor `DEFER` 链。它只读取仓库内 metadata，不读取 source body、不联网、不写文件；scope、identity、reference、
 privacy 或 escalation 漂移均 fail-closed。成功只证明六项 identity 与 append-only review 链一致：48 个 evidence cell
 仍全为 `PENDING`，closure effect 为 `NONE`，IANA XML 冲突为 `UNRESOLVED`，IANA TXT parser 为 `FAIL_CLOSED`，
-Formal Gate 0 未执行且仍 `BLOCKED`。
+该 validator 自身不执行 Formal Gate 0；当前 repository-wide Formal Gate 0 已执行且结果为 `BLOCKED`。
 
 ```bash
 PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_rfc_iana_evidence_review.py
@@ -240,8 +254,9 @@ PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_mit_oc
 `DEFER` 链。范围只含冻结的 20 个 MIT PDF，保留 `digital_answers` 与 `information_worksheet` 两项
 normalization rejection；RFC/IANA、OpenDSA 和其他来源不进入本批次。20 项共 160 个 evidence cell 全部保持
 `PENDING`，20 条 successor 全部为 `DEFER`，`closure_effect=NONE`，third-party rights 为 `UNRESOLVED`。
-校验不读取 source body、不联网、不写文件；Formal Gate 0 未执行且仍为 `BLOCKED`，`reviewed_asset_count=0`，
-不创建 document/chunk、不授权 candidate 晋升、publication、source expansion、new acquisition 或 lifecycle mutation。
+校验不读取 source body、不联网、不写文件；该 validator 自身不执行 Formal Gate 0，且此 MIT-only historical
+result 的 `reviewed_asset_count=0`。当前 repository-wide Formal Gate 0 已执行并为 `BLOCKED`；本工具不创建
+document/chunk、不授权 candidate 晋升、publication、source expansion、new acquisition 或 lifecycle mutation。
 
 ```bash
 PYTHONPATH=platform ./platform/.venv/Scripts/python tools/validate_m11_p0_mit_ocw_evidence_review.py

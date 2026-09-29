@@ -15,6 +15,8 @@ AUTHORITY_ID = "m11-rfc-content-quality-review-3-20260928"
 SAMPLING_RESULT_ID = "m11-p0-rfc-content-quality-sampling-result-20260928"
 TECHNICAL_RESULT_ID = "m11-p0-rfc-technical-evidence-review-result-20260928"
 SCHEMA_RESULT_ID = "m11-p0-rfc-schema-review-result-20260928"
+TECHNICAL_DECISION_REFERENCE = "m11-p0-rfc-technical-evidence-review-result-20260928"
+SCHEMA_DECISION_REFERENCE = "m11-p0-rfc-schema-review-result-20260928"
 
 
 class RfcContentQualityReviewError(ValueError):
@@ -52,7 +54,13 @@ def validate_rfc_content_quality_result(payload: Mapping[str, Any], *, authority
         _fail("RFC_QUALITY_REVIEW_RESULT_FIELDS_INVALID")
     if payload["schema"] != "sa.m11.p0.rfc-content-quality-review-result.v1" or payload["result_id"] != "m11-p0-rfc-content-quality-review-result-20260928" or payload["authority_id"] != AUTHORITY_ID or payload["scope_digest"] != SCOPE_DIGEST:
         _fail("RFC_QUALITY_REVIEW_RESULT_IDENTITY_INVALID")
-    if payload["sampling_result_reference"] != SAMPLING_RESULT_ID or technical_result.get("result_id") != TECHNICAL_RESULT_ID or schema_result.get("result_id") != SCHEMA_RESULT_ID:
+    if (
+        payload["sampling_result_reference"] != SAMPLING_RESULT_ID
+        or payload["technical_decision_reference"] != TECHNICAL_DECISION_REFERENCE
+        or payload["schema_decision_reference"] != SCHEMA_DECISION_REFERENCE
+        or technical_result.get("result_id") != TECHNICAL_RESULT_ID
+        or schema_result.get("result_id") != SCHEMA_RESULT_ID
+    ):
         _fail("RFC_QUALITY_REVIEW_RESULT_LINK_INVALID")
     if sampling_result.get("technical_sampling_status") != "VERIFIED" or sampling_result.get("content_quality_status") != "PENDING":
         _fail("RFC_QUALITY_REVIEW_SAMPLING_NOT_VERIFIED")

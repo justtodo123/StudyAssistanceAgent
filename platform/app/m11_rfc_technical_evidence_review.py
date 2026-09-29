@@ -13,6 +13,7 @@ ASSETS = ("rfc1034", "rfc9110", "rfc9293")
 SCOPE_DIGEST = "e405e8d274c3a6a91d1bfa5aa732482ddb100d347af87131aebdbb5439972419"
 AUTHORITY_ID = "m11-rfc-technical-evidence-review-3-20260928"
 SCHEMA_RESULT_ID = "m11-p0-rfc-schema-review-result-20260928"
+SCHEMA_DECISION_REFERENCE = "m11-p0-rfc-schema-review-result-v1"
 CATEGORIES = ("license", "revision", "robots_terms", "notice_ipr", "schema", "provenance", "parser", "content_quality")
 VERIFIED_CATEGORIES = ("revision", "provenance", "parser")
 
@@ -54,7 +55,7 @@ def validate_rfc_technical_result(payload: Mapping[str, Any], *, authority: Mapp
         _fail("RFC_TECHNICAL_RESULT_IDENTITY_INVALID")
     if _timestamp(payload["signed_at"]) < _timestamp(authority["issued_at"]):
         _fail("RFC_TECHNICAL_RESULT_TIMESTAMP_ORDER_INVALID")
-    if schema_result.get("result_id") != SCHEMA_RESULT_ID:
+    if payload["schema_decision_reference"] != SCHEMA_DECISION_REFERENCE or schema_result.get("result_id") != SCHEMA_RESULT_ID:
         _fail("RFC_TECHNICAL_SCHEMA_RESULT_LINK_INVALID")
     if payload["asset_count"] != 3 or payload["closed_cell_count"] != 12 or payload["verified_cell_count"] != 9 or payload["not_applicable_cell_count"] != 3 or payload["pending_cell_count"] != 12 or payload["failed_cell_count"] != 0 or payload["closure_effect"] != "PARTIAL" or payload["result"] != "REVIEW_REQUIRED":
         _fail("RFC_TECHNICAL_RESULT_COUNTS_INVALID")

@@ -29,7 +29,7 @@ def main() -> int:
     print(
         f"valid: {validated['sample_size']} RFC legal notice records; "
         f"families={','.join(sorted(families))}; 9 legal-policy cells remain PENDING; "
-        "no network; no authority; Gate 0 unexecuted"
+        "no network; no authority; this validator does not execute repository-wide Gate 0"
     )
     return 0
 

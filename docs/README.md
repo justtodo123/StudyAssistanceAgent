@@ -110,7 +110,8 @@ docs/
 ### PLAN.md — 项目计划
 
 核心文件。定义项目定位（通用学习 Agent harness）、技术选型与里程碑；M0–M7、M9、M10 已收口，
-M8 与 M12 仍阻断；M11 已准入并获开工授权（plan_revision v1.1，A1/A2/A3 实施中）。
+M8 与 M12 仍阻断；M11 已准入并获开工授权（plan_revision v1.1，A1/A2/A3 实施中）；冻结 26 资产的
+Formal Gate 0 已执行并为 `BLOCKED`，未产生 promotion、publication、Formal 3K 或 approved 数据变更。
 **每次会话开工前先看本文档**，明确当前里程碑与退出条件。
 
 ### prds/ — 需求澄清 PRD
@@ -232,12 +233,4 @@ PRD 不能替代 [PLAN.md](PLAN.md)，也不能单独批准 M6a–M12。
 
 ---
 
-*创建：2026-08-11 · 更新：2026-09-23（M11 获批 `ADMITTED / IN_PROGRESS`，范围 `m11-data-scaling-v1`，
-开工已授权，plan_revision v1.1 纳入 A1/A2/A3；十项 Decision 已 `RESOLVED`。此前：M8 active execution protocol `draft-0.10` 曾到达
-`BINDING_FROZEN`，但独立 P3 文本审计为 `REJECTED / stop`；不得 `request-p4`，M8 与 M12 仍阻断；
-M9 已于 2026-09-20 在 `m9-plan-lifecycle-v1` 范围内获批准入（当时交付状态为 `IN_PROGRESS`），并于 2026-09-22 以
-plan_revision v1.5 解冻 `M9-EVALUATION` 的延迟/成本维度——**范围仅限 M9 外部 AI 路径**，CI 臂冻结预算
-**执行**、真实 provider 读数为 opt-in 非门禁且**本次未运行**；该变更触发 §4 撤销过渡。同日 owner 在同一
-范围内批准 `M9 COMPLETE`（§4 要求的独立 `completion_approval`，见 M9 计划 §4.5），登记表
-`delivery_status` 改为 `COMPLETE`、下游 `M10-M9-EXIT` 改为 `SATISFIED`（**只登记事实，不构成 M10 准入**）；
-三条 caveat 随收口**一并接受而非解除**）· 维护：随项目演进同步更新*
+*创建：2026-08-11 · 更新：2026-09-28（M11 冻结 26 资产 Formal Gate 0 已执行，结果为 `BLOCKED`；不产生 promotion、publication、Formal 3K 或 approved 数据变更；M11 仍为 `ADMITTED / IN_PROGRESS`）· 维护：随项目演进同步更新*

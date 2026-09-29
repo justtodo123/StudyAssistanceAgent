@@ -501,6 +501,24 @@ gitignored 数据层；tracked manifest 只含相对 artifact 名、digest、doc
 candidate promotion 或 publication authority。approved documents/chunks 仍均为 0，93 个 candidate chunks 明确
 `counts_toward_3k=false`，不得用于 3K/10K 或 M11 COMPLETE 声明。
 
+### 8.20 Formal Gate 0 execution（2026-09-28）
+
+owner 以独立 `operation=gate0` authority `m11-formal-gate0-26-20260928` 授权对冻结 26 资产执行一次
+本地、确定性、只读、metadata-only 的 Formal Gate 0 evaluation。执行显式使用独立
+`m11-acquisition-26-20260926` authority 验证历史 receipt，因此共享 scope digest 不使 Gate 0、acquisition
+或 human review authority 可互换。
+
+实际结果为 `BLOCKED`：26 条 `ACQUIRED` receipt、3 个 current
+`ACCEPT_FOR_PROMOTION_REVIEW` head、23 个 `DEFER` head、21 个 validated candidate、23 个匿名
+missing/blocking asset key，以及 0 个 failed evidence key。生命周期快照保持 21 个 candidate document、96 个
+candidate chunk、0 个 approved document 与 0 个 approved chunk。
+
+本记录只证明 evaluation 已执行，`BLOCKED` 不等于 evaluator failure；
+`ACCEPT_FOR_PROMOTION_REVIEW` 也不等于 approval。结果明确固定
+`candidate_promotion_authorized=false`、`publication_authorized=false`、`formal_3k_executed=false`、
+`network_used=false`、`source_expansion=false` 与 `lifecycle_mutation=false`。本次不改写 receipt，不新增来源，
+不晋升、不发布、不计入 Formal 3K，M11 继续为 `ADMITTED / IN_PROGRESS`。
+
 ## 9. 撤销与后续边界
 
 来源许可、parser/chunk/embedding profile、质量/检索 workload、控制面权威或删除语义实质变化时，阶段 admission 必须

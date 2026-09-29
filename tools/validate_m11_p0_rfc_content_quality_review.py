@@ -39,7 +39,7 @@ def main() -> int:
         f"valid: {validated['verified_cell_count']} VERIFIED + "
         f"{validated['not_applicable_cell_count']} NOT_APPLICABLE; "
         f"{validated['pending_cell_count']} legal-policy cells remain PENDING; "
-        "no successor; Gate 0 unexecuted"
+        "no successor; this validator does not execute repository-wide Gate 0"
     )
     return 0
 

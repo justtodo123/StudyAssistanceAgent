@@ -39,7 +39,7 @@ def main() -> int:
         return 1
     print(
         f"valid: {result['asset_count']} RFC current heads ACCEPT_FOR_PROMOTION_REVIEW; "
-        "IANA/MIT remain DEFER; Gate 0 unexecuted; promotion/publication false"
+        "IANA/MIT remain DEFER; this validator does not execute repository-wide Gate 0; promotion/publication false"
     )
     return 0
 
