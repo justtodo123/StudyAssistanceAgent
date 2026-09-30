@@ -43,6 +43,32 @@ def _reload_error(
     return raised.value
 
 
+def test_settings_are_isolated_and_dotenv_is_explicit(tmp_path, monkeypatch) -> None:
+    from app.config import load_settings
+
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text(
+        "SA_AGENT_PREVIEW_ENABLED=true\n"
+        f"SA_AGENT_PREVIEW_TOKEN={('d' * 32)}\n"
+        "SA_TOP_K=2\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("SA_TOP_K", "99")
+
+    isolated = load_settings({})
+    from_dotenv = load_settings({}, dotenv_path=dotenv_path)
+    overridden = load_settings({"SA_TOP_K": "7"}, dotenv_path=dotenv_path)
+
+    assert isolated.agent_preview_enabled is False
+    assert isolated.top_k == 5
+    assert from_dotenv.agent_preview_enabled is True
+    assert from_dotenv.top_k == 2
+    assert overridden.top_k == 7
+
+    monkeypatch.setenv("SA_TOP_K", "42")
+    assert overridden.top_k == 7
+
+
 def test_defaults_match_the_frozen_preview_contract(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

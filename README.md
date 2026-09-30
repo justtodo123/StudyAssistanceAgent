@@ -71,7 +71,7 @@ StudyAssistanceAgent/
 │   └── interview/         # 面试叙事、考点映射与招聘对齐调查
 ├── platform/              # Python 后端（FastAPI + 轻量 RAG）
 │   ├── README.md          # API 文档与启动指南
-│   ├── app/               # 应用代码
+│   ├── app/               # 应用代码（含 README：Settings / create_app / 模块边界）
 │   │   ├── main.py        # FastAPI 入口（search/qa/quiz/review/study-sessions + 工作台）
 │   │   ├── retrieval.py   # 多路召回 + RRF 融合
 │   │   ├── bm25.py        # BM25 关键词检索（bigram 分词）
@@ -156,6 +156,17 @@ M11 的 2026-09-28 Formal Gate 0 历史结果仍为 `BLOCKED`：approved documen
 `PENDING`；current heads 为 `3 RFC ACCEPT_FOR_PROMOTION_REVIEW + 3 IANA DEFER + 20 MIT DEFER`。暂停不产生
 promotion、publication、network 或 lifecycle mutation，也不抹去既有实现和证据。
 
+## Runtime profiles
+
+- **CPython 3.12**：通用离线应用与共享阶段 CI profile。
+- **精确 CPython 3.11.9**：完整 M7 五格式 parser profile；GitHub Actions 的 `m7-cpython311` job
+  阻塞运行完整 `tests/M7`。
+- Python 3.11 是 `StrEnum` 带来的最低语法基线，但不代表任意 3.11 patch 都满足 TXT parser；其他版本
+  （包括 3.13）会按精确 `cpython-textio==3.11.9` 合同对 TXT fail closed。
+
+requirements 文件是当前 clean-install compatibility 输入，不是 lockfile；项目仍按 source tree 运行，尚不声明
+`pip install .`、wheel 或 sdist 支持。
+
 ## 快速开始
 
 ```bash
@@ -165,10 +176,12 @@ git clone <repo-url> && cd StudyAssistanceAgent
 # 2. （可选）安装提交规范工具
 npm i -g commitizen
 
-# 3. 启动 API 后端（platform/ 下）
+# 3. 安装运行环境
 cd platform
 python -m venv .venv
 ./.venv/Scripts/python -m pip install -r requirements.txt
+# 需要运行测试时改装开发依赖（它会包含 requirements.txt）
+./.venv/Scripts/python -m pip install -r requirements-dev.txt
 ./.venv/Scripts/python ../tools/start_local.py   # 或 uvicorn；http://127.0.0.1:8000/
 
 # 4. 运行冒烟测试

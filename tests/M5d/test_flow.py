@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
+from contextlib import contextmanager
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,10 +11,21 @@ from app.main import app
 from tests.M5b.helpers import make_service
 
 
+@contextmanager
+def _study_session_service(service):
+    runtime = app.state.services
+    previous = runtime.study_sessions
+    runtime.study_sessions = service
+    try:
+        yield
+    finally:
+        runtime.study_sessions = previous
+
+
 @pytest.fixture
 def workbench_client():
     service, qa, quiz, scheduler = make_service()
-    with patch("app.main._study_sessions", service):
+    with _study_session_service(service):
         yield TestClient(app), service, qa, quiz, scheduler
 
 

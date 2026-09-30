@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import importlib
-import sys
-from typing import Any
-
 import pytest
 from fastapi.testclient import TestClient
+
+from app.config import load_settings
+from app.main import create_app
 
 
 pytestmark = pytest.mark.m6b
@@ -15,35 +14,31 @@ _TOKEN = "preview-token-that-is-at-least-thirty-two-bytes"
 _PREVIEW_PATH = "/api/v1/agent-preview"
 
 
-def _load_main(monkeypatch: pytest.MonkeyPatch, *, enabled: bool) -> Any:
-    monkeypatch.setenv("SA_USE_VECTOR", "false")
-    monkeypatch.setenv("SA_AGENT_PREVIEW_ENABLED", "true" if enabled else "false")
+def _application(tmp_path, *, enabled: bool):
+    environment = {
+        "SA_USE_VECTOR": "false",
+        "SA_AGENT_PREVIEW_ENABLED": "true" if enabled else "false",
+        "SA_INDEX_CACHE_PATH": str(tmp_path / "index"),
+        "SA_LEARNING_STORE_PATH": str(tmp_path / "learning.sqlite3"),
+        "SA_SOURCE_REGISTRY_PATH": str(tmp_path / "sources.sqlite3"),
+        "SA_USER_SOURCE_CACHE_PATH": str(tmp_path / "user-sources"),
+    }
     if enabled:
-        monkeypatch.setenv("SA_AGENT_PREVIEW_TOKEN", _TOKEN)
-    else:
-        monkeypatch.delenv("SA_AGENT_PREVIEW_TOKEN", raising=False)
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-
-    import app.config as config
-
-    importlib.reload(config)
-    sys.modules.pop("app.main", None)
-    return importlib.import_module("app.main")
+        environment["SA_AGENT_PREVIEW_TOKEN"] = _TOKEN
+    return create_app(load_settings(environment))
 
 
-def test_default_main_app_omits_preview_route(monkeypatch: pytest.MonkeyPatch) -> None:
-    main = _load_main(monkeypatch, enabled=False)
+def test_default_main_app_omits_preview_route(tmp_path) -> None:
+    application = _application(tmp_path, enabled=False)
 
-    assert _PREVIEW_PATH not in main.app.openapi()["paths"]
+    assert _PREVIEW_PATH not in application.openapi()["paths"]
 
 
-def test_enabled_main_app_registers_preview_before_openapi(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    main = _load_main(monkeypatch, enabled=True)
+def test_enabled_main_app_registers_preview_before_openapi(tmp_path) -> None:
+    application = _application(tmp_path, enabled=True)
 
-    assert _PREVIEW_PATH in main.app.openapi()["paths"]
-    with TestClient(main.app) as client:
+    assert _PREVIEW_PATH in application.openapi()["paths"]
+    with TestClient(application) as client:
         unauthorized = client.post(_PREVIEW_PATH, json={"prompt": "question"})
         unavailable = client.post(
             _PREVIEW_PATH,

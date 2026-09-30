@@ -307,15 +307,16 @@ class TestPathPrivacy:
 
 def test_qa_llm_fallback_does_not_expose_exception_paths(monkeypatch, test_client, repo_root, knowledge_root):
     from app import config
-    from app.main import _qa
+    from app.main import app
 
+    qa_service = app.state.services.qa
     leaked_path = repo_root / "private" / "provider.log"
     monkeypatch.setattr(config, "LLM_API_KEY", "configured-for-test")
 
     def fail_generation(*_args, **_kwargs):
         raise OSError(f"provider failure at {leaked_path}")
 
-    monkeypatch.setattr(_qa, "_generate", fail_generation)
+    monkeypatch.setattr(qa_service, "_generate", fail_generation)
     response = test_client.post(
         "/api/v1/qa",
         json={"question": "什么是死锁", "course": "os", "use_vector": False, "use_llm": True},

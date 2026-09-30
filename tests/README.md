@@ -21,6 +21,15 @@
 | `source_inventory/` | 外部资料只读盘点测试 |
 | `utils/` | 跨阶段测试辅助函数 |
 
+## Runtime profiles
+
+- CPython 3.12：`.github/workflows/offline-ci.yml` 的通用 `offline` job。
+- 精确 CPython 3.11.9：blocking `m7-cpython311` job，干净安装 runtime/dev requirements、运行 `pip check`，
+  再执行完整 `tests/M7`。
+- 非 3.11.9 环境中的 TXT `PARSER_UNAVAILABLE` 是精确 parser identity 的 fail-closed 行为，不是可跳过或放宽的断言。
+
+requirements 不是 lockfile，测试继续按 source tree 运行，不使用 `pip install .`。
+
 ## 常用命令
 
 ```bash

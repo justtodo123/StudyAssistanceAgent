@@ -36,7 +36,7 @@ benchmark 本身不产生阶段批准；2026-09-06 的独立人工完成批准�
   昂贵读取后经 process-local final publication gate 复核 authority、generation 与 identity，stale result 不返回也不入 cache；
 - 公共 Search/QA schema 不暴露 caller-selected `principal_id`；仅受信任内部 service boundary 可启用用户源 overlay。隔离后执行 FTS5+vector、auth/generation 缓存、跨源 RRF 与 `user://` provenance；`top_k` 在 default/mixed/overlay-only 与 fresh/cache-hit 全部分支统一封顶；preview/quiz/sessions 不含用户源。
 - `sa.source.vector.v1` 的 generation-bound source-local vector：绑定 source_id/revision/generation/embedding/chunk policy 与 identity-set；与 FTS5 chunk_id 集合 100% 一致；缺 metadata、generation/模型/identity 不一致或 vector 未附着时用户源 fail closed，不回退默认包 keyword-only。
-- 协议内热路径复用：已校验 generation 的 FTS5/vector runtime、snapshot chunk 缓存与隔离批处理；热缓存后 identity 被篡改仍 fail closed。`tests/M7/` 当前收集 270 项；Python 3.13.3 环境中的 TXT 真实 parser 用例因精确 `cpython-textio==3.11.9` 合同返回 `PARSER_UNAVAILABLE`，不得放宽为通过。冻结 20 次 1k/3k BGE 仍不是本目录的通过条件。
+- 协议内热路径复用：已校验 generation 的 FTS5/vector runtime、snapshot chunk 缓存与隔离批处理；热缓存后 identity 被篡改仍 fail closed。`tests/M7/` 当前收集 277 项；Python 3.13.3 环境中的 TXT 真实 parser 用例因精确 `cpython-textio==3.11.9` 合同返回 `PARSER_UNAVAILABLE`，不得放宽为通过。精确 CPython 3.11.9 的完整 M7 套件由 GitHub Actions `m7-cpython311` blocking job 验证。冻结 20 次 1k/3k BGE 仍不是本目录的通过条件。
 - M7-3 已合并：冻结 1k/3k BGE runner 与 2026-09-04 失败证据。hash smoke 不是冻结证据。
 - M7-4：完整冻结 1k/3k BGE 已通过（1k RSS 768 MiB 授权）。报告 `m7_exit=true` 不是自动 M8 开工。
 - M7-5：READY 提交后 CURRENT 激活失败保持 registry 权威；删除按 intent 捕获的 generation 发布 tombstone；receipt 后故障可恢复终态；相同 FULL 重试修复指针且不得降级。不是 M7 exit。

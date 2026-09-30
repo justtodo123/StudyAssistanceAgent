@@ -14,12 +14,11 @@ about the boundary as much as the feature:
 
 from __future__ import annotations
 
-import importlib
-import sys
-from typing import Any
-
 import pytest
 from fastapi.testclient import TestClient
+
+from app.config import load_settings
+from app.main import create_app
 
 from app.effect_ledger import EffectLedgerStore
 from app.runner_authority import Confirmation, RunnerAuthorityError, issue_confirmation
@@ -32,40 +31,19 @@ pytestmark = pytest.mark.m10
 _ARGUMENTS = {"file": "knowledge/os/scheduling.md", "course": "os", "source_session_id": ""}
 
 
-@pytest.fixture
-def load_main(monkeypatch: pytest.MonkeyPatch):
-    """Import `app.main` under a given switch, then put the session's back.
-
-    Restoring is not optional. Loading a module means `pop` plus re-import, which
-    mints a **new module object**; later stages hold the collection-time one.
-    `tests/M5b/test_api.py` binds `from app.main import app` at module level and
-    patches services by the string `"app.main._study_sessions"`, so a leftover
-    module makes those patches land on one object while the served app comes from
-    another — the fakes stop being used and the real services run. M6a is the
-    other half: it asserts the exact default public surface, which a leftover
-    enabled app would violate.
-    """
-    previous = sys.modules.get("app.main")
-
-    def _load(*, enabled: bool) -> Any:
-        monkeypatch.setenv("SA_USE_VECTOR", "false")
-        monkeypatch.setenv("SA_RUNNER", "true" if enabled else "false")
-        import app.config as config
-
-        importlib.reload(config)
-        sys.modules.pop("app.main", None)
-        return importlib.import_module("app.main")
-
-    yield _load
-
-    monkeypatch.undo()  # drop this test's env overrides before reloading config
-    import app.config as config
-
-    importlib.reload(config)
-    if previous is None:
-        sys.modules.pop("app.main", None)
-    else:
-        sys.modules["app.main"] = previous
+def _application(tmp_path, *, enabled: bool):
+    return create_app(
+        load_settings(
+            {
+                "SA_USE_VECTOR": "false",
+                "SA_RUNNER": "true" if enabled else "false",
+                "SA_INDEX_CACHE_PATH": str(tmp_path / "index"),
+                "SA_LEARNING_STORE_PATH": str(tmp_path / "learning.sqlite3"),
+                "SA_SOURCE_REGISTRY_PATH": str(tmp_path / "sources.sqlite3"),
+                "SA_USER_SOURCE_CACHE_PATH": str(tmp_path / "user-sources"),
+            }
+        )
+    )
 
 
 def _service(tmp_path) -> RunnerService:
@@ -79,26 +57,24 @@ def _job(service: RunnerService, job_id: str = "job-1") -> None:
 # -- default off --------------------------------------------------------------
 
 
-def test_the_default_app_does_not_register_the_runner_route(load_main) -> None:
+def test_the_default_app_does_not_register_the_runner_route(tmp_path) -> None:
     """Structural, not merely inert: the path is absent from the OpenAPI document."""
-    main = load_main(enabled=False)
-    assert RUNNER_PATH not in main.app.openapi()["paths"]
-    assert not any(getattr(route, "path", None) == RUNNER_PATH for route in main.app.routes)
+    application = _application(tmp_path, enabled=False)
+    assert RUNNER_PATH not in application.openapi()["paths"]
+    assert not any(getattr(route, "path", None) == RUNNER_PATH for route in application.routes)
 
 
-def test_the_default_app_still_serves_the_state_machine_path(load_main) -> None:
+def test_the_default_app_still_serves_the_state_machine_path(tmp_path) -> None:
     """Off is an identity operation: the existing surface is untouched."""
-    main = load_main(enabled=False)
-    paths = main.app.openapi()["paths"]
+    paths = _application(tmp_path, enabled=False).openapi()["paths"]
     for path in ("/api/v1/study-sessions", "/api/v1/review-log", "/api/v1/plans"):
         assert path in paths
 
 
-def test_enabling_the_runner_registers_the_route(load_main, monkeypatch, tmp_path) -> None:
+def test_enabling_the_runner_registers_the_route(tmp_path) -> None:
     """Non-vacuity for the default-off test: the route must be able to appear."""
-    monkeypatch.setenv("SA_LEARNING_STORE_PATH", str(tmp_path / "learning.sqlite3"))
-    main = load_main(enabled=True)
-    assert RUNNER_PATH in main.app.openapi()["paths"]
+    application = _application(tmp_path, enabled=True)
+    assert RUNNER_PATH in application.openapi()["paths"]
 
 
 # -- the approved write -------------------------------------------------------

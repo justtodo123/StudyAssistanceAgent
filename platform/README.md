@@ -106,10 +106,11 @@ source expansion 或 network-acquisition authorization。测试使用临时目�
 platform/
 ├── README.md              # 本文件（API 文档与启动指南）
 ├── app/
+│   ├── README.md          # Settings、create_app、RuntimeServices 与模块导航
 │   ├── __init__.py
-│   ├── main.py            # FastAPI 入口：search/qa/quiz/review/study-sessions + 工作台
+│   ├── main.py            # FastAPI composition root：路由、服务容器与生命周期
 │   ├── models.py          # Pydantic 领域模型（RetrievalChunk, SearchRequest, QaRequest 等）
-│   ├── config.py          # 环境变量配置（dotenv → 常量）
+│   ├── config.py          # 显式 Settings/load_settings + 兼容常量导出
 │   ├── retrieval.py       # 多路召回 + RRF 融合（MultiRecallService）
 │   ├── bm25.py            # BM25 关键词检索（中文 bigram + 英文整词分词）
 │   ├── vector_store.py    # SQLite/内存向量后端（BGE 可选；当前均为线性余弦）
@@ -642,6 +643,16 @@ immutable revision 才是 published generation 的权威，且重复请求与无
 
 ## 配置
 
+`app.config.load_settings()` 从显式环境映射构造冻结的 `Settings`；普通 import 不再隐式搜索或读取 `.env`。
+`tools/start_local.py` 会显式读取 `platform/.env`，且已有进程环境优先。直接使用 uvicorn 并希望加载 dotenv 时，使用：
+
+```bash
+uvicorn --env-file .env app.main:app --workers 1
+```
+
+应用由 `app.main.create_app(settings)` 构造，每个实例独占 `app.state.services`；`app.main.app = create_app()`
+继续兼容既有启动命令。测试可传入临时 SQLite/cache 路径构造互不污染的 Preview/Runner 开关组合。
+
 复制 `.env.example` → `.env`，按需修改：
 
 | 环境变量 | 默认值 | 说明 |
@@ -812,6 +823,16 @@ python tools/start_local.py --use-vector
 ```
 
 
+## Runtime profiles
+
+- CPython 3.12：通用离线应用、平台基线与共享阶段 CI。
+- 精确 CPython 3.11.9：完整 M7 五格式 parser contract；`m7-cpython311` blocking job 从干净 runner
+  安装 tracked requirements、运行 `pip check` 并执行完整 `tests/M7`。
+- Python 3.11 是最低语法基线；任意非 3.11.9 环境都不满足 TXT 的精确 `cpython-textio` identity，按设计
+  返回 `PARSER_UNAVAILABLE`，不得通过放宽合同修复。
+
+当前 requirements 证明 clean-install compatibility，不是锁文件，也不表示支持 `pip install .`。
+
 ## 运行
 
 仓库根目录一条命令启动（默认离线 BM25，不下载模型、不要求 LLM key）：
@@ -824,13 +845,17 @@ python tools/start_local.py --check  # 只做健康检查
 成功后打开 `http://127.0.0.1:8000/`。演示步骤见 [docs/demo.md](../docs/demo.md)。
 
 ```bash
-# 安装环境
+# 安装运行环境
 cd platform
 python -m venv .venv
 ./.venv/Scripts/python -m pip install -r requirements.txt
+# 运行测试时安装开发依赖（已递归包含 requirements.txt）
+./.venv/Scripts/python -m pip install -r requirements-dev.txt
 
 # 启动 API / 学习工作台
-./.venv/Scripts/uvicorn app.main:app --workers 1   # http://127.0.0.1:8000/
+./.venv/Scripts/uvicorn app.main:app --workers 1   # 不读取 .env
+# 如需显式加载 platform/.env：
+./.venv/Scripts/uvicorn --env-file .env app.main:app --workers 1
 
 # 跑测试
 ./.venv/Scripts/python -m pytest tests/ -q

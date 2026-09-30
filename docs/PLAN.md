@@ -172,6 +172,19 @@ harness 按计划从知识库选题并跑学习闭环（讲解/测验/复习）�
 生产开工门禁，只有 `AUTHORIZED` 后交付才能进入 `IN_PROGRESS`。Agent 不得自行批准准入或开工。前提失效时
 改为 `REVOKED` 并停止生产实施。
 
+### Post-MVP 工程可信度加固（2026-09-30）
+
+本增量不新增产品阶段，也不改变 M8/M11/M12 状态：
+
+- 通用离线 CI 继续使用 CPython 3.12；新增 blocking `m7-cpython311` job，在精确 CPython 3.11.9 下从 tracked
+  requirements 干净安装、运行 `pip check` 和完整 `tests/M7`，不再让已完成的 M7 整体游离于 CI。
+- 配置改为显式 `Settings/load_settings`；普通 import 不再隐式读取 `.env`。`tools/start_local.py` 是显式 dotenv
+  进程入口，直接 uvicorn 可使用 `--env-file`。
+- FastAPI 改由 `create_app(settings)` 构造，每个实例独占 `app.state.services`；module-level `app` 与配置常量保留
+  为兼容导出，Preview/Runner 的默认关闭和公开 API 契约不变。
+- `pyproject.toml`、lockfile、wheel/sdist 与 `pip install .` 延后到独立 packaging 阶段；本轮 clean-install 只证明
+  source-tree requirements compatibility。
+
 **依赖顺序**：M6b 与 M7 都只依赖 M6a 退出证据，彼此不互为前置。M7 已完成 Source Registry、
 source-local FULL/INCREMENTAL/delete/isolation、FTS5/vector/offline fail-closed、Search/QA overlay 与冻结技术验收，
 并于 2026-09-06 取得独立完成批准。因此 M8/M9/M10 的事实型 M7 退出前置均为 `SATISFIED`；这不批准任何下游阶段。

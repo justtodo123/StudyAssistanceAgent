@@ -23,6 +23,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from dotenv import dotenv_values
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PLATFORM_DIR = REPO_ROOT / "platform"
 DEFAULT_HOST = "127.0.0.1"
@@ -65,9 +67,22 @@ def workbench_url(host: str, port: int) -> str:
     return f"http://{host}:{port}/"
 
 
+def load_platform_environment(environ: dict[str, str] | None = None) -> dict[str, str]:
+    """Load platform/.env explicitly while preserving process-environment priority."""
+    target = dict(os.environ if environ is None else environ)
+    dotenv_path = PLATFORM_DIR / ".env"
+    if not dotenv_path.is_file():
+        return target
+    values = dotenv_values(dotenv_path)
+    return {
+        **{key: value for key, value in values.items() if value is not None},
+        **target,
+    }
+
+
 def apply_offline_defaults(use_vector: bool, env: dict[str, str] | None = None) -> dict[str, str]:
     """Keep the demo path free of Hugging Face downloads and LLM keys."""
-    target = os.environ if env is None else env
+    target = dict(os.environ) if env is None else env
     target.setdefault("SA_USE_VECTOR", "true" if use_vector else "false")
     if use_vector:
         return target
@@ -121,7 +136,7 @@ def apply_single_worker_env(env: dict[str, str]) -> dict[str, str]:
 
 
 def start_server(host: str, port: int, use_vector: bool) -> subprocess.Popen[Any]:
-    env = apply_offline_defaults(use_vector, os.environ.copy())
+    env = apply_offline_defaults(use_vector, load_platform_environment())
     env["SA_USE_VECTOR"] = "true" if use_vector else "false"
     apply_single_worker_env(env)
     return subprocess.Popen(

@@ -136,6 +136,52 @@ class TestOfflineCiContract:
         assert "SA_PLAN_AI_TOKEN" not in serialized
         assert "SA_PLAN_AI_ENABLED" not in serialized
 
+    def test_m7_runs_in_exact_cpython311_blocking_job(self, repo_root):
+        workflow = self._load_workflow(repo_root)
+        job = workflow["jobs"]["m7-cpython311"]
+        commands = self._run_commands(job)
+
+        assert job["name"] == "m7-cpython311"
+        assert job["env"] == {
+            "SA_USE_VECTOR": "false",
+            "HF_HUB_OFFLINE": "1",
+            "TRANSFORMERS_OFFLINE": "1",
+            "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+        }
+        assert "continue-on-error" not in job
+        assert all("continue-on-error" not in step for step in job["steps"])
+
+        setup = next(
+            step for step in job["steps"]
+            if step.get("name") == "Set up exact M7 Python"
+        )
+        assert setup["uses"] == "actions/setup-python@v5"
+        assert setup["with"] == {"python-version": "3.11.9"}
+
+        install = next(command for command in commands if "pip install" in command)
+        assert "platform/requirements.txt" in install
+        assert "platform/requirements-dev.txt" in install
+        assert "python -m pip check" in install
+
+        runtime = next(
+            command for command in commands
+            if "platform.python_version() == '3.11.9'" in command
+        )
+        assert "platform.python_implementation() == 'CPython'" in runtime
+        for distribution in (
+            "markdown-it-py", "pypdf", "python-pptx", "python-docx", "jieba"
+        ):
+            assert distribution in runtime
+
+        assert "python -m pytest tests/M7 -q --tb=short -m m7" in commands
+
+        serialized = yaml.safe_dump(job)
+        assert "CRAWLER_ONLINE" not in serialized
+        assert "ANTHROPIC_API_KEY" not in serialized
+        assert "SA_LLM_API_KEY" not in serialized
+        assert "SA_AGENT_PREVIEW_TOKEN" not in serialized
+        assert "SA_PLAN_AI_TOKEN" not in serialized
+
     def test_crawler_jobs_remain_isolated_and_online_is_explicit(self, repo_root):
         workflow = self._load_workflow(repo_root)
         jobs = workflow["jobs"]
@@ -167,7 +213,7 @@ class TestOfflineCiContract:
     #: `test_*.py` must be in that command.
     _STAGE_DIRS_WITHOUT_SHARED_COMMAND = {
         "M6_crawler": "runs in the dedicated crawler-offline / crawler-online-smoke jobs",
-        "M7": "excluded: 3 TXT cases fail closed on CPython 3.13 by design (see TEST_PLAN)",
+        "M7": "runs in the dedicated exact-CPython-3.11.9 blocking job",
         "source_inventory": "read-only external inventory; not a gate",
     }
 

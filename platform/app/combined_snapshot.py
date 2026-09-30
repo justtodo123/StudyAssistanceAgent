@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -166,19 +165,25 @@ class CombinedSnapshotBuilder:
         )
 
 
-def build_configured_snapshot() -> CombinedRetrievalSnapshot:
-    """Parse startup configuration and build one complete immutable candidate."""
-    limits = parse_source_limits()
+def build_snapshot_for_settings(settings: config.Settings) -> CombinedRetrievalSnapshot:
+    """Build one candidate from a captured app settings object."""
+    environment = dict(settings.source_environment)
+    limits = parse_source_limits(environment)
     extras = parse_extra_sources(
-        default_root=config.KNOWLEDGE_ROOT,
-        repository_root=config.REPO_ROOT,
-        crawler_cache_root=_crawler_cache_root(),
+        environment.get("SA_EXTRA_SOURCES"),
+        default_root=settings.knowledge_root,
+        repository_root=settings.repo_root,
+        crawler_cache_root=(
+            Path(environment["SA_CRAWLER_CANDIDATE_CACHE"])
+            if environment.get("SA_CRAWLER_CANDIDATE_CACHE")
+            else None
+        ),
     )
     builder = CombinedSnapshotBuilder(
-        config.KNOWLEDGE_ROOT,
+        settings.knowledge_root,
         extras,
         limits,
-        strict=parse_extra_sources_strict(),
+        strict=parse_extra_sources_strict(environment.get("SA_EXTRA_SOURCES_STRICT")),
     )
     try:
         return builder.build()
@@ -186,6 +191,11 @@ def build_configured_snapshot() -> CombinedRetrievalSnapshot:
         raise
     except (OSError, UnicodeError, ProtocolValidationError, ValueError) as exc:
         raise CombinedSnapshotError("snapshot candidate is invalid") from exc
+
+
+def build_configured_snapshot() -> CombinedRetrievalSnapshot:
+    """Parse compatibility module configuration and build one complete candidate."""
+    return build_snapshot_for_settings(config.DEFAULT_SETTINGS)
 
 
 def _measure_default_source(
@@ -254,11 +264,6 @@ def _extra_retrieval_chunk(chunk: SourceChunk) -> RetrievalChunk:
         updated=str(metadata.get("updated", "")),
         content=chunk.content,
     )
-
-
-def _crawler_cache_root() -> Path | None:
-    raw = os.getenv("SA_CRAWLER_CANDIDATE_CACHE", "")
-    return Path(raw) if raw else None
 
 
 def _digest(value: object) -> str:
