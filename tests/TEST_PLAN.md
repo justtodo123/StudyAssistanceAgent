@@ -41,7 +41,9 @@ tests/
 │   └── test_interview_bank.py    # 面经条目验证
 │
 ├── M3d/                  # 文档完整性测试（M3d 文档闭环）
-│   └── test_docs.py              # 文档结构与链接验证
+│   ├── README.md                 # M3d 测试导航与运行说明
+│   ├── test_docs.py              # 历史文档结构与链接基线
+│   └── test_reference_navigation.py # reference 链接与 Network candidate 状态
 │
 ├── M4/                   # 课程知识库规模补齐测试
 │   ├── test_knowledge_scale.py   # 数量、frontmatter、导航与评测引用
@@ -571,15 +573,18 @@ pytest tests/M0_M2/ -v         # 基线回归
 
 **对应开发任务**：统一项目状态、文档导航、测试统计和 M3 退出条件；不在本阶段新增课程条目。
 
-**测试时间**：M3d 文档变更完成后；6 项文档完整性测试已通过
+**测试时间**：M3d 文档变更完成后；历史 closeout 的 6 项文档完整性测试已通过；当前在独立文件中新增 2 项
+reference 导航回归测试，共 8 项。
 
 #### 4.1 业务需求验证
 
 | 测试文件 | 测试项 | 验证点 |
 |----------|--------|--------|
-| `test_docs.py` | README 链接 | 每个子目录 README 中的相对链接可解析 |
+| `test_docs.py` | README 链接 | 根 README 与 knowledge README 的历史相对链接基线 |
 | `test_docs.py` | PLAN 一致性 | `docs/PLAN.md` 中标记 ✅ 的条目对应文件实际存在 |
 | `test_docs.py` | 知识库导航 | 每门课程 README 的章节地图与实际文件一一对应 |
+| `test_reference_navigation.py` | reference 链接 | `docs/reference/README.md` 的本地文件和锚点均可解析 |
+| `test_reference_navigation.py` | Network 状态 | canonical 记录仍为 candidate 时，总导航不得声称 Network 已完成 |
 
 ---
 
@@ -874,7 +879,7 @@ keyword-mode 完整根级结果为 CPython 3.13.3 的 822 passed、1 skipped、3
 | 验证范围 | 结果 | 收口含义 |
 | --- | --- | --- |
 | 聚焦文档/治理回归 | 34 passed | 项目发布状态与 M8/M11/M12 阶段事实一致 |
-| M3d 文档完整性 | 6 passed | 导航与文档结构可用 |
+| M3d 文档完整性 | 历史快照 6 passed；当前 8 项 | 导航与文档结构可用；新增 reference 链接和 Network 状态护栏 |
 | M11 + regression | 554 passed, 2 skipped | 候选/治理证据保持一致；不构成 M11 exit |
 | M0–M5 + platform 基线 | 207 passed | 当前 MVP 产品闭环保持可交付 |
 | 默认 90 题评测 | Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 | 三课均超过 0.8 门槛 |

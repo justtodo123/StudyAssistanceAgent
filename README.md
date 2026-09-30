@@ -118,6 +118,7 @@ StudyAssistanceAgent/
 │   ├── crawler/           # 候选 Markdown 抓取/清洗/转换（M6a-P0 离线 marker/CI 已收口）
 │   └── evaluations/       # 默认三课 90 题 + Network 30 题显式扩展集
 ├── tests/                 # ★ 迭代测试体系（阶段隔离架构）
+│   ├── README.md          # 测试目录导航与常用命令
 │   ├── TEST_PLAN.md       # 测试计划文档
 │   ├── conftest.py        # 跨阶段共享 fixtures
 │   ├── M0_M2/             # 基线回归测试（18 项）

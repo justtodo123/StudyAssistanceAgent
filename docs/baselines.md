@@ -701,8 +701,9 @@ authorization 记录保持不变。当前 M7 为 `ADMITTED / COMPLETE`。
 阶段。M8、M9、M10 仍为 `BLOCKED / NOT_STARTED`；Network 文档晋升、P0 语料治理闭环、任意 corpus 自动批准、
 M8 专业化存储、Milvus/LanceDB/Qdrant 选择以及 M9/M10 实现继续处于原批准范围之外。
 
-> **2026-09-22 更新**（不修改上述历史记录）：该段描述的是 2026-09-06 时的状态。此后 M9 已 `ADMITTED /
-> COMPLETE`，M10 的三项前置（含以**维持现状结论**兑现的 `M10-M8-EXIT`）亦已全部 `SATISFIED`；
+> **2026-09-22 历史更新**（不修改上述历史记录）：以下状态仅描述截至该次更新时的仓库快照，
+> 不是当前登记表。该段原始记录描述 2026-09-06；截至 2026-09-22，M9 已 `ADMITTED / COMPLETE`，
+> M10 的三项前置（含以**维持现状结论**兑现的 `M10-M8-EXIT`）亦已全部 `SATISFIED`；当时
 > **M8 与 M10 仍为 `BLOCKED / NOT_STARTED`**（M10 等待自身十一项强制决策与独立批准）。本节其余内容
 > ——尤其是「M8 专业化存储与 Milvus/LanceDB/Qdrant 选择仍在原批准范围之外」——**仍然成立**。
 
@@ -770,7 +771,10 @@ M9 计划 §4.3。
 维护：知识库、评测集或检索策略变化后复测并追加记录*
 
 
-## 阶段性 MVP 发布收口验证 — 2026-09-29
+## 阶段性 MVP 发布收口验证（历史快照）— 2026-09-29
+
+> 本节固定记录 checkout `2eb1808` 及其后的当日文档/治理增量。下列状态、测试数量和失败数是该 checkout 的
+> 历史证据，不是当前实时登记表；当前阶段状态以 `docs/PLAN.md` 与机器门禁为准。
 
 - 环境：Windows 11 Home，CPython 3.13.3，pytest 9.1.1；checkout `2eb1808` 后的文档/治理增量。
 - 项目状态：`MVP_COMPLETE / ACTIVE_ROADMAP_DEFERRED`。该状态不改变 M8/M11/M12 的阶段事实。

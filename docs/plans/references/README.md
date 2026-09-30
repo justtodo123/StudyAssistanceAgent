@@ -18,11 +18,14 @@
 
 ## 当前文件
 
-本轮 selected-scope M8 材料尚未形成独立 publication commit；因此本索引暂不登记
-candidate、review request/prompt、dispatch 或 Owner Gate 文件。待这些材料实际创建并提交后，
-只新增导航条目，不改写、删除、重命名或重新格式化既有历史条目。六阶段 publication 链与
-dispatch 根的独立审查请求指路文档见
+本轮 selected-scope M8 已冻结并提交六阶段 **pre-review publication chain**：
+`candidate_publication → builder_self_check → review_request → review_prompt → review_target → dispatch_manifest`。
+链对象与 dispatch 根的独立审查请求指路文档见
 [`m8-metadata-discovery-scope-independent-review-request-20260920-r02.md`](m8-metadata-discovery-scope-independent-review-request-20260920-r02.md)。
+但它尚未形成 independent Reviewer verdict/publication：reviewer 仍未指定，最高状态仅为
+`READY_FOR_EXTERNAL_INDEPENDENT_REVIEW`，本索引也不把链对象虚构成本地导航文件。上述 pre-review 链不产生
+Owner Gate、阶段 admission、执行或后端选择授权；后续若形成新的独立审查产物，只新增导航条目，不改写、删除、
+重命名或重新格式化既有历史条目。
 
 S1 prerequisite freeze 的 candidate closure 由目标 commit 内的 canonical oracle manifest 唯一声明并机械展开。
 Code-fixed bootstrap 防止 manifest 省略自身、aggregate 或 freeze authority chain；fixture graph/member 数仍可作为

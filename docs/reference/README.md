@@ -24,14 +24,14 @@
 
 ### 🟢 核心专业课
 
-| 外部目录 | 简称 | 知识库 course（待建） | 状态 | 详细登记 |
+| 外部目录 | 简称 | 知识库 course | 状态 | 详细登记 |
 | --- | --- | --- | --- | --- |
-| `操作系统` | OS | `knowledge/os/` | 📝 笔记已建 | [os.md](os.md) |
-| `数据结构复习` | DS | `knowledge/ds/` | ✅ 完成 | [ds.md](ds.md) |
-| `计算机组成原理` | CO | `knowledge/co/` | 📝 笔记已建 | [co.md](co.md) |
+| `操作系统` | OS | [knowledge/os/](../../knowledge/os/README.md) | 📝 笔记已建 | [os.md](os.md) |
+| `数据结构复习` | DS | [knowledge/ds/](../../knowledge/ds/README.md) | ✅ 完成 | [ds.md](ds.md) |
+| `计算机组成原理` | CO | [knowledge/co/](../../knowledge/co/README.md) | 📝 笔记已建 | [co.md](co.md) |
 | `数据库系统` | DB | `knowledge/db/` | 🆕 未整理 | [db.md](db.md) |
 | `算法设计与分析` | Algo | `knowledge/algo/` | 🆕 未整理 | [algo.md](algo.md) |
-| `ComputingNet`（计算机网络） | Network | `knowledge/network/` | 📝 笔记已建 | [network.md](network.md) |
+| `ComputingNet`（计算机网络） | Network | [knowledge/network/](../../knowledge/network/README.md) | 📝 31 篇笔记已建；仍为 candidate，不进入默认索引 | [network.md](network.md) |
 | `Bian_Yi_subject`（编译技术） | Compiler | `knowledge/compiler/` | 🆕 未整理 | [compiler.md](compiler.md) |
 | `数字逻辑` | DigitalLogic | `knowledge/digital-logic/` | 🆕 未整理 | [digital-logic.md](digital-logic.md) |
 | `微机原理` | μP | `knowledge/microcomputer/` | 🆕 未整理 | [microcomputer.md](microcomputer.md) |
@@ -39,19 +39,19 @@
 
 ### 🟡 专业拓展
 
-| 外部目录 | 简称 | 知识库 course（待建） | 状态 | 详细登记 |
+| 外部目录 | 简称 | 知识库 course | 状态 | 详细登记 |
 | --- | --- | --- | --- | --- |
-| `data_science` | DSci | `knowledge/data-science/` | 🆕 未整理 | [data-science.md](data-science.md) |
-| `人工智能导论` | AI | `knowledge/ai/` | 🆕 未整理 | [ai.md](ai.md) |
-| `ComputerGraph`（计算机图形学） | CG | `knowledge/cg/` | 🆕 未整理 | [cg.md](cg.md) |
-| `数字图像处理` | DIP | `knowledge/dip/` | 🆕 未整理 | [dip.md](dip.md) |
-| `softwareTesting` | SWTest | `knowledge/software-testing/` | 🆕 未整理 | [software-testing.md](software-testing.md) |
-| `CloudComputing` | Cloud | `knowledge/cloud/` | 🆕 未整理 | [cloud.md](cloud.md) |
-| `系统分析与设计` | SAD | `knowledge/sad/` | 🆕 未整理 | [sad.md](sad.md) |
-| `软件体系结构` | SA | `knowledge/software-architecture/` | 🆕 未整理 | [software-architecture.md](software-architecture.md) |
-| `软件设计综合实践` | SE-Design | `knowledge/se-design/` | 🆕 未整理 | [se-design.md](se-design.md) |
-| `《网络安全实用技术》2版PPT-清华-贾` | Security | `knowledge/security/` | 🆕 未整理 | [security.md](security.md) |
-| `软件前沿技术讲座-光谱数据实验` | Seminar | `knowledge/seminar/` | 🆕 未整理 | [seminar.md](seminar.md) |
+| `data_science` | DSci | `knowledge/data-science/`（待建） | 🆕 未整理 | 未建 |
+| `人工智能导论` | AI | `knowledge/ai/`（待建） | 🆕 未整理 | 未建 |
+| `ComputerGraph`（计算机图形学） | CG | `knowledge/cg/`（待建） | 🆕 未整理 | 未建 |
+| `数字图像处理` | DIP | `knowledge/dip/`（待建） | 🆕 未整理 | 未建 |
+| `softwareTesting` | SWTest | `knowledge/software-testing/`（待建） | 🆕 未整理 | 未建 |
+| `CloudComputing` | Cloud | `knowledge/cloud/`（待建） | 🆕 未整理 | 未建 |
+| `系统分析与设计` | SAD | `knowledge/sad/`（待建） | 🆕 未整理 | 未建 |
+| `软件体系结构` | SA | `knowledge/software-architecture/`（待建） | 🆕 未整理 | 未建 |
+| `软件设计综合实践` | SE-Design | `knowledge/se-design/`（待建） | 🆕 未整理 | 未建 |
+| `《网络安全实用技术》2版PPT-清华-贾` | Security | `knowledge/security/`（待建） | 🆕 未整理 | 未建 |
+| `软件前沿技术讲座-光谱数据实验` | Seminar | `knowledge/seminar/`（待建） | 🆕 未整理 | 未建 |
 
 ### ⚪ 其他/工具（仅登记不整理）
 
