@@ -14,7 +14,7 @@ registration_method: legacy_course_index
 provenance_evidence: docs/reference/document-mapping.json
 project_authored: false
 review_status: review
-ingest_status: candidate
+ingest_status: approved
 license_id: unknown
 license_status: unresolved
 ---
