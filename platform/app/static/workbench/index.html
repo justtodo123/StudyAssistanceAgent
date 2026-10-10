@@ -3,97 +3,270 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>学习工作台</title>
+    <title>StudyAssistanceAgent - 学习助手</title>
     <link rel="stylesheet" href="/static/workbench/styles.css" />
   </head>
   <body>
+    <nav class="top-nav">
+      <div class="nav-inner">
+        <span class="nav-brand">StudyAssistanceAgent</span>
+        <div class="nav-tabs">
+          <button class="nav-tab active" data-tab="qa">智能问答</button>
+          <button class="nav-tab" data-tab="quiz">测验练习</button>
+          <button class="nav-tab" data-tab="plan">复习计划</button>
+          <button class="nav-tab" data-tab="session">学习会话</button>
+          <button class="nav-tab" data-tab="due">今日待复习</button>
+        </div>
+      </div>
+    </nav>
+
     <main class="page">
-      <header class="page-header">
-        <h1>学习工作台</h1>
-        <p class="lede">选择课程和主题，完成讲解、作答、反馈和复习记录。</p>
-      </header>
+      <p id="global-status" class="status" role="status" aria-live="polite"></p>
 
-      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <!-- ===== 智能问答 ===== -->
+      <section id="tab-qa" class="tab-panel active">
+        <div class="panel">
+          <h2>知识库检索</h2>
+          <p class="muted">输入问题，从知识库检索相关片段。支持 BM25 关键词 + 向量混合检索。</p>
+          <form id="search-form" class="stack-form">
+            <div class="form-row">
+              <div class="form-grow">
+                <label for="search-q">检索问题</label>
+                <input id="search-q" type="text" placeholder="例如：进程调度算法有哪些" required />
+              </div>
+              <div class="form-field">
+                <label for="search-course">课程</label>
+                <select id="search-course">
+                  <option value="">全部</option>
+                  <option value="os">操作系统</option>
+                  <option value="ds">数据结构</option>
+                  <option value="co">组成原理</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="search-k">Top K</label>
+                <select id="search-k">
+                  <option value="3">3</option>
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit">检索</button>
+          </form>
+          <div id="search-results" class="results-panel hidden"></div>
+        </div>
 
-      <section id="due-panel" class="panel">
-        <div class="panel-head">
-          <h2>今日待复习</h2>
-          <div class="inline-form">
-            <label for="due-course">课程</label>
-            <select id="due-course">
-              <option value="">全部</option>
-              <option value="os">操作系统</option>
-              <option value="ds">数据结构</option>
-              <option value="co">组成原理</option>
-            </select>
-            <button id="refresh-due" type="button">刷新</button>
+        <div class="panel">
+          <h2>智能问答</h2>
+          <p class="muted">基于检索结果生成带出处的回答。支持流式输出（SSE）。未配置 LLM 时自动降级为笔记摘要。</p>
+          <form id="qa-form" class="stack-form">
+            <div class="form-row">
+              <div class="form-grow">
+                <label for="qa-question">你的问题</label>
+                <input id="qa-question" type="text" placeholder="例如：什么是虚拟内存" required />
+              </div>
+              <div class="form-field">
+                <label for="qa-course">课程</label>
+                <select id="qa-course">
+                  <option value="">自动</option>
+                  <option value="os">操作系统</option>
+                  <option value="ds">数据结构</option>
+                  <option value="co">组成原理</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit">生成回答</button>
+              <label class="checkbox-label">
+                <input id="qa-stream" type="checkbox" checked />
+                流式输出
+              </label>
+            </div>
+          </form>
+          <div id="qa-result" class="qa-result hidden">
+            <div class="qa-meta">
+              <span id="qa-layer" class="badge"></span>
+              <span id="qa-mode" class="badge badge-muted"></span>
+            </div>
+            <div id="qa-answer" class="qa-answer"></div>
+            <div id="qa-sources" class="qa-sources"></div>
           </div>
         </div>
-        <p id="due-summary" class="muted"></p>
-        <ul id="due-list" class="due-list"></ul>
       </section>
 
-      <section id="start-panel" class="panel">
-        <h2>开始学习</h2>
-        <form id="start-form" class="stack-form">
-          <label for="course">课程</label>
-          <select id="course" name="course" required>
-            <option value="os">操作系统</option>
-            <option value="ds">数据结构</option>
-            <option value="co">组成原理</option>
-          </select>
-          <label for="topic">主题</label>
-          <input id="topic" name="topic" type="text" required minlength="1" placeholder="例如：死锁" />
-          <button id="start-button" type="submit">开始学习</button>
-        </form>
+      <!-- ===== 测验练习 ===== -->
+      <section id="tab-quiz" class="tab-panel">
+        <div class="panel">
+          <h2>测验生成</h2>
+          <p class="muted">三种题型：经典例题（含答案）、检索题（需查阅知识条目）、概念题（自主思考）。</p>
+          <form id="quiz-form" class="stack-form">
+            <div class="form-row">
+              <div class="form-field">
+                <label for="quiz-course">课程</label>
+                <select id="quiz-course" required>
+                  <option value="os">操作系统</option>
+                  <option value="ds">数据结构</option>
+                  <option value="co">组成原理</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="quiz-count">题数</label>
+                <select id="quiz-count">
+                  <option value="3">3</option>
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="quiz-difficulty">难度</label>
+                <select id="quiz-difficulty">
+                  <option value="">不限</option>
+                  <option value="入门">入门</option>
+                  <option value="中等">中等</option>
+                  <option value="进阶">进阶</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="quiz-topics">主题（可选）</label>
+                <input id="quiz-topics" type="text" placeholder="逗号分隔" />
+              </div>
+            </div>
+            <button type="submit">生成测验</button>
+          </form>
+        </div>
+        <div id="quiz-results" class="hidden"></div>
       </section>
 
-      <section id="session-panel" class="panel hidden">
-        <div class="panel-head">
-          <h2>当前会话</h2>
-          <p id="session-meta" class="muted"></p>
+      <!-- ===== 复习计划 ===== -->
+      <section id="tab-plan" class="tab-panel">
+        <div class="panel">
+          <h2>复习计划生成</h2>
+          <p class="muted">根据课程和目标日期，自动生成分日复习任务，按难度和优先级排序。</p>
+          <form id="plan-form" class="stack-form">
+            <div class="form-row">
+              <div class="form-field">
+                <label for="plan-course">课程</label>
+                <select id="plan-course" required>
+                  <option value="os">操作系统</option>
+                  <option value="ds">数据结构</option>
+                  <option value="co">组成原理</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="plan-date">目标日期</label>
+                <input id="plan-date" type="date" />
+              </div>
+              <div class="form-field">
+                <label for="plan-hours">每日学时</label>
+                <select id="plan-hours">
+                  <option value="1">1 小时</option>
+                  <option value="2" selected>2 小时</option>
+                  <option value="3">3 小时</option>
+                  <option value="4">4 小时</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit">生成计划</button>
+          </form>
+        </div>
+        <div id="plan-results" class="hidden"></div>
+      </section>
+
+      <!-- ===== 学习会话 ===== -->
+      <section id="tab-session" class="tab-panel">
+        <div class="panel">
+          <h2>开始学习</h2>
+          <p class="muted">选择课程和主题，系统会检索相关知识并生成讲解和测验题。</p>
+          <form id="start-form" class="stack-form">
+            <div class="form-row">
+              <div class="form-field">
+                <label for="course">课程</label>
+                <select id="course" name="course" required>
+                  <option value="os">操作系统</option>
+                  <option value="ds">数据结构</option>
+                  <option value="co">组成原理</option>
+                </select>
+              </div>
+              <div class="form-grow">
+                <label for="topic">主题</label>
+                <input id="topic" name="topic" type="text" required minlength="1" placeholder="例如：死锁" />
+              </div>
+            </div>
+            <button id="start-button" type="submit">开始学习</button>
+          </form>
         </div>
 
-        <article id="explanation-panel">
-          <h3>知识讲解</h3>
-          <div id="explanation" class="prose"></div>
-        </article>
+        <div id="session-panel" class="hidden">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>当前会话</h2>
+              <p id="session-meta" class="muted"></p>
+            </div>
 
-        <article id="sources-panel">
-          <h3>来源</h3>
-          <ul id="sources" class="source-list"></ul>
-        </article>
+            <article id="explanation-panel">
+              <h3>知识讲解</h3>
+              <div id="explanation" class="prose"></div>
+            </article>
 
-        <article id="question-panel">
-          <h3>作答</h3>
-          <p id="question-text" class="question"></p>
-          <form id="answer-form" class="stack-form">
-            <label for="answer">你的答案</label>
-            <textarea id="answer" name="answer" rows="5" required minlength="1"></textarea>
-            <button id="answer-button" type="submit">提交答案</button>
-          </form>
-        </article>
+            <article id="sources-panel">
+              <h3>来源</h3>
+              <ul id="sources" class="source-list"></ul>
+            </article>
 
-        <article id="feedback-panel" class="hidden">
-          <h3>反馈与补充讲解</h3>
-          <p id="feedback" class="prose"></p>
-          <div id="remediation" class="prose"></div>
-        </article>
+            <article id="question-panel">
+              <h3>作答</h3>
+              <p id="question-text" class="question"></p>
+              <form id="answer-form" class="stack-form">
+                <label for="answer">你的答案</label>
+                <textarea id="answer" name="answer" rows="4" required minlength="1"></textarea>
+                <button id="answer-button" type="submit">提交答案</button>
+              </form>
+            </article>
 
-        <article id="completion-panel" class="hidden">
-          <h3>学习结果</h3>
-          <p id="completion-result" class="prose"></p>
-          <p id="next-review" class="prose"></p>
-          <button id="reset-button" type="button">再学一个主题</button>
-        </article>
+            <article id="feedback-panel" class="hidden">
+              <h3>反馈</h3>
+              <p id="feedback" class="prose"></p>
+              <div id="remediation" class="prose"></div>
+            </article>
 
-        <details id="trace-panel">
-          <summary>工具调用轨迹</summary>
-          <ol id="tool-trace" class="trace-list"></ol>
-        </details>
+            <article id="completion-panel" class="hidden">
+              <h3>学习结果</h3>
+              <p id="completion-result" class="prose"></p>
+              <p id="next-review" class="prose"></p>
+              <button id="reset-button" type="button">再学一个主题</button>
+            </article>
+
+            <details id="trace-panel">
+              <summary>工具调用轨迹</summary>
+              <ol id="tool-trace" class="trace-list"></ol>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 今日待复习 ===== -->
+      <section id="tab-due" class="tab-panel">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>今日待复习</h2>
+            <div class="inline-form">
+              <label for="due-course">课程</label>
+              <select id="due-course">
+                <option value="">全部</option>
+                <option value="os">操作系统</option>
+                <option value="ds">数据结构</option>
+                <option value="co">组成原理</option>
+              </select>
+              <button id="refresh-due" type="button">刷新</button>
+            </div>
+          </div>
+          <p id="due-summary" class="muted"></p>
+          <ul id="due-list" class="due-list"></ul>
+        </div>
       </section>
     </main>
-    <noscript>学习工作台需要浏览器启用 JavaScript，以便调用正式会话 API。</noscript>
+    <noscript>学习工作台需要浏览器启用 JavaScript。</noscript>
     <script src="/static/workbench/app.js" defer></script>
   </body>
 </html>
