@@ -1,0 +1,92 @@
+services:
+  platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: study-assistant-platform
+    ports:
+      - "8000:8000"
+    volumes:
+      - platform-cache:/app/.cache
+      - ./knowledge:/app/knowledge:ro
+    environment:
+      - SA_KNOWLEDGE_ROOT=/app/knowledge
+      - SA_TOP_K=5
+      - SA_BM25_POOL=0
+      - SA_USE_VECTOR=false
+      - SA_VECTOR_STORE=sqlite
+      - SA_VECTOR_STORE_PATH=/app/.cache/vector_store.sqlite3
+      - SA_LEARNING_STORE_PATH=/app/.cache/learning_state.sqlite3
+      - SA_INDEX_CACHE_PATH=/app/.cache/index
+      - SA_SOURCE_REGISTRY_PATH=/app/.cache/source_registry.sqlite3
+      - SA_EXTRA_SOURCES=[]
+      - SA_EXTRA_SOURCES_STRICT=true
+    env_file:
+      - path: platform/.env
+        required: false
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Qdrant 向量数据库（可选，用于生产级向量检索）
+  # 启用方式：docker compose --profile qdrant up -d
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: study-assistant-qdrant
+    ports:
+      - "6333:6333"   # REST API
+      - "6334:6334"   # gRPC
+    volumes:
+      - qdrant-data:/qdrant/storage
+    restart: unless-stopped
+    profiles:
+      - qdrant
+
+  # 使用 Qdrant 的 platform 服务（覆盖默认配置）
+  platform-qdrant:
+    build:
+      context: .
+      dockerfile: Dockerfile.qdrant
+    container_name: study-assistant-platform-qdrant
+    ports:
+      - "8000:8000"
+    volumes:
+      - platform-cache:/app/.cache
+      - ./knowledge:/app/knowledge:ro
+    environment:
+      - SA_KNOWLEDGE_ROOT=/app/knowledge
+      - SA_TOP_K=5
+      - SA_BM25_POOL=0
+      - SA_USE_VECTOR=true
+      - SA_VECTOR_STORE=qdrant
+      - SA_QDRANT_URL=http://qdrant
+      - SA_QDRANT_PORT=6333
+      - SA_QDRANT_GRPC_PORT=6334
+      - SA_QDRANT_COLLECTION=study_assistant
+      - SA_LEARNING_STORE_PATH=/app/.cache/learning_state.sqlite3
+      - SA_INDEX_CACHE_PATH=/app/.cache/index
+      - SA_SOURCE_REGISTRY_PATH=/app/.cache/source_registry.sqlite3
+    env_file:
+      - path: platform/.env
+        required: false
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    profiles:
+      - qdrant
+
+volumes:
+  platform-cache:
+    driver: local
+  qdrant-data:
+    driver: local

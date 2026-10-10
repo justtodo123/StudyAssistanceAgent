@@ -1,0 +1,44 @@
+# ===== Git =====
+.git
+.gitignore
+
+# ===== 文档与配置 =====
+docs/
+tests/
+tools/
+proced_problem/
+*.md
+!platform/README.md
+
+# ===== 开发与测试 =====
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+platform/tests/
+platform/requirements-dev.txt
+
+# ===== 环境与缓存 =====
+.env
+.env.*
+!.env.example
+platform/.cache/
+platform/.venv/
+artifacts/
+reports/
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# ===== 其他 =====
+data/raw/
+data/normalized/
+data/candidates/
+data/approved/
+data/rejected/
+node_modules/

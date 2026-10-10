@@ -28,6 +28,15 @@ except Exception:  # pragma: no cover - optional dependency is absent in CI.
     SentenceTransformer = Any  # type: ignore[assignment,misc]
     _ST_AVAILABLE = False
 
+try:  # Optional Qdrant client for production-grade vector search.
+    from qdrant_client import QdrantClient
+    from qdrant_client.http.models import Distance, PointStruct, VectorParams
+
+    _QDRANT_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency.
+    QdrantClient = Any  # type: ignore[assignment,misc]
+    _QDRANT_AVAILABLE = False
+
 Vector = list[float]
 _SCHEMA_VERSION = "m3a-1"
 
@@ -476,6 +485,211 @@ class SqliteVectorStore(_EmbeddingMixin):
         if self._memory_connection is not None:
             self._memory_connection.close()
             self._memory_connection = None
+
+
+class QdrantVectorStore(_EmbeddingMixin):
+    """Qdrant-backed vector store for production deployments.
+
+    Requires qdrant-client and a running Qdrant instance (local or remote).
+    Supports both in-memory mode (for testing) and persistent HTTP/gRPC modes.
+    """
+
+    DEFAULT_COLLECTION = "study_assistant"
+
+    def __init__(
+        self,
+        model_name: str | None = None,
+        cache_dir: str | os.PathLike[str] | None = None,
+        embedder: Any | None = None,
+        location: str | None = None,
+        url: str | None = None,
+        port: int | None = None,
+        grpc_port: int | None = None,
+        collection_name: str | None = None,
+        prefer_grpc: bool = True,
+    ) -> None:
+        if not _QDRANT_AVAILABLE:
+            raise RuntimeError("qdrant-client is not installed")
+        self.model_name = model_name or "BAAI/bge-small-zh-v1.5"
+        self.cache_dir = str(cache_dir) if cache_dir is not None else None
+        self._embedder = embedder
+        self._model: Any | None = None
+        self.collection_name = collection_name or self.DEFAULT_COLLECTION
+        self._dimension: int | None = None
+
+        if location is not None:
+            self._client = QdrantClient(location=location)
+        elif url is not None:
+            self._client = QdrantClient(
+                url=url,
+                port=port or 6333,
+                grpc_port=grpc_port or 6334,
+                prefer_grpc=prefer_grpc,
+            )
+        else:
+            self._client = QdrantClient(location=":memory:")
+
+    @staticmethod
+    def available() -> bool:
+        return _QDRANT_AVAILABLE
+
+    def is_available(self) -> bool:
+        if not _QDRANT_AVAILABLE:
+            return False
+        try:
+            self._client.get_collections()
+            return True
+        except Exception:
+            return False
+
+    def _ensure_collection(self, dimension: int) -> None:
+        collections = [c.name for c in self._client.get_collections().collections]
+        if self.collection_name not in collections:
+            self._client.create_collection(
+                collection_name=self.collection_name,
+                vectors_config=VectorParams(size=dimension, distance=Distance.COSINE),
+            )
+        self._dimension = dimension
+
+    def _validate_dimension(self, values: list[Vector]) -> None:
+        if not values:
+            return
+        dim = len(values[0])
+        if self._dimension is None:
+            self._ensure_collection(dim)
+        elif dim != self._dimension:
+            raise ValueError(f"vector dimension mismatch: expected={self._dimension}, actual={dim}")
+
+    def _chunk_to_payload(self, chunk: RetrievalChunk, vector: Vector) -> dict[str, Any]:
+        payload = chunk.model_dump(exclude={"score"})
+        payload["fingerprint"] = _chunk_fingerprint(chunk)
+        return {"id": _qdrant_point_id(chunk.id), "vector": vector, "payload": payload}
+
+    def add(self, chunks: list[RetrievalChunk], vectors: list[Vector] | None = None) -> None:
+        if not chunks:
+            return
+        values = self._vectors_for(chunks, vectors)
+        self._validate_dimension(values)
+        points = [
+            PointStruct(**self._chunk_to_payload(chunk, vector))
+            for chunk, vector in zip(chunks, values)
+        ]
+        self._client.upsert(collection_name=self.collection_name, points=points)
+
+    def replace_all(self, chunks: list[RetrievalChunk], vectors: list[Vector] | None = None) -> None:
+        try:
+            self._client.delete_collection(self.collection_name)
+        except Exception:
+            pass
+        if chunks:
+            values = self._vectors_for(chunks, vectors)
+            self._ensure_collection(len(values[0]))
+            points = [
+                PointStruct(**self._chunk_to_payload(chunk, vector))
+                for chunk, vector in zip(chunks, values)
+            ]
+            self._client.upsert(collection_name=self.collection_name, points=points)
+
+    def search(
+        self,
+        query: str | Sequence[float] | None = None,
+        top_k: int = 5,
+        threshold: float = 0.0,
+        *,
+        query_vector: Sequence[float] | None = None,
+    ) -> list[RetrievalChunk]:
+        if top_k <= 0:
+            return []
+        resolved = _resolve_query(query, query_vector)
+        query_vec = self._query_vector(resolved)
+
+        try:
+            self._client.get_collection(self.collection_name)
+        except Exception:
+            return []
+
+        results = self._client.search(
+            collection_name=self.collection_name,
+            query_vector=query_vec,
+            limit=top_k,
+            score_threshold=threshold,
+        )
+        chunks: list[RetrievalChunk] = []
+        for hit in results:
+            payload = dict(hit.payload)
+            payload.pop("fingerprint", None)
+            chunk = RetrievalChunk(**payload)
+            chunk.score = round(hit.score, 4)
+            chunks.append(chunk)
+        return chunks
+
+    def count(self) -> int:
+        try:
+            info = self._client.get_collection(self.collection_name)
+            return info.points_count or 0
+        except Exception:
+            return 0
+
+    def ids(self) -> set[str]:
+        result: set[str] = set()
+        try:
+            offset = None
+            while True:
+                points, offset = self._client.scroll(
+                    collection_name=self.collection_name,
+                    limit=100,
+                    offset=offset,
+                    with_payload=True,
+                    with_vectors=False,
+                )
+                for point in points:
+                    chunk_id = point.payload.get("id")
+                    if chunk_id:
+                        result.add(chunk_id)
+                if offset is None:
+                    break
+        except Exception:
+            pass
+        return result
+
+    def is_synced(self, chunks: list[RetrievalChunk]) -> bool:
+        if self.count() != len(chunks):
+            return False
+        stored_ids = self.ids()
+        expected_ids = {chunk.id for chunk in chunks}
+        if stored_ids != expected_ids:
+            return False
+        expected_fps = {chunk.id: _chunk_fingerprint(chunk) for chunk in chunks}
+        try:
+            offset = None
+            while True:
+                points, offset = self._client.scroll(
+                    collection_name=self.collection_name,
+                    limit=100,
+                    offset=offset,
+                    with_payload=True,
+                    with_vectors=False,
+                )
+                for point in points:
+                    chunk_id = point.payload.get("id")
+                    stored_fp = point.payload.get("fingerprint", "")
+                    if chunk_id in expected_fps and expected_fps[chunk_id] != stored_fp:
+                        return False
+                if offset is None:
+                    break
+        except Exception:
+            return False
+        return True
+
+    def close(self) -> None:
+        try:
+            self._client.close()
+        except Exception:
+            pass
+
+
+def _qdrant_point_id(chunk_id: str) -> int:
+    return int(hashlib.sha256(chunk_id.encode()).hexdigest()[:16], 16)
 
 
 def migrate_store(source: Any, target: VectorStore) -> int:

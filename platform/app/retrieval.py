@@ -18,7 +18,7 @@ from . import config
 from .bm25 import Bm25Search
 from .models import RetrievalChunk
 from .observability import log_operation, metrics
-from .vector_store import LocalVectorStore, SqliteVectorStore, VectorStore
+from .vector_store import LocalVectorStore, QdrantVectorStore, SqliteVectorStore, VectorStore
 
 RRF_K = config.RRF_K
 
@@ -47,6 +47,14 @@ class _VectorHolder:
             if store is None:
                 if config.VECTOR_STORE == "linear":
                     store = LocalVectorStore(config.EMBEDDING_MODEL)
+                elif config.VECTOR_STORE == "qdrant":
+                    store = QdrantVectorStore(
+                        config.EMBEDDING_MODEL,
+                        url=config.QDRANT_URL,
+                        port=config.QDRANT_PORT,
+                        grpc_port=config.QDRANT_GRPC_PORT,
+                        collection_name=config.QDRANT_COLLECTION,
+                    )
                 else:
                     store = SqliteVectorStore(
                         config.EMBEDDING_MODEL,
@@ -100,9 +108,11 @@ class _VectorHolder:
             return LocalVectorStore.available()
         if config.VECTOR_STORE == "sqlite":
             return SqliteVectorStore.available()
+        if config.VECTOR_STORE == "qdrant":
+            return QdrantVectorStore.available()
         raise ValueError(
             f"unsupported vector store: {config.VECTOR_STORE!r}; "
-            "expected 'sqlite' or 'linear'"
+            "expected 'sqlite', 'linear' or 'qdrant'"
         )
 
 
