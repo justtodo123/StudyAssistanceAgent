@@ -161,6 +161,15 @@ def _build_runtime(settings: config.Settings) -> RuntimeServices:
             from .graphs.dependencies import GraphContainer
 
             if LANGGRAPH_AVAILABLE:
+                graph_llm = None
+                if settings.langgraph_llm_enabled and settings.anthropic_api_key:
+                    from .graphs.llm import GraphLLM
+
+                    graph_llm = GraphLLM(
+                        api_key=settings.anthropic_api_key,
+                        max_tokens=256,
+                        timeout_s=30.0,
+                    )
                 graph_container = GraphContainer(
                     recall=recall,
                     qa_service=QaService(recall, scope=RetrievalScope.DEFAULT_ONLY),
@@ -168,6 +177,7 @@ def _build_runtime(settings: config.Settings) -> RuntimeServices:
                     review_scheduler=review_scheduler,
                     goal_planner=goal_planner,
                     plan_lifecycle=plan_lifecycle,
+                    llm=graph_llm,
                 )
         except Exception:
             graph_container = None

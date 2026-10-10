@@ -4,6 +4,10 @@ Each function takes the graph *state* dict and returns a partial dict
 that LangGraph merges back.  The functions call the same deterministic
 services used by :class:`app.study_session.StudySessionService` so the
 v2 graph produces results consistent with v1.
+
+When a :class:`GraphLLM` is injected the remediation path can generate
+personalised hints via the model; any failure falls back to the
+template-based ``_hint()`` helper.
 """
 
 from __future__ import annotations
@@ -30,6 +34,7 @@ from ...study_session import (
     STATE_REMEDIATION,
     evaluate_answer,
 )
+from ..llm import GraphLLM
 
 
 def _now() -> str:
@@ -46,6 +51,38 @@ def _hint(question: QuizQuestion, explanation: str) -> str:
                 return f"提示：{snippet[: idx + 1]} 请结合出处再答一次。"
         return f"提示：{snippet[:80]} 请结合讲解和来源笔记再答一次。"
     return "请结合讲解和来源笔记再答一次。"
+
+
+_REMEDIATION_PROMPT = (
+    "你是一位计算机科学课程的辅导老师。学生回答了一道题目但答错了。\n"
+    "请根据题目、正确答案和学生的错误回答，给出一条简短的提示（不超过 80 字），"
+    "指出错误方向但不要直接给出答案。\n\n"
+    "题目：{question}\n"
+    "正确答案：{answer}\n"
+    "学生的回答：{student_answer}\n"
+    "来源笔记摘要：{explanation}\n\n"
+    "提示："
+)
+
+
+def _llm_hint(
+    llm: GraphLLM,
+    question: QuizQuestion,
+    student_answer: str,
+    explanation: str,
+) -> str | None:
+    prompt = _REMEDIATION_PROMPT.format(
+        question=question.question[:200],
+        answer=(question.answer or "")[:200],
+        student_answer=student_answer[:200],
+        explanation=explanation[:300],
+    )
+    result = llm.complete(prompt)
+    if result is None or len(result) < 4:
+        return None
+    if len(result) > 200:
+        result = result[:200]
+    return f"提示：{result}"
 
 
 def _full_explanation(question: QuizQuestion, explanation: str) -> str:
@@ -178,6 +215,8 @@ def initialize_node(
 
 def evaluate_node(
     state: dict[str, Any],
+    *,
+    llm: GraphLLM | None = None,
 ) -> dict[str, Any]:
     """Evaluate the user's answer for the current question."""
     questions = list(state.get("questions") or [])
@@ -224,7 +263,10 @@ def evaluate_node(
     elif q["attempt_count"] < MAX_ATTEMPTS:
         q["correct"] = False
         eval_dict["reference_answer"] = ""
-        updates["remediation"] = _hint(quiz_q, explanation)
+        hint = None
+        if llm is not None:
+            hint = _llm_hint(llm, quiz_q, answer, explanation)
+        updates["remediation"] = hint or _hint(quiz_q, explanation)
         updates["state"] = STATE_AWAITING_ANSWER
     else:
         q["correct"] = False

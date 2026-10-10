@@ -16,6 +16,7 @@ from ..quiz import QuizService
 from ..retrieval import MultiRecallService
 from ..review_scheduler import ReviewSchedulerService
 from .config import LangGraphLimits
+from .llm import GraphLLM
 
 
 class GraphContainer:
@@ -30,6 +31,7 @@ class GraphContainer:
         goal_planner: GoalPlannerService,
         plan_lifecycle: PlanLifecycleService,
         limits: LangGraphLimits | None = None,
+        llm: GraphLLM | None = None,
     ) -> None:
         self.recall = recall
         self.qa_service = qa_service
@@ -38,6 +40,7 @@ class GraphContainer:
         self.goal_planner = goal_planner
         self.plan_lifecycle = plan_lifecycle
         self.limits = limits or LangGraphLimits()
+        self.llm = llm
 
         self._study_graph: Any = None
         self._submit_graph: Any = None

@@ -655,6 +655,15 @@ immutable revision 才是 published generation 的权威，且重复请求与无
 v2 端点包装现有确定性服务（`QaService`、`QuizService`、`evaluate_answer`、`PlanLifecycleService`），
 不重写业务逻辑。`/health` 返回 `langgraph_enabled` 字段反映当前状态。
 
+### LLM 增强（`SA_LANGRAPH_LLM_ENABLED=true`）
+
+启用后两个节点接入 Anthropic Claude（需 `ANTHROPIC_API_KEY`）：
+
+- **Assistance router**：当 API 未指定 intent 时，LLM 对 `question` 做意图分类（study/plan/general）
+- **Study remediation**：答错时 LLM 根据题目、错误答案和正确答案生成个性化提示
+
+所有 LLM 调用失败时自动回退确定性路径（模板提示 / API intent），不影响可用性。
+
 ## 配置
 
 `app.config.load_settings()` 从显式环境映射构造冻结的 `Settings`；普通 import 不再隐式搜索或读取 `.env`。

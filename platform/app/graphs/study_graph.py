@@ -75,7 +75,8 @@ def build_study_graph(container: GraphContainer) -> Any:
     )
 
     graph.add_node("initialize", init_fn)
-    graph.add_node("evaluate", evaluate_node)
+    evaluate_fn = partial(evaluate_node, llm=container.llm)
+    graph.add_node("evaluate", evaluate_fn)
     graph.add_node("advance", advance_fn)
 
     graph.add_edge(START, "initialize")
@@ -113,8 +114,9 @@ def build_submit_graph(container: GraphContainer) -> Any:
         advance_node,
         review_scheduler=container.review_scheduler,
     )
+    evaluate_fn = partial(evaluate_node, llm=container.llm)
 
-    graph.add_node("evaluate", evaluate_node)
+    graph.add_node("evaluate", evaluate_fn)
     graph.add_node("advance", advance_fn)
 
     graph.add_edge(START, "evaluate")

@@ -383,7 +383,8 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 - ✅ **LangGraph Multi-Agent 编排**（2026-10-10，非正式里程碑）：`platform/app/graphs/` 实现 Tutor/Planner/Retrieval
   三 Agent 共享状态图编排，`/api/v2/*` 并行端点包装现有确定性服务（`QaService`/`QuizService`/`evaluate_answer`/
   `PlanLifecycleService`），不重写业务逻辑。langgraph 为可选依赖，`SA_LANGRAPH_ENABLED` 门控，未安装时 v2 不注册、
-  v1 不受影响。40 项测试（`tests/M12_langgraph/`）全绿。
+  v1 不受影响。`SA_LANGRAPH_LLM_ENABLED=true` 时 assistance router 接入 LLM 意图分类、study remediation 接入
+  LLM 个性化提示，失败自动回退确定性路径。60 项测试（`tests/M12_langgraph/`）全绿。
 
 ### 2026-09-29 阶段性项目收口
 

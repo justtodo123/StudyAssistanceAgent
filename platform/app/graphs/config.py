@@ -19,6 +19,8 @@ class LangGraphLimits:
     node_timeout_seconds: float = 30.0
     max_retrieval_top_k: int = 20
     max_remediation_attempts: int = 2
+    max_llm_tokens: int = 256
+    max_llm_timeout_s: float = 30.0
 
 
 _DEFAULTS = LangGraphLimits()
@@ -51,4 +53,14 @@ def validate_limits(limits: LangGraphLimits) -> None:
         raise ValueError(
             f"max_remediation_attempts ({limits.max_remediation_attempts}) "
             f"exceeds frozen limit ({_DEFAULTS.max_remediation_attempts})"
+        )
+    if limits.max_llm_tokens > _DEFAULTS.max_llm_tokens:
+        raise ValueError(
+            f"max_llm_tokens ({limits.max_llm_tokens}) "
+            f"exceeds frozen limit ({_DEFAULTS.max_llm_tokens})"
+        )
+    if limits.max_llm_timeout_s > _DEFAULTS.max_llm_timeout_s:
+        raise ValueError(
+            f"max_llm_timeout_s ({limits.max_llm_timeout_s}) "
+            f"exceeds frozen limit ({_DEFAULTS.max_llm_timeout_s})"
         )
