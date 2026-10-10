@@ -178,6 +178,8 @@ def _build_runtime(settings: config.Settings) -> RuntimeServices:
                     goal_planner=goal_planner,
                     plan_lifecycle=plan_lifecycle,
                     llm=graph_llm,
+                    tracing=settings.langsmith_tracing,
+                    tracing_project=settings.langsmith_project,
                 )
         except Exception:
             graph_container = None

@@ -64,6 +64,8 @@ class Settings:
     langgraph_enabled: bool
     langgraph_token: str
     langgraph_llm_enabled: bool
+    langsmith_tracing: bool
+    langsmith_project: str
     source_environment: tuple[tuple[str, str], ...]
 
 
@@ -253,6 +255,9 @@ def load_settings(
         )
     langgraph_llm_enabled = _strict_bool("SA_LANGRAPH_LLM_ENABLED", environ=source)
 
+    langsmith_tracing = _strict_bool("SA_LANGSMITH_TRACING", environ=source)
+    langsmith_project = _value(source, "SA_LANGSMITH_PROJECT", "study-assistant")
+
     cache_root = repo_root / "platform" / ".cache"
     return Settings(
         repo_root=repo_root,
@@ -294,6 +299,8 @@ def load_settings(
         langgraph_enabled=langgraph_enabled,
         langgraph_token=langgraph_token,
         langgraph_llm_enabled=langgraph_llm_enabled,
+        langsmith_tracing=langsmith_tracing,
+        langsmith_project=langsmith_project,
         source_environment=tuple(
             sorted(
                 (key, value)

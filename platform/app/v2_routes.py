@@ -46,7 +46,7 @@ def build_v2_router(container: GraphContainer) -> APIRouter:
             "question_count": req.question_count,
             "use_llm": req.use_llm,
         }
-        result = graph.invoke(initial_state)
+        result = graph.invoke(initial_state, config=container.invoke_config(session_id))
         graph_states[session_id] = result
         return _study_state_to_response(result)
 
@@ -73,7 +73,7 @@ def build_v2_router(container: GraphContainer) -> APIRouter:
             **existing,
             "current_answer": req.answer,
         }
-        result = graph.invoke(initial_state)
+        result = graph.invoke(initial_state, config=container.invoke_config(session_id))
         graph_states[session_id] = result
         return _study_state_to_response(result)
 
@@ -86,7 +86,7 @@ def build_v2_router(container: GraphContainer) -> APIRouter:
             )
         graph = container.plan_graph
         initial_state = {"plan_id": plan_id}
-        result = graph.invoke(initial_state)
+        result = graph.invoke(initial_state, config=container.invoke_config())
         return {
             "plan_id": plan_id,
             "deviation_count": result.get("deviation_count", 0),
@@ -108,7 +108,7 @@ def build_v2_router(container: GraphContainer) -> APIRouter:
             "question": req.get("question", ""),
             "course": req.get("course"),
         }
-        result = graph.invoke(initial_state)
+        result = graph.invoke(initial_state, config=container.invoke_config())
         return {
             "intent": result.get("intent", "general"),
             "retrieval_mode": result.get("retrieval_mode", ""),

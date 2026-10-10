@@ -664,6 +664,16 @@ v2 端点包装现有确定性服务（`QaService`、`QuizService`、`evaluate_a
 
 所有 LLM 调用失败时自动回退确定性路径（模板提示 / API intent），不影响可用性。
 
+### LangSmith 追踪（`SA_LANGSMITH_TRACING=true`）
+
+启用后每次 `graph.invoke()` 自动附加 `LangChainTracer` 回调，可在 [LangSmith](https://smith.langchain.com) 控制台观测：
+
+- 每个节点的执行轨迹与耗时
+- 状态流转路径
+- LLM 调用的输入/输出（当 LLM 增强同时启用时）
+
+需要 `LANGCHAIN_API_KEY` 环境变量（LangSmith SDK 自动读取）。`SA_LANGSMITH_PROJECT` 设置项目名，默认 `study-assistant`。
+
 ## 配置
 
 `app.config.load_settings()` 从显式环境映射构造冻结的 `Settings`；普通 import 不再隐式搜索或读取 `.env`。
