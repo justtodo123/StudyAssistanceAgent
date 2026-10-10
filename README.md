@@ -31,7 +31,7 @@ approved documents/chunks 为 0、3K/10K 均未挣得且无完成批准；M12 �
 | --- | --- | --- |
 | 知识问答 | 基于已索引 Markdown 知识库回答问题，支持 LLM 生成或降级笔记摘要；crawler 候选默认不检索 | ✅ 已实现 |
 | 课程知识维护 | 通过 Markdown + frontmatter 文件维护、索引和检索精炼笔记与例题 | ✅ 已实现默认包 OS 20 篇 + DS 20 篇 + CO 20 篇；Network 31 篇仍为 candidate，不进入默认索引 |
-| 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（默认 `SqliteVectorStore`，线性余弦；可显式切换内存 `LocalVectorStore`） |
+| 多路召回 RAG | BM25 关键词 + BGE 向量 + RRF 融合检索，带出处标注 | ✅ 已实现（默认 `SqliteVectorStore`，线性余弦；可切换内存 `LocalVectorStore` 或生产级 `QdrantVectorStore`） |
 | RAG 评测 | 默认一条命令评测 OS/DS/CO 三课 90 题；Network 30 题为显式扩展集 | ✅ 2026-08-31 复测 Recall@3：OS 1.000、DS 0.929、CO 1.000，加权 0.978 |
 | 学习计划 | 按课程/考试生成学习路线与计划 | ✅ MVP 已实现；M9 目标驱动 Planner 已按 Goal + 约束确定性生成版本化计划 |
 | 用户数据源 | 自定义知识目录，真实数据当前→3K→10K，30K/100K 分级扩展 | ✅ M7 Source Registry、FTS5/vector/offline、delete/isolation 与 Search/QA 的受信任内部 principal overlay 已完成；preview/quiz/sessions 仍不含用户源。冻结技术证据通过，随后于 2026-09-06 取得独立人工完成批准，当前为 `ADMITTED / COMPLETE` |
@@ -44,6 +44,8 @@ approved documents/chunks 为 0、3K/10K 均未挣得且无完成批准；M12 �
 | 多轮工具编排 | QA→讲解→出题→评估→记录复习完整链路 | ✅ 已实现（API `/api/v1/study-sessions` + Skill `study-assistant`） |
 | 学习工作台 | 最小交互页面，调用正式会话 API 完成学习闭环 | ✅ 已实现（`GET /`） |
 | 离线交付 | 一键启动、健康检查、离线 CI、crawler 独立离线 job 与演示基线 | ✅ 已实现（`tools/start_local.py` + `.github/workflows/offline-ci.yml`） |
+| 容器化部署 | Dockerfile + docker-compose，支持容器化运行与数据持久化 | ✅ 已实现（`Dockerfile` + `docker-compose.yml` + Qdrant profile） |
+| LangGraph Multi-Agent | LangGraph 状态图编排（Tutor/Planner/Retrieval 三 Agent），v2 API 并行端点 | ✅ 已实现（`platform/app/graphs/` + `/api/v2/*`；`SA_LANGRAPH_ENABLED` 门控，可选依赖） |
 
 ## 目录结构
 
@@ -51,6 +53,10 @@ approved documents/chunks 为 0、3K/10K 均未挣得且无完成批准；M12 �
 StudyAssistanceAgent/
 ├── CLAUDE.md              # Agent 项目指导（开发规范、知识库约定）
 ├── README.md              # 本文件（项目概览）
+├── Dockerfile             # 容器化部署（多阶段构建，python:3.12-slim）
+├── Dockerfile.qdrant      # Qdrant 向量数据库变体（含 qdrant-client + sentence-transformers）
+├── docker-compose.yml     # 容器编排（一键启动 + Qdrant profile + 数据持久化）
+├── .dockerignore          # Docker 构建排除规则
 ├── data/                  # M11 数据分层边界说明（raw/normalized 不入库）
 │   ├── README.md          # 目录约定与 Git 边界；不含正文
 │   └── manifests/         # 小型来源、digest、Gate 元数据；不含正文
@@ -75,7 +81,7 @@ StudyAssistanceAgent/
 │   │   ├── main.py        # FastAPI 入口（search/qa/quiz/review/study-sessions + 工作台）
 │   │   ├── retrieval.py   # 多路召回 + RRF 融合
 │   │   ├── bm25.py        # BM25 关键词检索（bigram 分词）
-│   │   ├── vector_store.py# SQLite/内存 BGE 向量后端（当前线性余弦）
+│   │   ├── vector_store.py# 向量后端（SqliteVectorStore / LocalVectorStore / QdrantVectorStore）
 │   │   ├── qa.py          # 问答服务（LLM 生成 / 降级笔记摘要）
 │   │   ├── knowledge_index.py # 知识库索引（Markdown 切分 + 缓存）
 │   │   ├── review_plan.py # 复习计划服务（分日学习计划生成）
@@ -106,6 +112,16 @@ StudyAssistanceAgent/
 │   │   ├── m11_candidate_pipeline.py # M11 manifest-bound candidate-only 规范化编排
 │   │   ├── m11_gate0.py      # M11 只读 Formal Gate 0 runner（不授予下游权限）
 │   │   ├── m11_gate0_result.py # M11 Formal Gate 0 persisted-result privacy/integrity validator
+│   │   ├── v2_routes.py       # M12 LangGraph v2 API 端点（study-sessions/plans/assist）
+│   │   ├── graphs/            # M12 LangGraph Multi-Agent 编排
+│   │   │   ├── __init__.py    # 可选 langgraph 导入与 LANGGRAPH_AVAILABLE 标志
+│   │   │   ├── state.py       # TypedDict 状态模式（StudyState/PlanState/AssistanceState）
+│   │   │   ├── config.py      # LangGraphLimits 冻结参数
+│   │   │   ├── dependencies.py# GraphContainer DI 容器
+│   │   │   ├── study_graph.py # 学习会话图（initialize→evaluate→advance）
+│   │   │   ├── plan_graph.py  # 计划生命周期图（deviation→grounding→replan）
+│   │   │   ├── assistance_graph.py # 顶层多 Agent 路由
+│   │   │   └── nodes/         # 图节点实现（retrieval/study/plan）
 │   │   └── static/           # 最小学习工作台静态页
 │   ├── tests/             # 冒烟测试
 │   ├── requirements.txt   # Python 依赖

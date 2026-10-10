@@ -41,6 +41,10 @@ class Settings:
     llm_timeout_s: float
     vector_store: str
     vector_store_path: Path
+    qdrant_url: str
+    qdrant_port: int
+    qdrant_grpc_port: int
+    qdrant_collection: str
     learning_store_path: Path
     source_registry_path: Path
     index_cache_path: Path
@@ -57,6 +61,9 @@ class Settings:
     plan_ai_enabled: bool
     plan_ai_token: str
     plan_ai_limits: PlanAILimits
+    langgraph_enabled: bool
+    langgraph_token: str
+    langgraph_llm_enabled: bool
     source_environment: tuple[tuple[str, str], ...]
 
 
@@ -216,9 +223,9 @@ def load_settings(
 
     repo_root = REPO_ROOT
     vector_store = _value(source, "SA_VECTOR_STORE", "sqlite").lower()
-    if vector_store not in {"sqlite", "linear"}:
+    if vector_store not in {"sqlite", "linear", "qdrant"}:
         raise ValueError(
-            f"unsupported SA_VECTOR_STORE={vector_store!r}; expected 'sqlite' or 'linear'"
+            f"unsupported SA_VECTOR_STORE={vector_store!r}; expected 'sqlite', 'linear' or 'qdrant'"
         )
 
     preview_enabled = _strict_bool("SA_AGENT_PREVIEW_ENABLED", environ=source)
@@ -236,6 +243,15 @@ def load_settings(
             "SA_PLAN_AI_TOKEN (or ANTHROPIC_API_KEY) must contain at least 32 UTF-8 bytes "
             "when the external AI planning path is enabled"
         )
+
+    langgraph_enabled = _strict_bool("SA_LANGRAPH_ENABLED", environ=source)
+    langgraph_token = _value(source, "SA_LANGRAPH_TOKEN", "")
+    if langgraph_enabled and len(langgraph_token.encode("utf-8")) < 32:
+        raise ValueError(
+            "SA_LANGRAPH_TOKEN must contain at least 32 UTF-8 bytes "
+            "when LangGraph orchestration is enabled"
+        )
+    langgraph_llm_enabled = _strict_bool("SA_LANGRAPH_LLM_ENABLED", environ=source)
 
     cache_root = repo_root / "platform" / ".cache"
     return Settings(
@@ -255,6 +271,10 @@ def load_settings(
         llm_timeout_s=float(_value(source, "SA_LLM_TIMEOUT_S", "60")),
         vector_store=vector_store,
         vector_store_path=Path(_value(source, "SA_VECTOR_STORE_PATH", str(cache_root / "vector_store.sqlite3"))),
+        qdrant_url=_value(source, "SA_QDRANT_URL", "http://localhost"),
+        qdrant_port=int(_value(source, "SA_QDRANT_PORT", "6333")),
+        qdrant_grpc_port=int(_value(source, "SA_QDRANT_GRPC_PORT", "6334")),
+        qdrant_collection=_value(source, "SA_QDRANT_COLLECTION", "study_assistant"),
         learning_store_path=Path(_value(source, "SA_LEARNING_STORE_PATH", str(cache_root / "learning_state.sqlite3"))),
         source_registry_path=Path(_value(source, "SA_SOURCE_REGISTRY_PATH", str(cache_root / "source_registry.sqlite3"))),
         index_cache_path=Path(_value(source, "SA_INDEX_CACHE_PATH", str(cache_root / "index"))),
@@ -271,6 +291,9 @@ def load_settings(
         plan_ai_enabled=plan_ai_enabled,
         plan_ai_token=plan_ai_token,
         plan_ai_limits=_plan_ai_limits(source),
+        langgraph_enabled=langgraph_enabled,
+        langgraph_token=langgraph_token,
+        langgraph_llm_enabled=langgraph_llm_enabled,
         source_environment=tuple(
             sorted(
                 (key, value)
@@ -304,6 +327,10 @@ LLM_TEMPERATURE = DEFAULT_SETTINGS.llm_temperature
 LLM_TIMEOUT_S = DEFAULT_SETTINGS.llm_timeout_s
 VECTOR_STORE = DEFAULT_SETTINGS.vector_store
 VECTOR_STORE_PATH = DEFAULT_SETTINGS.vector_store_path
+QDRANT_URL = DEFAULT_SETTINGS.qdrant_url
+QDRANT_PORT = DEFAULT_SETTINGS.qdrant_port
+QDRANT_GRPC_PORT = DEFAULT_SETTINGS.qdrant_grpc_port
+QDRANT_COLLECTION = DEFAULT_SETTINGS.qdrant_collection
 LEARNING_STORE_PATH = DEFAULT_SETTINGS.learning_store_path
 SOURCE_REGISTRY_PATH = DEFAULT_SETTINGS.source_registry_path
 INDEX_CACHE_PATH = DEFAULT_SETTINGS.index_cache_path
@@ -320,6 +347,9 @@ ANTHROPIC_API_KEY = DEFAULT_SETTINGS.anthropic_api_key
 AGENT_PREVIEW_LIMITS = DEFAULT_SETTINGS.agent_preview_limits
 PLAN_AI_ENABLED = DEFAULT_SETTINGS.plan_ai_enabled
 PLAN_AI_TOKEN = DEFAULT_SETTINGS.plan_ai_token
+LANGRAPH_ENABLED = DEFAULT_SETTINGS.langgraph_enabled
+LANGRAPH_TOKEN = DEFAULT_SETTINGS.langgraph_token
+LANGRAPH_LLM_ENABLED = DEFAULT_SETTINGS.langgraph_llm_enabled
 
 # Historical names used by tests and limit-name guards.
 _AGENT_PREVIEW_TRUE = _TRUE_VALUES

@@ -96,6 +96,7 @@ class RuntimeServices:
     preview_registry: Any | None = None
     preview_service: Any | None = None
     runner_service: Any | None = None
+    graph_container: Any | None = None
 
 
 def _build_runtime(settings: config.Settings) -> RuntimeServices:
@@ -152,6 +153,25 @@ def _build_runtime(settings: config.Settings) -> RuntimeServices:
         review_scheduler=review_scheduler,
         session_repository=learning_store,
     )
+
+    graph_container = None
+    if settings.langgraph_enabled:
+        try:
+            from .graphs import LANGGRAPH_AVAILABLE
+            from .graphs.dependencies import GraphContainer
+
+            if LANGGRAPH_AVAILABLE:
+                graph_container = GraphContainer(
+                    recall=recall,
+                    qa_service=QaService(recall, scope=RetrievalScope.DEFAULT_ONLY),
+                    quiz_service=quiz_service,
+                    review_scheduler=review_scheduler,
+                    goal_planner=goal_planner,
+                    plan_lifecycle=plan_lifecycle,
+                )
+        except Exception:
+            graph_container = None
+
     return RuntimeServices(
         settings=settings,
         snapshot_publisher=snapshot_publisher,
@@ -172,6 +192,7 @@ def _build_runtime(settings: config.Settings) -> RuntimeServices:
         goal_planner=goal_planner,
         plan_lifecycle=plan_lifecycle,
         study_sessions=study_sessions,
+        graph_container=graph_container,
     )
 
 
@@ -264,6 +285,14 @@ def create_app(settings: config.Settings | None = None) -> FastAPI:
                 "replayed": outcome.replayed,
             }
 
+    if selected.langgraph_enabled and runtime.graph_container is not None:
+        from .graphs import LANGGRAPH_AVAILABLE
+
+        if LANGGRAPH_AVAILABLE:
+            from .v2_routes import build_v2_router
+
+            application.include_router(build_v2_router(runtime.graph_container))
+
     def initialize_runtime() -> None:
         enforce_single_worker_topology()
         runtime.service_lock.acquire()
@@ -292,11 +321,15 @@ def create_app(settings: config.Settings | None = None) -> FastAPI:
     @application.get("/health")
     def health() -> dict[str, Any]:
         from .observability import metrics
-        from .vector_store import LocalVectorStore, SqliteVectorStore
+        from .vector_store import LocalVectorStore, QdrantVectorStore, SqliteVectorStore
 
         if selected.vector_store == "sqlite":
             vector_engine = (
                 "sqlite" if SqliteVectorStore.available() else "sqlite-unavailable"
+            )
+        elif selected.vector_store == "qdrant":
+            vector_engine = (
+                "qdrant" if QdrantVectorStore.available() else "qdrant-unavailable"
             )
         else:
             vector_engine = (
@@ -319,6 +352,10 @@ def create_app(settings: config.Settings | None = None) -> FastAPI:
             "p99_latency_ms": snapshot["p99_latency_ms"],
             "sample_count": snapshot["sample_count"],
             "llm_configured": bool(selected.llm_api_key),
+            "langgraph_enabled": (
+                selected.langgraph_enabled
+                and runtime.graph_container is not None
+            ),
         }
 
     @application.post("/api/v1/search", response_model=SearchResponse)
@@ -489,3 +526,4 @@ _study_sessions = _default_services.study_sessions
 _preview_registry = _default_services.preview_registry
 _preview_service = _default_services.preview_service
 _runner_service = _default_services.runner_service
+_graph_container = _default_services.graph_container

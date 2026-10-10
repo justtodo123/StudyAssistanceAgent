@@ -8,8 +8,7 @@
 ```
 提问 / 工作台 GET /
   → MultiRecallService（course 过滤前置）
-       ├─ 路1: SqliteVectorStore（BGE 可选；持久化 + 线性余弦）
-       │        └─ SA_VECTOR_STORE=linear 时使用内存 LocalVectorStore
+       ├─ 路1: VectorStore（BGE 可选；SqliteVectorStore / LocalVectorStore / QdrantVectorStore）
        └─ 路2: Bm25Search（bigram 关键词）
     → RRF 融合（k=60）+ 文件级去重
     → QaService: LLM 生成 | 降级笔记摘要
@@ -113,7 +112,7 @@ platform/
 │   ├── config.py          # 显式 Settings/load_settings + 兼容常量导出
 │   ├── retrieval.py       # 多路召回 + RRF 融合（MultiRecallService）
 │   ├── bm25.py            # BM25 关键词检索（中文 bigram + 英文整词分词）
-│   ├── vector_store.py    # SQLite/内存向量后端（BGE 可选；当前均为线性余弦）
+│   ├── vector_store.py    # 向量后端（SqliteVectorStore / LocalVectorStore / QdrantVectorStore）
 │   ├── qa.py              # 问答服务（LLM 生成 / 降级笔记摘要）
 │   ├── knowledge_index.py # 知识库索引兼容视图（Markdown 快照 + JSON 缓存）
 │   ├── markdown_parser.py # 共享 Markdown frontmatter/H2 解析原语
@@ -249,7 +248,7 @@ GET /health
 ```
 
 字段说明：
-- `vector_engine`：当前向量后端；可为 `linear` / `sqlite`，不可用时带 `-unavailable` 后缀。
+- `vector_engine`：当前向量后端；可为 `linear` / `sqlite` / `qdrant`，不可用时带 `-unavailable` 后缀。
 - `knowledge_root`：默认知识包的稳定逻辑标识 `knowledge-pack`，不返回宿主机目录路径。
 - `index_size`：当前索引中的有效 Markdown 切片数。
 - `cache_status`：进程内最近一次索引/检索缓存状态，取值为 `cold`、`warm` 或 `unknown`。
@@ -641,6 +640,21 @@ immutable revision 才是 published generation 的权威，且重复请求与无
 
 默认启动仍不创建 Source Registry。公共 Search/QA 请求体不接受 caller-selected `principal_id`，因此调用方不能通过 JSON 选择任意用户源；未来认证完成后，可信 principal 只作为 service-level 内部边界传入，才会懒加载用户源 FTS5+vector overlay 并与默认/extra 结果 RRF 融合。公开出处为 `user://{source_id}/{logical_uri}`。M6b preview、Quiz、Review Plan 与 study-sessions 不接收该 overlay。`use_vector=false` 时用户源只执行已授权的 FTS5 keyword route，不要求 vector runtime/metadata 或 query encoding；hybrid 模式仍要求 vector 与 FTS5 绑定同一 published generation 和 identity-set。缺依赖或元数据不一致时用户源 fail closed，不降级到默认包 keyword-only。用户源读路径在昂贵查询后执行有界的 process-local operation-lock revalidation；这不是跨进程 read lease。该能力不构成 M7 exit。M6a 静态额外源、默认 pack、学习状态 SQLite 与 M6b preview 均保持原契约。
 
+### M12 LangGraph v2 API（可选）
+
+> 需 `pip install langgraph>=0.2` 并设置 `SA_LANGRAPH_ENABLED=true` + `SA_LANGRAPH_TOKEN`。
+> langgraph 为可选依赖，未安装时 v2 端点不注册，v1 不受影响。
+
+| 端点 | 方法 | 说明 |
+| --- | --- | --- |
+| `/api/v2/study-sessions` | POST | LangGraph 编排的学习会话（study_graph） |
+| `/api/v2/study-sessions/{id}/answers` | POST | 答案提交与评估（submit_graph） |
+| `/api/v2/plans/{id}/replan-grounded` | POST | 知识接地重规划（plan_graph） |
+| `/api/v2/assist` | POST | 统一多 Agent 入口（assistance_graph） |
+
+v2 端点包装现有确定性服务（`QaService`、`QuizService`、`evaluate_answer`、`PlanLifecycleService`），
+不重写业务逻辑。`/health` 返回 `langgraph_enabled` 字段反映当前状态。
+
 ## 配置
 
 `app.config.load_settings()` 从显式环境映射构造冻结的 `Settings`；普通 import 不再隐式搜索或读取 `.env`。
@@ -661,8 +675,12 @@ uvicorn --env-file .env app.main:app --workers 1
 | `SA_TOP_K` | `5` | 检索返回数量 |
 | `SA_BM25_POOL` | `0` | BM25 候选池大小（`0`=全库检索，个人规模下推荐） |
 | `SA_USE_VECTOR` | `true` | 是否启用向量检索 |
-| `SA_VECTOR_STORE` | `sqlite` | 向量后端；`linear` 使用内存 `LocalVectorStore` |
+| `SA_VECTOR_STORE` | `sqlite` | 向量后端；`linear` 使用内存 `LocalVectorStore`，`qdrant` 使用 Qdrant |
 | `SA_VECTOR_STORE_PATH` | `platform/.cache/vector_store.sqlite3` | 默认 `SqliteVectorStore` 持久化路径 |
+| `SA_QDRANT_URL` | `http://localhost` | Qdrant 服务地址（`SA_VECTOR_STORE=qdrant` 时生效） |
+| `SA_QDRANT_PORT` | `6333` | Qdrant REST API 端口 |
+| `SA_QDRANT_GRPC_PORT` | `6334` | Qdrant gRPC 端口 |
+| `SA_QDRANT_COLLECTION` | `study_assistant` | Qdrant collection 名称 |
 | `SA_EMBEDDING_MODEL` | `BAAI/bge-small-zh-v1.5` | BGE 嵌入模型名 |
 | `SA_EMBEDDING_NORMALIZE` | `true` | 向量 L2 归一化 |
 | `SA_EMBEDDING_DIM` | `512` | BGE-small-zh 期望维度（入库仍校验） |
@@ -863,12 +881,45 @@ python -m venv .venv
 
 > `sentence-transformers` 为可选依赖：安装后自动启用本地 BGE 向量检索；未安装则降级为纯关键词（BM25）检索，功能不断。
 
+### Docker 部署
+
+仓库根目录提供 `Dockerfile` 与 `docker-compose.yml`，支持容器化部署：
+
+```bash
+# 方式一：docker compose（推荐）
+docker compose up -d
+
+# 方式二：直接构建运行
+docker build -t study-assistant .
+docker run -d -p 8000:8000 -v sa-cache:/app/.cache study-assistant
+
+# 健康检查
+curl http://localhost:8000/health
+```
+
+容器默认使用 BM25 检索（`SA_USE_VECTOR=false`）。如需启用向量检索，在 `platform/.env` 中设置 `SA_USE_VECTOR=true` 并安装 `sentence-transformers`（需自定义 Dockerfile 添加该依赖）。
+
+数据持久化通过 Docker volume `platform-cache` 实现，SQLite 数据库和缓存保存在 `/app/.cache`。
+
+#### Qdrant 向量数据库（可选）
+
+使用 Docker Compose profile 一键启用 Qdrant 生产级向量检索：
+
+```bash
+docker compose --profile qdrant up -d
+```
+
+该 profile 启动 Qdrant 服务（REST 6333 / gRPC 6334）和使用 `Dockerfile.qdrant` 构建的 platform 服务，
+`SA_VECTOR_STORE=qdrant`，自动连接。Qdrant 数据保存在 `qdrant-data` volume。
+
 ## 当前向量存储
 
 默认后端是由 `SA_VECTOR_STORE_PATH` 配置的持久化 `SqliteVectorStore`；设置
-`SA_VECTOR_STORE=linear` 可切换到内存 `LocalVectorStore`。两者当前都使用线性余弦检索，ANN、LanceDB 与
-Qdrant 属于 M8。索引保存 chunk fingerprint 和 embedding 模型名，知识内容或模型变化时自动重建；编码器
-不可用时检索降级为 BM25。
+`SA_VECTOR_STORE=linear` 可切换到内存 `LocalVectorStore`；设置 `SA_VECTOR_STORE=qdrant`
+可连接到外部 Qdrant 服务（需安装 `qdrant-client` 和 `sentence-transformers`）。三者共享同一
+`VectorStore` Protocol，SqliteVectorStore 与 LocalVectorStore 当前都使用线性余弦检索，
+支持 upsert、dimension 校验和 fingerprint 同步检测。ANN 优化、LanceDB 属于 M8 范围。索引保存
+chunk fingerprint 和 embedding 模型名，知识内容或模型变化时自动重建；编码器不可用时检索降级为 BM25。
 
 ---
 

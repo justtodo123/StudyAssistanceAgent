@@ -46,7 +46,14 @@ _AUTHORITY_MODULE = "learning_store.py"
 #: - `runners/state_machine.py` 驱动正式学习闭环（唯一权威的**调用方**，非另一套权威）；
 #: - `study_session.py` 自身（权威的定义处）。
 _ALLOWED_AUTHORITY_IMPORTERS = frozenset(
-    {"main.py", "review_scheduler.py", "runners/state_machine.py", "study_session.py"}
+    {
+        "main.py",
+        "review_scheduler.py",
+        "runners/state_machine.py",
+        "study_session.py",
+        "graphs/nodes/study.py",
+        "graphs/study_graph.py",
+    }
 )
 
 #: M9 本次阶段新增/接管的模块。它们**必须**与写权威完全隔离。此名单只用于给出可读的失败信息，

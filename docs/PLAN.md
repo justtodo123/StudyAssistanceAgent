@@ -380,6 +380,10 @@ M8–M11 并交付可选云端单用户 profile。所有阶段都不以 M6b 为�
 - ⬜ **M12 可选云端单用户部署**：准备计划见
   [`m12-cloud-deployment-plan.md`](plans/m12-cloud-deployment-plan.md)；本地离线 profile 永久保留且仍是默认。云端仅为
   显式 opt-in 单用户部署，须闭合服务器、安全、身份、备份、成本、数据驻留和 rollback Decision；多租户和百万级不在范围。
+- ✅ **LangGraph Multi-Agent 编排**（2026-10-10，非正式里程碑）：`platform/app/graphs/` 实现 Tutor/Planner/Retrieval
+  三 Agent 共享状态图编排，`/api/v2/*` 并行端点包装现有确定性服务（`QaService`/`QuizService`/`evaluate_answer`/
+  `PlanLifecycleService`），不重写业务逻辑。langgraph 为可选依赖，`SA_LANGRAPH_ENABLED` 门控，未安装时 v2 不注册、
+  v1 不受影响。40 项测试（`tests/M12_langgraph/`）全绿。
 
 ### 2026-09-29 阶段性项目收口
 
