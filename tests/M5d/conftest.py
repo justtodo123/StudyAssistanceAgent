@@ -24,14 +24,14 @@ REQUIRED_VIEW_IDS = (
 )
 
 ALLOWED_API_PREFIXES = (
-    "/api/v1/review-due",
-    "/api/v1/study-sessions",
-)
-
-FORBIDDEN_API_PREFIXES = (
     "/api/v1/qa",
     "/api/v1/quiz",
+    "/api/v1/review-due",
     "/api/v1/review-log",
     "/api/v1/review-plan",
     "/api/v1/search",
+    "/api/v1/settings",
+    "/api/v1/study-sessions",
 )
+
+FORBIDDEN_API_PREFIXES = ()

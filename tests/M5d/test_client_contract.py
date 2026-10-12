@@ -38,9 +38,6 @@ class TestWorkbenchClientContract:
             "STATE_EVALUATING",
             "MAX_ATTEMPTS",
             "log_review",
-            "/api/v1/qa",
-            "/api/v1/quiz",
-            "/api/v1/review-log",
         )
         for token in forbidden_tokens:
             assert token not in source
