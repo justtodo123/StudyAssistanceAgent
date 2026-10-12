@@ -675,7 +675,7 @@ normalized document、provenance、增量同步、删除或恢复能力。报告
 **稳定 ID 与选定政策**
 
 - Decision ID 固定为 `M7-PARSER-MATRIX`，协议固定为 `sa.source.parser-matrix.v1`。解析器选择、版本和输出协议均是构建输入的一部分，精确 `parser_id@version` 必须进入 M6a `build_input_digest`；同一 format 不允许按环境或文件扩展名选择不同解析器。
-- v1 受支持格式及唯一解析器固定为：`md` → `markdown-it-py==4.0.0`（`commonmark` preset，源码编码 UTF-8）；`txt` → Python 标准库 `textio`（CPython `3.11.9`，UTF-8，`newline=None`）；`pdf` → `pypdf==6.0.0`；`pptx` → `python-pptx==1.0.2`；`docx` → `python-docx==1.2.0`。`parser_id` 分别固定为 `markdown-it-py`、`cpython-textio`、`pypdf`、`python-pptx`、`python-docx`；版本解析必须精确匹配，未知或不匹配即不可用。
+- v1 受支持格式及唯一解析器固定为：`md` → `markdown-it-py==4.0.0`（`commonmark` preset，源码编码 UTF-8）；`txt` → Python 标准库 `textio`（CPython `3.11.9`，UTF-8，`newline=None`）；`pdf` → `pypdf==6.19.0`；`pptx` → `python-pptx==1.0.2`；`docx` → `python-docx==1.2.0`。`parser_id` 分别固定为 `markdown-it-py`、`cpython-textio`、`pypdf`、`python-pptx`、`python-docx`；版本解析必须精确匹配，未知或不匹配即不可用。
 - Markdown 默认 pack 不经过本矩阵改写，继续使用既有 `sa.chunk.markdown-h2.v1` 和默认 `knowledge/` 路径；M7 用户源的 `md` 解析只定义输入解析器，不提前决定 normalized-document 或 provenance。
 - 解析成功必须产生可供后续切块的文本候选；解析器不得写入 Git、默认 `knowledge/` 或对外暴露原文。PDF 页、PPTX 幻灯片和 DOCX 标题的统一字段、稳定 chunk key、缓存与出处字段留给 §3.10–§3.11。
 

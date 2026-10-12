@@ -306,8 +306,8 @@ SCOPE_ASSERTIONS = {
     ),
     "docs/plans/m7-source-lifecycle-plan.md": (
         "frozen-parser-policy",
-        "`pdf` → `pypdf==6.0.0`",
-        "The committed M7 policy freezes pypdf 6.0.0 for PDF.",
+        "`pdf` → `pypdf==6.19.0`",
+        "The committed M7 policy freezes pypdf 6.19.0 for PDF.",
     ),
 }
 
@@ -474,12 +474,12 @@ def validate_scope_candidate(candidate: dict[str, Any]) -> None:
         "scope_origin": "USER_REQUIREMENT",
         "purpose": "M7_PDF_PARSER_RUNTIME_DEPENDENCY_METADATA_DISCOVERY_ONLY",
         "distribution_name": "pypdf",
-        "exact_version": "6.0.0",
-        "exact_requirement": "pypdf==6.0.0",
+        "exact_version": "6.19.0",
+        "exact_requirement": "pypdf==6.19.0",
         "import_name": "pypdf",
         "consumer_format": "pdf",
         "parser_id": "pypdf",
-        "parser_version": "6.0.0",
+        "parser_version": "6.19.0",
         "dependency_scope": ["pypdf"],
         "artifact": None,
         "metadata_url": None,
