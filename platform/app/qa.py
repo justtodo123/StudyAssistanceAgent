@@ -12,7 +12,7 @@ import time
 from typing import Any
 
 from . import config
-from .models import QaRequest, QaResponse, RetrievalChunk
+from .models import QaRequest, QaResponse, QaUsage, RetrievalChunk
 from .observability import log_operation, metrics
 from .retrieval import MultiRecallService, RetrievalScope
 
@@ -52,7 +52,7 @@ class QaService:
 
             if req.use_llm and config.LLM_API_KEY:
                 try:
-                    text = self._generate(req.question, results)
+                    text, usage = self._generate(req.question, results)
                     layer = "grounded_llm" if results else "no_hit"
                     return QaResponse(
                         question=req.question,
@@ -60,6 +60,8 @@ class QaService:
                         mode=mode,
                         sources=results,
                         generation_layer=layer,
+                        model=config.LLM_MODEL or None,
+                        usage=usage,
                     )
                 except Exception:
                     fallback_note = "LLM generation failed; used local summary."
@@ -87,7 +89,7 @@ class QaService:
             )
 
     # -- 生成路径 --
-    def _generate(self, question: str, chunks: list[RetrievalChunk]) -> str:
+    def _generate(self, question: str, chunks: list[RetrievalChunk]) -> tuple[str, QaUsage]:
         import urllib.request
 
         context = "\n\n".join(
@@ -116,7 +118,14 @@ class QaService:
         )
         with urllib.request.urlopen(req, timeout=config.LLM_TIMEOUT_S) as resp:
             data: dict[str, Any] = json.loads(resp.read().decode("utf-8"))
-        return data["choices"][0]["message"]["content"]
+        text = data["choices"][0]["message"]["content"]
+        usage_data = data.get("usage", {})
+        usage = QaUsage(
+            prompt_tokens=usage_data.get("prompt_tokens", 0),
+            completion_tokens=usage_data.get("completion_tokens", 0),
+            total_tokens=usage_data.get("total_tokens", 0),
+        )
+        return text, usage
 
     # -- 降级路径 --
     @staticmethod

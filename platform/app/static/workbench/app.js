@@ -7,6 +7,8 @@ const API = Object.freeze({
   reviewLog: "/api/v1/review-log",
   reviewDue: "/api/v1/review-due",
   studySessions: "/api/v1/study-sessions",
+  settings: "/api/v1/settings",
+  settingsLlm: "/api/v1/settings/llm",
 });
 
 const state = { session: null };
@@ -143,6 +145,7 @@ async function normalQA(question, course, answerDiv, sourcesDiv, layerBadge, mod
     layerBadge.className = "badge" + (data.generation_layer === "grounded_llm" ? " badge-success" : " badge-muted");
     modeBadge.textContent = data.mode || "-";
     renderQASources(data.sources || [], sourcesDiv);
+    renderQAUsage(data);
     setStatus("回答生成完成", "success");
   } catch (err) {
     answerDiv.parentElement.classList.remove("loading");
@@ -214,6 +217,22 @@ function renderQASources(sources, container) {
     "</div>";
   });
   container.innerHTML = html;
+}
+
+function renderQAUsage(data) {
+  const usageDiv = $("qa-usage");
+  if (data.model || data.usage) {
+    let html = "";
+    if (data.model) html += "模型：<span>" + escapeHtml(data.model) + "</span>";
+    if (data.usage) {
+      html += "Token：<span>" + data.usage.total_tokens + "</span>";
+      html += "（输入 " + data.usage.prompt_tokens + " + 输出 " + data.usage.completion_tokens + "）";
+    }
+    usageDiv.innerHTML = html;
+    usageDiv.classList.remove("hidden");
+  } else {
+    usageDiv.classList.add("hidden");
+  }
 }
 
 // ===== Quiz =====
@@ -528,6 +547,56 @@ function renderDue(data) {
   });
 }
 
+// ===== Settings =====
+function initSettings() {
+  loadSettings();
+  $("settings-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const apiKey = $("settings-api-key").value.trim();
+    const baseUrl = $("settings-base-url").value.trim();
+    const model = $("settings-model").value.trim();
+
+    const body = {};
+    if (apiKey) body.api_key = apiKey;
+    if (baseUrl) body.base_url = baseUrl;
+    if (model) body.model = model;
+
+    if (Object.keys(body).length === 0) {
+      setStatus("未填写任何配置", "error");
+      return;
+    }
+
+    try {
+      await api(API.settingsLlm, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      setStatus("配置已保存", "success");
+      $("settings-api-key").value = "";
+      await loadSettings();
+    } catch (err) {
+      setStatus(err.message, "error");
+    }
+  });
+}
+
+async function loadSettings() {
+  try {
+    const data = await api(API.settings);
+    $("settings-key-hint").textContent = "当前：" + (data.llm.api_key_masked || "未配置");
+    $("settings-base-url").value = data.llm.base_url || "";
+    $("settings-model").value = data.llm.model || "";
+    $("settings-index-size").textContent = data.index_size;
+    $("settings-courses").textContent = data.courses.join(", ") || "-";
+    $("settings-llm-status").textContent = data.llm.configured
+      ? "已配置 (" + (data.llm.model || "default") + ")"
+      : "未配置";
+  } catch (err) {
+    setStatus("加载配置失败：" + err.message, "error");
+  }
+}
+
 // ===== Init =====
 function init() {
   initTabs();
@@ -537,6 +606,7 @@ function init() {
   initPlan();
   initSession();
   initDue();
+  initSettings();
 }
 
 if (document.readyState === "loading") {

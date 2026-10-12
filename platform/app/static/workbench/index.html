@@ -16,6 +16,7 @@
           <button class="nav-tab" data-tab="plan">复习计划</button>
           <button class="nav-tab" data-tab="session">学习会话</button>
           <button class="nav-tab" data-tab="due">今日待复习</button>
+          <button class="nav-tab" data-tab="settings">设置</button>
         </div>
       </div>
     </nav>
@@ -91,6 +92,7 @@
             </div>
             <div id="qa-answer" class="qa-answer"></div>
             <div id="qa-sources" class="qa-sources"></div>
+            <div id="qa-usage" class="qa-usage hidden"></div>
           </div>
         </div>
       </section>
@@ -263,6 +265,42 @@
           </div>
           <p id="due-summary" class="muted"></p>
           <ul id="due-list" class="due-list"></ul>
+        </div>
+      </section>
+
+      <!-- ===== 设置 ===== -->
+      <section id="tab-settings" class="tab-panel">
+        <div class="panel">
+          <h2>LLM 配置</h2>
+          <p class="muted">配置大语言模型参数。修改后立即生效（当前会话级别）。</p>
+          <form id="settings-form" class="stack-form">
+            <div class="form-row">
+              <div class="form-grow">
+                <label for="settings-api-key">API Key</label>
+                <input id="settings-api-key" type="password" placeholder="输入新的 API Key（留空不修改）" />
+                <small class="field-hint" id="settings-key-hint">当前：未配置</small>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-grow">
+                <label for="settings-base-url">Base URL</label>
+                <input id="settings-base-url" type="text" placeholder="例如：https://api.deepseek.com" />
+              </div>
+              <div class="form-field">
+                <label for="settings-model">Model</label>
+                <input id="settings-model" type="text" placeholder="例如：deepseek-chat" />
+              </div>
+            </div>
+            <button id="settings-save" type="submit">保存配置</button>
+          </form>
+        </div>
+        <div class="panel">
+          <h3>当前状态</h3>
+          <div id="settings-status" class="settings-status">
+            <div class="settings-stat"><strong>索引大小</strong><span id="settings-index-size">-</span></div>
+            <div class="settings-stat"><strong>课程</strong><span id="settings-courses">-</span></div>
+            <div class="settings-stat"><strong>LLM</strong><span id="settings-llm-status">-</span></div>
+          </div>
         </div>
       </section>
     </main>

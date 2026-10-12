@@ -20,6 +20,8 @@ from .errors import ErrorCode, http_error
 from .models import (
     GoalPlanRequest,
     GoalPlanResponse,
+    LlmSettings,
+    LlmSettingsUpdate,
     PlanAdoptRequest,
     PlanProgressEvent,
     PlanProgressRequest,
@@ -34,6 +36,7 @@ from .models import (
     ReviewPlanResponse,
     SearchRequest,
     SearchResponse,
+    SettingsResponse,
     StudySessionAnswerRequest,
     StudySessionCreateRequest,
     StudySessionResponse,
@@ -369,6 +372,43 @@ def create_app(settings: config.Settings | None = None) -> FastAPI:
                 and runtime.graph_container is not None
             ),
         }
+
+    # Session-level LLM settings overrides (in-memory, not persisted)
+    _session_llm_settings: dict[str, str] = {}
+
+    @application.get("/api/v1/settings", response_model=SettingsResponse)
+    def get_settings() -> SettingsResponse:
+        api_key = _session_llm_settings.get("api_key") or selected.llm_api_key
+        base_url = _session_llm_settings.get("base_url") or selected.llm_base_url
+        model = _session_llm_settings.get("model") or selected.llm_model
+
+        masked = (api_key[:8] + "…") if len(api_key) > 8 else ("***" if api_key else "")
+        _, chunks = runtime.snapshot_publisher.view(RetrievalScope.DEFAULT_ONLY)
+        courses = sorted({c.course for c in chunks if c.course})
+
+        return SettingsResponse(
+            llm=LlmSettings(
+                api_key_masked=masked,
+                base_url=base_url,
+                model=model,
+                configured=bool(api_key),
+            ),
+            index_size=len(chunks),
+            courses=courses,
+        )
+
+    @application.post("/api/v1/settings/llm", response_model=SettingsResponse)
+    def update_llm_settings(req: LlmSettingsUpdate) -> SettingsResponse:
+        if req.api_key is not None:
+            _session_llm_settings["api_key"] = req.api_key
+            config.LLM_API_KEY = req.api_key
+        if req.base_url is not None:
+            _session_llm_settings["base_url"] = req.base_url
+            config.LLM_BASE_URL = req.base_url
+        if req.model is not None:
+            _session_llm_settings["model"] = req.model
+            config.LLM_MODEL = req.model
+        return get_settings()
 
     @application.post("/api/v1/search", response_model=SearchResponse)
     def search(req: SearchRequest) -> SearchResponse:

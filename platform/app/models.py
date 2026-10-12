@@ -42,6 +42,14 @@ class QaRequest(BaseModel):
     use_llm: bool = False
 
 
+class QaUsage(BaseModel):
+    """LLM token usage for a QA response."""
+
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+
+
 class QaResponse(BaseModel):
     question: str
     answer: str
@@ -51,6 +59,8 @@ class QaResponse(BaseModel):
         default="note_summary",
         description="grounded_llm | note_summary | no_hit",
     )
+    model: str | None = Field(default=None, description="LLM model used, if any")
+    usage: QaUsage | None = Field(default=None, description="Token usage, if LLM was called")
 
 
 # ── 复习计划 ──────────────────────────────────────────────────────────────────
@@ -362,3 +372,31 @@ class PlanReplanRequest(BaseModel):
     target_date: str | None = Field(default=None, description="新的目标日期 YYYY-MM-DD")
     hours_per_day: float | None = Field(default=None, ge=0.5, le=8.0, description="新的每日学时")
     constraints: GoalPlanConstraints | None = Field(default=None, description="新的话题约束")
+
+
+# ── 设置 ─────────────────────────────────────────────────────────────────────
+
+
+class LlmSettings(BaseModel):
+    """LLM configuration (masked for display)."""
+
+    api_key_masked: str = Field(description="API key with only first 8 chars visible")
+    base_url: str = Field(default="")
+    model: str = Field(default="")
+    configured: bool = Field(description="Whether LLM is configured (non-empty key)")
+
+
+class SettingsResponse(BaseModel):
+    """Current system settings (read-only view)."""
+
+    llm: LlmSettings
+    index_size: int
+    courses: list[str]
+
+
+class LlmSettingsUpdate(BaseModel):
+    """Request to update LLM settings (session-level)."""
+
+    api_key: str | None = Field(default=None, min_length=1, max_length=500)
+    base_url: str | None = Field(default=None, max_length=500)
+    model: str | None = Field(default=None, max_length=100)
