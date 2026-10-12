@@ -49,7 +49,7 @@ class TestToKnowledgeMarkdown:
         """有 source_url 时应出现在 frontmatter 中。"""
         meta = ArticleMeta(title="测试", course="network", source_url="https://example.com")
         md = to_knowledge_markdown(sample_text, meta)
-        assert "https://example.com" in md
+        assert "source_url: https://example.com" in md
 
     def test_no_source_url_when_empty(self, sample_text: str) -> None:
         """无 source_url 时 frontmatter 中不应出现该字段。"""
