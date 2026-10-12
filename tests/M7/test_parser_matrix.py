@@ -35,7 +35,7 @@ def test_parser_matrix_has_exact_one_approved_parser_per_supported_format() -> N
     expected = {
         "md": ("markdown-it-py", "4.0.0"),
         "txt": ("cpython-textio", "3.11.9"),
-        "pdf": ("pypdf", "6.0.0"),
+        "pdf": ("pypdf", "6.19.0"),
         "pptx": ("python-pptx", "1.0.2"),
         "docx": ("python-docx", "1.2.0"),
     }

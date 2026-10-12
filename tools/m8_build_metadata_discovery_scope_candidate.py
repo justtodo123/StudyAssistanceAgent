@@ -41,7 +41,7 @@ except ImportError:  # pragma: no cover
 
 ROOT = Path(__file__).resolve().parents[1]
 CYCLE_ID = SCOPE_CYCLE_ID
-EXACT_REQUIREMENT = "pypdf==6.0.0"
+EXACT_REQUIREMENT = "pypdf==6.19.0"
 CLASSIFICATIONS = {
     "platform/requirements.txt": "RUNTIME_DEPENDENCY_DECLARATION",
     "platform/app/parser_matrix.py": "RUNTIME_PARSER_IMPLEMENTATION_BINDING",

@@ -291,18 +291,18 @@ SCOPE_ASSERTION_PATHS = SCOPE_EVIDENCE_PATHS[:4]
 SCOPE_ASSERTIONS = {
     "platform/requirements.txt": (
         "runtime-requirement-pin",
-        "pypdf==6.0.0",
+        "pypdf==6.19.0",
         "The committed runtime dependency declaration contains the exact Owner-selected requirement.",
     ),
     "platform/app/parser_matrix.py": (
         "runtime-parser-binding",
-        '"pdf": ParserSpec("pdf", "pypdf", "6.0.0", "pypdf", "pypdf", MAX_PDF_PAGES)',
-        "The committed parser matrix binds PDF parsing to pypdf 6.0.0.",
+        '        "pdf": ParserSpec("pdf", "pypdf", "6.19.0", "pypdf", "pypdf", MAX_PDF_PAGES),',
+        "The committed parser matrix binds PDF parsing to pypdf 6.19.0.",
     ),
     "tests/M7/test_parser_matrix.py": (
         "runtime-parser-contract",
-        '"pdf": ("pypdf", "6.0.0")',
-        "The committed parser contract test expects pypdf 6.0.0 for PDF.",
+        '"pdf": ("pypdf", "6.19.0")',
+        "The committed parser contract test expects pypdf 6.19.0 for PDF.",
     ),
     "docs/plans/m7-source-lifecycle-plan.md": (
         "frozen-parser-policy",

@@ -159,7 +159,7 @@ PARSER_SPECS: Mapping[str, ParserSpec] = MappingProxyType(
     {
         "md": ParserSpec("md", "markdown-it-py", "4.0.0", "markdown-it-py", "markdown_it"),
         "txt": ParserSpec("txt", "cpython-textio", "3.11.9", None, None),
-        "pdf": ParserSpec("pdf", "pypdf", "6.0.0", "pypdf", "pypdf", MAX_PDF_PAGES),
+        "pdf": ParserSpec("pdf", "pypdf", "6.19.0", "pypdf", "pypdf", MAX_PDF_PAGES),
         "pptx": ParserSpec("pptx", "python-pptx", "1.0.2", "python-pptx", "pptx", MAX_PPTX_SLIDES),
         "docx": ParserSpec(
             "docx", "python-docx", "1.2.0", "python-docx", "docx", MAX_DOCX_BODY_PARAGRAPHS
