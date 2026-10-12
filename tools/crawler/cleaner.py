@@ -92,8 +92,8 @@ def _extract_with_bs4(html: str) -> str:
 
 def _extract_with_regex(html: str) -> str:
     """最基础的 regex 去标签（最终降级）。"""
-    text = re.sub(r"<script[^>]*>.*?</script\s*>", "", html, flags=re.DOTALL | re.IGNORECASE)
-    text = re.sub(r"<style[^>]*>.*?</style\s*>", "", text, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r"<script[^>]*>.*?</script[^>]*>", "", html, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r"<style[^>]*>.*?</style[^>]*>", "", text, flags=re.DOTALL | re.IGNORECASE)
     text = re.sub(r"<[^>]+>", "\n", text)
     text = re.sub(r"&nbsp;", " ", text)
     text = re.sub(r"&[a-z]+;", "", text)
@@ -121,5 +121,5 @@ def extract_title(html: str) -> str:
             return title_tag.string.strip()
 
     # regex 降级
-    match = re.search(r"<title[^>]*>(.*?)</title>", html, re.DOTALL | re.IGNORECASE)
+    match = re.search(r"<title[^>]*>(.*?)</title[^>]*>", html, re.DOTALL | re.IGNORECASE)
     return match.group(1).strip() if match else ""
