@@ -10,7 +10,7 @@ WORKBENCH_JS = WORKBENCH_DIR / "app.js"
 WORKBENCH_CSS = WORKBENCH_DIR / "styles.css"
 
 REQUIRED_VIEW_IDS = (
-    "due-panel",
+    "tab-due",
     "start-form",
     "topic",
     "course",

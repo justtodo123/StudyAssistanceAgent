@@ -21,7 +21,7 @@ class TestWorkbenchPage:
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
         body = response.text
-        assert "<h1>学习工作台</h1>" in body
+        assert 'class="top-nav"' in body
         assert "产品介绍" not in body
         assert "立即注册" not in body
 
@@ -35,7 +35,7 @@ class TestWorkbenchPage:
         css = client.get("/static/workbench/styles.css")
         assert js.status_code == 200
         assert css.status_code == 200
-        assert "WORKBENCH_API" in js.text
+        assert "const API" in js.text
         assert "due-panel" in css.text or ".panel" in css.text
 
     def test_workbench_files_exist_on_disk(self):

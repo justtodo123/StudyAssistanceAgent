@@ -61,7 +61,7 @@ reviewer-a-*.patch                # 中断恢复补丁
 ### 虚拟磁盘
 
 ```
-C:\sa-m8-parent-binding.vhdx      # 隔离环境虚拟磁盘
+<system-temp>/sa-m8-parent-binding.vhdx  # 隔离环境虚拟磁盘
 ```
 
 **用途**：为审核者提供完全隔离的执行环境，防止意外修改主仓库。
@@ -273,20 +273,20 @@ C:\sa-m8-parent-binding.vhdx      # 隔离环境虚拟磁盘
 **删除清单**：
 ```bash
 # Worktrees
-rm -rf "D:/Git Demo/m8-v3-"*
-rm -rf "D:/Git Demo/m8-reviewer-b-"*
-rm -rf "D:/Git Demo/StudyAssistanceAgent-untracked-backup-20260920"
+rm -rf "<repo-parent>/m8-v3-"*
+rm -rf "<repo-parent>/m8-reviewer-b-"*
+rm -rf "<repo-parent>/StudyAssistanceAgent-untracked-backup-20260920"
 
 # 状态文件和日志
-rm -f "D:/Git Demo/m8-"*.json
-rm -f "D:/Git Demo/m8-reviewer-b-"*.{log,txt}
-rm -f "D:/Git Demo/reviewer-a-"*.patch
+rm -f "<repo-parent>/m8-"*.json
+rm -f "<repo-parent>/m8-reviewer-b-"*.{log,txt}
+rm -f "<repo-parent>/reviewer-a-"*.patch
 
 # M11 外部数据
-rm -rf "D:/M11-external"
+rm -rf "<external>/M11-external"
 
 # 虚拟磁盘（需要管理员权限）
-rm -f "C:/sa-m8-parent-binding.vhdx"
+rm -f "<system-temp>/sa-m8-parent-binding.vhdx"
 ```
 
 ---

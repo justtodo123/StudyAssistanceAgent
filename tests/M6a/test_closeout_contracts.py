@@ -30,6 +30,8 @@ PUBLIC_API_PATHS = {
     "/api/v1/study-sessions",
     "/api/v1/study-sessions/{session_id}",
     "/api/v1/study-sessions/{session_id}/answers",
+    "/api/v1/settings",
+    "/api/v1/settings/llm",
 }
 
 DOCUMENTED_ROUTE_FILES = (
