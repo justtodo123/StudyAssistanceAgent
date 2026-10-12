@@ -18,6 +18,8 @@ on:
 jobs:
   offline:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       SA_USE_VECTOR: "false"
       HF_HUB_OFFLINE: "1"
@@ -123,6 +125,8 @@ jobs:
   m7-cpython311:
     name: m7-cpython311
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       SA_USE_VECTOR: "false"
       HF_HUB_OFFLINE: "1"
@@ -153,6 +157,8 @@ jobs:
   crawler-offline:
     name: crawler-offline
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       SA_USE_VECTOR: "false"
       HF_HUB_OFFLINE: "1"
@@ -185,6 +191,8 @@ jobs:
     name: crawler-online-smoke
     if: github.event_name == 'workflow_dispatch' && inputs.crawler_online_smoke
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       SA_USE_VECTOR: "false"
       HF_HUB_OFFLINE: "1"
