@@ -291,23 +291,23 @@ SCOPE_ASSERTION_PATHS = SCOPE_EVIDENCE_PATHS[:4]
 SCOPE_ASSERTIONS = {
     "platform/requirements.txt": (
         "runtime-requirement-pin",
-        "pypdf==6.0.0",
+        "pypdf==6.19.0",
         "The committed runtime dependency declaration contains the exact Owner-selected requirement.",
     ),
     "platform/app/parser_matrix.py": (
         "runtime-parser-binding",
-        '"pdf": ParserSpec("pdf", "pypdf", "6.0.0", "pypdf", "pypdf", MAX_PDF_PAGES)',
-        "The committed parser matrix binds PDF parsing to pypdf 6.0.0.",
+        '        "pdf": ParserSpec("pdf", "pypdf", "6.19.0", "pypdf", "pypdf", MAX_PDF_PAGES),',
+        "The committed parser matrix binds PDF parsing to pypdf 6.19.0.",
     ),
     "tests/M7/test_parser_matrix.py": (
         "runtime-parser-contract",
-        '"pdf": ("pypdf", "6.0.0")',
-        "The committed parser contract test expects pypdf 6.0.0 for PDF.",
+        '"pdf": ("pypdf", "6.19.0")',
+        "The committed parser contract test expects pypdf 6.19.0 for PDF.",
     ),
     "docs/plans/m7-source-lifecycle-plan.md": (
         "frozen-parser-policy",
-        "`pdf` → `pypdf==6.0.0`",
-        "The committed M7 policy freezes pypdf 6.0.0 for PDF.",
+        "`pdf` → `pypdf==6.19.0`",
+        "The committed M7 policy freezes pypdf 6.19.0 for PDF.",
     ),
 }
 
@@ -474,12 +474,12 @@ def validate_scope_candidate(candidate: dict[str, Any]) -> None:
         "scope_origin": "USER_REQUIREMENT",
         "purpose": "M7_PDF_PARSER_RUNTIME_DEPENDENCY_METADATA_DISCOVERY_ONLY",
         "distribution_name": "pypdf",
-        "exact_version": "6.0.0",
-        "exact_requirement": "pypdf==6.0.0",
+        "exact_version": "6.19.0",
+        "exact_requirement": "pypdf==6.19.0",
         "import_name": "pypdf",
         "consumer_format": "pdf",
         "parser_id": "pypdf",
-        "parser_version": "6.0.0",
+        "parser_version": "6.19.0",
         "dependency_scope": ["pypdf"],
         "artifact": None,
         "metadata_url": None,

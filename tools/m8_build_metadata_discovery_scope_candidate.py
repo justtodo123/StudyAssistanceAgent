@@ -41,7 +41,7 @@ except ImportError:  # pragma: no cover
 
 ROOT = Path(__file__).resolve().parents[1]
 CYCLE_ID = SCOPE_CYCLE_ID
-EXACT_REQUIREMENT = "pypdf==6.0.0"
+EXACT_REQUIREMENT = "pypdf==6.19.0"
 CLASSIFICATIONS = {
     "platform/requirements.txt": "RUNTIME_DEPENDENCY_DECLARATION",
     "platform/app/parser_matrix.py": "RUNTIME_PARSER_IMPLEMENTATION_BINDING",
@@ -221,12 +221,12 @@ def build_scope_candidate(commit: str, repo_root: Path = ROOT) -> dict[str, Any]
             "distribution_name": "pypdf",
             "endpoint_selection_state": "NOT_SELECTED",
             "exact_requirement": EXACT_REQUIREMENT,
-            "exact_version": "6.0.0",
+            "exact_version": "6.19.0",
             "import_name": "pypdf",
             "metadata_request_authorized": False,
             "metadata_url": None,
             "parser_id": "pypdf",
-            "parser_version": "6.0.0",
+            "parser_version": "6.19.0",
             "project_url": None,
             "purpose": "M7_PDF_PARSER_RUNTIME_DEPENDENCY_METADATA_DISCOVERY_ONLY",
             "scope_origin": "USER_REQUIREMENT",

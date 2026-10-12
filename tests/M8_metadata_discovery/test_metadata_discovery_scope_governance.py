@@ -267,13 +267,13 @@ def test_scope_candidate_freezes_only_owner_selected_pypdf_scope(repo_root: Path
         "dependency_scope": ["pypdf"],
         "distribution_name": "pypdf",
         "endpoint_selection_state": "NOT_SELECTED",
-        "exact_requirement": "pypdf==6.0.0",
-        "exact_version": "6.0.0",
+        "exact_requirement": "pypdf==6.19.0",
+        "exact_version": "6.19.0",
         "import_name": "pypdf",
         "metadata_request_authorized": False,
         "metadata_url": None,
         "parser_id": "pypdf",
-        "parser_version": "6.0.0",
+        "parser_version": "6.19.0",
         "project_url": None,
         "purpose": "M7_PDF_PARSER_RUNTIME_DEPENDENCY_METADATA_DISCOVERY_ONLY",
         "scope_origin": "USER_REQUIREMENT",
@@ -301,7 +301,7 @@ def test_scope_candidate_does_not_expand_dependencies(repo_root: Path) -> None:
     other_requirements = {
         line.split("==", 1)[0]
         for line in requirements.splitlines()
-        if line and not line.startswith("#") and line != "pypdf==6.0.0"
+        if line and not line.startswith("#") and line != "pypdf==6.19.0"
     }
     assert other_requirements
     assert other_requirements.isdisjoint(candidate["scope"]["dependency_scope"])
